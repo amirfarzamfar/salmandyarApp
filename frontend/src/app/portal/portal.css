@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  /* Ultra-Premium Medical Palette (Calm & Trustworthy) */
+  --color-medical-50: #F5FAFF; /* Softer, warmer blue-white */
+  --color-medical-100: #E6F4FF;
+  --color-medical-200: #C2E5FF;
+  --color-medical-300: #99D6FF;
+  --color-medical-400: #66C2FF;
+  --color-medical-500: #33A6FF;
+  --color-medical-600: #008AE6; /* Trusted Blue */
+  --color-medical-700: #006BB3;
+  --color-medical-800: #004D80;
+  --color-medical-900: #002E4D;
+
+  /* Emotional Support Colors (Success/Positive) */
+  --color-calm-green-50: #F2FBF6;
+  --color-calm-green-100: #E0F5EA;
+  --color-calm-green-500: #34D399; /* Softer Mint Green */
+  --color-calm-green-600: #10B981;
+
+  /* Neutral Warm (For backgrounds, avoiding clinical coldness) */
+  --color-neutral-warm-50: #FAFAF9;
+  --color-neutral-warm-100: #F5F5F4;
+  --color-neutral-warm-200: #E7E5E4;
+  
+  /* Glassmorphism Variables */
+  --color-surface-glass: rgba(255, 255, 255, 0.85);
+  --color-surface-glass-border: rgba(255, 255, 255, 0.6);
+  
+  /* Elevation System (Ultra-Soft Shadows) */
+  --shadow-soft-sm: 0 2px 10px rgba(27, 31, 35, 0.02);
+  --shadow-soft-md: 0 8px 30px rgba(27, 31, 35, 0.04);
+  --shadow-soft-lg: 0 20px 60px -10px rgba(27, 31, 35, 0.06);
+  --shadow-glow-medical: 0 0 40px -10px rgba(51, 166, 255, 0.15);
+}
+
+/* Base Refinements */
+body {
+  @apply text-gray-700 bg-neutral-warm-50 antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Component Classes */
+.glass-card {
+  @apply bg-surface-glass backdrop-blur-xl border border-white/50 shadow-soft-md;
+  background: linear-gradient(145deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%);
+}
+
+.dark .glass-card {
+  @apply bg-gray-900/80 border-gray-800/50;
+  background: linear-gradient(145deg, rgba(17, 24, 39, 0.8) 0%, rgba(17, 24, 39, 0.6) 100%);
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Elder Mode Enhancements */
+.elder-mode .text-base {
+  @apply text-lg leading-relaxed;
+}
+.elder-mode .text-sm {
+  @apply text-base leading-relaxed;
+}
+.elder-mode .text-xs {
+  @apply text-sm leading-relaxed;
+}
+.elder-mode h1, .elder-mode h2, .elder-mode h3 {
+  @apply tracking-tight font-bold;
+}
+.elder-mode button {
+  @apply min-h-[64px] text-lg font-bold shadow-soft-lg;
+}
