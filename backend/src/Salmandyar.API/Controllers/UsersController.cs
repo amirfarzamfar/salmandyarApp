@@ -57,7 +57,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPatch("{id}/role")]
-    [Authorize(Roles = "SuperAdmin")] // Only SuperAdmin can change roles
+    [Authorize(Roles = "Admin,SuperAdmin")] // Allow both Admin and SuperAdmin
     public async Task<IActionResult> ChangeRole(string id, [FromBody] UpdateUserRoleDto dto)
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -68,7 +68,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("{id}/reset-password")]
-    [Authorize(Roles = "SuperAdmin")]
+    [Authorize(Roles = "Admin,SuperAdmin")] // Allow both Admin and SuperAdmin
     public async Task<IActionResult> ResetPassword(string id, [FromBody] object payload)
     {
         // Simple payload with { "newPassword": "..." } or similar

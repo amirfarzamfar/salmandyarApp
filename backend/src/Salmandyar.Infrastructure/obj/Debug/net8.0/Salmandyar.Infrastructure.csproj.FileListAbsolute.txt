@@ -33,3 +33,4 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandy
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Infrastructure\obj\Debug\net8.0\refint\Salmandyar.Infrastructure.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Infrastructure\obj\Debug\net8.0\Salmandyar.Infrastructure.pdb
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Infrastructure\obj\Debug\net8.0\ref\Salmandyar.Infrastructure.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Infrastructure\obj\Debug\net8.0\Salmandyar.Infrastructure.sourcelink.json

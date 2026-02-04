@@ -81,6 +81,92 @@ export default function UsersPage() {
     }
   };
 
+  const handleRoleChange = async (user: UserListDto) => {
+    const roles = {
+      'Admin': 'ادمین',
+      'Manager': 'مدیر',
+      'Supervisor': 'سوپروایزر',
+      'Nurse': 'پرستار',
+      'AssistantNurse': 'کمک پرستار',
+      'Physiotherapist': 'فیزیوتراپیست',
+      'ElderlyCareAssistant': 'مراقب سالمند',
+      'Elderly': 'سالمند',
+      'Patient': 'بیمار',
+      'PatientFamily': 'خانواده بیمار'
+    };
+
+    const { value: role } = await Swal.fire({
+      title: 'تغییر نقش کاربر',
+      input: 'select',
+      inputOptions: roles,
+      inputValue: user.role,
+      showCancelButton: true,
+      confirmButtonText: 'ثبت تغییرات',
+      cancelButtonText: 'انصراف',
+      inputPlaceholder: 'انتخاب نقش جدید...',
+    });
+
+    if (role) {
+      try {
+        await userService.changeRole(user.id, role);
+        toast.success('نقش کاربر با موفقیت تغییر یافت');
+        fetchUsers();
+      } catch (error) {
+        toast.error('خطا در تغییر نقش کاربر');
+      }
+    }
+  };
+
+  const handleResetPassword = async (user: UserListDto) => {
+    const { value: newPassword } = await Swal.fire({
+      title: 'ریست رمز عبور',
+      input: 'password',
+      inputLabel: 'رمز عبور جدید',
+      inputPlaceholder: 'رمز عبور جدید را وارد کنید...',
+      showCancelButton: true,
+      confirmButtonText: 'تغییر رمز',
+      cancelButtonText: 'انصراف',
+      inputAttributes: {
+        autocapitalize: 'off',
+        autocorrect: 'off'
+      }
+    });
+
+    if (newPassword) {
+      if (newPassword.length < 6) {
+        toast.error('رمز عبور باید حداقل ۶ کاراکتر باشد');
+        return;
+      }
+      try {
+        await userService.resetPassword(user.id, newPassword);
+        toast.success('رمز عبور با موفقیت تغییر کرد');
+      } catch (error) {
+        toast.error('خطا در تغییر رمز عبور');
+      }
+    }
+  };
+
+  const handleForceLogout = async (user: UserListDto) => {
+    const result = await Swal.fire({
+      title: 'خروج اجباری',
+      text: `آیا از خارج کردن اجباری ${user.firstName} ${user.lastName} از سیستم اطمینان دارید؟`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      confirmButtonText: 'بله، خارج شود',
+      cancelButtonText: 'انصراف'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await userService.forceLogout(user.id);
+        toast.success('کاربر با موفقیت از سیستم خارج شد');
+      } catch (error) {
+        toast.error('خطا در انجام عملیات خروج اجباری');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
@@ -218,11 +304,26 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                         <button title="مشاهده جزئیات" className="p-1 text-slate-400 hover:text-teal-600 transition-colors">
-                            <Eye className="w-5 h-5" />
+                         <button 
+                           onClick={() => handleRoleChange(user)}
+                           title="تغییر نقش" 
+                           className="p-1 text-slate-400 hover:text-purple-600 transition-colors"
+                         >
+                            <UserCog className="w-5 h-5" />
                          </button>
-                         <button title="تغییر رمز" className="p-1 text-slate-400 hover:text-orange-600 transition-colors">
+                         <button 
+                           onClick={() => handleResetPassword(user)}
+                           title="تغییر رمز" 
+                           className="p-1 text-slate-400 hover:text-orange-600 transition-colors"
+                         >
                             <Lock className="w-5 h-5" />
+                         </button>
+                         <button 
+                           onClick={() => handleForceLogout(user)}
+                           title="خروج اجباری" 
+                           className="p-1 text-slate-400 hover:text-red-600 transition-colors"
+                         >
+                            <Shield className="w-5 h-5" />
                          </button>
                       </div>
                     </td>

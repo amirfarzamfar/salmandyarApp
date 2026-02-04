@@ -4,6 +4,7 @@ using Salmandyar.Application.DTOs.Users;
 using Salmandyar.Application.Services.Users;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Infrastructure.Persistence;
+using System;
 using System.Text.Json;
 
 namespace Salmandyar.Infrastructure.Services.Users;
@@ -19,19 +20,27 @@ public class AuditLogService : IAuditLogService
 
     public async Task LogAsync(string? userId, string action, string entityName, string? entityId, string? details, string? ipAddress)
     {
-        var log = new AuditLog
+        try 
         {
-            UserId = userId,
-            Action = action,
-            EntityName = entityName,
-            EntityId = entityId,
-            Details = details,
-            IpAddress = ipAddress,
-            CreatedAt = DateTime.UtcNow
-        };
+            var log = new AuditLog
+            {
+                UserId = userId,
+                Action = action,
+                EntityName = entityName,
+                EntityId = entityId,
+                Details = details,
+                IpAddress = ipAddress,
+                CreatedAt = DateTime.UtcNow
+            };
 
-        _context.AuditLogs.Add(log);
-        await _context.SaveChangesAsync();
+            _context.AuditLogs.Add(log);
+            await _context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log to console/logger but don't crash the main operation
+            Console.WriteLine($"Error saving audit log: {ex.Message}");
+        }
     }
 
     public async Task<List<AuditLogDto>> GetLogsForUserAsync(string userId)
