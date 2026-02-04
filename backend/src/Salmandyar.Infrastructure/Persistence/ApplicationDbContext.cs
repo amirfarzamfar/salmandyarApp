@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Domain.Entities;
+using Salmandyar.Domain.Entities.Assessments;
 
 namespace Salmandyar.Infrastructure.Persistence;
 
@@ -23,6 +24,13 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
     public DbSet<CareAssignment> CareAssignments { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
+
+    // Assessment Module
+    public DbSet<AssessmentForm> AssessmentForms { get; set; }
+    public DbSet<AssessmentQuestion> AssessmentQuestions { get; set; }
+    public DbSet<AssessmentOption> AssessmentOptions { get; set; }
+    public DbSet<AssessmentSubmission> AssessmentSubmissions { get; set; }
+    public DbSet<QuestionAnswer> QuestionAnswers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -171,5 +179,43 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
         builder.Entity<CareAssignment>()
             .HasIndex(a => a.StartDate);
+
+        // Assessment Module Configurations
+        builder.Entity<AssessmentForm>().ToTable("AssessmentForms");
+        builder.Entity<AssessmentQuestion>().ToTable("AssessmentQuestions");
+        builder.Entity<AssessmentOption>().ToTable("AssessmentOptions");
+        builder.Entity<AssessmentSubmission>().ToTable("AssessmentSubmissions");
+        builder.Entity<QuestionAnswer>().ToTable("QuestionAnswers");
+
+        builder.Entity<AssessmentQuestion>()
+            .Property(q => q.Tags)
+            .HasConversion(
+                v => string.Join(',', v),
+                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
+            );
+
+        builder.Entity<AssessmentQuestion>()
+            .HasOne(q => q.Form)
+            .WithMany(f => f.Questions)
+            .HasForeignKey(q => q.FormId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<AssessmentOption>()
+            .HasOne(o => o.Question)
+            .WithMany(q => q.Options)
+            .HasForeignKey(o => o.QuestionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<AssessmentSubmission>()
+            .HasOne(s => s.Form)
+            .WithMany()
+            .HasForeignKey(s => s.FormId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<QuestionAnswer>()
+            .HasOne(a => a.Submission)
+            .WithMany(s => s.Answers)
+            .HasForeignKey(a => a.SubmissionId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

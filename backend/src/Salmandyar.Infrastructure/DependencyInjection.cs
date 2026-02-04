@@ -22,6 +22,8 @@ using Salmandyar.Application.Services.Assignments;
 using Salmandyar.Infrastructure.Services.Assignments;
 using Salmandyar.Application.Services.Users;
 using Salmandyar.Infrastructure.Services.Users;
+using Salmandyar.Application.Services.Assessments;
+using Salmandyar.Infrastructure.Services.Assessments;
 
 namespace Salmandyar.Infrastructure;
 
@@ -53,6 +55,10 @@ public static class DependencyInjection
 
         // Assignments
         services.AddScoped<ICareAssignmentService, CareAssignmentService>();
+
+        // Assessment Module
+        services.AddScoped<IAssessmentService, AssessmentService>();
+        services.AddScoped<IMatchingService, MatchingService>();
 
         // Notifications
         services.AddScoped<INotificationService, LoggerNotificationService>();

@@ -155,6 +155,173 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentForm", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AssessmentForms", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ScoreValue")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("AssessmentOptions", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FormId");
+
+                    b.ToTable("AssessmentQuestions", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentSubmission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AnalysisResultJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CareRecipientId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("TotalScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CareRecipientId");
+
+                    b.HasIndex("FormId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AssessmentSubmissions", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.QuestionAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool?>("BooleanResponse")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SelectedOptionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubmissionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TextResponse")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("SelectedOptionId");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("QuestionAnswers", (string)null);
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.AuditLog", b =>
                 {
                     b.Property<int>("Id")
@@ -876,6 +1043,76 @@ namespace Salmandyar.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentOption", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentQuestion", "Question")
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentQuestion", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentForm", "Form")
+                        .WithMany("Questions")
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Form");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentSubmission", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
+                        .WithMany()
+                        .HasForeignKey("CareRecipientId");
+
+                    b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentForm", "Form")
+                        .WithMany()
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("CareRecipient");
+
+                    b.Navigation("Form");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.QuestionAnswer", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentQuestion", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentOption", "SelectedOption")
+                        .WithMany()
+                        .HasForeignKey("SelectedOptionId");
+
+                    b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentSubmission", "Submission")
+                        .WithMany("Answers")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("SelectedOption");
+
+                    b.Navigation("Submission");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.CareAssignment", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.User", "Caregiver")
@@ -1046,6 +1283,21 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("CareRecipient");
 
                     b.Navigation("Recorder");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentForm", b =>
+                {
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentQuestion", b =>
+                {
+                    b.Navigation("Options");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Assessments.AssessmentSubmission", b =>
+                {
+                    b.Navigation("Answers");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.CareRecipient", b =>

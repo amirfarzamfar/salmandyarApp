@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 
 const navigation = [
@@ -13,6 +13,16 @@ const navigation = [
   { name: 'مدیریت کاربران', href: '/dashboard/admin/users', icon: Users },
   { name: 'مدیریت شیفت‌ها', href: '/dashboard/admin/shifts', icon: Clock },
   { name: 'پیکربندی گزارشات', href: '/dashboard/admin/report-config', icon: Settings },
+  { 
+    name: 'مدیریت آزمون‌ها', 
+    href: '#', 
+    icon: ClipboardList,
+    subItems: [
+        { name: 'لیست آزمون‌ها', href: '/dashboard/admin/assessments', icon: List },
+        { name: 'ایجاد آزمون', href: '/dashboard/admin/assessments/create', icon: FileText },
+        { name: 'تطبیق هوشمند', href: '/dashboard/admin/matching', icon: Brain }
+    ]
+  },
   { name: 'مدیریت پرسنل', href: '/dashboard/personnel', icon: UserCog },
   { name: 'گزارش‌ها', href: '/dashboard/reports', icon: FileText },
   { 
