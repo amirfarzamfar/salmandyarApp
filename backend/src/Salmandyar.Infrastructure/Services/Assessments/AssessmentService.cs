@@ -288,18 +288,21 @@ public class AssessmentService : IAssessmentService
             Title = form.Title,
             Description = form.Description,
             Type = form.Type,
+            IsActive = form.IsActive,
             Questions = form.Questions.OrderBy(q => q.Order).Select(q => new QuestionDto
             {
                 QuestionId = q.Id,
-                Type = q.Type.ToString(),
+                Type = q.Type,
                 Question = q.Text,
                 Weight = q.Weight,
                 Tags = q.Tags,
+                Order = q.Order,
                 Options = q.Options.OrderBy(o => o.Order).Select(o => new OptionDto
                 {
                     Id = o.Id,
                     Text = o.Text,
-                    Value = o.ScoreValue
+                    Value = o.ScoreValue,
+                    Order = o.Order
                 }).ToList()
             }).ToList()
         };

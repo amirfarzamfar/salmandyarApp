@@ -46,7 +46,7 @@ export default function EditAssessmentPage({ params }: { params: Promise<{ id: s
       type: form.type,
       questions: form.questions.map(q => ({
           question: q.question,
-          type: Number(q.type), // Ensure enum number
+          type: Number(q.type),
           weight: q.weight,
           tags: q.tags,
           order: q.order || 0,

@@ -196,6 +196,41 @@ function QuestionItem({
         setValue(`questions.${index}.tags`, currentTags.filter((_: any, i: number) => i !== tagIndex));
     };
 
+    // Watch specific fields for this question to trigger effects
+    const currentType = Number(watch(`questions.${index}.type`));
+    const currentOptions = watch(`questions.${index}.options`);
+
+    // Auto-template logic when type changes
+    useEffect(() => {
+        // If switching to MultipleChoice and no options exist, add defaults
+        if (currentType === QuestionType.MultipleChoice && (!currentOptions || currentOptions.length === 0)) {
+            setValue(`questions.${index}.options`, [
+                { text: 'گزینه ۱', scoreValue: 0, order: 0 },
+                { text: 'گزینه ۲', scoreValue: 0, order: 1 },
+                { text: 'گزینه ۳', scoreValue: 0, order: 2 },
+                { text: 'گزینه ۴', scoreValue: 0, order: 3 }
+            ]);
+        }
+        // If switching to TrueFalse, set standard Yes/No
+        else if (currentType === QuestionType.TrueFalse && (!currentOptions || currentOptions.length === 0)) {
+            setValue(`questions.${index}.options`, [
+                { text: 'بله', scoreValue: 1, order: 0 },
+                { text: 'خیر', scoreValue: 0, order: 1 }
+            ]);
+        }
+        // If switching to text types, clear options (optional, but cleaner)
+        else if ((currentType === QuestionType.ShortAnswer || currentType === QuestionType.LongAnswer) && currentOptions?.length > 0) {
+            setValue(`questions.${index}.options`, []);
+        }
+    }, [currentType, setValue, index]); // Removed currentOptions from dependency to prevent infinite loop if setValue changes options
+
+    // Sync fields when switching to edit mode
+    useEffect(() => {
+        if (currentType === QuestionType.MultipleChoice && optionFields.length === 0 && currentOptions?.length > 0) {
+             setValue(`questions.${index}.options`, currentOptions);
+        }
+    }, [optionFields.length, currentOptions, currentType, setValue, index]);
+
     return (
         <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700 space-y-3">
             <div className="flex justify-between items-start gap-4">
@@ -252,12 +287,14 @@ function QuestionItem({
                         </div>
                     </div>
 
-                    {/* Options Builder (Only for MultipleChoice) */}
-                    {Number(type) === QuestionType.MultipleChoice && (
+                    {/* Options Builder (For MultipleChoice AND TrueFalse) */}
+                    {(Number(watch(`questions.${index}.type`)) === QuestionType.MultipleChoice || 
+                      Number(watch(`questions.${index}.type`)) === QuestionType.TrueFalse) && (
                         <div className="pl-4 border-r-2 border-slate-700 space-y-2 mt-2">
                             <label className="text-xs text-slate-500 block mb-1">گزینه‌ها:</label>
-                            {optionFields.map((opt, optIndex) => (
-                                <div key={opt.id} className="flex gap-2 items-center">
+                            {/* We use fields from useFieldArray but need to sync if options are reset externally */}
+                            {(optionFields.length > 0 ? optionFields : watch(`questions.${index}.options`))?.map((opt: any, optIndex: number) => (
+                                <div key={opt.id || optIndex} className="flex gap-2 items-center">
                                     <input
                                         {...register(`questions.${index}.options.${optIndex}.text`)}
                                         placeholder={`گزینه ${optIndex + 1}`}
@@ -269,18 +306,43 @@ function QuestionItem({
                                         placeholder="امتیاز"
                                         className="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white text-center"
                                     />
-                                    <button type="button" onClick={() => removeOption(optIndex)} className="text-red-400 hover:text-red-300">
-                                        <Trash2 size={14} />
-                                    </button>
+                                    {Number(watch(`questions.${index}.type`)) === QuestionType.MultipleChoice && (
+                                        <button type="button" onClick={() => removeOption(optIndex)} className="text-red-400 hover:text-red-300">
+                                            <Trash2 size={14} />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
-                            <button
-                                type="button"
-                                onClick={() => appendOption({ text: '', scoreValue: 0, order: optionFields.length })}
-                                className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1 mt-1"
-                            >
-                                <Plus size={12} /> افزودن گزینه
-                            </button>
+                            {Number(watch(`questions.${index}.type`)) === QuestionType.MultipleChoice && (
+                                <button
+                                    type="button"
+                                    onClick={() => appendOption({ text: '', scoreValue: 0, order: optionFields.length })}
+                                    className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1 mt-1"
+                                >
+                                    <Plus size={12} /> افزودن گزینه
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {/* True/False Preview - REMOVED since we now allow editing */}
+                    {/* ... */}
+
+                    {/* Short Answer Preview */}
+                    {Number(watch(`questions.${index}.type`)) === QuestionType.ShortAnswer && (
+                        <div className="pl-4 border-r-2 border-slate-700 mt-2">
+                            <div className="w-1/2 h-8 bg-slate-800/50 border border-slate-700 border-dashed rounded px-3 flex items-center text-slate-500 text-xs">
+                                محل درج پاسخ کوتاه کاربر...
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Long Answer Preview */}
+                    {Number(watch(`questions.${index}.type`)) === QuestionType.LongAnswer && (
+                        <div className="pl-4 border-r-2 border-slate-700 mt-2">
+                            <div className="w-full h-20 bg-slate-800/50 border border-slate-700 border-dashed rounded p-3 text-slate-500 text-xs">
+                                محل درج پاسخ تشریحی و طولانی کاربر...
+                            </div>
                         </div>
                     )}
                 </div>

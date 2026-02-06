@@ -32,6 +32,7 @@ public class AssessmentFormDto
     public int Id { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public bool IsActive { get; set; }
     public AssessmentType Type { get; set; }
     public List<QuestionDto> Questions { get; set; } = new List<QuestionDto>();
 }
@@ -39,11 +40,12 @@ public class AssessmentFormDto
 public class QuestionDto
 {
     public int QuestionId { get; set; }
-    public string Type { get; set; } = string.Empty; // String representation as requested
+    public QuestionType Type { get; set; }
     public string Question { get; set; } = string.Empty;
     public List<OptionDto> Options { get; set; } = new List<OptionDto>();
     public int Weight { get; set; }
     public List<string> Tags { get; set; } = new List<string>();
+    public int Order { get; set; }
 }
 
 public class OptionDto
@@ -51,6 +53,7 @@ public class OptionDto
     public int Id { get; set; }
     public string Text { get; set; } = string.Empty;
     public int Value { get; set; }
+    public int Order { get; set; }
 }
 
 public class SubmitAssessmentDto
