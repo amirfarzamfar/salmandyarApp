@@ -13,7 +13,7 @@ interface AssessmentFormBuilderProps {
 }
 
 export default function AssessmentFormBuilder({ initialData, onSubmit, loading, title }: AssessmentFormBuilderProps) {
-  const { register, control, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<CreateAssessmentFormDto>({
+  const { register, control, handleSubmit, watch, setValue, reset, getValues, formState: { errors } } = useForm<CreateAssessmentFormDto>({
     defaultValues: initialData || {
       title: '',
       description: '',
@@ -147,6 +147,7 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
                       remove={remove} 
                       watch={watch}
                       setValue={setValue}
+                      getValues={getValues}
                    />
                 ))}
              </div>
@@ -164,17 +165,19 @@ function QuestionItem({
     register, 
     remove, 
     watch, 
-    setValue 
+    setValue,
+    getValues
 }: { 
     index: number, 
     control: Control<CreateAssessmentFormDto>, 
     register: UseFormRegister<CreateAssessmentFormDto>, 
     remove: (index: number) => void,
     watch: UseFormWatch<CreateAssessmentFormDto>,
-    setValue: UseFormSetValue<CreateAssessmentFormDto>
+    setValue: UseFormSetValue<CreateAssessmentFormDto>,
+    getValues: any // Added getValues
 }) {
     const type = watch(`questions.${index}.type`);
-    const { fields: optionFields, append: appendOption, remove: removeOption } = useFieldArray({
+    const { fields: optionFields, append: appendOption, remove: removeOption, replace: replaceOptions } = useFieldArray({
         control,
         name: `questions.${index}.options`
     });
@@ -196,41 +199,8 @@ function QuestionItem({
         setValue(`questions.${index}.tags`, currentTags.filter((_: any, i: number) => i !== tagIndex));
     };
 
-    // Watch specific fields for this question to trigger effects
-    const currentType = Number(watch(`questions.${index}.type`));
-    const currentOptions = watch(`questions.${index}.options`);
-
-    // Auto-template logic when type changes
-    useEffect(() => {
-        // If switching to MultipleChoice and no options exist, add defaults
-        if (currentType === QuestionType.MultipleChoice && (!currentOptions || currentOptions.length === 0)) {
-            setValue(`questions.${index}.options`, [
-                { text: 'گزینه ۱', scoreValue: 0, order: 0 },
-                { text: 'گزینه ۲', scoreValue: 0, order: 1 },
-                { text: 'گزینه ۳', scoreValue: 0, order: 2 },
-                { text: 'گزینه ۴', scoreValue: 0, order: 3 }
-            ]);
-        }
-        // If switching to TrueFalse, set standard Yes/No
-        else if (currentType === QuestionType.TrueFalse && (!currentOptions || currentOptions.length === 0)) {
-            setValue(`questions.${index}.options`, [
-                { text: 'بله', scoreValue: 1, order: 0 },
-                { text: 'خیر', scoreValue: 0, order: 1 }
-            ]);
-        }
-        // If switching to text types, clear options (optional, but cleaner)
-        else if ((currentType === QuestionType.ShortAnswer || currentType === QuestionType.LongAnswer) && currentOptions?.length > 0) {
-            setValue(`questions.${index}.options`, []);
-        }
-    }, [currentType, setValue, index]); // Removed currentOptions from dependency to prevent infinite loop if setValue changes options
-
-    // Sync fields when switching to edit mode
-    useEffect(() => {
-        if (currentType === QuestionType.MultipleChoice && optionFields.length === 0 && currentOptions?.length > 0) {
-             setValue(`questions.${index}.options`, currentOptions);
-        }
-    }, [optionFields.length, currentOptions, currentType, setValue, index]);
-
+    // Handle type change manually to ensure realtime update - Removed old handler
+    
     return (
         <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-700 space-y-3">
             <div className="flex justify-between items-start gap-4">
@@ -246,6 +216,31 @@ function QuestionItem({
                         <div className="w-32">
                             <select
                                 {...register(`questions.${index}.type`)}
+                                onChange={(e) => {
+                                    const newType = Number(e.target.value);
+                                    setValue(`questions.${index}.type`, newType);
+                                    
+                                    // Logic to update options based on newType
+                                    if (newType === QuestionType.MultipleChoice) {
+                                        const currentOpts = getValues(`questions.${index}.options`) || [];
+                                        if (currentOpts.length < 4) {
+                                            const newOptions = [...currentOpts];
+                                            for (let i = currentOpts.length; i < 4; i++) {
+                                                newOptions.push({ text: `گزینه ${i + 1}`, scoreValue: 0, order: i });
+                                            }
+                                            replaceOptions(newOptions);
+                                        }
+                                    }
+                                    else if (newType === QuestionType.TrueFalse) {
+                                        replaceOptions([
+                                            { text: 'بله', scoreValue: 1, order: 0 },
+                                            { text: 'خیر', scoreValue: 0, order: 1 }
+                                        ]);
+                                    }
+                                    else if (newType === QuestionType.ShortAnswer || newType === QuestionType.LongAnswer) {
+                                        replaceOptions([]);
+                                    }
+                                }}
                                 className="w-full bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white"
                             >
                                 <option value={QuestionType.MultipleChoice}>چهار گزینه‌ای</option>
