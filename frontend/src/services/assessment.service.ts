@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { AssessmentForm, CreateAssessmentFormDto, MatchingResult, AssessmentType } from '@/types/assessment';
+import { AssessmentForm, CreateAssessmentFormDto, MatchingResult, AssessmentType, SubmitAssessmentDto, UserProfileDto } from '@/types/assessment';
 
 export const assessmentService = {
   // Forms
@@ -33,6 +33,16 @@ export const assessmentService = {
   
   getActiveForm: async (type: AssessmentType) => {
     const response = await api.get<AssessmentForm>(`/assessments/forms/${type}`);
+    return response.data;
+  },
+
+  getFormsByType: async (type: AssessmentType) => {
+    const response = await api.get<AssessmentForm[]>(`/assessments/forms/list/${type}`);
+    return response.data;
+  },
+
+  submitAssessment: async (data: SubmitAssessmentDto) => {
+    const response = await api.post<UserProfileDto>('/assessments/submit', data);
     return response.data;
   },
 

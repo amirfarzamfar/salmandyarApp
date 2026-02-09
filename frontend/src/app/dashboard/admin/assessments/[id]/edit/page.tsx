@@ -22,23 +22,25 @@ export default function EditAssessmentPage({ params }: { params: Promise<{ id: s
   const onSubmit = async (data: CreateAssessmentFormDto) => {
     try {
       setSaving(true);
+      console.log('Submitting data:', data); // Log the data being sent
       await assessmentService.updateForm(Number(id), data);
       toast.success('آزمون با موفقیت ویرایش شد');
       router.push('/dashboard/admin/assessments');
     } catch (error) {
-      console.error(error);
+      console.error('Error updating form:', error);
       toast.error('خطا در ویرایش آزمون');
     } finally {
       setSaving(false);
     }
   };
 
-  if (isLoading) return <div className="p-10 text-center text-white">در حال بارگذاری...</div>;
+  if (isLoading) return <div className="p-10 text-center text-black">در حال بارگذاری...</div>;
   if (error || !form) return <div className="p-10 text-center text-red-400">خطا در دریافت اطلاعات آزمون</div>;
 
   // Transform backend DTO to Form DTO if needed (e.g. enum conversions)
   // Backend returns structure similar to CreateAssessmentFormDto but with Ids.
   // AssessmentFormBuilder accepts CreateAssessmentFormDto which is compatible.
+  // Ensure options is always an array, even if empty.
   
   const initialData: CreateAssessmentFormDto = {
       title: form.title,
@@ -48,9 +50,9 @@ export default function EditAssessmentPage({ params }: { params: Promise<{ id: s
           question: q.question,
           type: Number(q.type),
           weight: q.weight,
-          tags: q.tags,
+          tags: q.tags || [], // Ensure tags is an array
           order: q.order || 0,
-          options: q.options.map(o => ({
+          options: (q.options || []).map(o => ({ // Ensure options is an array
               text: o.text,
               scoreValue: o.value,
               order: o.order || 0

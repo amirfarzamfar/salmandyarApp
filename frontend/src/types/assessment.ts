@@ -20,20 +20,20 @@ export interface AssessmentForm {
 }
 
 export interface Question {
-  questionId?: number;
-  type: string; // "MultipleChoice" | ...
+  questionId: number;
+  type: QuestionType; 
   question: string;
   options: Option[];
   weight: number;
   tags: string[];
-  order?: number;
+  order: number;
 }
 
 export interface Option {
-  id?: number;
+  id: number;
   text: string;
   value: number; // ScoreValue
-  order?: number;
+  order: number;
 }
 
 export interface CreateAssessmentFormDto {
@@ -45,9 +45,7 @@ export interface CreateAssessmentFormDto {
 
 export interface CreateQuestionDto {
   question: string;
-  type: QuestionType; // enum value (0, 1, 2, 3) but API expects enum? Backend DTO uses QuestionType enum. 
-  // Wait, backend DTO QuestionType is enum. JSON serialization usually sends integer by default in .NET unless configured as string.
-  // I should check if backend accepts string or int. By default int.
+  type: QuestionType;
   weight: number;
   tags: string[];
   options: CreateOptionDto[];
@@ -70,4 +68,26 @@ export interface MatchCandidate {
   caregiverName: string;
   matchingScore: number;
   reason: string;
+}
+
+export interface SubmitAssessmentDto {
+  formId: number;
+  careRecipientId?: string;
+  answers: AssessmentAnswerDto[];
+}
+
+export interface AssessmentAnswerDto {
+  questionId: number;
+  selectedOptionId?: number;
+  textResponse?: string;
+  booleanResponse?: boolean;
+}
+
+export interface UserProfileDto {
+    userId: string;
+    role: string;
+    skills: Record<string, number>;
+    needs: Record<string, number>;
+    personality: Record<string, number>;
+    preferences: Record<string, boolean>;
 }

@@ -141,6 +141,18 @@ public class AssessmentService : IAssessmentService
         return MapToDto(form);
     }
 
+    public async Task<List<AssessmentFormDto>> GetActiveFormsByTypeAsync(AssessmentType type)
+    {
+        var forms = await _context.AssessmentForms
+            .Include(f => f.Questions)
+                .ThenInclude(q => q.Options)
+            .Where(f => f.Type == type && f.IsActive)
+            .OrderByDescending(f => f.CreatedAt)
+            .ToListAsync();
+
+        return forms.Select(MapToDto).ToList();
+    }
+
     public async Task<UserProfileDto> SubmitAssessmentAsync(string userId, SubmitAssessmentDto dto)
     {
         var form = await _context.AssessmentForms

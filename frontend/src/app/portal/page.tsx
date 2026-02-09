@@ -10,8 +10,9 @@ import { DocumentCards } from "@/components/portal/document-cards";
 import { QuickConnect } from "@/components/portal/quick-connect";
 import { PrivacyBadge } from "@/components/portal/ui/privacy-badge";
 import { cn } from "@/lib/utils";
-import { Eye, Smartphone, ShieldCheck } from "lucide-react";
+import { Eye, Smartphone, ShieldCheck, ClipboardCheck, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
 
 export default function PortalPage() {
   const [isElderMode, setIsElderMode] = useState(false);
@@ -83,6 +84,26 @@ export default function PortalPage() {
           {/* Section: Medication - High Priority */}
           <motion.section variants={itemVariants}>
             <MedicationTimeline />
+          </motion.section>
+
+          {/* Section: Assessments */}
+          <motion.section variants={itemVariants}>
+             <Link href="/portal/assessments">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all group cursor-pointer">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-600 group-hover:scale-110 transition-transform">
+                            <ClipboardCheck size={24} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-gray-800 text-lg group-hover:text-teal-600 transition-colors">ارزیابی‌های سلامت</h3>
+                            <p className="text-gray-500 text-sm">پرسشنامه‌های دوره ای و چک‌لیست‌های سلامتی</p>
+                        </div>
+                    </div>
+                    <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center group-hover:bg-teal-50 group-hover:border-teal-100 transition-colors">
+                        <ArrowLeft size={20} className="text-gray-400 group-hover:text-teal-600" />
+                    </div>
+                </div>
+             </Link>
           </motion.section>
 
           <div className="grid lg:grid-cols-2 gap-10">

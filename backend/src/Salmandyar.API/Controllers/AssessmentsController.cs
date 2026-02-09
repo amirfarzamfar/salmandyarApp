@@ -77,6 +77,13 @@ public class AssessmentsController : ControllerBase
         return Ok(form);
     }
 
+    [HttpGet("forms/list/{type}")]
+    public async Task<IActionResult> GetActiveFormsByType(AssessmentType type)
+    {
+        var forms = await _assessmentService.GetActiveFormsByTypeAsync(type);
+        return Ok(forms);
+    }
+
     [HttpPost("submit")]
     [Authorize]
     public async Task<IActionResult> SubmitAssessment([FromBody] SubmitAssessmentDto dto)

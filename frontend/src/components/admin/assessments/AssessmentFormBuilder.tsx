@@ -182,6 +182,26 @@ function QuestionItem({
         name: `questions.${index}.options`
     });
 
+    // Sync options on mount based on question type
+    useEffect(() => {
+        const currentType = Number(getValues(`questions.${index}.type`));
+        const currentOpts = getValues(`questions.${index}.options`) || [];
+        if (currentType === QuestionType.MultipleChoice && currentOpts.length < 4) {
+            const newOptions = [...currentOpts];
+            for (let i = currentOpts.length; i < 4; i++) {
+                newOptions.push({ text: `گزینه ${i + 1}`, scoreValue: 0, order: i });
+            }
+            replaceOptions(newOptions);
+        } else if (currentType === QuestionType.TrueFalse) {
+            replaceOptions([
+                { text: 'بله', scoreValue: 1, order: 0 },
+                { text: 'خیر', scoreValue: 0, order: 1 }
+            ]);
+        } else if (currentType === QuestionType.ShortAnswer || currentType === QuestionType.LongAnswer) {
+            replaceOptions([]);
+        }
+    }, []);
+
     const addTag = (e: any) => {
         if (e.key === 'Enter') {
             e.preventDefault();
