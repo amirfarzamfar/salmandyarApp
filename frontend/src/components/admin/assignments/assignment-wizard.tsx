@@ -7,6 +7,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/Button";
 import { AssignmentDto, AssignmentType, ShiftSlot } from "@/types/assignment";
 import { assignmentService } from "@/services/assignment.service";
+import { userService } from "@/services/user.service";
 import { toast } from "react-hot-toast";
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { Loader2, X, Calendar as CalendarIcon } from "lucide-react";
@@ -82,14 +83,18 @@ export function AssignmentWizard({ isOpen, onClose, onSuccess, initialData }: As
   }, [isOpen, initialData]);
 
   const fetchData = async () => {
-    const patientsData = await nursePortalService.getMyPatients(); 
-    setPatients(patientsData);
-    
-    setCaregivers([
-      { id: "nurse-1-id", firstName: "سارا", lastName: "محمدی" },
-      { id: "nurse-2-id", firstName: "مریم", lastName: "کاظمی" },
-      { id: "nurse-3-id", firstName: "زهرا", lastName: "حسینی" }
-    ]);
+    try {
+      const [patientsData, nursesData] = await Promise.all([
+        nursePortalService.getMyPatients(),
+        userService.getUsers({ role: 'Nurse', pageNumber: 1, pageSize: 100 })
+      ]);
+      
+      setPatients(patientsData);
+      setCaregivers(nursesData.items);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("خطا در دریافت اطلاعات اولیه");
+    }
   };
 
   const onSubmit = async (data: any) => {
@@ -117,8 +122,13 @@ export function AssignmentWizard({ isOpen, onClose, onSuccess, initialData }: As
       onSuccess();
       onClose();
     } catch (error: any) {
-      console.error(error);
-      toast.error(error.response?.data?.error || "خطا در عملیات");
+      console.error("Error submitting assignment:", error);
+      if (error.response?.status === 409) {
+        const serverMessage = error.response?.data?.error;
+        toast.error(serverMessage || "تداخل در تخصیص: پرستار در این بازه زمانی مشغول است یا بیمار پرستار اصلی دارد.");
+      } else {
+        toast.error(error.response?.data?.error || "خطا در عملیات");
+      }
     } finally {
       setIsLoading(false);
     }

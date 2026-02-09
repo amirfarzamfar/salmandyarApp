@@ -31,6 +31,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<AssessmentOption> AssessmentOptions { get; set; }
     public DbSet<AssessmentSubmission> AssessmentSubmissions { get; set; }
     public DbSet<QuestionAnswer> QuestionAnswers { get; set; }
+    public DbSet<AssessmentAssignment> AssessmentAssignments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -186,6 +187,25 @@ public class ApplicationDbContext : IdentityDbContext<User>
         builder.Entity<AssessmentOption>().ToTable("AssessmentOptions");
         builder.Entity<AssessmentSubmission>().ToTable("AssessmentSubmissions");
         builder.Entity<QuestionAnswer>().ToTable("QuestionAnswers");
+        builder.Entity<AssessmentAssignment>().ToTable("AssessmentAssignments");
+
+        builder.Entity<AssessmentAssignment>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<AssessmentAssignment>()
+            .HasOne(a => a.Form)
+            .WithMany()
+            .HasForeignKey(a => a.FormId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<AssessmentAssignment>()
+            .HasOne(a => a.Submission)
+            .WithOne()
+            .HasForeignKey<AssessmentAssignment>(a => a.SubmissionId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Entity<AssessmentQuestion>()
             .Property(q => q.Tags)

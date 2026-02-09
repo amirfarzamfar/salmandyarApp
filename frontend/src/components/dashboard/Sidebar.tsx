@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 
 const navigation = [
@@ -19,6 +19,7 @@ const navigation = [
     icon: ClipboardList,
     subItems: [
         { name: 'لیست آزمون‌ها', href: '/dashboard/admin/assessments', icon: List },
+        { name: 'مدیریت آزمون کاربران', href: '/dashboard/admin/assessments/user-assignments', icon: UserCheck },
         { name: 'ایجاد آزمون', href: '/dashboard/admin/assessments/create', icon: FileText },
         { name: 'تطبیق هوشمند', href: '/dashboard/admin/matching', icon: Brain }
     ]

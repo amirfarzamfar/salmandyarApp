@@ -59,6 +59,7 @@ public static class DependencyInjection
         // Assessment Module
         services.AddScoped<IAssessmentService, AssessmentService>();
         services.AddScoped<IMatchingService, MatchingService>();
+        services.AddScoped<IAssessmentAssignmentService, AssessmentAssignmentService>();
 
         // Notifications
         services.AddScoped<INotificationService, LoggerNotificationService>();
