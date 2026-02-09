@@ -49,5 +49,15 @@ export const assessmentAssignmentService = {
         });
         if (!response.ok) throw new Error('Failed to fetch assignment details');
         return response.json();
+    },
+
+    async getMyPendingAssignments(): Promise<AssessmentAssignment[]> {
+        const response = await fetch(`${API_URL}/admin/assignments/my/pending`, {
+            headers: {
+                'Authorization': `Bearer ${authService.getToken()}`
+            }
+        });
+        if (!response.ok) throw new Error('Failed to fetch pending assignments');
+        return response.json();
     }
 };

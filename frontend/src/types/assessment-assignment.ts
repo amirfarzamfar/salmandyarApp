@@ -44,6 +44,7 @@ export interface CreateAssessmentAssignment {
     userId: string;
     formId: number;
     deadline?: string;
+    startDate?: string;
     isMandatory: boolean;
 }
 

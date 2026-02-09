@@ -32,6 +32,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<AssessmentSubmission> AssessmentSubmissions { get; set; }
     public DbSet<QuestionAnswer> QuestionAnswers { get; set; }
     public DbSet<AssessmentAssignment> AssessmentAssignments { get; set; }
+    public DbSet<UserNotification> UserNotifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -188,6 +189,13 @@ public class ApplicationDbContext : IdentityDbContext<User>
         builder.Entity<AssessmentSubmission>().ToTable("AssessmentSubmissions");
         builder.Entity<QuestionAnswer>().ToTable("QuestionAnswers");
         builder.Entity<AssessmentAssignment>().ToTable("AssessmentAssignments");
+        builder.Entity<UserNotification>().ToTable("UserNotifications");
+
+        builder.Entity<UserNotification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.Entity<AssessmentAssignment>()
             .HasOne(a => a.User)

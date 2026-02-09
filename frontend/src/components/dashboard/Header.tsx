@@ -1,9 +1,10 @@
 'use client';
 
-import { Bell, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AuthResponse } from '@/types/auth';
 import { translateRole } from '@/utils/role-translation';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
 export default function Header() {
   const [user, setUser] = useState<AuthResponse | null>(null);
@@ -38,10 +39,7 @@ export default function Header() {
         </div>
       </div>
       <div className="flex items-center space-x-4 space-x-reverse">
-        <button className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
-          <span className="sr-only">مشاهده اعلان‌ها</span>
-          <Bell className="h-6 w-6" />
-        </button>
+        <NotificationCenter />
         <div className="flex items-center">
           <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold">
             {initial}

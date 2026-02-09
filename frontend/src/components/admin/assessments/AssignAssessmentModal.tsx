@@ -21,6 +21,7 @@ export function AssignAssessmentModal({ userId, isOpen, onClose, onSuccess }: As
     
     // Form State
     const [selectedFormId, setSelectedFormId] = useState<number | ''>('');
+    const [startDate, setStartDate] = useState<string>('');
     const [deadline, setDeadline] = useState<string>('');
     const [isMandatory, setIsMandatory] = useState(false);
 
@@ -54,6 +55,7 @@ export function AssignAssessmentModal({ userId, isOpen, onClose, onSuccess }: As
             await assessmentAssignmentService.assignAssessment({
                 userId,
                 formId: Number(selectedFormId),
+                startDate: startDate ? new Date(startDate).toISOString() : undefined,
                 deadline: deadline ? new Date(deadline).toISOString() : undefined,
                 isMandatory
             });
@@ -93,15 +95,27 @@ export function AssignAssessmentModal({ userId, isOpen, onClose, onSuccess }: As
                         </select>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-1">مهلت انجام (اختیاری)</label>
-                        <input
-                            type="date"
-                            value={deadline}
-                            onChange={(e) => setDeadline(e.target.value)}
-                            className="w-full bg-slate-800 border-slate-700 text-white rounded-md focus:ring-teal-500 focus:border-teal-500 p-2"
-                            min={new Date().toISOString().split('T')[0]}
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">تاریخ شروع (اختیاری)</label>
+                            <input
+                                type="date"
+                                value={startDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                className="w-full bg-slate-800 border-slate-700 text-white rounded-md focus:ring-teal-500 focus:border-teal-500 p-2"
+                                min={new Date().toISOString().split('T')[0]}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-1">مهلت انجام (اختیاری)</label>
+                            <input
+                                type="date"
+                                value={deadline}
+                                onChange={(e) => setDeadline(e.target.value)}
+                                className="w-full bg-slate-800 border-slate-700 text-white rounded-md focus:ring-teal-500 focus:border-teal-500 p-2"
+                                min={startDate || new Date().toISOString().split('T')[0]}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex items-center">

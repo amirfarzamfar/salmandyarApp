@@ -11,6 +11,7 @@ public class AssessmentAssignmentDto
     public string FormTitle { get; set; } = string.Empty;
     public DateTime AssignedDate { get; set; }
     public DateTime? Deadline { get; set; }
+    public DateTime? StartDate { get; set; }
     public bool IsMandatory { get; set; }
     public AssessmentAssignmentStatus Status { get; set; }
     public int? SubmissionId { get; set; }
@@ -46,6 +47,7 @@ public class CreateAssessmentAssignmentDto
     public string UserId { get; set; } = string.Empty;
     public int FormId { get; set; }
     public DateTime? Deadline { get; set; }
+    public DateTime? StartDate { get; set; }
     public bool IsMandatory { get; set; }
 }
 

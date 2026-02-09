@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.DTOs.Assessments;
 using Salmandyar.Application.Services.Assessments;
+using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Domain.Entities.Assessments;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Infrastructure.Persistence;
@@ -10,10 +11,12 @@ namespace Salmandyar.Infrastructure.Services.Assessments;
 public class AssessmentAssignmentService : IAssessmentAssignmentService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IUserNotificationService _notificationService;
 
-    public AssessmentAssignmentService(ApplicationDbContext context)
+    public AssessmentAssignmentService(ApplicationDbContext context, IUserNotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<AssessmentAssignmentDto> AssignAssessmentAsync(CreateAssessmentAssignmentDto dto)
@@ -22,6 +25,7 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
         var existing = await _context.AssessmentAssignments
             .FirstOrDefaultAsync(a => a.UserId == dto.UserId && 
                                       a.FormId == dto.FormId && 
+                                      !a.IsDeleted &&
                                       (a.Status == AssessmentAssignmentStatus.Pending || a.Status == AssessmentAssignmentStatus.InProgress));
 
         if (existing != null)
@@ -34,6 +38,7 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
             UserId = dto.UserId,
             FormId = dto.FormId,
             Deadline = dto.Deadline,
+            StartDate = dto.StartDate,
             IsMandatory = dto.IsMandatory,
             AssignedDate = DateTime.UtcNow,
             Status = AssessmentAssignmentStatus.Pending
@@ -47,6 +52,16 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
             .Include(a => a.User)
             .Include(a => a.Form)
             .FirstAsync(a => a.Id == assignment.Id);
+            
+        // Trigger Notification
+        await _notificationService.CreateNotificationAsync(
+            dto.UserId,
+            "آزمون جدید",
+            $"آزمون «{created.Form.Title}» به شما تخصیص داده شده است. لطفا در اسرع وقت اقدام نمایید.",
+            NotificationType.Assessment,
+            referenceId: assignment.Id.ToString(),
+            link: $"/dashboard/my-assessments"
+        );
 
         return MapToDto(created);
     }
@@ -57,11 +72,11 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
             .Include(a => a.User)
             .Include(a => a.Form)
             .Include(a => a.Submission)
-            .Where(a => a.UserId == userId)
+            .Where(a => a.UserId == userId && !a.IsDeleted)
             .OrderByDescending(a => a.AssignedDate)
             .ToListAsync();
 
-        return assignments.Select(MapToDto).ToList();
+        return assignments.Select(a => MapToDto(a)).ToList();
     }
 
     public async Task<List<UserAssessmentSummaryDto>> GetUserAssessmentSummariesAsync(string? role = null, bool? isActive = null)
@@ -184,7 +199,7 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
                     Weight = a.Question.Weight,
                     Tags = a.Question.Tags ?? new List<string>(),
                     SelectedOptionText = a.SelectedOption?.Text,
-                    SelectedOptionScore = a.SelectedOption?.Score,
+                    SelectedOptionScore = a.SelectedOption?.ScoreValue,
                     TextResponse = a.TextResponse,
                     BooleanResponse = a.BooleanResponse
                 }).ToList()

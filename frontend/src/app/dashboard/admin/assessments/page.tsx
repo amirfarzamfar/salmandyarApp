@@ -1,14 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { Plus, ClipboardList, Activity, Trash2, Edit, Power } from 'lucide-react';
+import { Plus, ClipboardList, Activity, Trash2, Edit, Power, Users, UserPlus } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { assessmentService } from '@/services/assessment.service';
 import { toast } from 'react-hot-toast';
 import Swal from 'sweetalert2';
+import { useState } from 'react';
+import { AssignExamToUsersModal } from '@/components/admin/assessments/AssignExamToUsersModal';
 
 export default function AssessmentsListPage() {
   const queryClient = useQueryClient();
+  const [assignModalData, setAssignModalData] = useState<{id: number, title: string} | null>(null);
 
   const { data: forms, isLoading } = useQuery({
     queryKey: ['assessments'],
@@ -59,13 +62,22 @@ export default function AssessmentsListPage() {
           <ClipboardList className="text-teal-400" />
           مدیریت آزمون‌ها
         </h1>
-        <Link
-          href="/dashboard/admin/assessments/create"
-          className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
-        >
-          <Plus size={18} />
-          آزمون جدید
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/admin/assessments/user-assignments"
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            <Users size={18} />
+            تخصیص به کاربران
+          </Link>
+          <Link
+            href="/dashboard/admin/assessments/create"
+            className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
+          >
+            <Plus size={18} />
+            آزمون جدید
+          </Link>
+        </div>
       </div>
 
       {isLoading ? (
@@ -107,6 +119,13 @@ export default function AssessmentsListPage() {
                     </div>
 
                     <div className="flex gap-2">
+                        <button
+                            onClick={() => setAssignModalData({ id: form.id, title: form.title })}
+                            className="flex-1 py-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 rounded-lg text-sm text-center transition-colors flex items-center justify-center gap-2"
+                            title="تخصیص به کاربران"
+                        >
+                            <UserPlus size={16} /> تخصیص
+                        </button>
                         <Link 
                             href={`/dashboard/admin/assessments/${form.id}/edit`}
                             className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm text-center transition-colors flex items-center justify-center gap-2"
@@ -123,6 +142,19 @@ export default function AssessmentsListPage() {
                 </div>
             ))}
           </div>
+      )}
+
+      {assignModalData && (
+        <AssignExamToUsersModal
+            formId={assignModalData.id}
+            formTitle={assignModalData.title}
+            isOpen={true}
+            onClose={() => setAssignModalData(null)}
+            onSuccess={() => {
+                setAssignModalData(null);
+                // Optionally refresh something if needed
+            }}
+        />
       )}
     </div>
   );

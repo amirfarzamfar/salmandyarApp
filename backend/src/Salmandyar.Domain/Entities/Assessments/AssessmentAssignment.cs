@@ -13,8 +13,10 @@ public class AssessmentAssignment
     public virtual AssessmentForm Form { get; set; } = null!;
 
     public DateTime AssignedDate { get; set; } = DateTime.UtcNow;
+    public DateTime? StartDate { get; set; } // When the user can start
     public DateTime? Deadline { get; set; }
     public bool IsMandatory { get; set; } = false;
+    public bool IsDeleted { get; set; } = false;
 
     public AssessmentAssignmentStatus Status { get; set; } = AssessmentAssignmentStatus.Pending;
 

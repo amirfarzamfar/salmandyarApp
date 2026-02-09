@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Salmandyar.Application.DTOs.Assessments;
 using Salmandyar.Application.Services.Assessments;
+using System.Security.Claims;
 
 namespace Salmandyar.API.Controllers;
 
@@ -47,6 +48,21 @@ public class AssessmentAssignmentsController : ControllerBase
     {
         var result = await _service.GetUserAssignmentsAsync(userId);
         return Ok(result);
+    }
+
+    [HttpGet("my/pending")]
+    public async Task<ActionResult<List<AssessmentAssignmentDto>>> GetMyPendingAssignments()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var assignments = await _service.GetUserAssignmentsAsync(userId);
+        var pending = assignments.Where(a => 
+            (a.Status == Domain.Enums.AssessmentAssignmentStatus.Pending || 
+             a.Status == Domain.Enums.AssessmentAssignmentStatus.InProgress)
+        ).ToList();
+        
+        return Ok(pending);
     }
 
     [HttpGet("summaries")]
