@@ -11,6 +11,7 @@ public interface IUserManagementService
     Task<bool> ResetPasswordAsync(string userId, string newPassword, string adminId);
     Task<bool> ForceLogoutAsync(string userId, string adminId);
     Task<bool> PerformBulkActionAsync(BulkActionDto dto, string adminId);
+    Task<bool> UpdateUserProfileAsync(string userId, UpdateUserProfileDto dto);
 }
 
 public interface IAuditLogService

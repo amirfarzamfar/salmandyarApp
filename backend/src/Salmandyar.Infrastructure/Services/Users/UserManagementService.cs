@@ -158,7 +158,17 @@ public class UserManagementService : IUserManagementService
         if (user == null) return null;
 
         var roles = await _userManager.GetRolesAsync(user);
-        var logs = await _auditLogService.GetLogsForUserAsync(userId);
+        
+        // Handle potential issues with AuditLogService gracefully
+        List<AuditLogDto> logs = new();
+        try 
+        {
+            logs = await _auditLogService.GetLogsForUserAsync(userId);
+        }
+        catch(Exception ex)
+        {
+             Console.WriteLine($"Error fetching audit logs for user {userId}: {ex.Message}");
+        }
 
         return new UserDetailDto
         {
@@ -277,5 +287,20 @@ public class UserManagementService : IUserManagementService
             }
         }
         return true;
+    }
+
+    public async Task<bool> UpdateUserProfileAsync(string userId, UpdateUserProfileDto dto)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null) return false;
+
+        user.FirstName = dto.FirstName;
+        user.LastName = dto.LastName;
+        user.PhoneNumber = dto.PhoneNumber;
+        user.Email = dto.Email;
+        user.UserName = dto.PhoneNumber; // Sync UserName with PhoneNumber if used as identifier
+
+        var result = await _userManager.UpdateAsync(user);
+        return result.Succeeded;
     }
 }

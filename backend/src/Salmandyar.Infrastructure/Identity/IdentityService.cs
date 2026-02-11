@@ -46,9 +46,24 @@ public class IdentityService : IIdentityService
         return await _userManager.Users.FirstOrDefaultAsync(u => u.PhoneNumber == identifier);
     }
 
+    public async Task<User?> GetUserByIdAsync(string userId)
+    {
+        return await _userManager.FindByIdAsync(userId);
+    }
+
     public async Task<bool> CheckPasswordAsync(User user, string password)
     {
         return await _userManager.CheckPasswordAsync(user, password);
+    }
+
+    public async Task<(bool Success, string[] Errors)> ChangePasswordAsync(User user, string currentPassword, string newPassword)
+    {
+        var result = await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        if (!result.Succeeded)
+        {
+            return (false, result.Errors.Select(e => e.Description).ToArray());
+        }
+        return (true, Array.Empty<string>());
     }
 
     public async Task<IList<string>> GetUserRolesAsync(User user)

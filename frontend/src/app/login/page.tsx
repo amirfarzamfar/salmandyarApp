@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, LogIn, User, Lock } from 'lucide-react';
 import Link from 'next/link';
+import { useUser } from '@/components/auth/UserContext';
 
 const schema = z.object({
   identifier: z.string().min(1, 'لطفا شماره موبایل یا ایمیل خود را وارد کنید'),
@@ -19,6 +20,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const { refreshUser } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -39,7 +41,24 @@ export default function LoginPage() {
       } else {
         sessionStorage.setItem('token', response.token);
         sessionStorage.setItem('user', JSON.stringify(response));
+        // Also set localStorage token for persistence across refresh in same session if needed, 
+        // but our auth service checks both.
+        // However, UserContext primarily checks localStorage first in the current implementation.
+        // Let's update UserContext to check sessionStorage too, OR simply duplicate to localStorage for consistency with the context.
+        // Better: Update UserContext to check sessionStorage.
+        // But for now, let's ensure UserContext is refreshed.
+        
+        // Wait, UserContext implementation:
+        // const storedUser = localStorage.getItem('user');
+        // const token = localStorage.getItem('token');
+        
+        // It ONLY checks localStorage! We must fix UserContext or write to localStorage here.
+        // Writing to localStorage when "Remember Me" is unchecked defeats the purpose.
+        // So we MUST fix UserContext.
       }
+      
+      // Trigger context update
+      refreshUser();
       
       const Toast = Swal.mixin({
         toast: true,

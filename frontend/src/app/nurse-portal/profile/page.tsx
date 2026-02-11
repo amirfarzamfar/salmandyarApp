@@ -21,9 +21,15 @@ import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { useUser } from '@/components/auth/UserContext';
+import { EditProfileModal } from '@/components/common/EditProfileModal';
+import DateObject from "react-date-object";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 
 export default function NurseProfilePage() {
   const router = useRouter();
+  const { user, logout, refreshUser } = useUser();
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState({
     patients: 0,
@@ -31,43 +37,51 @@ export default function NurseProfilePage() {
     services: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         setIsLoading(true);
-        // In a real app, we'd fetch actual profile and stats
-        // For now, we'll simulate it with the available services
-        const [userData, patients] = await Promise.all([
-          nursePortalService.getProfile(),
-          nursePortalService.getMyPatients()
-        ]);
+        // Fetch fresh stats
+        const patients = await nursePortalService.getMyPatients();
         
-        setProfile(userData);
         setStats({
           patients: patients.length,
-          reports: 12, // Mock data
-          services: 45  // Mock data
+          reports: 12, // Mock data for now until API exists
+          services: 45  // Mock data for now until API exists
         });
+
+        // Always fetch full profile data from API to get details like createdAt
+        const userData = await nursePortalService.getProfile();
+        setProfile(userData);
+
       } catch (error) {
         console.error('Error fetching profile:', error);
-        toast.error('خطا در دریافت اطلاعات پروفایل');
+        // Fallback to user context if API fails
+        if (user && !profile) {
+             setProfile(user);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchProfileData();
-  }, []);
+    if (user) {
+        // Set initial data from context for immediate render (better UX)
+        if (!profile) setProfile(user);
+        fetchProfileData(); // Then fetch full data
+    } else {
+        fetchProfileData();
+    }
+  }, [user]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     toast.success('با موفقیت خارج شدید');
-    router.push('/login');
   };
 
-  if (isLoading) {
+  if (isLoading && !profile) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="relative w-16 h-16">
@@ -166,7 +180,7 @@ export default function NurseProfilePage() {
               </div>
               <div>
                 <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500">شماره تماس</div>
-                <div className="text-sm font-bold text-gray-700 dark:text-gray-200">{profile?.phoneNumber || '۰۹۱۲۳۴۵۶۷۸۹'}</div>
+                <div className="text-sm font-bold text-gray-700 dark:text-gray-200">{profile?.phoneNumber || '-'}</div>
               </div>
             </div>
 
@@ -176,7 +190,7 @@ export default function NurseProfilePage() {
               </div>
               <div>
                 <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500">ایمیل</div>
-                <div className="text-sm font-bold text-gray-700 dark:text-gray-200">{profile?.email || 'nurse@example.com'}</div>
+                <div className="text-sm font-bold text-gray-700 dark:text-gray-200">{profile?.email || '-'}</div>
               </div>
             </div>
 
@@ -186,7 +200,9 @@ export default function NurseProfilePage() {
               </div>
               <div>
                 <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500">تاریخ عضویت</div>
-                <div className="text-sm font-bold text-gray-700 dark:text-gray-200">۱۴۰۲/۰۵/۱۵</div>
+                <div className="text-sm font-bold text-gray-700 dark:text-gray-200">
+                  {profile?.createdAt ? new DateObject({ date: new Date(profile.createdAt), calendar: persian, locale: persian_fa }).format("YYYY/MM/DD") : '-'}
+                </div>
               </div>
             </div>
           </div>
@@ -199,7 +215,9 @@ export default function NurseProfilePage() {
           transition={{ delay: 0.5 }}
           className="space-y-3"
         >
-          <button className="w-full group flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-[2rem] shadow-soft-sm border border-gray-100 dark:border-gray-700 hover:border-medical-200 dark:hover:border-medical-800 transition-all duration-300">
+          <button 
+            onClick={() => setIsEditModalOpen(true)}
+            className="w-full group flex items-center justify-between p-5 bg-white dark:bg-gray-800 rounded-[2rem] shadow-soft-sm border border-gray-100 dark:border-gray-700 hover:border-medical-200 dark:hover:border-medical-800 transition-all duration-300">
             <div className="flex items-center gap-4">
               <div className="w-11 h-11 rounded-2xl bg-medical-50 dark:bg-medical-900/20 text-medical-500 dark:text-medical-400 flex items-center justify-center transition-colors group-hover:bg-medical-100 dark:group-hover:bg-medical-900/30">
                 <Settings size={20} />
@@ -230,6 +248,18 @@ export default function NurseProfilePage() {
           Salmandyar Nurse Portal • v1.2.0
         </p>
       </div>
+
+      {profile && (
+        <EditProfileModal
+            user={profile}
+            isOpen={isEditModalOpen}
+            onClose={() => setIsEditModalOpen(false)}
+            onSuccess={(updatedUser) => {
+                setProfile(updatedUser);
+                refreshUser(); // Refresh global context
+            }}
+        />
+      )}
     </div>
   );
 }

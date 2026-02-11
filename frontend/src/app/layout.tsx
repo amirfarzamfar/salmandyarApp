@@ -3,6 +3,7 @@ import { Vazirmatn } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
+import { UserProvider } from "@/components/auth/UserContext";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -33,7 +34,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvider >
-            {children}
+            <UserProvider>
+              {children}
+            </UserProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

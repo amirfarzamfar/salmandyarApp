@@ -55,6 +55,7 @@ public class AuthenticationService : IAuthenticationService
             user.FirstName,
             user.LastName,
             user.Email ?? string.Empty,
+            user.PhoneNumber ?? string.Empty,
             request.Role,
             token
         );
@@ -82,8 +83,24 @@ public class AuthenticationService : IAuthenticationService
             user.FirstName,
             user.LastName,
             user.Email,
+            user.PhoneNumber,
             roles.FirstOrDefault() ?? string.Empty,
             token
         );
+    }
+
+    public async Task ChangePasswordAsync(ChangePasswordRequest request)
+    {
+        var user = await _identityService.GetUserByIdAsync(request.UserId);
+        if (user == null)
+        {
+            throw new Exception("کاربر یافت نشد.");
+        }
+
+        var (success, errors) = await _identityService.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (!success)
+        {
+            throw new Exception($"تغییر رمز عبور با خطا مواجه شد: {string.Join(", ", errors)}");
+        }
     }
 }

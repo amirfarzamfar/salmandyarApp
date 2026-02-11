@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PortalCard } from "@/components/portal/ui/portal-card";
-import { Search, User, ChevronLeft, MapPin, Activity, Heart, Calendar, Loader2, AlertCircle, Bell, Filter, Plus, FileText, Phone } from "lucide-react";
+import { Search, User, ChevronLeft, MapPin, Activity, Heart, Calendar, Loader2, AlertCircle, Bell, Filter, Plus, FileText, Phone, Clock, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { nursePortalService } from "@/services/nurse-portal.service";
@@ -10,6 +10,8 @@ import { PatientList } from "@/types/patient";
 import { toast } from "react-hot-toast";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
+import { UserProfileModal } from "@/components/common/UserProfileModal";
+import { useUser } from "@/components/auth/UserContext";
 
 export default function NursePortalPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,6 +23,10 @@ export default function NursePortalPage() {
     critical: 0,
     tasks: 12 // Mock
   });
+  
+  // User Profile State
+  const { user } = useUser();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -75,6 +81,16 @@ export default function NursePortalPage() {
     return "شب بخیر";
   };
 
+  const roleMap: Record<string, string> = {
+    'Admin': 'مدیر سیستم',
+    'Nurse': 'پرستار',
+    'Senior': 'سالمندیار',
+    'Patient': 'بیمار',
+    'Family': 'خانواده'
+  };
+
+  const userInitial = user?.firstName?.charAt(0) || user?.lastName?.charAt(0) || 'U';
+
   return (
     <div className="space-y-6 px-4 md:px-0 pb-24">
       {/* Header Section */}
@@ -82,7 +98,7 @@ export default function NursePortalPage() {
         <div>
           <div className="flex items-center gap-2 text-medical-600 dark:text-medical-400 text-sm font-bold mb-1">
             <span className="w-2 h-2 rounded-full bg-medical-500 animate-pulse" />
-            <span>{getTimeGreeting()}، پرستار مریم</span>
+            <span>{getTimeGreeting()}، {user ? `${roleMap[user.role] || user.role} ${user.firstName}` : 'پرستار'}</span>
           </div>
           <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">داشبورد مراقبت</h1>
         </div>
@@ -92,8 +108,12 @@ export default function NursePortalPage() {
             <Bell className="w-6 h-6" />
             <span className="absolute top-3 right-3 w-2 h-2 rounded-full bg-rose-500 border-2 border-white dark:border-gray-800" />
           </button>
-          <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-medical-500 to-medical-600 flex items-center justify-center text-white font-black shadow-glow-medical">
-            M
+          <div 
+            onClick={() => user && setIsProfileModalOpen(true)}
+            className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-medical-500 to-medical-600 flex items-center justify-center text-white font-black shadow-glow-medical cursor-pointer hover:scale-105 transition-transform"
+            title={user ? "مشاهده پروفایل" : "کاربر یافت نشد"}
+          >
+            {userInitial}
           </div>
         </div>
       </header>
@@ -291,9 +311,15 @@ export default function NursePortalPage() {
           )}
         </motion.div>
       </div>
+      {user && (
+        <UserProfileModal
+            user={user}
+            isOpen={isProfileModalOpen}
+            onClose={() => setIsProfileModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
 
-// Helper icons
-import { Clock, Check } from "lucide-react";
+
