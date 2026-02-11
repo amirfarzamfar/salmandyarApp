@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { assessmentAssignmentService } from '@/services/assessment-assignment.service';
 import { UserAssessmentSummary, AssessmentAssignment, AssessmentAssignmentStatus } from '@/types/assessment-assignment';
 import { Search, Filter, ChevronDown, ChevronUp, Plus, Eye, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
@@ -150,8 +150,8 @@ export default function UserAssignmentManagement() {
                 </tr>
               ) : (
                 summaries.map((summary) => (
-                  <>
-                    <tr key={summary.userId} className={`hover:bg-slate-700/50 transition-colors ${expandedUserId === summary.userId ? 'bg-slate-700/30' : ''}`}>
+                  <Fragment key={summary.userId}>
+                    <tr className={`hover:bg-slate-700/50 transition-colors ${expandedUserId === summary.userId ? 'bg-slate-700/30' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           <div className="h-8 w-8 rounded-full bg-teal-500/10 flex items-center justify-center text-teal-500 font-bold ml-3">
@@ -262,7 +262,7 @@ export default function UserAssignmentManagement() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))
               )}
             </tbody>

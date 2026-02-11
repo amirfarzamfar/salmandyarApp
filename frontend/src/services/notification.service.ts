@@ -1,6 +1,4 @@
-import { authService } from './auth.service';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+import api from '@/lib/axios';
 
 export enum NotificationType {
     System = 0,
@@ -23,32 +21,16 @@ export interface UserNotification {
 
 export const notificationService = {
     async getMyNotifications(unreadOnly: boolean = false): Promise<UserNotification[]> {
-        const response = await fetch(`${API_URL}/notifications?unreadOnly=${unreadOnly}`, {
-            headers: {
-                'Authorization': `Bearer ${authService.getToken()}`
-            }
-        });
-        if (!response.ok) throw new Error('Failed to fetch notifications');
-        return response.json();
+        const response = await api.get<UserNotification[]>(`/notifications?unreadOnly=${unreadOnly}`);
+        return response.data;
     },
 
     async getUnreadCount(): Promise<number> {
-        const response = await fetch(`${API_URL}/notifications/unread-count`, {
-            headers: {
-                'Authorization': `Bearer ${authService.getToken()}`
-            }
-        });
-        if (!response.ok) throw new Error('Failed to fetch unread count');
-        return response.json();
+        const response = await api.get<number>('/notifications/unread-count');
+        return response.data;
     },
 
     async markAsRead(id: number): Promise<void> {
-        const response = await fetch(`${API_URL}/notifications/${id}/read`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${authService.getToken()}`
-            }
-        });
-        if (!response.ok) throw new Error('Failed to mark notification as read');
+        await api.post(`/notifications/${id}/read`);
     }
 };

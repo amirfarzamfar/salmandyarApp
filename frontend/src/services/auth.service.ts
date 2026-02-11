@@ -16,4 +16,10 @@ export const authService = {
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
   },
+  getToken: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('token') || sessionStorage.getItem('token');
+    }
+    return null;
+  },
 };
