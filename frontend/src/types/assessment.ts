@@ -16,6 +16,7 @@ export interface AssessmentForm {
   title: string;
   description: string;
   type: AssessmentType;
+  isActive: boolean;
   questions: Question[];
 }
 
