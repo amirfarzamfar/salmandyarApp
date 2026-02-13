@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, FileText, Calendar, UserCircle, ClipboardCheck, LogOut, LayoutDashboard } from "lucide-react";
+import { Users, FileText, Calendar, UserCircle, ClipboardCheck, LogOut, LayoutDashboard, Activity } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/components/auth/UserContext";
@@ -12,6 +12,7 @@ export function NurseSidebar() {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "داشبورد", href: "/nurse-portal" },
+    { icon: Activity, label: "علائم حیاتی", href: "/nurse-portal/vital-signs" },
     { icon: Users, label: "بیماران", href: "/nurse-portal/patients" },
     { icon: ClipboardCheck, label: "ارزیابی‌ها", href: "/nurse-portal/assessments" },
     { icon: FileText, label: "گزارش‌ها", href: "/nurse-portal/reports" },
