@@ -65,6 +65,30 @@ namespace Salmandyar.API.Controllers
             return Ok(dto); 
         }
 
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, UpdateServiceReminderDto dto)
+        {
+            var reminder = await _context.ServiceReminders.FindAsync(id);
+            if (reminder == null) return NotFound();
+
+            reminder.ServiceDefinitionId = dto.ServiceDefinitionId;
+            reminder.ScheduledTime = dto.ScheduledTime;
+            reminder.Note = dto.Note;
+            reminder.NotifyPatient = dto.NotifyPatient;
+            reminder.NotifyAdmin = dto.NotifyAdmin;
+            reminder.NotifySupervisor = dto.NotifySupervisor;
+            
+            // If time changed significantly (e.g. > 1 min), reset sent status
+            if (Math.Abs((reminder.ScheduledTime - dto.ScheduledTime).TotalMinutes) > 1)
+            {
+                reminder.IsSent = false;
+                reminder.SentAt = null;
+            }
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

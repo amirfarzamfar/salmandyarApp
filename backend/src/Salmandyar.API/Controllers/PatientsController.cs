@@ -68,6 +68,20 @@ public class PatientsController : ControllerBase
         return Ok();
     }
 
+    [HttpPut("services/{serviceId}")]
+    public async Task<IActionResult> UpdateService(int serviceId, [FromBody] UpdateCareServiceDto dto)
+    {
+        await _patientService.UpdateCareServiceAsync(serviceId, dto);
+        return NoContent();
+    }
+
+    [HttpDelete("services/{serviceId}")]
+    public async Task<IActionResult> DeleteService(int serviceId)
+    {
+        await _patientService.DeleteCareServiceAsync(serviceId);
+        return NoContent();
+    }
+
     // Reports
     [HttpGet("{id}/reports")]
     public async Task<ActionResult<List<NursingReportDto>>> GetReports(int id)

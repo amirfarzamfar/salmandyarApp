@@ -53,6 +53,14 @@ export const nursePortalService = {
     await api.post(`/patients/${patientId}/services`, data);
   },
 
+  updateService: async (serviceId: number, data: any) => {
+    await api.put(`/patients/services/${serviceId}`, data);
+  },
+
+  deleteService: async (serviceId: number) => {
+    await api.delete(`/patients/services/${serviceId}`);
+  },
+
   getProfile: async () => {
     const response = await api.get('/auth/me');
     return response.data;

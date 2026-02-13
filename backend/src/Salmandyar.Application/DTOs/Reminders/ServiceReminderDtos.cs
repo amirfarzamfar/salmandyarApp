@@ -26,4 +26,14 @@ namespace Salmandyar.Application.DTOs.Reminders
         public bool NotifyAdmin { get; set; }
         public bool NotifySupervisor { get; set; }
     }
+
+    public class UpdateServiceReminderDto
+    {
+        public int ServiceDefinitionId { get; set; }
+        public DateTime ScheduledTime { get; set; }
+        public string Note { get; set; }
+        public bool NotifyPatient { get; set; }
+        public bool NotifyAdmin { get; set; }
+        public bool NotifySupervisor { get; set; }
+    }
 }

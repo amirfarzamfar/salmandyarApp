@@ -183,6 +183,54 @@ public class PatientService : IPatientService
         await _context.SaveChangesAsync();
     }
 
+    public async Task UpdateCareServiceAsync(int serviceId, UpdateCareServiceDto dto)
+    {
+        var service = await _context.CareServices.FindAsync(serviceId);
+        if (service == null) throw new KeyNotFoundException($"Service with ID {serviceId} not found.");
+
+        // Validation: EndTime > StartTime
+        if (dto.StartTime.HasValue && dto.EndTime.HasValue && dto.EndTime < dto.StartTime)
+        {
+            throw new ArgumentException("End time cannot be before start time");
+        }
+
+        // Validation: Overlap check for the same Performer (excluding current service)
+        if (dto.StartTime.HasValue && dto.EndTime.HasValue)
+        {
+            var overlap = await _context.CareServices
+                .AnyAsync(s => s.PerformerId == service.PerformerId && 
+                               s.Id != serviceId && // Exclude self
+                               s.StartTime.HasValue && s.EndTime.HasValue &&
+                               s.StartTime < dto.EndTime && s.EndTime > dto.StartTime);
+            
+            if (overlap)
+            {
+                throw new InvalidOperationException("This performer has an overlapping service at this time.");
+            }
+        }
+
+        service.ServiceDefinitionId = dto.ServiceDefinitionId;
+        service.PerformedAt = dto.PerformedAt;
+        service.StartTime = dto.StartTime;
+        service.EndTime = dto.EndTime;
+        service.Description = dto.Description;
+        service.Notes = dto.Notes;
+        service.Status = dto.Status;
+        service.UpdatedAt = DateTime.UtcNow;
+
+        _context.CareServices.Update(service);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteCareServiceAsync(int serviceId)
+    {
+        var service = await _context.CareServices.FindAsync(serviceId);
+        if (service == null) throw new KeyNotFoundException($"Service with ID {serviceId} not found.");
+
+        _context.CareServices.Remove(service);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<List<NursingReportDto>> GetNursingReportsAsync(int patientId)
     {
         return await _context.NursingReports

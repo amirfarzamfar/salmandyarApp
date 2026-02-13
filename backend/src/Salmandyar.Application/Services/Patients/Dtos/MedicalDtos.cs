@@ -57,6 +57,16 @@ public record CreateCareServiceDto(
     string Notes
 );
 
+public record UpdateCareServiceDto(
+    int ServiceDefinitionId,
+    DateTime PerformedAt,
+    DateTime? StartTime,
+    DateTime? EndTime,
+    string Description,
+    string Notes,
+    CareServiceStatus Status
+);
+
 public record NursingReportDto(
     int Id,
     DateTime CreatedAt,

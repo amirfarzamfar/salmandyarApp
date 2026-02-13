@@ -14,6 +14,8 @@ public interface IPatientService
     // Services
     Task<List<CareServiceDto>> GetCareServicesAsync(int patientId);
     Task AddCareServiceAsync(string performerId, CreateCareServiceDto dto);
+    Task UpdateCareServiceAsync(int serviceId, UpdateCareServiceDto dto);
+    Task DeleteCareServiceAsync(int serviceId);
 
     // Reports
     Task<List<NursingReportDto>> GetNursingReportsAsync(int patientId);

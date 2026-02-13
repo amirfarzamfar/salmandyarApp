@@ -14,6 +14,7 @@ import { serviceReminderService } from '@/services/service-reminder.service';
 import Swal from 'sweetalert2';
 
 const schema = z.object({
+  careRecipientId: z.number().optional(), // Added for global mode
   serviceDefinitionId: z.number().min(1, 'انتخاب خدمت الزامی است'),
   scheduledTime: z.any(),
   note: z.string().optional(),
@@ -24,46 +25,69 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+import { ServiceReminder } from '@/services/service-reminder.service';
+
 interface Props {
   patientId: number;
   definitions: ServiceDefinition[];
   onSuccess: () => void;
   onCancel: () => void;
+  initialData?: ServiceReminder;
 }
 
-export default function ServiceReminderForm({ patientId, definitions, onSuccess, onCancel }: Props) {
+export default function ServiceReminderForm({ patientId, definitions, onSuccess, onCancel, initialData }: Props) {
   const { control, register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      notifyPatient: true,
-      notifyAdmin: false,
-      notifySupervisor: false
+      serviceDefinitionId: initialData?.serviceDefinitionId || undefined,
+      scheduledTime: initialData?.scheduledTime ? new Date(initialData.scheduledTime) : undefined,
+      note: initialData?.note || '',
+      notifyPatient: initialData?.notifyPatient ?? true,
+      notifyAdmin: initialData?.notifyAdmin ?? false,
+      notifySupervisor: initialData?.notifySupervisor ?? false
     }
   });
 
   const onSubmit = async (data: FormData) => {
     try {
-      await serviceReminderService.create({
-        careRecipientId: patientId,
-        serviceDefinitionId: Number(data.serviceDefinitionId),
-        scheduledTime: new Date(data.scheduledTime).toISOString(),
-        note: data.note || '',
-        notifyPatient: data.notifyPatient,
-        notifyAdmin: data.notifyAdmin,
-        notifySupervisor: data.notifySupervisor
-      });
-
-      Swal.fire({
-        title: 'موفق',
-        text: 'یادآور با موفقیت ثبت شد',
-        icon: 'success',
-        timer: 1500,
-        showConfirmButton: false
-      });
+      if (initialData) {
+        await serviceReminderService.update(initialData.id, {
+            serviceDefinitionId: Number(data.serviceDefinitionId),
+            scheduledTime: new Date(data.scheduledTime).toISOString(),
+            note: data.note || '',
+            notifyPatient: data.notifyPatient,
+            notifyAdmin: data.notifyAdmin,
+            notifySupervisor: data.notifySupervisor
+        });
+        Swal.fire({
+            title: 'موفق',
+            text: 'یادآور با موفقیت ویرایش شد',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+      } else {
+        await serviceReminderService.create({
+            careRecipientId: patientId,
+            serviceDefinitionId: Number(data.serviceDefinitionId),
+            scheduledTime: new Date(data.scheduledTime).toISOString(),
+            note: data.note || '',
+            notifyPatient: data.notifyPatient,
+            notifyAdmin: data.notifyAdmin,
+            notifySupervisor: data.notifySupervisor
+        });
+        Swal.fire({
+            title: 'موفق',
+            text: 'یادآور با موفقیت ثبت شد',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+      }
       onSuccess();
     } catch (error) {
       console.error(error);
-      Swal.fire('خطا', 'مشکلی در ثبت یادآور پیش آمد', 'error');
+      Swal.fire('خطا', 'مشکلی در عملیات پیش آمد', 'error');
     }
   };
 
