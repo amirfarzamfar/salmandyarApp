@@ -381,7 +381,7 @@ export function ReportWriter({ patientId, onSuccess, trigger, isOpen: controlled
 
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+          <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
             <motion.div
               initial={{ y: "100%" }}
               animate={{ y: 0 }}

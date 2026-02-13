@@ -71,9 +71,11 @@ export interface CreateCareService {
 export interface NursingReport {
   id: number;
   createdAt: string;
-  authorName: string;
+  authorName?: string; // Optional as backend DTO doesn't have it (uses AuthorId/Name in other DTOs)
   shift: string;
   content: string;
+  careRecipientId: number;
+  patientName: string;
 }
 
 export interface Medication {

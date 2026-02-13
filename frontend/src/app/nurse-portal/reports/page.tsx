@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { PortalCard } from "@/components/portal/ui/portal-card";
-import { FileText, Search, Calendar, User, Clock, ChevronLeft, Loader2, Quote, Plus } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { FileText, Search, User, Clock, ChevronLeft, Loader2, Quote, Plus } from "lucide-react";
+// import { motion } from "framer-motion"; // Temporarily removed to debug visibility issues
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { NursingReport } from "@/types/patient";
 import { toast } from "react-hot-toast";
@@ -11,61 +11,73 @@ import { PatientSelector } from "@/components/nurse-portal/PatientSelector";
 import { ReportWriter } from "@/components/nurse-portal/report-writer";
 
 export default function NurseReportsPage() {
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<NursingReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isPatientSelectorOpen, setIsPatientSelectorOpen] = useState(false);
   const [selectedPatientForReport, setSelectedPatientForReport] = useState<number | null>(null);
 
-  useEffect(() => {
-    const fetchAllReports = async () => {
-      try {
-        setIsLoading(true);
-        // Use the new optimized endpoint
-        const allReports = await nursePortalService.getAllMyReports();
-        setReports(allReports);
-      } catch (error) {
-        console.error(error);
-        toast.error("خطا در دریافت گزارش‌ها");
-      } finally {
-        setIsLoading(false);
+  // Helper to normalize report data from backend (handles PascalCase, camelCase, etc.)
+  const normalizeReport = (r: any): NursingReport => ({
+    id: r.id || r.Id || r.ID || Math.floor(Math.random() * 100000),
+    content: r.content || r.Content || r.body || "",
+    patientName: r.patientName || r.PatientName || r.patient?.name || "نامشخص",
+    shift: r.shift || r.Shift || "Morning",
+    createdAt: r.createdAt || r.CreatedAt || new Date().toISOString(),
+    careRecipientId: r.careRecipientId || r.CareRecipientId || r.patientId || 0,
+    authorName: r.authorName || r.AuthorName
+  });
+
+  const fetchAllReports = async () => {
+    try {
+      setIsLoading(true);
+      const response = await nursePortalService.getAllMyReports();
+      console.log("Raw fetched reports:", response);
+      
+      // Handle various response structures (array, { data: [] }, { items: [] })
+      let reportsData: any[] = [];
+      if (Array.isArray(response)) {
+        reportsData = response;
+      } else if (response && Array.isArray(response.data)) {
+        reportsData = response.data;
+      } else if (response && Array.isArray(response.items)) {
+        reportsData = response.items;
+      } else if (response && Array.isArray(response.value)) {
+        reportsData = response.value;
       }
-    };
-    fetchAllReports();
-  }, []);
 
-  const refreshReports = async () => {
-      try {
-        setIsLoading(true);
-        const allReports = await nursePortalService.getAllMyReports();
-        setReports(allReports);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
-      }
-  };
+      console.log("Extracted reports array:", reportsData);
 
-  const filteredReports = reports.filter(r => 
-    r.content.includes(searchTerm) || 
-    r.patientName.includes(searchTerm)
-  );
+      const mappedReports = reportsData.map(normalizeReport);
+      console.log("Mapped reports:", mappedReports);
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
+      setReports(mappedReports);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      toast.error("خطا در دریافت گزارش‌ها");
+      setReports([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
+  useEffect(() => {
+    fetchAllReports();
+  }, []);
+
+  // Robust filtering
+  const filteredReports = reports.filter(r => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return true;
+    
+    const content = (r.content || "").toLowerCase();
+    const name = (r.patientName || "").toLowerCase();
+    
+    return content.includes(term) || name.includes(term);
+  });
 
   return (
-    <div className="space-y-8 px-4 md:px-0">
+    <div className="space-y-8 px-4 md:px-0 pb-24">
       <header className="flex justify-between items-center pt-6">
         <div>
           <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">تاریخچه گزارش‌ها</h1>
@@ -76,7 +88,7 @@ export default function NurseReportsPage() {
         </div>
       </header>
 
-      {/* Premium Search Bar */}
+      {/* Search Bar */}
       <div className="relative">
         <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-medical-400" />
@@ -90,12 +102,8 @@ export default function NurseReportsPage() {
         />
       </div>
 
-      <motion.div 
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="space-y-6"
-      >
+      {/* Reports List - Removed framer-motion to ensure visibility */}
+      <div className="space-y-6">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-500">
             <Loader2 className="w-10 h-10 animate-spin mb-4 text-medical-500" />
@@ -120,7 +128,7 @@ export default function NurseReportsPage() {
           </div>
         ) : (
           filteredReports.map((report) => (
-            <motion.div key={report.id} variants={item}>
+            <div key={report.id} className="block">
               <PortalCard className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-soft-lg hover:shadow-soft-xl dark:shadow-none transition-all duration-300 overflow-hidden relative" noPadding>
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
@@ -134,7 +142,11 @@ export default function NurseReportsPage() {
                           <Clock className="w-3.5 h-3.5 text-medical-500" />
                           <span>شیفت {report.shift === 'Morning' ? 'صبح' : report.shift === 'Evening' ? 'عصر' : 'شب'}</span>
                           <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                          <span>{new Date(report.createdAt).toLocaleDateString('fa-IR')}</span>
+                          <span>
+                            {report.createdAt && !isNaN(new Date(report.createdAt).getTime()) 
+                              ? new Date(report.createdAt).toLocaleDateString('fa-IR') 
+                              : 'تاریخ نامعتبر'}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -158,10 +170,10 @@ export default function NurseReportsPage() {
                   </div>
                 </div>
               </PortalCard>
-            </motion.div>
+            </div>
           ))
         )}
-      </motion.div>
+      </div>
 
       {/* Floating Action Button */}
       <button
@@ -174,20 +186,21 @@ export default function NurseReportsPage() {
       <PatientSelector
         isOpen={isPatientSelectorOpen}
         onClose={() => setIsPatientSelectorOpen(false)}
-        onSelect={(id) => {
+        onSelect={(patientId) => {
           setIsPatientSelectorOpen(false);
-          setSelectedPatientForReport(id);
+          setSelectedPatientForReport(patientId);
         }}
       />
 
       {selectedPatientForReport && (
         <ReportWriter
-          patientId={selectedPatientForReport}
           isOpen={true}
+          patientId={selectedPatientForReport}
           onClose={() => setSelectedPatientForReport(null)}
           onSuccess={() => {
-             setSelectedPatientForReport(null);
-             refreshReports(); 
+            setSelectedPatientForReport(null);
+            toast.success("گزارش با موفقیت ثبت شد");
+            fetchAllReports();
           }}
         />
       )}
