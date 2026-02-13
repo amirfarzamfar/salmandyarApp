@@ -279,6 +279,7 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandy
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\Salmandyar.API.csproj.CoreCompileInputs.cache
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\Salmandyar.API.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\Salmandyar.API.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\Salmandyar.API.sourcelink.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\rjimswa.dswa.cache.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json
@@ -293,4 +294,3 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandy
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\Salmandyar.API.pdb
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\Salmandyar.API.genruntimeconfig.cache
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\ref\Salmandyar.API.dll
-C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\Salmandyar.API.sourcelink.json

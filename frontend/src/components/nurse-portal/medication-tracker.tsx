@@ -1,26 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Pill, Check, Clock, Plus, AlertCircle, CheckCircle2, XCircle, CalendarDays } from "lucide-react";
+import { Pill, Check, Plus, CheckCircle2, XCircle, X, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { nursePortalService } from "@/services/nurse-portal.service";
-import { MedicationSchedule, Medication } from "@/types/patient";
+import { medicationService } from "@/services/medication.service";
+import { Medication, MedicationDose, DoseStatus, RecordDoseDto, SideEffectSeverity } from "@/types/medication";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
 
 export function MedicationTracker({ patientId }: { patientId: number }) {
   const [activeTab, setActiveTab] = useState<'schedule' | 'list'>('schedule');
-  const [schedules, setSchedules] = useState<MedicationSchedule[]>([]);
+  const [schedules, setSchedules] = useState<MedicationDose[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAdding, setIsAdding] = useState(false);
   
-  // Mock adding state
-  const [newSchedule, setNewSchedule] = useState({
-    medicationId: "",
-    time: "",
-  });
-
+  // Modal states
+  const [selectedDose, setSelectedDose] = useState<MedicationDose | null>(null);
+  const [actionType, setActionType] = useState<'take' | 'miss' | null>(null);
+  const [notes, setNotes] = useState("");
+  const [missedReason, setMissedReason] = useState("");
+  
   useEffect(() => {
     fetchData();
   }, [patientId]);
@@ -28,32 +27,13 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      // In real app, we fetch both. For now, mocking data if service returns empty
       const [scheduleData, medsData] = await Promise.all([
-        nursePortalService.getMedicationSchedule(patientId, new Date().toISOString().split('T')[0]),
-        nursePortalService.getPatientMedications(patientId)
+        medicationService.getDailySchedule(patientId, new Date()),
+        medicationService.getPatientMedications(patientId)
       ]);
       
-      // Mock data if empty for demonstration
-      if (!scheduleData || scheduleData.length === 0) {
-        setSchedules([
-          { id: 1, medicationId: 1, medicationName: "متفورمین", scheduledTime: "08:00", status: 'taken', takenAt: "08:05" },
-          { id: 2, medicationId: 2, medicationName: "آتورواستاتین", scheduledTime: "12:00", status: 'pending' },
-          { id: 3, medicationId: 3, medicationName: "آسپرین", scheduledTime: "20:00", status: 'pending' },
-        ]);
-      } else {
-        setSchedules(scheduleData);
-      }
-
-      if (!medsData || medsData.length === 0) {
-        setMedications([
-          { id: 1, name: "متفورمین", dosage: "500mg", frequency: "روزانه", route: "خوراکی", startDate: "1402/01/01" },
-          { id: 2, name: "آتورواستاتین", dosage: "20mg", frequency: "شب‌ها", route: "خوراکی", startDate: "1402/02/01" },
-          { id: 3, name: "آسپرین", dosage: "80mg", frequency: "روزانه", route: "خوراکی", startDate: "1402/01/15" },
-        ]);
-      } else {
-        setMedications(medsData);
-      }
+      setSchedules(scheduleData);
+      setMedications(medsData);
     } catch (error) {
       console.error(error);
       toast.error("خطا در دریافت اطلاعات دارویی");
@@ -62,41 +42,38 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
     }
   };
 
-  const handleTakeMedication = async (scheduleId: number) => {
-    try {
-      // Optimistic update
-      setSchedules(prev => prev.map(s => 
-        s.id === scheduleId ? { ...s, status: 'taken', takenAt: new Date().toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'}) } : s
-      ));
-      
-      await nursePortalService.markMedicationAsTaken(scheduleId, {
-        takenAt: new Date().toISOString()
-      });
-      toast.success("مصرف دارو ثبت شد");
-    } catch (error) {
-      toast.error("خطا در ثبت وضعیت");
-      fetchData(); // Revert on error
-    }
+  const handleActionClick = (dose: MedicationDose, type: 'take' | 'miss') => {
+      setSelectedDose(dose);
+      setActionType(type);
+      setNotes("");
+      setMissedReason("");
   };
 
-  const handleAddSchedule = async () => {
-    if (!newSchedule.medicationId || !newSchedule.time) {
-      toast.error("لطفا دارو و زمان را انتخاب کنید");
-      return;
-    }
+  const submitAction = async () => {
+      if (!selectedDose || !actionType) return;
 
-    try {
-      await nursePortalService.addMedicationSchedule(patientId, {
-        medicationId: parseInt(newSchedule.medicationId),
-        scheduledTime: newSchedule.time,
-        careRecipientId: patientId
-      });
-      toast.success("زمان‌بندی جدید اضافه شد");
-      setIsAdding(false);
-      fetchData();
-    } catch (error) {
-      toast.error("خطا در افزودن زمان‌بندی");
-    }
+      try {
+          const dto: RecordDoseDto = {
+              takenAt: new Date().toISOString(),
+              status: actionType === 'take' ? DoseStatus.Taken : DoseStatus.Missed,
+              notes: notes,
+              missedReason: actionType === 'miss' ? missedReason : undefined,
+              sideEffectSeverity: SideEffectSeverity.None // Simplified for MVP
+          };
+
+          await medicationService.logDose(selectedDose.id, dto);
+          
+          toast.success(actionType === 'take' ? "مصرف دارو ثبت شد" : "عدم مصرف ثبت شد");
+          setSelectedDose(null);
+          setActionType(null);
+          fetchData();
+      } catch (error) {
+          toast.error("خطا در ثبت وضعیت");
+      }
+  };
+
+  const formatTime = (dateStr: string) => {
+      return new Date(dateStr).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
   };
 
   return (
@@ -137,71 +114,77 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
             exit={{ opacity: 0, y: -10 }}
             className="space-y-4"
           >
-            {/* Timeline View */}
+            {schedules.length === 0 ? (
+                <div className="text-center py-10 text-gray-400">برنامه‌ای برای امروز یافت نشد.</div>
+            ) : (
             <div className="relative border-r-2 border-dashed border-gray-200 dark:border-gray-700 mr-4 space-y-8 py-2">
-              {schedules.map((schedule, idx) => (
+              {schedules.map((schedule) => (
                 <div key={schedule.id} className="relative pr-8 group">
                   {/* Timeline Dot */}
                   <div className={cn(
                     "absolute -right-[9px] top-3 w-4 h-4 rounded-full border-2 transition-colors duration-300 z-10",
-                    schedule.status === 'taken' ? "bg-emerald-500 border-emerald-200" :
-                    schedule.status === 'missed' ? "bg-rose-500 border-rose-200" :
+                    schedule.status === DoseStatus.Taken ? "bg-emerald-500 border-emerald-200" :
+                    schedule.status === DoseStatus.Missed ? "bg-rose-500 border-rose-200" :
                     "bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                   )} />
                   
                   <div className={cn(
                     "bg-white dark:bg-gray-800 rounded-[1.5rem] p-4 border transition-all duration-300",
-                    schedule.status === 'taken' ? "border-emerald-100 dark:border-emerald-900/30 shadow-soft-sm" :
-                    schedule.status === 'missed' ? "border-rose-100 dark:border-rose-900/30" :
+                    schedule.status === DoseStatus.Taken ? "border-emerald-100 dark:border-emerald-900/30 shadow-soft-sm" :
+                    schedule.status === DoseStatus.Missed ? "border-rose-100 dark:border-rose-900/30" :
                     "border-gray-100 dark:border-gray-700 hover:border-medical-200 dark:hover:border-medical-800"
                   )}>
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-lg font-black text-gray-800 dark:text-gray-100">{schedule.medicationName}</span>
-                          <span className="text-xs font-bold text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700 px-2 py-0.5 rounded-lg dir-ltr">{schedule.scheduledTime}</span>
+                          <span className="text-xs font-bold text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700 px-2 py-0.5 rounded-lg dir-ltr">{formatTime(schedule.scheduledTime)}</span>
                         </div>
-                        <p className="text-xs text-gray-400 font-medium">دوز: {medications.find(m => m.name === schedule.medicationName)?.dosage || 'طبق دستور'}</p>
+                        <p className="text-xs text-gray-400 font-medium">دوز: {schedule.dosage} - {schedule.route}</p>
+                        {schedule.instructions && <p className="text-xs text-blue-500 mt-1">{schedule.instructions}</p>}
                       </div>
                       
-                      {schedule.status === 'pending' ? (
-                        <button 
-                          onClick={() => handleTakeMedication(schedule.id)}
-                          className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-emerald-50 hover:text-emerald-500 dark:hover:bg-emerald-900/20 transition-all flex items-center justify-center group/btn"
-                        >
-                          <Check className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
-                        </button>
-                      ) : schedule.status === 'taken' ? (
+                      {schedule.status === DoseStatus.Scheduled || schedule.status === DoseStatus.Late || schedule.status === DoseStatus.Due ? (
+                        <div className="flex gap-2">
+                            <button 
+                            onClick={() => handleActionClick(schedule, 'miss')}
+                            className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20 transition-all flex items-center justify-center"
+                            title="عدم مصرف"
+                            >
+                            <XCircle className="w-5 h-5" />
+                            </button>
+                            <button 
+                            onClick={() => handleActionClick(schedule, 'take')}
+                            className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-700 text-gray-400 hover:bg-emerald-50 hover:text-emerald-500 dark:hover:bg-emerald-900/20 transition-all flex items-center justify-center"
+                            title="مصرف شد"
+                            >
+                            <Check className="w-5 h-5" />
+                            </button>
+                        </div>
+                      ) : schedule.status === DoseStatus.Taken ? (
                         <div className="flex flex-col items-end">
                           <div className="text-emerald-500 flex items-center gap-1 text-xs font-black">
                             <CheckCircle2 size={14} />
                             مصرف شد
                           </div>
-                          <span className="text-[10px] text-gray-300 font-bold mt-0.5 dir-ltr">{schedule.takenAt}</span>
+                          <span className="text-[10px] text-gray-300 font-bold mt-0.5 dir-ltr">{schedule.takenAt ? formatTime(schedule.takenAt) : '-'}</span>
+                          <span className="text-[10px] text-gray-400">{schedule.takenByName}</span>
                         </div>
                       ) : (
-                        <div className="text-rose-500 flex items-center gap-1 text-xs font-black">
-                          <XCircle size={14} />
-                          فراموش شده
+                        <div className="text-rose-500 flex flex-col items-end gap-1">
+                            <div className="flex items-center gap-1 text-xs font-black">
+                                <XCircle size={14} />
+                                فراموش شده
+                            </div>
+                            {schedule.missedReason && <span className="text-[10px] text-rose-400">{schedule.missedReason}</span>}
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
               ))}
-              
-              {/* Add Button */}
-              <div className="relative pr-8">
-                 <div className="absolute -right-[9px] top-3 w-4 h-4 rounded-full bg-medical-100 border-2 border-medical-50 z-10" />
-                 <button 
-                   onClick={() => setIsAdding(true)}
-                   className="w-full py-4 rounded-[1.5rem] border-2 border-dashed border-gray-200 dark:border-gray-700 text-gray-400 hover:text-medical-500 hover:border-medical-200 hover:bg-medical-50/50 dark:hover:bg-medical-900/10 transition-all flex items-center justify-center gap-2 text-sm font-bold"
-                 >
-                   <Plus size={18} />
-                   افزودن زمان‌بندی جدید
-                 </button>
-              </div>
             </div>
+            )}
           </motion.div>
         ) : (
           <motion.div
@@ -218,11 +201,14 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
                     <Pill size={24} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-black text-gray-800 dark:text-gray-100">{med.name}</h3>
+                    <h3 className="text-lg font-black text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                        {med.name}
+                        {med.highAlert && <AlertTriangle size={14} className="text-red-500" />}
+                    </h3>
                     <div className="flex items-center gap-3 text-xs text-gray-400 font-medium mt-1">
                       <span className="bg-gray-50 dark:bg-gray-700 px-2 py-0.5 rounded-lg">{med.dosage}</span>
                       <span>•</span>
-                      <span>{med.frequency}</span>
+                      <span>{med.frequencyDetail || 'طبق دستور'}</span>
                     </div>
                   </div>
                 </div>
@@ -236,9 +222,9 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
         )}
       </AnimatePresence>
 
-      {/* Add Schedule Modal Overlay */}
+      {/* Action Modal */}
       <AnimatePresence>
-        {isAdding && (
+        {selectedDose && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -252,42 +238,57 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
               className="w-full max-w-md bg-white dark:bg-gray-900 rounded-[2.5rem] p-6 shadow-soft-xl border border-white/50 dark:border-gray-800"
             >
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-black text-gray-800 dark:text-gray-100">زمان‌بندی جدید</h3>
-                <button onClick={() => setIsAdding(false)} className="p-2 bg-gray-50 dark:bg-gray-800 rounded-full text-gray-400">
-                  <XCircle size={20} />
+                <h3 className="text-lg font-black text-gray-800 dark:text-gray-100">
+                    {actionType === 'take' ? 'ثبت مصرف دارو' : 'ثبت عدم مصرف'}
+                </h3>
+                <button onClick={() => setSelectedDose(null)} className="p-2 bg-gray-50 dark:bg-gray-800 rounded-full text-gray-400">
+                  <X size={20} />
                 </button>
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-2 mr-2">انتخاب دارو</label>
-                  <select 
-                    className="w-full p-4 bg-neutral-warm-50 dark:bg-gray-800 rounded-2xl border-none focus:ring-2 focus:ring-medical-200 outline-none text-gray-700 dark:text-gray-200 font-bold text-sm"
-                    value={newSchedule.medicationId}
-                    onChange={(e) => setNewSchedule({...newSchedule, medicationId: e.target.value})}
-                  >
-                    <option value="">انتخاب کنید...</option>
-                    {medications.map(m => (
-                      <option key={m.id} value={m.id}>{m.name} ({m.dosage})</option>
-                    ))}
-                  </select>
+                <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-2xl">
+                    <p className="font-bold text-gray-700 dark:text-gray-200">{selectedDose.medicationName}</p>
+                    <p className="text-sm text-gray-500">{selectedDose.dosage} - {formatTime(selectedDose.scheduledTime)}</p>
                 </div>
 
+                {actionType === 'miss' && (
+                    <div>
+                        <label className="block text-xs font-bold text-gray-400 mb-2 mr-2">دلیل عدم مصرف *</label>
+                        <select
+                            className="w-full p-4 bg-neutral-warm-50 dark:bg-gray-800 rounded-2xl border-none focus:ring-2 focus:ring-medical-200 outline-none text-gray-700 dark:text-gray-200 text-sm"
+                            value={missedReason}
+                            onChange={(e) => setMissedReason(e.target.value)}
+                        >
+                            <option value="">انتخاب کنید...</option>
+                            <option value="PatientRefused">بیمار امتناع کرد</option>
+                            <option value="NPO">بیمار NPO است</option>
+                            <option value="Vomiting">استفراغ</option>
+                            <option value="NotAvailable">دارو موجود نیست</option>
+                            <option value="Other">سایر</option>
+                        </select>
+                    </div>
+                )}
+
                 <div>
-                  <label className="block text-xs font-bold text-gray-400 mb-2 mr-2">زمان مصرف</label>
-                  <input 
-                    type="time" 
-                    className="w-full p-4 bg-neutral-warm-50 dark:bg-gray-800 rounded-2xl border-none focus:ring-2 focus:ring-medical-200 outline-none text-gray-700 dark:text-gray-200 font-bold text-lg text-center dir-ltr"
-                    value={newSchedule.time}
-                    onChange={(e) => setNewSchedule({...newSchedule, time: e.target.value})}
+                  <label className="block text-xs font-bold text-gray-400 mb-2 mr-2">توضیحات تکمیلی</label>
+                  <textarea 
+                    className="w-full p-4 bg-neutral-warm-50 dark:bg-gray-800 rounded-2xl border-none focus:ring-2 focus:ring-medical-200 outline-none text-gray-700 dark:text-gray-200 text-sm min-h-[100px]"
+                    placeholder="توضیحات پرستاری..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
                   />
                 </div>
 
                 <button 
-                  onClick={handleAddSchedule}
-                  className="w-full py-4 bg-medical-500 hover:bg-medical-600 text-white rounded-2xl font-black text-sm shadow-glow-medical mt-4 transition-all active:scale-95"
+                  onClick={submitAction}
+                  disabled={actionType === 'miss' && !missedReason}
+                  className={cn(
+                      "w-full py-4 text-white rounded-2xl font-black text-sm shadow-glow-medical mt-4 transition-all active:scale-95 disabled:opacity-50",
+                      actionType === 'take' ? "bg-emerald-500 hover:bg-emerald-600" : "bg-rose-500 hover:bg-rose-600"
+                  )}
                 >
-                  ثبت در برنامه
+                  {actionType === 'take' ? 'تایید مصرف' : 'تایید عدم مصرف'}
                 </button>
               </div>
             </motion.div>

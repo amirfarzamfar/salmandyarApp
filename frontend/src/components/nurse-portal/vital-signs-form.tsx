@@ -41,13 +41,23 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
   });
 
   const watchedValues = watch();
+  const {
+    measuredAt,
+    systolicBloodPressure,
+    diastolicBloodPressure,
+    pulseRate,
+    respiratoryRate,
+    bodyTemperature,
+    oxygenSaturation,
+    glasgowComaScale
+  } = watchedValues;
 
   useEffect(() => {
     const newWarnings = getVitalWarnings(watchedValues);
     
     // Check schedule deviation
-    if (expectedTime && watchedValues.measuredAt) {
-        const measured = new Date(watchedValues.measuredAt).getTime();
+    if (expectedTime && measuredAt) {
+        const measured = new Date(measuredAt).getTime();
         const expected = expectedTime.getTime();
         const diffMinutes = (measured - expected) / (1000 * 60);
         
@@ -58,7 +68,17 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
     }
 
     setWarnings(newWarnings);
-  }, [watchedValues, expectedTime]);
+  }, [
+    measuredAt,
+    systolicBloodPressure,
+    diastolicBloodPressure,
+    pulseRate,
+    respiratoryRate,
+    bodyTemperature,
+    oxygenSaturation,
+    glasgowComaScale,
+    expectedTime
+  ]);
 
   const onSubmit = async (data: VitalSignFormData) => {
     if (warnings.length > 0) {

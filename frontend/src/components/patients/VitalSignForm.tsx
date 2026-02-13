@@ -32,13 +32,23 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
   });
 
   const watchedValues = watch();
+  const {
+    systolicBloodPressure,
+    diastolicBloodPressure,
+    pulseRate,
+    respiratoryRate,
+    bodyTemperature,
+    oxygenSaturation,
+    glasgowComaScale,
+    measuredAt,
+  } = watchedValues;
 
   useEffect(() => {
     const newWarnings = getVitalWarnings(watchedValues);
     
     // Check schedule deviation if expectedTime is provided
-    if (expectedTime && watchedValues.measuredAt) {
-        const measured = new Date(watchedValues.measuredAt).getTime();
+    if (expectedTime && measuredAt) {
+        const measured = new Date(measuredAt).getTime();
         const expected = expectedTime.getTime();
         const diffMinutes = (measured - expected) / (1000 * 60);
         
@@ -49,7 +59,18 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
     }
 
     setWarnings(newWarnings);
-  }, [watchedValues, expectedTime]);
+  }, [
+    systolicBloodPressure,
+    diastolicBloodPressure,
+    pulseRate,
+    respiratoryRate,
+    bodyTemperature,
+    oxygenSaturation,
+    glasgowComaScale,
+    measuredAt,
+    expectedTime,
+    watchedValues,
+  ]);
 
   // Calculate MAP dynamically
   const sbp = watchedValues.systolicBloodPressure || 0;

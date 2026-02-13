@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { patientService } from '@/services/patient.service';
 import { VitalSign, CareLevel } from '@/types/patient';
 import VitalSignForm from '../VitalSignForm';
@@ -17,6 +17,8 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
   const [selectedCareLevel, setSelectedCareLevel] = useState<CareLevel>(careLevel);
   const [manualResetTime, setManualResetTime] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
+
+  const expectedTime = useMemo(() => nextDue || new Date(), [nextDue]);
 
   useEffect(() => {
     setSelectedCareLevel(careLevel);
@@ -156,6 +158,8 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
       }
   };
 
+  const status = getTimeStatus();
+
   return (
     <div className="space-y-6">
       {/* Header Stats */}
@@ -204,7 +208,7 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
            <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <VitalSignForm 
                 patientId={patientId} 
-                expectedTime={nextDue || new Date()}
+                expectedTime={expectedTime}
                 onSuccess={() => { setShowForm(false); fetchVitals(); }} 
                 onCancel={() => setShowForm(false)} 
               />

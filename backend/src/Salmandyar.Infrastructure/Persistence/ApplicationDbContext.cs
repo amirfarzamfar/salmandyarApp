@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.Assessments;
+using Salmandyar.Domain.Entities.Medications;
 
 namespace Salmandyar.Infrastructure.Persistence;
 
@@ -33,6 +34,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<QuestionAnswer> QuestionAnswers { get; set; }
     public DbSet<AssessmentAssignment> AssessmentAssignments { get; set; }
     public DbSet<UserNotification> UserNotifications { get; set; }
+
+    // Medication Module
+    public DbSet<PatientMedication> PatientMedications { get; set; }
+    public DbSet<MedicationDose> MedicationDoses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -245,5 +250,27 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany(s => s.Answers)
             .HasForeignKey(a => a.SubmissionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Medication Module Configurations
+        builder.Entity<PatientMedication>().ToTable("PatientMedications");
+        builder.Entity<MedicationDose>().ToTable("MedicationDoses");
+
+        builder.Entity<PatientMedication>()
+            .HasOne(m => m.CareRecipient)
+            .WithMany()
+            .HasForeignKey(m => m.CareRecipientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<MedicationDose>()
+            .HasOne(d => d.PatientMedication)
+            .WithMany(m => m.Doses)
+            .HasForeignKey(d => d.PatientMedicationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<MedicationDose>()
+            .HasOne(d => d.TakenByUser)
+            .WithMany()
+            .HasForeignKey(d => d.TakenByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

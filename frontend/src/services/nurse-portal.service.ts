@@ -74,21 +74,30 @@ export const nursePortalService = {
   // Medication APIs
   getPatientMedications: async (patientId: number) => {
     // This returns the list of prescribed medications
-    const response = await api.get<Medication[]>(`/patients/${patientId}/medications`);
+    const response = await api.get<Medication[]>(`/medications/patient/${patientId}`);
     return response.data;
   },
 
   getMedicationSchedule: async (patientId: number, date: string) => {
     // This returns the schedule for a specific day
-    const response = await api.get<MedicationSchedule[]>(`/patients/${patientId}/medications/schedule`, { params: { date } });
+    const response = await api.get<MedicationSchedule[]>(`/medications/patient/${patientId}/schedule`, { params: { date } });
     return response.data;
   },
 
   markMedicationAsTaken: async (scheduleId: number, data: { takenAt: string, note?: string }) => {
-    await api.patch(`/medications/schedule/${scheduleId}/taken`, data);
+    await api.post(`/medications/doses/${scheduleId}/log`, {
+      status: 3,
+      takenAt: data.takenAt,
+      notes: data.note
+    });
   },
 
-  addMedicationSchedule: async (patientId: number, data: CreateMedicationSchedule) => {
-    await api.post(`/patients/${patientId}/medications/schedule`, data);
+  addMedicationSchedule: async (patientId: number, data: any) => {
+      // NOTE: The MVP currently generates schedule from Medication. 
+      // Manual schedule addition is not yet supported in backend MVP directly without adding a medication.
+      // This function might need to be "Add Medication" instead.
+      // For now, mapping to AddMedication if it fits, or throwing error.
+      // Assuming 'data' here is actually a new Medication, not just a schedule instance
+      await api.post(`/medications`, data);
   }
 };

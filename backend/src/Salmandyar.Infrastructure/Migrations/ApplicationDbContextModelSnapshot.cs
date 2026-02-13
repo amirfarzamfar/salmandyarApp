@@ -625,6 +625,101 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("CaregiverProfiles", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationDose", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientMedicationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ScheduledTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("TakenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TakenByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientMedicationId");
+
+                    b.HasIndex("TakenByUserId");
+
+                    b.ToTable("MedicationDoses", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.PatientMedication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CareRecipientId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Dosage")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Frequency")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FrequencyDetail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Instructions")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsPRN")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Route")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CareRecipientId");
+
+                    b.ToTable("PatientMedications", (string)null);
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.NotificationSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -1313,6 +1408,35 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationDose", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Medications.PatientMedication", "PatientMedication")
+                        .WithMany("Doses")
+                        .HasForeignKey("PatientMedicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "TakenByUser")
+                        .WithMany()
+                        .HasForeignKey("TakenByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("PatientMedication");
+
+                    b.Navigation("TakenByUser");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.PatientMedication", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
+                        .WithMany()
+                        .HasForeignKey("CareRecipientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CareRecipient");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.NursingReport", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.User", "Author")
@@ -1438,6 +1562,11 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("NursingReports");
 
                     b.Navigation("VitalSigns");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.PatientMedication", b =>
+                {
+                    b.Navigation("Doses");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.NursingReport", b =>

@@ -19,8 +19,8 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandy
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\Salmandyar.Domain.AssemblyInfoInputs.cache
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\Salmandyar.Domain.AssemblyInfo.cs
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\Salmandyar.Domain.csproj.CoreCompileInputs.cache
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\Salmandyar.Domain.sourcelink.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\Salmandyar.Domain.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\refint\Salmandyar.Domain.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\Salmandyar.Domain.pdb
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\ref\Salmandyar.Domain.dll
-C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Domain\obj\Debug\net8.0\Salmandyar.Domain.sourcelink.json

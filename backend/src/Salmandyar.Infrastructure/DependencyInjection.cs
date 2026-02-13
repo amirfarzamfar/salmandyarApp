@@ -24,6 +24,8 @@ using Salmandyar.Application.Services.Users;
 using Salmandyar.Infrastructure.Services.Users;
 using Salmandyar.Application.Services.Assessments;
 using Salmandyar.Infrastructure.Services.Assessments;
+using Salmandyar.Application.Services.Medications;
+using Salmandyar.Infrastructure.Services.Medications;
 
 namespace Salmandyar.Infrastructure;
 
@@ -64,6 +66,9 @@ public static class DependencyInjection
         // Notifications
         services.AddScoped<INotificationService, LoggerNotificationService>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
+
+        // Medications
+        services.AddScoped<IMedicationService, MedicationService>();
 
         // Background Services
         services.AddHostedService<Salmandyar.Infrastructure.BackgroundServices.ReminderBackgroundService>();
