@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PortalCard } from "@/components/portal/ui/portal-card";
-import { FileText, Search, User, Clock, ChevronLeft, Loader2, Quote, Plus } from "lucide-react";
+import { FileText, Search, User, Clock, ChevronLeft, Loader2, Quote, Plus, X, Calendar } from "lucide-react";
 // import { motion } from "framer-motion"; // Temporarily removed to debug visibility issues
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { NursingReport } from "@/types/patient";
@@ -16,6 +16,7 @@ export default function NurseReportsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isPatientSelectorOpen, setIsPatientSelectorOpen] = useState(false);
   const [selectedPatientForReport, setSelectedPatientForReport] = useState<number | null>(null);
+  const [viewingReport, setViewingReport] = useState<NursingReport | null>(null);
 
   // Helper to normalize report data from backend (handles PascalCase, camelCase, etc.)
   const normalizeReport = (r: any): NursingReport => ({
@@ -150,9 +151,6 @@ export default function NurseReportsPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700/50 rounded-lg text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border border-gray-200 dark:border-gray-600">
-                      ID: {report.careRecipientId}
-                    </div>
                   </div>
 
                   <div className="relative bg-gray-50 dark:bg-gray-700/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/50 mb-4">
@@ -163,7 +161,10 @@ export default function NurseReportsPage() {
                   </div>
 
                   <div className="flex justify-end pt-2 border-t border-gray-50 dark:border-gray-700/50">
-                    <button className="text-xs font-black text-medical-600 dark:text-medical-400 hover:text-medical-700 dark:hover:text-medical-300 transition-colors flex items-center gap-1 group px-3 py-1.5 rounded-lg hover:bg-medical-50 dark:hover:bg-medical-900/20">
+                    <button 
+                      onClick={() => setViewingReport(report)}
+                      className="text-xs font-black text-medical-600 dark:text-medical-400 hover:text-medical-700 dark:hover:text-medical-300 transition-colors flex items-center gap-1 group px-3 py-1.5 rounded-lg hover:bg-medical-50 dark:hover:bg-medical-900/20"
+                    >
                       جزئیات کامل
                       <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
                     </button>
@@ -203,6 +204,83 @@ export default function NurseReportsPage() {
             fetchAllReports();
           }}
         />
+      )}
+
+      {/* Report Details Modal */}
+      {viewingReport && (
+        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+          <div className="w-full max-w-lg bg-white dark:bg-gray-800 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6 border-b border-gray-100 dark:border-gray-700 pb-4">
+              <h2 className="text-xl font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <FileText className="w-6 h-6 text-medical-500" />
+                جزئیات گزارش
+              </h2>
+              <button 
+                onClick={() => setViewingReport(null)}
+                className="p-2 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 dark:text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-gray-50 dark:bg-gray-700/30 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50 flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm text-medical-600 dark:text-medical-400">
+                  <User className="w-7 h-7" />
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-bold mb-1">نام بیمار</div>
+                  <div className="text-lg font-black text-gray-900 dark:text-gray-100">{viewingReport.patientName}</div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 dark:bg-gray-700/30 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50">
+                  <div className="flex items-center gap-2 mb-2 text-medical-600 dark:text-medical-400">
+                    <Clock className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase">شیفت</span>
+                  </div>
+                  <div className="font-black text-gray-900 dark:text-gray-100">
+                    {viewingReport.shift === 'Morning' ? 'صبح' : viewingReport.shift === 'Evening' ? 'عصر' : 'شب'}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700/30 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50">
+                  <div className="flex items-center gap-2 mb-2 text-medical-600 dark:text-medical-400">
+                    <Calendar className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase">تاریخ ثبت</span>
+                  </div>
+                  <div className="font-black text-gray-900 dark:text-gray-100">
+                    {viewingReport.createdAt && !isNaN(new Date(viewingReport.createdAt).getTime()) 
+                      ? new Date(viewingReport.createdAt).toLocaleDateString('fa-IR') 
+                      : 'نامشخص'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative">
+                <div className="absolute -top-3 right-4 bg-white dark:bg-gray-800 px-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+                  متن گزارش
+                </div>
+                <div className="border border-gray-200 dark:border-gray-700 rounded-2xl p-5 text-gray-700 dark:text-gray-300 leading-relaxed text-justify min-h-[150px] whitespace-pre-wrap">
+                  {viewingReport.content}
+                </div>
+              </div>
+
+              {viewingReport.authorName && (
+                <div className="text-right text-xs font-medium text-gray-400 dark:text-gray-500 mt-4">
+                  ثبت شده توسط: {viewingReport.authorName}
+                </div>
+              )}
+
+              <button 
+                onClick={() => setViewingReport(null)}
+                className="w-full py-4 bg-gray-900 dark:bg-gray-700 text-white rounded-2xl font-bold text-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-all shadow-lg shadow-gray-900/20"
+              >
+                بستن
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
