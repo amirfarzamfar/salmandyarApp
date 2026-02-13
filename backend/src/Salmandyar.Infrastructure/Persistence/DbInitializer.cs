@@ -196,5 +196,36 @@ public static class DbInitializer
                 await context.SaveChangesAsync();
             }
         }
+        // Seed Nursing Reports
+        if (!context.NursingReports.Any())
+        {
+            var nurse1 = await userManager.FindByNameAsync("09123456789");
+            var patient1 = await context.CareRecipients.FirstOrDefaultAsync(p => p.FirstName == "احمد");
+
+            if (nurse1 != null && patient1 != null)
+            {
+                var reports = new List<NursingReport>
+                {
+                    new NursingReport
+                    {
+                        CareRecipientId = patient1.Id,
+                        AuthorId = nurse1.Id,
+                        Shift = "Morning",
+                        Content = "بیمار وضعیت پایداری داشت. علائم حیاتی در محدوده نرمال بود. داروهای صبحگاهی مصرف شد.",
+                        CreatedAt = DateTime.UtcNow.AddDays(-1)
+                    },
+                    new NursingReport
+                    {
+                        CareRecipientId = patient1.Id,
+                        AuthorId = nurse1.Id,
+                        Shift = "Evening",
+                        Content = "بیمار کمی احساس ضعف داشت. فشار خون کنترل شد (۱۲۰/۸۰). استراحت کافی داشت.",
+                        CreatedAt = DateTime.UtcNow.AddDays(-2)
+                    }
+                };
+                context.NursingReports.AddRange(reports);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }

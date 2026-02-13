@@ -12,6 +12,8 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
 import { UserProfileModal } from "@/components/common/UserProfileModal";
 import { useUser } from "@/components/auth/UserContext";
+import { PatientSelector } from "@/components/nurse-portal/PatientSelector";
+import { ReportWriter } from "@/components/nurse-portal/report-writer";
 
 export default function NursePortalPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,6 +29,8 @@ export default function NursePortalPage() {
   // User Profile State
   const { user } = useUser();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isPatientSelectorOpen, setIsPatientSelectorOpen] = useState(false);
+  const [selectedPatientForReport, setSelectedPatientForReport] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -186,15 +190,15 @@ export default function NursePortalPage() {
       <div>
         <h3 className="text-sm font-black text-gray-800 dark:text-gray-100 mb-3 px-1">دسترسی سریع</h3>
         <div className="grid grid-cols-2 gap-3">
-          <Link href="/nurse-portal/reports" className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 rounded-[1.5rem] border border-blue-100 dark:border-blue-800/30 group">
+          <button onClick={() => setIsPatientSelectorOpen(true)} className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-900/20 dark:to-blue-800/10 rounded-[1.5rem] border border-blue-100 dark:border-blue-800/30 group">
             <div className="w-10 h-10 rounded-xl bg-white dark:bg-blue-900/30 flex items-center justify-center text-blue-500 shadow-sm group-hover:scale-110 transition-transform">
               <FileText size={20} />
             </div>
-            <div>
+            <div className="text-right">
               <div className="text-sm font-black text-gray-800 dark:text-gray-200">گزارش‌نویسی</div>
               <div className="text-[10px] text-gray-500 dark:text-gray-400 font-bold">ثبت گزارش جدید</div>
             </div>
-          </Link>
+          </button>
           <button className="flex items-center gap-3 p-4 bg-gradient-to-br from-rose-50 to-rose-100/50 dark:from-rose-900/20 dark:to-rose-800/10 rounded-[1.5rem] border border-rose-100 dark:border-rose-800/30 group">
             <div className="w-10 h-10 rounded-xl bg-white dark:bg-rose-900/30 flex items-center justify-center text-rose-500 shadow-sm group-hover:scale-110 transition-transform">
               <Phone size={20} />
@@ -316,6 +320,24 @@ export default function NursePortalPage() {
             user={user}
             isOpen={isProfileModalOpen}
             onClose={() => setIsProfileModalOpen(false)}
+        />
+      )}
+      
+      <PatientSelector
+        isOpen={isPatientSelectorOpen}
+        onClose={() => setIsPatientSelectorOpen(false)}
+        onSelect={(id) => {
+          setIsPatientSelectorOpen(false);
+          setSelectedPatientForReport(id);
+        }}
+      />
+
+      {selectedPatientForReport && (
+        <ReportWriter
+          patientId={selectedPatientForReport}
+          isOpen={true}
+          onClose={() => setSelectedPatientForReport(null)}
+          onSuccess={() => setSelectedPatientForReport(null)}
         />
       )}
     </div>

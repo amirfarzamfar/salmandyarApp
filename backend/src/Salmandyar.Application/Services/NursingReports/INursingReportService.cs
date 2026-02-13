@@ -6,5 +6,5 @@ namespace Salmandyar.Application.Services.NursingReports;
 public interface INursingReportService
 {
     Task<NursingReport> CreateReportAsync(string authorId, SubmitNursingReportDto dto);
-    // Add other methods if needed (GetReports, etc.)
+    Task<List<NursingReportDto>> GetReportsByAuthorAsync(string authorId);
 }

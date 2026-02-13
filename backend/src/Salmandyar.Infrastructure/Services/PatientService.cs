@@ -189,6 +189,7 @@ public class PatientService : IPatientService
             .Where(r => r.CareRecipientId == patientId)
             .Include(r => r.Author)
             .OrderByDescending(r => r.CreatedAt)
+            .ThenByDescending(r => r.Id)
             .Select(r => new NursingReportDto(
                 r.Id,
                 r.CreatedAt,

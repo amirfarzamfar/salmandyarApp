@@ -2,37 +2,27 @@
 
 import { useState, useEffect } from "react";
 import { PortalCard } from "@/components/portal/ui/portal-card";
-import { FileText, Search, Calendar, User, Clock, ChevronLeft, Loader2, Quote } from "lucide-react";
+import { FileText, Search, Calendar, User, Clock, ChevronLeft, Loader2, Quote, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { NursingReport } from "@/types/patient";
 import { toast } from "react-hot-toast";
+import { PatientSelector } from "@/components/nurse-portal/PatientSelector";
+import { ReportWriter } from "@/components/nurse-portal/report-writer";
 
 export default function NurseReportsPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isPatientSelectorOpen, setIsPatientSelectorOpen] = useState(false);
+  const [selectedPatientForReport, setSelectedPatientForReport] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchAllReports = async () => {
       try {
         setIsLoading(true);
-        // In a real app, we'd have an endpoint for all reports for this nurse
-        // For now, we fetch patients then their reports to simulate a global list
-        const patients = await nursePortalService.getMyPatients();
-        const allReports: any[] = [];
-        
-        for (const patient of patients) {
-          const patientReports = await nursePortalService.getPatientReports(patient.id);
-          allReports.push(...patientReports.map(r => ({
-            ...r,
-            patientName: `${patient.firstName} ${patient.lastName}`,
-            patientId: patient.id
-          })));
-        }
-        
-        // Sort by date descending
-        allReports.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Use the new optimized endpoint
+        const allReports = await nursePortalService.getAllMyReports();
         setReports(allReports);
       } catch (error) {
         console.error(error);
@@ -43,6 +33,18 @@ export default function NurseReportsPage() {
     };
     fetchAllReports();
   }, []);
+
+  const refreshReports = async () => {
+      try {
+        setIsLoading(true);
+        const allReports = await nursePortalService.getAllMyReports();
+        setReports(allReports);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+  };
 
   const filteredReports = reports.filter(r => 
     r.content.includes(searchTerm) || 
@@ -66,10 +68,10 @@ export default function NurseReportsPage() {
     <div className="space-y-8 px-4 md:px-0">
       <header className="flex justify-between items-center pt-6">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">تاریخچه گزارش‌ها</h1>
-          <p className="text-sm font-medium text-gray-400 mt-1">آرشیو تمامی گزارش‌های ثبت شده</p>
+          <h1 className="text-3xl font-black text-gray-900 dark:text-gray-100 tracking-tight">تاریخچه گزارش‌ها</h1>
+          <p className="text-sm font-medium text-gray-400 dark:text-gray-500 mt-1">آرشیو تمامی گزارش‌های ثبت شده</p>
         </div>
-        <div className="w-12 h-12 rounded-2xl bg-white shadow-soft-md flex items-center justify-center text-medical-600 border border-gray-50">
+        <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-soft-md flex items-center justify-center text-medical-600 dark:text-medical-400 border border-gray-50 dark:border-gray-700">
           <FileText className="w-6 h-6" />
         </div>
       </header>
@@ -81,7 +83,7 @@ export default function NurseReportsPage() {
         </div>
         <input
           type="text"
-          className="block w-full pr-14 pl-6 py-5 bg-white/70 backdrop-blur-md border border-white/50 rounded-[2rem] shadow-soft-md focus:ring-2 focus:ring-medical-200 focus:bg-white transition-all text-gray-700 placeholder-gray-400 font-medium"
+          className="block w-full pr-14 pl-6 py-5 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border border-white/50 dark:border-gray-700/50 rounded-[2rem] shadow-soft-md focus:ring-2 focus:ring-medical-200 dark:focus:ring-medical-800 focus:bg-white dark:focus:bg-gray-800 transition-all text-gray-700 dark:text-gray-200 placeholder-gray-400 font-medium"
           placeholder="جستجو در متن گزارش یا نام بیمار..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -95,52 +97,63 @@ export default function NurseReportsPage() {
         className="space-y-6"
       >
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+          <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-500">
             <Loader2 className="w-10 h-10 animate-spin mb-4 text-medical-500" />
             <p className="text-sm font-black">در حال دریافت گزارش‌ها...</p>
           </div>
         ) : filteredReports.length === 0 ? (
-          <div className="text-center py-20 bg-white/50 backdrop-blur-md rounded-[2.5rem] border border-dashed border-gray-200">
-            <FileText className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-            <h3 className="text-lg font-black text-gray-800 mb-1">گزارشی یافت نشد</h3>
-            <p className="text-sm text-gray-400 font-medium">موردی مطابق با جستجوی شما یافت نشد.</p>
+          <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-[2.5rem] border border-dashed border-gray-300 dark:border-gray-700 shadow-sm">
+            <FileText className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 mb-1">گزارشی یافت نشد</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-6">
+              {searchTerm ? "موردی مطابق با جستجوی شما یافت نشد." : "هنوز گزارشی ثبت نشده است."}
+            </p>
+            {!searchTerm && (
+              <button 
+                onClick={() => setIsPatientSelectorOpen(true)}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-medical-500 hover:bg-medical-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-medical-500/20"
+              >
+                <Plus size={20} />
+                ثبت اولین گزارش
+              </button>
+            )}
           </div>
         ) : (
           filteredReports.map((report) => (
             <motion.div key={report.id} variants={item}>
-              <PortalCard className="bg-white border-none shadow-soft-lg hover:shadow-soft-xl transition-all duration-300 overflow-hidden relative" noPadding>
+              <PortalCard className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-soft-lg hover:shadow-soft-xl dark:shadow-none transition-all duration-300 overflow-hidden relative" noPadding>
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-medical-50 flex items-center justify-center text-medical-600">
-                        <User className="w-5 h-5" />
+                      <div className="w-12 h-12 rounded-2xl bg-medical-50 dark:bg-medical-900/20 flex items-center justify-center text-medical-600 dark:text-medical-400 shadow-sm border border-medical-100 dark:border-medical-800/30">
+                        <User className="w-6 h-6" />
                       </div>
                       <div>
-                        <h3 className="text-lg font-black text-gray-800">{report.patientName}</h3>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-0.5">
-                          <Clock className="w-3 h-3" />
-                          <span>شیفت {report.shift}</span>
-                          <span className="w-1 h-1 rounded-full bg-gray-200" />
+                        <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 mb-0.5">{report.patientName}</h3>
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest">
+                          <Clock className="w-3.5 h-3.5 text-medical-500" />
+                          <span>شیفت {report.shift === 'Morning' ? 'صبح' : report.shift === 'Evening' ? 'عصر' : 'شب'}</span>
+                          <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
                           <span>{new Date(report.createdAt).toLocaleDateString('fa-IR')}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="px-3 py-1 bg-gray-50 rounded-lg text-[8px] font-black text-gray-400 uppercase tracking-widest">
-                      ID: {report.patientId}
+                    <div className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700/50 rounded-lg text-[10px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest border border-gray-200 dark:border-gray-600">
+                      ID: {report.careRecipientId}
                     </div>
                   </div>
 
-                  <div className="relative bg-neutral-warm-50/50 p-5 rounded-2xl border border-gray-50/50">
-                    <Quote className="absolute top-3 right-3 w-6 h-6 text-medical-100 -scale-x-100" />
-                    <p className="text-sm text-gray-600 leading-relaxed font-medium pr-8">
+                  <div className="relative bg-gray-50 dark:bg-gray-700/30 p-5 rounded-2xl border border-gray-100 dark:border-gray-700/50 mb-4">
+                    <Quote className="absolute top-4 right-4 w-8 h-8 text-gray-200 dark:text-gray-600 -scale-x-100 pointer-events-none" />
+                    <p className="text-sm text-gray-700 dark:text-gray-200 leading-relaxed font-medium relative z-10 pr-2">
                       {report.content}
                     </p>
                   </div>
 
-                  <div className="mt-4 flex justify-end">
-                    <button className="text-[10px] font-black text-medical-500 hover:text-medical-600 transition-colors flex items-center gap-1 group">
+                  <div className="flex justify-end pt-2 border-t border-gray-50 dark:border-gray-700/50">
+                    <button className="text-xs font-black text-medical-600 dark:text-medical-400 hover:text-medical-700 dark:hover:text-medical-300 transition-colors flex items-center gap-1 group px-3 py-1.5 rounded-lg hover:bg-medical-50 dark:hover:bg-medical-900/20">
                       جزئیات کامل
-                      <ChevronLeft className="w-3 h-3 group-hover:-translate-x-1 transition-transform" />
+                      <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
                     </button>
                   </div>
                 </div>
@@ -149,6 +162,35 @@ export default function NurseReportsPage() {
           ))
         )}
       </motion.div>
+
+      {/* Floating Action Button */}
+      <button
+        onClick={() => setIsPatientSelectorOpen(true)}
+        className="fixed bottom-24 left-6 w-14 h-14 bg-teal-500 text-white rounded-full shadow-lg shadow-teal-500/30 flex items-center justify-center hover:bg-teal-600 hover:scale-110 active:scale-95 transition-all z-40"
+      >
+        <Plus size={28} />
+      </button>
+
+      <PatientSelector
+        isOpen={isPatientSelectorOpen}
+        onClose={() => setIsPatientSelectorOpen(false)}
+        onSelect={(id) => {
+          setIsPatientSelectorOpen(false);
+          setSelectedPatientForReport(id);
+        }}
+      />
+
+      {selectedPatientForReport && (
+        <ReportWriter
+          patientId={selectedPatientForReport}
+          isOpen={true}
+          onClose={() => setSelectedPatientForReport(null)}
+          onSuccess={() => {
+             setSelectedPatientForReport(null);
+             refreshReports(); 
+          }}
+        />
+      )}
     </div>
   );
 }

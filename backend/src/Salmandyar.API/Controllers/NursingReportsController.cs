@@ -27,4 +27,14 @@ public class NursingReportsController : ControllerBase
         var report = await _service.CreateReportAsync(authorId, dto);
         return Ok(new { id = report.Id });
     }
+
+    [HttpGet("my-reports")]
+    public async Task<IActionResult> GetMyReports()
+    {
+        var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (authorId == null) return Unauthorized();
+
+        var reports = await _service.GetReportsByAuthorAsync(authorId);
+        return Ok(reports);
+    }
 }
