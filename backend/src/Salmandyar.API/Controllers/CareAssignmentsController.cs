@@ -5,7 +5,7 @@ using Salmandyar.Application.Services.Assignments;
 
 namespace Salmandyar.API.Controllers;
 
-[Authorize(Roles = "Manager,Supervisor")]
+[Authorize(Roles = "Admin,SuperAdmin,Manager,Supervisor")]
 [ApiController]
 [Route("api/assignments")]
 public class CareAssignmentsController : ControllerBase

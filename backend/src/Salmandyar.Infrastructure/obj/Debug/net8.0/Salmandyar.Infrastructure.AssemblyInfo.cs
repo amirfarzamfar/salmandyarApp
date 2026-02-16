@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Salmandyar.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ccdf35cba19fb88c69f17ecb9306ce60ed88dcac")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+082f93f3b795120bfd1c518b84edf46beb57fd29")]
 [assembly: System.Reflection.AssemblyProductAttribute("Salmandyar.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Salmandyar.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
