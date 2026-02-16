@@ -72,6 +72,7 @@ public static class DependencyInjection
 
         // Background Services
         services.AddHostedService<Salmandyar.Infrastructure.BackgroundServices.ReminderBackgroundService>();
+        services.AddHostedService<Salmandyar.Infrastructure.BackgroundServices.MedicationBackgroundService>();
 
         services.AddAuthentication(options =>
         {

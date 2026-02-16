@@ -9,4 +9,6 @@ public interface IMedicationService
     Task<List<MedicationDoseDto>> GetDailyScheduleAsync(int patientId, DateTime date);
     Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId);
     Task GenerateDosesAsync(int medicationId, DateTime from, DateTime to);
+    Task CheckMissedDosesAndEscalateAsync();
+    Task SendRemindersAsync();
 }

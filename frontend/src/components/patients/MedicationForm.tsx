@@ -17,7 +17,13 @@ export default function MedicationForm({ patientId, onSuccess, onCancel, onSubmi
     frequencyType: MedicationFrequencyType.Daily,
     isPRN: false,
     highAlert: false,
-    startDate: new Date().toISOString().split('T')[0]
+    startDate: new Date().toISOString().split('T')[0],
+    gracePeriodMinutes: 30,
+    notifyPatient: false,
+    notifyNurse: false,
+    notifySupervisor: false,
+    notifyFamily: false,
+    escalationEnabled: false
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -146,7 +152,82 @@ export default function MedicationForm({ patientId, onSuccess, onCancel, onSubmi
            />
         </div>
 
-        <div className="flex gap-6 items-center">
+        <div className="border-t pt-4 mt-4">
+            <h4 className="text-md font-semibold text-gray-800 mb-3">تنظیمات یادآوری و هشدار</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">مهلت مصرف (دقیقه)</label>
+                    <input
+                        type="number"
+                        min="0"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                        value={formData.gracePeriodMinutes || 30}
+                        onChange={e => setFormData({ ...formData, gracePeriodMinutes: Number(e.target.value) })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">مدت زمان مجاز پس از ساعت مقرر برای مصرف دارو</p>
+                </div>
+                
+                <div className="flex flex-col gap-2 pt-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.escalationEnabled}
+                            onChange={e => setFormData({...formData, escalationEnabled: e.target.checked})}
+                            className="rounded text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">فعال‌سازی سیستم Escalation (ارتقاء هشدار)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">ارسال اعلان به:</p>
+                <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.notifyPatient}
+                            onChange={e => setFormData({...formData, notifyPatient: e.target.checked})}
+                            className="rounded text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-600">بیمار</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.notifyNurse}
+                            onChange={e => setFormData({...formData, notifyNurse: e.target.checked})}
+                            className="rounded text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-600">پرستار</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.notifySupervisor}
+                            onChange={e => setFormData({...formData, notifySupervisor: e.target.checked})}
+                            className="rounded text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-600">سوپروایزر</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.notifyFamily}
+                            onChange={e => setFormData({...formData, notifyFamily: e.target.checked})}
+                            className="rounded text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-600">خانواده</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div className="flex gap-6 items-center pt-2">
             <label className="flex items-center gap-2 cursor-pointer">
                 <input 
                   type="checkbox" 

@@ -35,3 +35,11 @@ public enum MedicationFrequencyType
     Interval = 3, // Every X hours
     SpecificDays = 4
 }
+
+public enum DoseEscalationLevel
+{
+    None = 0,
+    NurseNotified = 1,
+    SupervisorNotified = 2,
+    FamilyNotified = 3
+}

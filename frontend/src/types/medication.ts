@@ -44,6 +44,13 @@ export interface Medication {
     highAlert: boolean;
     criticality: MedicationCriticality;
     instructions?: string;
+    
+    gracePeriodMinutes: number;
+    notifyPatient: boolean;
+    notifyNurse: boolean;
+    notifySupervisor: boolean;
+    notifyFamily: boolean;
+    escalationEnabled: boolean;
 }
 
 export interface CreateMedicationDto {
@@ -60,6 +67,13 @@ export interface CreateMedicationDto {
     highAlert: boolean;
     criticality: MedicationCriticality;
     instructions?: string;
+
+    gracePeriodMinutes: number;
+    notifyPatient: boolean;
+    notifyNurse: boolean;
+    notifySupervisor: boolean;
+    notifyFamily: boolean;
+    escalationEnabled: boolean;
 }
 
 export interface MedicationDose {

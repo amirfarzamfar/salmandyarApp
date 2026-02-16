@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import { Pill, Check, Plus, CheckCircle2, XCircle, X, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { medicationService } from "@/services/medication.service";
-import { Medication, MedicationDose, DoseStatus, RecordDoseDto, SideEffectSeverity } from "@/types/medication";
+import { Medication, MedicationDose, DoseStatus, RecordDoseDto, SideEffectSeverity, CreateMedicationDto } from "@/types/medication";
 import toast from "react-hot-toast";
 import { cn } from "@/lib/utils";
+import MedicationForm from "@/components/patients/MedicationForm";
 
 export function MedicationTracker({ patientId }: { patientId: number }) {
   const [activeTab, setActiveTab] = useState<'schedule' | 'list'>('schedule');
   const [schedules, setSchedules] = useState<MedicationDose[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAddForm, setShowAddForm] = useState(false);
   
   // Modal states
   const [selectedDose, setSelectedDose] = useState<MedicationDose | null>(null);
@@ -40,6 +42,10 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleAddMedication = async (data: CreateMedicationDto) => {
+      await medicationService.addMedication(data);
   };
 
   const handleActionClick = (dose: MedicationDose, type: 'take' | 'miss') => {
@@ -83,25 +89,34 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
           <Pill className="w-5 h-5 text-medical-500" />
           <h2 className="text-xl font-black text-gray-800 dark:text-gray-100">مدیریت دارویی</h2>
         </div>
-        <div className="flex bg-neutral-warm-50 dark:bg-gray-800 p-1 rounded-xl border border-gray-100 dark:border-gray-700">
+        <div className="flex gap-3">
           <button 
-            onClick={() => setActiveTab('schedule')}
-            className={cn(
-              "px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
-              activeTab === 'schedule' ? "bg-white dark:bg-gray-700 text-medical-600 dark:text-medical-400 shadow-soft-sm" : "text-gray-400 dark:text-gray-500 hover:text-gray-600"
-            )}
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 px-4 py-1.5 bg-medical-500 text-white rounded-xl text-xs font-bold shadow-glow-medical hover:bg-medical-600 transition-all active:scale-95"
           >
-            برنامه روزانه
+            <Plus size={16} />
+            <span>افزودن دارو</span>
           </button>
-          <button 
-            onClick={() => setActiveTab('list')}
-            className={cn(
-              "px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
-              activeTab === 'list' ? "bg-white dark:bg-gray-700 text-medical-600 dark:text-medical-400 shadow-soft-sm" : "text-gray-400 dark:text-gray-500 hover:text-gray-600"
-            )}
-          >
-            لیست داروها
-          </button>
+          <div className="flex bg-neutral-warm-50 dark:bg-gray-800 p-1 rounded-xl border border-gray-100 dark:border-gray-700">
+            <button 
+              onClick={() => setActiveTab('schedule')}
+              className={cn(
+                "px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                activeTab === 'schedule' ? "bg-white dark:bg-gray-700 text-medical-600 dark:text-medical-400 shadow-soft-sm" : "text-gray-400 dark:text-gray-500 hover:text-gray-600"
+              )}
+            >
+              برنامه روزانه
+            </button>
+            <button 
+              onClick={() => setActiveTab('list')}
+              className={cn(
+                "px-4 py-1.5 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all",
+                activeTab === 'list' ? "bg-white dark:bg-gray-700 text-medical-600 dark:text-medical-400 shadow-soft-sm" : "text-gray-400 dark:text-gray-500 hover:text-gray-600"
+              )}
+            >
+              لیست داروها
+            </button>
+          </div>
         </div>
       </div>
 
@@ -291,6 +306,35 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
                   {actionType === 'take' ? 'تایید مصرف' : 'تایید عدم مصرف'}
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Add Medication Modal */}
+      <AnimatePresence>
+        {showAddForm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-2xl"
+            >
+                <MedicationForm 
+                    patientId={patientId}
+                    onSuccess={() => {
+                        setShowAddForm(false);
+                        fetchData();
+                        toast.success("داروی جدید با موفقیت ثبت شد");
+                    }}
+                    onCancel={() => setShowAddForm(false)}
+                    onSubmit={handleAddMedication}
+                />
             </motion.div>
           </motion.div>
         )}

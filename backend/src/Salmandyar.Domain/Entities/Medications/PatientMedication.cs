@@ -26,6 +26,14 @@ public class PatientMedication
 
     public string? Instructions { get; set; }
 
+    public int GracePeriodMinutes { get; set; } = 30;
+    
+    public bool NotifyPatient { get; set; }
+    public bool NotifyNurse { get; set; }
+    public bool NotifySupervisor { get; set; }
+    public bool NotifyFamily { get; set; }
+    public bool EscalationEnabled { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public string? CreatedByUserId { get; set; }

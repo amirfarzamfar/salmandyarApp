@@ -25,6 +25,11 @@ public class MedicationDose
     public SideEffectSeverity SideEffectSeverity { get; set; } = SideEffectSeverity.None;
     public string? SideEffectDescription { get; set; }
 
+    public string? AttachmentPath { get; set; }
+    public bool IsReminderSent { get; set; }
+    public DoseEscalationLevel EscalationLevel { get; set; } = DoseEscalationLevel.None;
+    public DateTime? LastEscalationTime { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 }

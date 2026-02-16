@@ -2,9 +2,21 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Salmandyar.Application.DTOs.Medications;
 using Salmandyar.Application.Services.Medications;
+using Salmandyar.Domain.Enums;
 using System.Security.Claims;
 
 namespace Salmandyar.API.Controllers;
+
+public class RecordDoseFormDto
+{
+    public DateTime TakenAt { get; set; }
+    public string? Notes { get; set; }
+    public string? MissedReason { get; set; }
+    public DoseStatus Status { get; set; } = DoseStatus.Taken;
+    public SideEffectSeverity SideEffectSeverity { get; set; }
+    public string? SideEffectDescription { get; set; }
+    public IFormFile? Attachment { get; set; }
+}
 
 [Authorize]
 [ApiController]
@@ -42,6 +54,43 @@ public class MedicationsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
+
+        await _medicationService.RecordDoseAsync(doseId, dto, userId);
+        return Ok();
+    }
+
+    [HttpPost("doses/{doseId}/log-with-evidence")]
+    public async Task<IActionResult> LogDoseWithEvidence(int doseId, [FromForm] RecordDoseFormDto form)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        string? attachmentPath = null;
+        if (form.Attachment != null)
+        {
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "medications");
+            if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}_{form.Attachment.FileName}";
+            var filePath = Path.Combine(uploadsFolder, fileName);
+            
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await form.Attachment.CopyToAsync(stream);
+            }
+            attachmentPath = $"/uploads/medications/{fileName}";
+        }
+
+        var dto = new RecordDoseDto
+        {
+            TakenAt = form.TakenAt,
+            Notes = form.Notes,
+            MissedReason = form.MissedReason,
+            Status = form.Status,
+            SideEffectSeverity = form.SideEffectSeverity,
+            SideEffectDescription = form.SideEffectDescription,
+            AttachmentPath = attachmentPath
+        };
 
         await _medicationService.RecordDoseAsync(doseId, dto, userId);
         return Ok();
