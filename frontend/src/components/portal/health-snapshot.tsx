@@ -2,11 +2,23 @@
 
 import { PortalCard } from "./ui/portal-card";
 import { Activity, Heart, Thermometer, Droplet, RefreshCw } from "lucide-react";
-import { AreaChart, Area, ResponsiveContainer, Tooltip } from "recharts";
+import { AreaChart, Area, ResponsiveContainer } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { patientService } from "@/services/patient.service";
+import { formatDistanceToNow } from "date-fns";
+import { faIR } from "date-fns/locale";
 
-// Smoother mock data
-const generateData = (base: number, variance: number) => 
-  Array.from({ length: 10 }, (_, i) => ({ value: base + Math.sin(i) * variance }));
+// Helper to generate chart data from history
+const getChartData = (vitals: any[], key: string, limit = 10) => {
+  if (!vitals || vitals.length === 0) return Array(10).fill({ value: 0 });
+  
+  // Sort by date ascending
+  const sorted = [...vitals].sort((a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime());
+  // Take last N
+  const slice = sorted.slice(-limit);
+  
+  return slice.map(v => ({ value: v[key] }));
+};
 
 const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusColor }: any) => (
   <PortalCard className="relative overflow-hidden group hover:shadow-soft-lg transition-all duration-500" noPadding>
@@ -52,57 +64,91 @@ const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusC
   </PortalCard>
 );
 
-export function HealthSnapshot() {
+interface HealthSnapshotProps {
+  patientId: number;
+}
+
+export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
+  const { data: vitals, isLoading } = useQuery({
+    queryKey: ["vitals", patientId],
+    queryFn: () => patientService.getVitals(patientId),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4 mb-8">
+        <div className="flex items-center justify-between px-2">
+          <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-40 bg-gray-100 rounded-3xl animate-pulse"></div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Get latest vital sign
+  const latestVital = vitals && vitals.length > 0 
+    ? [...vitals].sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())[0]
+    : null;
+
+  const lastUpdate = latestVital 
+    ? formatDistanceToNow(new Date(latestVital.recordedAt), { addSuffix: true, locale: faIR })
+    : "نامشخص";
+
   return (
     <div className="space-y-4 mb-8">
       <div className="flex items-center justify-between px-2">
         <h2 className="text-lg font-bold text-gray-800">وضعیت سلامت شما</h2>
         <div className="flex items-center gap-1 text-xs text-gray-400">
           <RefreshCw className="w-3 h-3" />
-          <span>بروزرسانی: ۱۰ دقیقه پیش</span>
+          <span>بروزرسانی: {lastUpdate}</span>
         </div>
       </div>
       
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <VitalCard 
           title="فشار خون" 
-          value="12/8" 
+          value={latestVital ? `${latestVital.systolicBloodPressure}/${latestVital.diastolicBloodPressure}` : "--/--"} 
           unit="mmHg" 
           icon={Activity} 
           color="bg-blue-500" 
           statusColor="bg-green-500 text-green-700"
           trend="نرمال"
-          data={generateData(120, 5)}
+          data={getChartData(vitals || [], "systolicBloodPressure")}
         />
         <VitalCard 
           title="ضربان قلب" 
-          value="72" 
+          value={latestVital ? latestVital.pulseRate : "--"} 
           unit="bpm" 
           icon={Heart} 
           color="bg-rose-500" 
           statusColor="bg-green-500 text-green-700"
           trend="عالی"
-          data={generateData(72, 3)}
+          data={getChartData(vitals || [], "pulseRate")}
         />
         <VitalCard 
           title="اکسیژن خون" 
-          value="98" 
+          value={latestVital ? latestVital.oxygenSaturation : "--"} 
           unit="%" 
           icon={Droplet} 
           color="bg-sky-500" 
           statusColor="bg-blue-500 text-blue-700"
           trend="پایدار"
-          data={generateData(98, 1)}
+          data={getChartData(vitals || [], "oxygenSaturation")}
         />
         <VitalCard 
           title="دما" 
-          value="36.5" 
+          value={latestVital ? latestVital.bodyTemperature : "--"} 
           unit="°C" 
           icon={Thermometer} 
           color="bg-orange-500" 
           statusColor="bg-green-500 text-green-700"
           trend="طبیعی"
-          data={generateData(36.5, 0.2)}
+          data={getChartData(vitals || [], "bodyTemperature")}
         />
       </div>
     </div>

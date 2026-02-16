@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { SmartHeader } from "@/components/portal/smart-header";
 import { HealthSnapshot } from "@/components/portal/health-snapshot";
+import { VitalSignsChart } from "@/components/portal/vital-signs-chart";
+import { VitalSignsHistory } from "@/components/portal/vital-signs-history";
 import { MedicationTimeline } from "@/components/portal/medication-timeline";
 import { CarePlanCards } from "@/components/portal/care-plan-cards";
 import { NursingReportFeed } from "@/components/portal/nursing-report-feed";
@@ -17,6 +19,7 @@ import Link from "next/link";
 export default function PortalPage() {
   const [isElderMode, setIsElderMode] = useState(false);
   const [isFamilyMode, setIsFamilyMode] = useState(false);
+  const patientId = 1; // TODO: Get from auth context
 
   // Stagger variants for the main content
   const containerVariants = {
@@ -77,8 +80,19 @@ export default function PortalPage() {
           className="space-y-10 pb-32 pt-2"
         >
           {/* Section: Health Status */}
-          <motion.section variants={itemVariants}>
-            <HealthSnapshot />
+          <motion.section variants={itemVariants} className="space-y-6">
+            <HealthSnapshot patientId={patientId} />
+            
+            {!isElderMode && (
+              <div className="grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2">
+                  <VitalSignsChart patientId={patientId} />
+                </div>
+                <div className="lg:col-span-1 max-h-[460px] overflow-y-auto rounded-3xl no-scrollbar">
+                  <VitalSignsHistory patientId={patientId} />
+                </div>
+              </div>
+            )}
           </motion.section>
 
           {/* Section: Medication - High Priority */}
