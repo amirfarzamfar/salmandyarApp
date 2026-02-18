@@ -7,9 +7,10 @@ import { Skeleton } from "./ui/skeleton";
 
 interface SmartHeaderProps {
   patientName: string;
+  onAvatarClick?: () => void;
 }
 
-export function SmartHeader({ patientName }: SmartHeaderProps) {
+export function SmartHeader({ patientName, onAvatarClick }: SmartHeaderProps) {
   const [notifications, setNotifications] = useState<PortalNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState("سلام");
@@ -48,11 +49,22 @@ export function SmartHeader({ patientName }: SmartHeaderProps) {
   return (
     <header className="flex items-center justify-between py-6 mb-2">
       <div className="flex items-center gap-4">
-        <div className="relative group">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-medical-100 to-medical-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-soft-md transition-transform duration-300 group-hover:scale-105">
+        <div 
+            className="relative group cursor-pointer" 
+            onClick={onAvatarClick}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    onAvatarClick?.();
+                }
+            }}
+        >
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-medical-100 to-medical-200 flex items-center justify-center overflow-hidden border-2 border-white shadow-soft-md transition-transform duration-300 group-hover:scale-105 group-active:scale-95">
              <User className="w-8 h-8 text-medical-700" strokeWidth={1.5} />
           </div>
           <div className="absolute bottom-1 right-1 w-4 h-4 bg-calm-green-500 border-2 border-white rounded-full animate-pulse"></div>
+          <div className="absolute inset-0 rounded-full ring-2 ring-medical-400 ring-offset-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
         </div>
         
         <div>

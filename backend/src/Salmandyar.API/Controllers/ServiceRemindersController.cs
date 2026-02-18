@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.DTOs.Reminders;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Infrastructure.Persistence;
+using Microsoft.AspNetCore.SignalR;
+using Salmandyar.API.Hubs;
 
 namespace Salmandyar.API.Controllers
 {
@@ -11,10 +13,12 @@ namespace Salmandyar.API.Controllers
     public class ServiceRemindersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<ServiceHub> _hubContext;
 
-        public ServiceRemindersController(ApplicationDbContext context)
+        public ServiceRemindersController(ApplicationDbContext context, IHubContext<ServiceHub> hubContext)
         {
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpGet("{patientId}")]
@@ -61,7 +65,8 @@ namespace Salmandyar.API.Controllers
             _context.ServiceReminders.Add(reminder);
             await _context.SaveChangesAsync();
 
-            // Return DTO (reload to get service title if needed, or just return basic info)
+            await _hubContext.Clients.Group($"Patient_{dto.CareRecipientId}").SendAsync("ReceiveServiceUpdate");
+
             return Ok(dto); 
         }
 
@@ -78,7 +83,6 @@ namespace Salmandyar.API.Controllers
             reminder.NotifyAdmin = dto.NotifyAdmin;
             reminder.NotifySupervisor = dto.NotifySupervisor;
             
-            // If time changed significantly (e.g. > 1 min), reset sent status
             if (Math.Abs((reminder.ScheduledTime - dto.ScheduledTime).TotalMinutes) > 1)
             {
                 reminder.IsSent = false;
@@ -86,6 +90,9 @@ namespace Salmandyar.API.Controllers
             }
 
             await _context.SaveChangesAsync();
+            
+            await _hubContext.Clients.Group($"Patient_{reminder.CareRecipientId}").SendAsync("ReceiveServiceUpdate");
+
             return NoContent();
         }
 
@@ -95,8 +102,13 @@ namespace Salmandyar.API.Controllers
             var reminder = await _context.ServiceReminders.FindAsync(id);
             if (reminder == null) return NotFound();
 
+            var patientId = reminder.CareRecipientId;
+
             _context.ServiceReminders.Remove(reminder);
             await _context.SaveChangesAsync();
+
+            await _hubContext.Clients.Group($"Patient_{patientId}").SendAsync("ReceiveServiceUpdate");
+
             return NoContent();
         }
     }

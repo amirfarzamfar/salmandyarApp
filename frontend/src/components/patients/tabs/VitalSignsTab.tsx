@@ -15,7 +15,6 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
   const [showForm, setShowForm] = useState(false);
   const [nextDue, setNextDue] = useState<Date | null>(null);
   const [selectedCareLevel, setSelectedCareLevel] = useState<CareLevel>(careLevel);
-  const [manualResetTime, setManualResetTime] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
 
   const expectedTime = useMemo(() => nextDue || new Date(), [nextDue]);
@@ -43,59 +42,21 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
     }
   }, [patientId]);
 
-  // Reset manual override when new vitals are fetched/added
+  // Calculate Next Due based on Last Measured Time + Care Level Interval
   useEffect(() => {
-    setManualResetTime(null);
-  }, [vitals]);
-
-  // Calculate Next Due whenever dependencies change
-  useEffect(() => {
-    // Determine the anchor point
-    let anchorTime: Date;
-    
-    if (manualResetTime) {
-      anchorTime = manualResetTime;
-    } else if (vitals.length > 0) {
-      // Use the OLDEST vital as the anchor to maintain the original schedule
-      // Sort by measuredAt ascending
-      const sortedVitals = [...vitals].sort((a, b) => new Date(a.measuredAt).getTime() - new Date(b.measuredAt).getTime());
-      anchorTime = new Date(sortedVitals[0].measuredAt);
+    if (vitals.length > 0) {
+      // Sort by measuredAt descending (newest first)
+      const sortedVitals = [...vitals].sort((a, b) => new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime());
+      const lastMeasured = new Date(sortedVitals[0].measuredAt);
+      
+      const intervalMs = selectedCareLevel * 60 * 60 * 1000;
+      const nextSlot = lastMeasured.getTime() + intervalMs;
+      
+      setNextDue(new Date(nextSlot));
     } else {
       setNextDue(null);
-      return;
     }
-
-    const intervalMs = selectedCareLevel * 60 * 60 * 1000;
-    const now = new Date().getTime();
-    
-    // Calculate the next slot: Anchor + (k * Interval) > LastMeasured
-    // Actually, to be strictly drift-free, it should be > NOW if we are just showing the schedule
-    // But logically, the next due is the first slot that hasn't been "covered" yet.
-    // However, simply: find the next future slot relative to anchor.
-    
-    let nextSlot = anchorTime.getTime();
-    
-    // If we have recent vitals, we want the next slot AFTER the last measurement
-    // But snapped to the grid.
-    if (vitals.length > 0) {
-        const lastMeasured = new Date(vitals[0].measuredAt).getTime(); // vitals[0] is newest
-        
-        // Find the slot just before or at lastMeasured
-        const timeSinceAnchor = lastMeasured - anchorTime.getTime();
-        const slotsPassed = Math.floor(timeSinceAnchor / intervalMs);
-        
-        // The next due is the next slot
-        nextSlot = anchorTime.getTime() + ((slotsPassed + 1) * intervalMs);
-    } else {
-        // No vitals, just project from anchor to now
-        while (nextSlot <= now) {
-            nextSlot += intervalMs;
-        }
-    }
-
-    setNextDue(new Date(nextSlot));
-
-  }, [vitals, selectedCareLevel, manualResetTime]);
+  }, [vitals, selectedCareLevel]);
 
   useEffect(() => {
     fetchVitals();
@@ -103,7 +64,6 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
 
   const handleCareLevelChange = (level: CareLevel) => {
     setSelectedCareLevel(level);
-    setManualResetTime(new Date()); // Reset timing to NOW
   };
 
   // Chart Data Preparation

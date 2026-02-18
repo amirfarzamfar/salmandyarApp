@@ -11,6 +11,7 @@ import DatePicker, { DateObject } from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import TimePicker from 'react-multi-date-picker/plugins/time_picker';
+import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { Plus, CheckCircle, Clock, XCircle, AlertCircle, Bell, Calendar } from 'lucide-react';
 import ServiceReminderForm from '../ServiceReminderForm';
 
@@ -37,6 +38,33 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
 
   useEffect(() => {
     fetchData();
+
+    if (!patientId) return;
+
+    const connection = new HubConnectionBuilder()
+        .withUrl("http://localhost:5016/serviceHub")
+        .configureLogging(LogLevel.Information)
+        .withAutomaticReconnect()
+        .build();
+
+    const startConnection = async () => {
+        try {
+            await connection.start();
+            await connection.invoke("JoinPatientGroup", patientId.toString());
+            
+            connection.on("ReceiveServiceUpdate", () => {
+                fetchData();
+            });
+        } catch (err) {
+            console.error("SignalR Connection Error: ", err);
+        }
+    };
+    
+    startConnection();
+
+    return () => {
+        connection.stop();
+    };
   }, [patientId]);
 
   const fetchData = async () => {

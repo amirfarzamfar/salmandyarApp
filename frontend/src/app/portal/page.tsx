@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SmartHeader } from "@/components/portal/smart-header";
 import { HealthSnapshot } from "@/components/portal/health-snapshot";
 import { VitalSignsChart } from "@/components/portal/vital-signs-chart";
@@ -15,11 +15,28 @@ import { cn } from "@/lib/utils";
 import { Eye, Smartphone, ShieldCheck, ClipboardCheck, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { patientService } from "@/services/patient.service";
+import { Patient } from "@/types/patient";
+import { PatientDetailsModal } from "@/components/portal/patient-details-modal";
 
 export default function PortalPage() {
   const [isElderMode, setIsElderMode] = useState(false);
   const [isFamilyMode, setIsFamilyMode] = useState(false);
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const patientId = 1; // TODO: Get from auth context
+
+  useEffect(() => {
+    const fetchPatient = async () => {
+        try {
+            const data = await patientService.getById(patientId);
+            setPatient(data);
+        } catch (error) {
+            console.error("Failed to fetch patient", error);
+        }
+    };
+    fetchPatient();
+  }, [patientId]);
 
   // Stagger variants for the main content
   const containerVariants = {
@@ -42,6 +59,12 @@ export default function PortalPage() {
       "transition-all duration-500 ease-in-out selection:bg-medical-100 selection:text-medical-900",
       isElderMode ? "elder-mode" : ""
     )}>
+      <PatientDetailsModal 
+        isOpen={isPatientModalOpen} 
+        onClose={() => setIsPatientModalOpen(false)} 
+        patient={patient} 
+      />
+
       {/* Premium UI Control Toggles - Refined Look */}
       <div className="fixed top-24 right-6 z-50 flex flex-col gap-3 md:top-10 md:right-10">
         <motion.button 
@@ -71,7 +94,10 @@ export default function PortalPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <SmartHeader patientName="آقای محمدی" />
+        <SmartHeader 
+            patientName={patient ? `${patient.firstName} ${patient.lastName}` : "کاربر گرامی"} 
+            onAvatarClick={() => setIsPatientModalOpen(true)}
+        />
         
         <motion.main 
           variants={containerVariants}
@@ -123,7 +149,7 @@ export default function PortalPage() {
           <div className="grid lg:grid-cols-2 gap-10">
             {/* Section: Care Schedule */}
             <motion.section variants={itemVariants}>
-              <CarePlanCards />
+              <CarePlanCards patientId={patientId} />
             </motion.section>
 
             {/* Section: Professional Updates */}

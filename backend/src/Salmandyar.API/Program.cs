@@ -1,3 +1,4 @@
+using Salmandyar.API.Hubs;
 using Salmandyar.Application;
 using Salmandyar.Infrastructure;
 using Salmandyar.Infrastructure.Persistence;
@@ -14,6 +15,7 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddSignalR();
 
 const string corsPolicyName = "AllowNextApp";
 
@@ -24,7 +26,8 @@ builder.Services.AddCors(options =>
         {
             policy.WithOrigins("http://localhost:3000")
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials();
         });
 });
 
@@ -64,5 +67,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ServiceHub>("/serviceHub");
 
 app.Run();
