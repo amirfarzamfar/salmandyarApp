@@ -75,6 +75,16 @@ public class ApplicationDbContext : IdentityDbContext<User>
         builder.Entity<CareService>().ToTable("CareServices");
         builder.Entity<ServiceDefinition>().ToTable("ServiceDefinitions");
         builder.Entity<VitalSign>().ToTable("VitalSigns");
+
+        // VitalSign DateTime Conversion
+        builder.Entity<VitalSign>()
+            .Property(v => v.RecordedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<VitalSign>()
+            .Property(v => v.MeasuredAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
         builder.Entity<ServiceReminder>().ToTable("ServiceReminders");
         builder.Entity<NotificationSettings>().ToTable("NotificationSettings");
         

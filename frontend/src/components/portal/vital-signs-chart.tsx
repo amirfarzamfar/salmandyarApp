@@ -35,7 +35,7 @@ const metrics = [
   },
   { 
     id: "hr", 
-    label: "ضربان قلب", 
+    label: "ضربان", 
     unit: "bpm", 
     icon: Heart, 
     color: "#ef4444", // red-500
@@ -43,7 +43,7 @@ const metrics = [
   },
   { 
     id: "o2", 
-    label: "اکسیژن خون", 
+    label: "اکسیژن", 
     unit: "%", 
     icon: Droplet, 
     color: "#0ea5e9", // sky-500
@@ -59,7 +59,7 @@ const metrics = [
   },
   {
     id: "gcs",
-    label: "سطح هوشیاری",
+    label: "هوشیاری",
     unit: "GCS",
     icon: Brain,
     color: "#8b5cf6", // violet-500
@@ -122,13 +122,13 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
                 <stop offset="95%" stopColor="#93c5fd" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis domain={['auto', 'auto']} />
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+            <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12 }} width={30} />
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
             <Tooltip 
-              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
             />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '12px' }} />
             <Area 
               type="monotone" 
               dataKey="systolic" 
@@ -157,10 +157,10 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
                 <stop offset="95%" stopColor="#ef4444" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis domain={['auto', 'auto']} />
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+            <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12 }} width={30} />
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }} />
             <Area type="monotone" dataKey="hr" name="ضربان قلب" stroke="#ef4444" fill="url(#colorHr)" />
           </AreaChart>
         );
@@ -174,10 +174,10 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
                 <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis domain={[80, 100]} />
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+            <YAxis domain={[80, 100]} tick={{ fontSize: 12 }} width={30} />
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }} />
             <Area type="monotone" dataKey="o2" name="اکسیژن خون" stroke="#0ea5e9" fill="url(#colorO2)" />
           </AreaChart>
         );
@@ -191,10 +191,10 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
                 <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis domain={['auto', 'auto']} />
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+            <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12 }} width={30} />
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }} />
             <Area type="monotone" dataKey="temp" name="دما" stroke="#f97316" fill="url(#colorTemp)" />
           </AreaChart>
         );
@@ -208,10 +208,10 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
                 <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-            <YAxis domain={[3, 15]} />
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+            <YAxis domain={[3, 15]} tick={{ fontSize: 12 }} width={30} />
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }} />
             <Area type="monotone" dataKey="gcs" name="سطح هوشیاری" stroke="#8b5cf6" fill="url(#colorGcs)" />
           </AreaChart>
         );
@@ -222,25 +222,27 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
   };
 
   return (
-    <PortalCard className="p-6">
-      <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
-        <h3 className="text-lg font-bold text-gray-800">نمودار تغییرات علائم حیاتی</h3>
+    <PortalCard className="p-4 md:p-6 h-full flex flex-col">
+      <div className="flex flex-col gap-4 mb-4">
+        <h3 className="text-base md:text-lg font-bold text-gray-800">نمودار تغییرات علائم حیاتی</h3>
         
-        <div className="flex bg-gray-100 p-1 rounded-xl overflow-x-auto w-full md:w-auto no-scrollbar">
+        {/* Mobile-first scrollable tabs */}
+        <div className="flex overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 gap-2 no-scrollbar snap-x">
           {metrics.map((metric) => {
             const Icon = metric.icon;
+            const isActive = activeMetric === metric.id;
             return (
               <button
                 key={metric.id}
                 onClick={() => setActiveMetric(metric.id)}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                  activeMetric === metric.id
-                    ? "bg-white text-gray-800 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
+                  "flex items-center gap-2 px-3 py-2 rounded-xl text-xs md:text-sm font-medium transition-all whitespace-nowrap snap-start border",
+                  isActive
+                    ? "bg-gray-800 text-white border-gray-800 shadow-md transform scale-105"
+                    : "bg-white text-gray-500 border-gray-100 hover:border-gray-200 hover:bg-gray-50"
                 )}
               >
-                <Icon size={16} className={activeMetric === metric.id ? `text-[${metric.color}]` : ""} />
+                <Icon size={16} className={isActive ? "text-white" : `text-[${metric.color}]`} />
                 {metric.label}
               </button>
             );
@@ -248,7 +250,7 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
         </div>
       </div>
 
-      <div className="h-[300px] w-full">
+      <div className="h-[250px] md:h-[300px] w-full -ml-2 md:ml-0">
         <ResponsiveContainer width="100%" height="100%">
           {renderChart() || <div />}
         </ResponsiveContainer>

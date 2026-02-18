@@ -22,26 +22,26 @@ const getChartData = (vitals: any[], key: string, limit = 10) => {
 
 const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusColor }: any) => (
   <PortalCard className="relative overflow-hidden group hover:shadow-soft-lg transition-all duration-500" noPadding>
-    <div className="p-6 relative z-10">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`p-3 rounded-2xl ${color} bg-opacity-10 backdrop-blur-sm transition-colors group-hover:bg-opacity-20`}>
-          <Icon className={`w-6 h-6 ${color.replace('bg-', 'text-')}`} strokeWidth={1.5} />
+    <div className="p-4 md:p-6 relative z-10">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
+        <div className={`p-2 md:p-3 rounded-2xl ${color} bg-opacity-10 backdrop-blur-sm transition-colors group-hover:bg-opacity-20`}>
+          <Icon className={`w-5 h-5 md:w-6 md:h-6 ${color.replace('bg-', 'text-')}`} strokeWidth={1.5} />
         </div>
-        <span className={`text-xs font-bold px-3 py-1 rounded-full ${statusColor} bg-opacity-10 text-opacity-100`}>
+        <span className={`text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full ${statusColor} bg-opacity-10 text-opacity-100`}>
           {trend}
         </span>
       </div>
       
-      <div className="space-y-1">
-        <span className="text-sm font-medium text-gray-500 block">{title}</span>
+      <div className="space-y-0.5 md:space-y-1">
+        <span className="text-xs md:text-sm font-medium text-gray-500 block">{title}</span>
         <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-bold text-gray-800 tracking-tight">{value}</span>
-          <span className="text-sm text-gray-400 font-medium">{unit}</span>
+          <span className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">{value}</span>
+          <span className="text-xs md:text-sm text-gray-400 font-medium">{unit}</span>
         </div>
       </div>
     </div>
     
-    <div className="absolute bottom-0 left-0 right-0 h-24 opacity-20 group-hover:opacity-30 transition-opacity duration-500">
+    <div className="absolute bottom-0 left-0 right-0 h-16 md:h-24 opacity-20 group-hover:opacity-30 transition-opacity duration-500">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data}>
           <defs>
@@ -81,9 +81,9 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
           <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
           <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-40 bg-gray-100 rounded-3xl animate-pulse"></div>
+            <div key={i} className="h-32 md:h-40 bg-gray-100 rounded-3xl animate-pulse"></div>
           ))}
         </div>
       </div>
@@ -102,14 +102,14 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
   return (
     <div className="space-y-4 mb-8">
       <div className="flex items-center justify-between px-2">
-        <h2 className="text-lg font-bold text-gray-800">وضعیت سلامت شما</h2>
-        <div className="flex items-center gap-1 text-xs text-gray-400">
+        <h2 className="text-base md:text-lg font-bold text-gray-800">وضعیت سلامت شما</h2>
+        <div className="flex items-center gap-1 text-[10px] md:text-xs text-gray-400">
           <RefreshCw className="w-3 h-3" />
           <span>بروزرسانی: {lastUpdate}</span>
         </div>
       </div>
       
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <VitalCard 
           title="فشار خون" 
           value={latestVital ? `${latestVital.systolicBloodPressure}/${latestVital.diastolicBloodPressure}` : "--/--"} 
