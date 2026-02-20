@@ -66,6 +66,7 @@ export interface CreateCareService {
   endTime?: string;
   description: string;
   notes: string;
+  performerId?: string;
 }
 
 export interface NursingReport {

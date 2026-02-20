@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { patientService } from '@/services/patient.service';
+import { userService, UserListDto } from '@/services/user.service';
 import { serviceCatalogService } from '@/services/service-catalog.service';
 import { serviceReminderService, ServiceReminder } from '@/services/service-reminder.service';
 import { CareService } from '@/types/patient';
@@ -11,14 +12,17 @@ import DatePicker, { DateObject } from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import TimePicker from 'react-multi-date-picker/plugins/time_picker';
-import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
-import { Plus, CheckCircle, Clock, XCircle, AlertCircle, Bell, Calendar } from 'lucide-react';
+import { HubConnectionBuilder, LogLevel, HttpTransportType } from '@microsoft/signalr';
+import { Plus, CheckCircle, Clock, XCircle, AlertCircle, Bell, Calendar, ChevronDown } from 'lucide-react';
 import ServiceReminderForm from '../ServiceReminderForm';
 
 export default function CareServicesTab({ patientId }: { patientId: number }) {
   const [services, setServices] = useState<CareService[]>([]);
   const [reminders, setReminders] = useState<ServiceReminder[]>([]);
   const [definitions, setDefinitions] = useState<ServiceDefinition[]>([]);
+  const [performers, setPerformers] = useState<UserListDto[]>([]);
+  const [performerSearch, setPerformerSearch] = useState('');
+  const [isPerformerOpen, setIsPerformerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReminderFormOpen, setIsReminderFormOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'history' | 'reminders'>('history');
@@ -42,7 +46,10 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
     if (!patientId) return;
 
     const connection = new HubConnectionBuilder()
-        .withUrl("http://localhost:5016/serviceHub")
+        .withUrl("http://localhost:5016/serviceHub", {
+            skipNegotiation: true,
+            transport: HttpTransportType.WebSockets
+        })
         .configureLogging(LogLevel.Information)
         .withAutomaticReconnect()
         .build();
@@ -69,19 +76,22 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
 
   const fetchData = async () => {
     try {
-      const [servicesData, definitionsData, remindersData] = await Promise.all([
+      const [servicesData, definitionsData, remindersData, usersData] = await Promise.all([
         patientService.getServices(patientId),
         serviceCatalogService.getAll(),
-        serviceReminderService.getAll(patientId)
+        serviceReminderService.getAll(patientId),
+        userService.getUsers({ pageNumber: 1, pageSize: 100, isActive: true })
       ]);
       setServices(servicesData);
       setDefinitions(definitionsData.filter(d => d.isActive));
       setReminders(remindersData);
+      setPerformers(usersData.items);
     } catch (error) {
       console.error(error);
       setServices([]);
       setDefinitions([]);
       setReminders([]);
+      setPerformers([]);
     }
   };
 
@@ -91,13 +101,15 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
         careRecipientId: patientId,
         serviceDefinitionId: data.serviceDefinitionId,
         performedAt: data.performedAt,
-        startTime: data.startTime ? new Date(data.startTime).toISOString() : undefined,
-        endTime: data.endTime ? new Date(data.endTime).toISOString() : undefined,
+        startTime: undefined,
+        endTime: undefined,
         description: data.description || '',
-        notes: data.notes || ''
+        notes: data.notes || '',
+        performerId: data.performerId || undefined
       });
       setIsFormOpen(false);
       reset();
+      setPerformerSearch('');
       fetchData();
     } catch (error) {
       console.error("Error adding service", error);
@@ -274,8 +286,64 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
                     </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Time pickers could be added here similar to DatePicker but for simplicity assuming Start/End are derived or simple inputs for now */}
+                <div className="relative">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">پرستار/مسئول (اختیاری)</label>
+                    <Controller
+                        control={control}
+                        name="performerId"
+                        render={({ field: { onChange, value } }) => {
+                            const selectedUser = performers.find(u => u.id === value);
+                            
+                            return (
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        className="w-full pr-3 pl-10 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
+                                        placeholder="جستجو و انتخاب..."
+                                        value={isPerformerOpen ? performerSearch : (selectedUser ? `${selectedUser.firstName} ${selectedUser.lastName}` : performerSearch)}
+                                        onChange={(e) => {
+                                            setPerformerSearch(e.target.value);
+                                            setIsPerformerOpen(true);
+                                            if (!e.target.value) onChange(undefined);
+                                        }}
+                                        onFocus={() => {
+                                            setIsPerformerOpen(true);
+                                            if (selectedUser) setPerformerSearch(`${selectedUser.firstName} ${selectedUser.lastName}`);
+                                        }}
+                                        onBlur={() => {
+                                            setTimeout(() => setIsPerformerOpen(false), 200);
+                                        }}
+                                    />
+                                    <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                    
+                                    {isPerformerOpen && (
+                                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                            {performers.filter(u => 
+                                                `${u.firstName} ${u.lastName} ${u.role}`.includes(performerSearch)
+                                            ).map(u => (
+                                                <div
+                                                    key={u.id}
+                                                    className="px-4 py-2 hover:bg-teal-50 cursor-pointer text-sm border-b last:border-0"
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        onChange(u.id);
+                                                        setPerformerSearch(`${u.firstName} ${u.lastName}`);
+                                                        setIsPerformerOpen(false);
+                                                    }}
+                                                >
+                                                    <div className="font-medium text-gray-800">{u.firstName} {u.lastName}</div>
+                                                    <div className="text-xs text-gray-500">{u.role}</div>
+                                                </div>
+                                            ))}
+                                            {performers.filter(u => `${u.firstName} ${u.lastName} ${u.role}`.includes(performerSearch)).length === 0 && (
+                                                <div className="px-4 py-2 text-sm text-gray-500">کاربری یافت نشد</div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }}
+                    />
                 </div>
 
                 <div>

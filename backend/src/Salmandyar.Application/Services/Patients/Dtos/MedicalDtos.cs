@@ -38,6 +38,7 @@ public record CareServiceDto(
     int Id,
     DateTime PerformedAt,
     string PerformerName,
+    string? PerformerId, // Added for editing
     string ServiceTitle, // Replaces ServiceType
     ServiceCategory Category,
     CareServiceStatus Status,
@@ -54,7 +55,8 @@ public record CreateCareServiceDto(
     DateTime? StartTime,
     DateTime? EndTime,
     string Description,
-    string Notes
+    string Notes,
+    string? PerformerId = null // Optional override for performer
 );
 
 public record UpdateCareServiceDto(
@@ -64,7 +66,8 @@ public record UpdateCareServiceDto(
     DateTime? EndTime,
     string Description,
     string Notes,
-    CareServiceStatus Status
+    CareServiceStatus Status,
+    string? PerformerId = null
 );
 
 public record NursingReportDto(

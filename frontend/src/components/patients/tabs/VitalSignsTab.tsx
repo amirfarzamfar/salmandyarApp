@@ -180,7 +180,7 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
       <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <h3 className="text-lg font-bold text-gray-800 mb-4">روند تغییرات ۲۴ ساعت گذشته</h3>
         <div className="h-[300px] w-full" dir="ltr">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
               <XAxis dataKey="time" stroke="#9ca3af" fontSize={12} />

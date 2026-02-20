@@ -132,6 +132,7 @@ public class PatientService : IPatientService
                 s.Id,
                 s.PerformedAt,
                 s.Performer != null ? $"{s.Performer.FirstName} {s.Performer.LastName}" : "Unknown",
+                s.PerformerId,
                 s.ServiceDefinition.Title,
                 s.ServiceDefinition.Category,
                 s.Status,
@@ -145,6 +146,9 @@ public class PatientService : IPatientService
 
     public async Task AddCareServiceAsync(string performerId, CreateCareServiceDto dto)
     {
+        // Use provided PerformerId if available (for Admin override), otherwise use logged-in user
+        var finalPerformerId = !string.IsNullOrEmpty(dto.PerformerId) ? dto.PerformerId : performerId;
+
         // Validation: EndTime > StartTime
         if (dto.StartTime.HasValue && dto.EndTime.HasValue && dto.EndTime < dto.StartTime)
         {
@@ -155,7 +159,7 @@ public class PatientService : IPatientService
         if (dto.StartTime.HasValue && dto.EndTime.HasValue)
         {
             var overlap = await _context.CareServices
-                .AnyAsync(s => s.PerformerId == performerId && 
+                .AnyAsync(s => s.PerformerId == finalPerformerId && 
                                s.StartTime.HasValue && s.EndTime.HasValue &&
                                s.StartTime < dto.EndTime && s.EndTime > dto.StartTime);
             
@@ -168,7 +172,7 @@ public class PatientService : IPatientService
         var entity = new CareService
         {
             CareRecipientId = dto.CareRecipientId,
-            PerformerId = performerId,
+            PerformerId = finalPerformerId,
             ServiceDefinitionId = dto.ServiceDefinitionId,
             PerformedAt = dto.PerformedAt,
             StartTime = dto.StartTime,
@@ -188,17 +192,20 @@ public class PatientService : IPatientService
         var service = await _context.CareServices.FindAsync(serviceId);
         if (service == null) throw new KeyNotFoundException($"Service with ID {serviceId} not found.");
 
+        // Determine the effective PerformerId (new one if provided, else existing)
+        var effectivePerformerId = !string.IsNullOrEmpty(dto.PerformerId) ? dto.PerformerId : service.PerformerId;
+
         // Validation: EndTime > StartTime
         if (dto.StartTime.HasValue && dto.EndTime.HasValue && dto.EndTime < dto.StartTime)
         {
             throw new ArgumentException("End time cannot be before start time");
         }
 
-        // Validation: Overlap check for the same Performer (excluding current service)
+        // Validation: Overlap check for the effective Performer (excluding current service)
         if (dto.StartTime.HasValue && dto.EndTime.HasValue)
         {
             var overlap = await _context.CareServices
-                .AnyAsync(s => s.PerformerId == service.PerformerId && 
+                .AnyAsync(s => s.PerformerId == effectivePerformerId && 
                                s.Id != serviceId && // Exclude self
                                s.StartTime.HasValue && s.EndTime.HasValue &&
                                s.StartTime < dto.EndTime && s.EndTime > dto.StartTime);
@@ -209,6 +216,7 @@ public class PatientService : IPatientService
             }
         }
 
+        if (!string.IsNullOrEmpty(dto.PerformerId)) service.PerformerId = dto.PerformerId;
         service.ServiceDefinitionId = dto.ServiceDefinitionId;
         service.PerformedAt = dto.PerformedAt;
         service.StartTime = dto.StartTime;
