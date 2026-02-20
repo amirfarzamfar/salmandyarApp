@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Salmandyar.API.Hubs;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Patients.Dtos;
 using System.Security.Claims;
@@ -12,10 +14,12 @@ namespace Salmandyar.API.Controllers;
 public class PatientsController : ControllerBase
 {
     private readonly IPatientService _patientService;
+    private readonly IHubContext<ServiceHub> _hubContext;
 
-    public PatientsController(IPatientService patientService)
+    public PatientsController(IPatientService patientService, IHubContext<ServiceHub> hubContext)
     {
         _patientService = patientService;
+        _hubContext = hubContext;
     }
 
     [HttpGet]
@@ -65,20 +69,29 @@ public class PatientsController : ControllerBase
         if (userId == null) return Unauthorized();
 
         await _patientService.AddCareServiceAsync(userId, dto);
+        
+        await _hubContext.Clients.Group($"Patient_{dto.CareRecipientId}").SendAsync("ReceiveServiceUpdate");
+        
         return Ok();
     }
 
     [HttpPut("services/{serviceId}")]
     public async Task<IActionResult> UpdateService(int serviceId, [FromBody] UpdateCareServiceDto dto)
     {
-        await _patientService.UpdateCareServiceAsync(serviceId, dto);
+        var patientId = await _patientService.UpdateCareServiceAsync(serviceId, dto);
+        
+        await _hubContext.Clients.Group($"Patient_{patientId}").SendAsync("ReceiveServiceUpdate");
+        
         return NoContent();
     }
 
     [HttpDelete("services/{serviceId}")]
     public async Task<IActionResult> DeleteService(int serviceId)
     {
-        await _patientService.DeleteCareServiceAsync(serviceId);
+        var patientId = await _patientService.DeleteCareServiceAsync(serviceId);
+        
+        await _hubContext.Clients.Group($"Patient_{patientId}").SendAsync("ReceiveServiceUpdate");
+        
         return NoContent();
     }
 

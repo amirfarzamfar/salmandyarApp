@@ -188,7 +188,7 @@ public class PatientService : IPatientService
         await _context.SaveChangesAsync();
     }
 
-    public async Task UpdateCareServiceAsync(int serviceId, UpdateCareServiceDto dto)
+    public async Task<int> UpdateCareServiceAsync(int serviceId, UpdateCareServiceDto dto)
     {
         var service = await _context.CareServices.FindAsync(serviceId);
         if (service == null) throw new KeyNotFoundException($"Service with ID {serviceId} not found.");
@@ -229,15 +229,20 @@ public class PatientService : IPatientService
 
         _context.CareServices.Update(service);
         await _context.SaveChangesAsync();
+        
+        return service.CareRecipientId;
     }
 
-    public async Task DeleteCareServiceAsync(int serviceId)
+    public async Task<int> DeleteCareServiceAsync(int serviceId)
     {
         var service = await _context.CareServices.FindAsync(serviceId);
         if (service == null) throw new KeyNotFoundException($"Service with ID {serviceId} not found.");
 
+        var careRecipientId = service.CareRecipientId;
         _context.CareServices.Remove(service);
         await _context.SaveChangesAsync();
+        
+        return careRecipientId;
     }
 
     public async Task<List<NursingReportDto>> GetNursingReportsAsync(int patientId)
