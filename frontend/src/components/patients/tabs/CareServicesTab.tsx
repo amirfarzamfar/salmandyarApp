@@ -24,6 +24,7 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
   const [performerSearch, setPerformerSearch] = useState('');
   const [isPerformerOpen, setIsPerformerOpen] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingService, setEditingService] = useState<CareService | null>(null);
   const [isReminderFormOpen, setIsReminderFormOpen] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<'history' | 'reminders'>('history');
 
@@ -32,11 +33,14 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CareServiceFormValues>({
     resolver: zodResolver(careServiceFormSchema),
     defaultValues: {
       performedAt: new Date().toISOString(),
+      // Ensure time is in HH:mm format (24-hour)
+      time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
     }
   });
 
@@ -95,24 +99,92 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
     }
   };
 
+  const handleEdit = (service: CareService) => {
+    // Check if service is in the future
+    if (new Date(service.performedAt) <= new Date()) {
+        return; // Silent return or show toast? User said "services that haven't reached due date yet"
+    }
+
+    setEditingService(service);
+    setIsFormOpen(true);
+    
+    // Populate form
+    setValue('serviceDefinitionId', service.serviceDefinitionId); // Note: Make sure serviceDefinitionId is available on CareService type
+    setValue('performedAt', service.performedAt);
+    
+    const timeStr = new Date(service.performedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    setValue('time', timeStr);
+    
+    setValue('description', service.description || '');
+    setValue('notes', service.notes || '');
+    setValue('performerId', service.performerId || undefined);
+    
+    if (service.performerId) {
+        const performer = performers.find(p => p.id === service.performerId);
+        if (performer) {
+            setPerformerSearch(`${performer.firstName} ${performer.lastName}`);
+        } else {
+             setPerformerSearch('');
+        }
+    } else {
+        setPerformerSearch('');
+    }
+  };
+
   const onSubmit = async (data: CareServiceFormValues) => {
     try {
-      await patientService.addService({
+      // Combine Date and Time
+      const datePart = new Date(data.performedAt);
+      // data.time format is expected to be HH:mm from TimePicker or manual input
+      // If it comes from DatePicker as Date object, handle it. But we used string in schema.
+      // TimePicker usually returns DateObject or string depending on config.
+      // Let's assume string HH:mm for now as per schema.
+      
+      let hours = 0, minutes = 0;
+      // data.time should be "HH:mm" string from input[type=time]
+      if (typeof data.time === 'string' && data.time.includes(':')) {
+          [hours, minutes] = data.time.split(':').map(Number);
+      } else {
+          // Fallback if empty or invalid, though required by schema
+          const now = new Date();
+          hours = now.getHours();
+          minutes = now.getMinutes();
+      }
+
+      datePart.setHours(hours, minutes, 0, 0);
+      
+      // Adjust for timezone if needed, but usually Date object handles local time.
+      // However, we want to send ISO string.
+      const finalDateTime = datePart.toISOString();
+
+      const payload = {
         careRecipientId: patientId,
         serviceDefinitionId: data.serviceDefinitionId,
-        performedAt: data.performedAt,
+        performedAt: finalDateTime,
         startTime: undefined,
         endTime: undefined,
         description: data.description || '',
         notes: data.notes || '',
-        performerId: data.performerId || undefined
-      });
+        performerId: data.performerId || undefined,
+        status: editingService ? editingService.status : CareServiceStatus.Planned
+      };
+
+      if (editingService) {
+        await patientService.updateService(editingService.id, payload);
+      } else {
+        await patientService.addService(payload);
+      }
+
       setIsFormOpen(false);
-      reset();
+      reset({
+          performedAt: new Date().toISOString(),
+          time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      });
+      setEditingService(null);
       setPerformerSearch('');
       fetchData();
     } catch (error) {
-      console.error("Error adding service", error);
+      console.error("Error saving service", error);
       alert("خطا در ثبت خدمت. لطفاً مجدداً تلاش کنید.");
     }
   };
@@ -212,7 +284,17 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
         
         {activeSubTab === 'history' ? (
             <button 
-                onClick={() => setIsFormOpen(!isFormOpen)}
+                onClick={() => {
+                    setIsFormOpen(!isFormOpen);
+                    if (!isFormOpen) {
+                        setEditingService(null);
+                        reset({
+                            performedAt: new Date().toISOString(),
+                            time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                        });
+                        setPerformerSearch('');
+                    }
+                }}
                 className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm flex items-center hover:bg-teal-700 transition-colors"
             >
                 <Plus className="w-4 h-4 ml-2" />
@@ -283,6 +365,20 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
                           )}
                         />
                          {errors.performedAt && <p className="text-red-500 text-xs mt-1">{errors.performedAt.message}</p>}
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">ساعت انجام</label>
+                        <div className="relative">
+                            <input
+                                type="time"
+                                {...register('time')}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 text-center font-mono"
+                                style={{ direction: 'ltr' }}
+                            />
+                            <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                        </div>
+                        {errors.time && <p className="text-red-500 text-xs mt-1">{errors.time.message}</p>}
                     </div>
                 </div>
                 
@@ -378,7 +474,15 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
                 </div>
             ) : (
                 services.map(s => (
-                <div key={s.id} className="bg-white border border-gray-200 p-4 rounded-xl hover:shadow-md transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div 
+                    key={s.id} 
+                    className={`bg-white border border-gray-200 p-4 rounded-xl transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-4 ${new Date(s.performedAt) > new Date() ? 'cursor-pointer hover:shadow-md hover:border-teal-300' : ''}`}
+                    onClick={() => {
+                        if (new Date(s.performedAt) > new Date()) {
+                            handleEdit(s);
+                        }
+                    }}
+                >
                     <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                             <h4 className="font-bold text-gray-900">{s.serviceTitle}</h4>

@@ -49,7 +49,9 @@ export interface CareService {
   id: number;
   performedAt: string;
   performerName: string;
+  performerId?: string;
   serviceTitle: string;
+  serviceDefinitionId: number;
   category: ServiceCategory;
   status: CareServiceStatus;
   startTime?: string;

@@ -27,7 +27,11 @@ export const patientService = {
     return response.data;
   },
   addService: async (data: CreateCareService) => {
-    await api.post(`/patients/${data.careRecipientId}/services`, data);
+    const response = await api.post(`/patients/${data.careRecipientId}/services`, data);
+    return response.data;
+  },
+  updateService: async (serviceId: number, data: any) => {
+    await api.put(`/patients/services/${serviceId}`, data);
   },
   getReports: async (id: number) => {
     const response = await api.get<NursingReport[]>(`/patients/${id}/reports`);

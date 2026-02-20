@@ -133,6 +133,7 @@ public class PatientService : IPatientService
                 s.PerformedAt,
                 s.Performer != null ? $"{s.Performer.FirstName} {s.Performer.LastName}" : "Unknown",
                 s.PerformerId,
+                s.ServiceDefinitionId,
                 s.ServiceDefinition.Title,
                 s.ServiceDefinition.Category,
                 s.Status,

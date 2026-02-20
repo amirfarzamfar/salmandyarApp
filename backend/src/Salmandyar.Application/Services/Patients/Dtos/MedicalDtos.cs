@@ -39,6 +39,7 @@ public record CareServiceDto(
     DateTime PerformedAt,
     string PerformerName,
     string? PerformerId, // Added for editing
+    int ServiceDefinitionId, // Added for editing
     string ServiceTitle, // Replaces ServiceType
     ServiceCategory Category,
     CareServiceStatus Status,
