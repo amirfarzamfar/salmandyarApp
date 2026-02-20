@@ -44,6 +44,7 @@ export interface VitalSign {
 }
 
 import { ServiceCategory, CareServiceStatus } from './service';
+export { ServiceCategory, CareServiceStatus };
 
 export interface CareService {
   id: number;
