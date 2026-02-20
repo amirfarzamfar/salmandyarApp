@@ -110,11 +110,11 @@ export default function PortalPage() {
             <HealthSnapshot patientId={patientId} />
             
             {!isElderMode && (
-              <div className="grid lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+              <div className="space-y-6">
+                <div>
                   <VitalSignsChart patientId={patientId} />
                 </div>
-                <div className="lg:col-span-1 max-h-[460px] overflow-y-auto rounded-3xl no-scrollbar">
+                <div className="max-h-[500px] overflow-y-auto rounded-3xl no-scrollbar">
                   <VitalSignsHistory patientId={patientId} />
                 </div>
               </div>
