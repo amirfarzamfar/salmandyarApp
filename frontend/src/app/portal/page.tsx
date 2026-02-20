@@ -154,7 +154,7 @@ export default function PortalPage() {
 
             {/* Section: Professional Updates */}
             <motion.section variants={itemVariants} className="space-y-10">
-              <NursingReportFeed />
+              <NursingReportFeed patientId={patientId} />
               <AnimatePresence>
                 {!isElderMode && (
                   <motion.div
