@@ -1,9 +1,9 @@
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, Controller } from 'react-hook-form';
 import { MedicationFormData, MedicationCriticality } from '../../types';
 import { ShieldAlert, AlertTriangle, Pill } from 'lucide-react';
 
 export const Step3_Safety = () => {
-  const { register, watch } = useFormContext<MedicationFormData>();
+  const { register, watch, control, formState: { errors } } = useFormContext<MedicationFormData>();
   
   const isHighAlert = watch('highAlert');
   const isPRN = watch('isPRN');
@@ -18,25 +18,36 @@ export const Step3_Safety = () => {
             <ShieldAlert className="w-5 h-5 text-teal-600" />
             سطح اهمیت (Criticality)
           </label>
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { value: MedicationCriticality.Routine, label: 'معمول', color: 'bg-green-50 border-green-200 text-green-700 peer-checked:bg-green-100 peer-checked:border-green-500' },
-              { value: MedicationCriticality.Important, label: 'مهم', color: 'bg-orange-50 border-orange-200 text-orange-700 peer-checked:bg-orange-100 peer-checked:border-orange-500' },
-              { value: MedicationCriticality.LifeSaving, label: 'حیاتی', color: 'bg-red-50 border-red-200 text-red-700 peer-checked:bg-red-100 peer-checked:border-red-500' },
-            ].map((option) => (
-              <label key={option.value} className="cursor-pointer relative">
-                <input
-                  type="radio"
-                  value={option.value}
-                  {...register('criticality')}
-                  className="peer sr-only"
-                />
-                <div className={`p-3 text-center rounded-xl border-2 transition-all hover:shadow-sm ${option.color}`}>
-                  <span className="font-medium text-sm">{option.label}</span>
-                </div>
-              </label>
-            ))}
-          </div>
+          <Controller
+            control={control}
+            name="criticality"
+            render={({ field }) => (
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { value: MedicationCriticality.Routine, label: 'معمول', color: 'bg-green-50 border-green-200 text-green-700 peer-checked:bg-green-100 peer-checked:border-green-500' },
+                  { value: MedicationCriticality.Important, label: 'مهم', color: 'bg-orange-50 border-orange-200 text-orange-700 peer-checked:bg-orange-100 peer-checked:border-orange-500' },
+                  { value: MedicationCriticality.LifeSaving, label: 'حیاتی', color: 'bg-red-50 border-red-200 text-red-700 peer-checked:bg-red-100 peer-checked:border-red-500' },
+                ].map((option) => (
+                  <label key={option.value} className="cursor-pointer relative">
+                    <input
+                      type="radio"
+                      name={field.name}
+                      value={option.value}
+                      checked={field.value === option.value}
+                      onChange={() => field.onChange(option.value)}
+                      className="peer sr-only"
+                    />
+                    <div className={`p-3 text-center rounded-xl border-2 transition-all hover:shadow-sm ${option.color}`}>
+                      <span className="font-medium text-sm">{option.label}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+          />
+          {errors.criticality && (
+             <p className="text-xs text-red-500 mt-1">{errors.criticality.message}</p>
+          )}
         </div>
 
         {/* Toggles */}

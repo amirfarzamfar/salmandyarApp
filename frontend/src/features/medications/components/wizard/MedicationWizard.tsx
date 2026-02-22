@@ -112,7 +112,18 @@ export const MedicationWizard = ({ patientId, onSuccess, onCancel, onSubmit }: M
       {/* Body */}
       <div className="flex-1 overflow-y-auto p-6 md:p-8">
         <FormProvider {...methods}>
-          <form onSubmit={methods.handleSubmit(onFormSubmit)} id="medication-wizard-form">
+          {/* Prevent default form submission on enter key, except on last step if needed */}
+          <form 
+            id="medication-wizard-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (isLastStep) {
+                methods.handleSubmit(onFormSubmit)(e);
+              } else {
+                handleNext();
+              }
+            }}
+          >
             <CurrentComponent />
           </form>
         </FormProvider>
@@ -132,8 +143,8 @@ export const MedicationWizard = ({ patientId, onSuccess, onCancel, onSubmit }: M
 
         {isLastStep ? (
           <button
-            type="submit"
-            form="medication-wizard-form"
+            type="button"
+            onClick={methods.handleSubmit(onFormSubmit)}
             disabled={isSubmitting || !methods.formState.isValid}
             className="flex items-center gap-2 px-8 py-2.5 bg-teal-600 text-white rounded-xl font-bold shadow-lg shadow-teal-200 hover:bg-teal-700 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
           >
