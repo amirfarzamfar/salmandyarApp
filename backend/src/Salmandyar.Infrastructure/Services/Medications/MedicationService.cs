@@ -54,6 +54,82 @@ public class MedicationService : IMedicationService
         return MapToDto(medication);
     }
 
+    public async Task<MedicationDto> UpdateMedicationAsync(int id, UpdateMedicationDto dto)
+    {
+        var medication = await _context.PatientMedications
+            .Include(m => m.Doses)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (medication == null) throw new KeyNotFoundException("Medication not found");
+
+        // Check if schedule changed
+        bool scheduleChanged = medication.FrequencyType != dto.FrequencyType ||
+                               medication.FrequencyDetail != dto.FrequencyDetail ||
+                               medication.StartDate != dto.StartDate;
+
+        // Update fields
+        medication.Name = dto.Name;
+        medication.Form = dto.Form;
+        medication.Dosage = dto.Dosage;
+        medication.Route = dto.Route;
+        medication.FrequencyType = dto.FrequencyType;
+        medication.FrequencyDetail = dto.FrequencyDetail;
+        medication.StartDate = dto.StartDate;
+        medication.EndDate = dto.EndDate;
+        medication.IsPRN = dto.IsPRN;
+        medication.HighAlert = dto.HighAlert;
+        medication.Criticality = dto.Criticality;
+        medication.Instructions = dto.Instructions;
+        medication.GracePeriodMinutes = dto.GracePeriodMinutes;
+        medication.NotifyPatient = dto.NotifyPatient;
+        medication.NotifyNurse = dto.NotifyNurse;
+        medication.NotifySupervisor = dto.NotifySupervisor;
+        medication.NotifyFamily = dto.NotifyFamily;
+        medication.EscalationEnabled = dto.EscalationEnabled;
+        medication.UpdatedAt = DateTime.UtcNow;
+
+        if (scheduleChanged)
+        {
+            // Remove future scheduled doses
+            var futureDoses = _context.MedicationDoses
+                .Where(d => d.PatientMedicationId == id && 
+                            d.Status == DoseStatus.Scheduled && 
+                            d.ScheduledTime > DateTime.UtcNow);
+            
+            _context.MedicationDoses.RemoveRange(futureDoses);
+            
+            // Regenerate
+            await _context.SaveChangesAsync(); // Save updates first
+            await GenerateDosesAsync(medication.Id, DateTime.UtcNow, DateTime.UtcNow.AddDays(7));
+        }
+        else
+        {
+            await _context.SaveChangesAsync();
+        }
+
+        return MapToDto(medication);
+    }
+
+    public async Task DeleteMedicationAsync(int id)
+    {
+        var medication = await _context.PatientMedications
+            .Include(m => m.Doses)
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        if (medication == null) throw new KeyNotFoundException("Medication not found");
+
+        // Safety check: Cannot delete if there are taken doses
+        bool hasHistory = medication.Doses.Any(d => d.Status != DoseStatus.Scheduled && d.Status != DoseStatus.Cancelled);
+        
+        if (hasHistory)
+        {
+            throw new InvalidOperationException("Cannot delete medication with administration history. Please set an End Date instead.");
+        }
+
+        _context.PatientMedications.Remove(medication);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<List<MedicationDto>> GetPatientMedicationsAsync(int patientId)
     {
         var medications = await _context.PatientMedications
@@ -321,6 +397,33 @@ public class MedicationService : IMedicationService
                  for (int i = 0; i < 24; i += hours)
                  {
                      times.Add(new TimeSpan(i, 0, 0));
+                 }
+             }
+        }
+        else if (med.FrequencyType == MedicationFrequencyType.Weekly)
+        {
+             if (!string.IsNullOrEmpty(med.FrequencyDetail) && med.FrequencyDetail.Contains('|'))
+             {
+                 var parts = med.FrequencyDetail.Split('|');
+                 var daysPart = parts[0];
+                 var timesPart = parts.Length > 1 ? parts[1] : "";
+
+                 var days = daysPart.Split(',').Select(d => int.TryParse(d, out int day) ? day : -1).ToList();
+                 
+                 // Check if current day (fromDate) is in the selected days
+                 // DayOfWeek.Sunday is 0, which matches our frontend convention
+                 int currentDayOfWeek = (int)fromDate.DayOfWeek;
+                 
+                 if (days.Contains(currentDayOfWeek))
+                 {
+                     if (!string.IsNullOrEmpty(timesPart))
+                     {
+                         var timeParts = timesPart.Split(',');
+                         foreach (var p in timeParts)
+                         {
+                             if (TimeSpan.TryParse(p, out var ts)) times.Add(ts);
+                         }
+                     }
                  }
              }
         }

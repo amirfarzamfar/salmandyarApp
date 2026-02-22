@@ -1,12 +1,14 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Pill, Clock, AlertTriangle, Info } from 'lucide-react';
+import { ChevronDown, ChevronUp, Pill, Clock, AlertTriangle, Info, Edit2, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface MedicationCardProps {
   medication: any;
+  onEdit?: (medication: any) => void;
+  onDelete?: (id: number) => void;
 }
 
-export const MedicationCard = ({ medication }: MedicationCardProps) => {
+export const MedicationCard = ({ medication, onEdit, onDelete }: MedicationCardProps) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -25,9 +27,29 @@ export const MedicationCard = ({ medication }: MedicationCardProps) => {
           </div>
         </div>
         
-        <button className="text-gray-400">
-          {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-1">
+            {onEdit && (
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onEdit(medication); }}
+                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-full transition-colors active:scale-95"
+                    title="ویرایش"
+                >
+                    <Edit2 className="w-5 h-5" />
+                </button>
+            )}
+            {onDelete && (
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onDelete(medication.id); }}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors active:scale-95"
+                    title="حذف"
+                >
+                    <Trash2 className="w-5 h-5" />
+                </button>
+            )}
+            <button className="text-gray-400 p-2">
+                {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+            </button>
+        </div>
       </div>
 
       {expanded && (

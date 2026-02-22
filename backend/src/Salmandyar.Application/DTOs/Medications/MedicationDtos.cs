@@ -50,6 +50,29 @@ public class CreateMedicationDto
     public bool EscalationEnabled { get; set; }
 }
 
+public class UpdateMedicationDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Form { get; set; } = string.Empty;
+    public string Dosage { get; set; } = string.Empty;
+    public string Route { get; set; } = string.Empty;
+    public MedicationFrequencyType FrequencyType { get; set; }
+    public string? FrequencyDetail { get; set; }
+    public DateTime StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public bool IsPRN { get; set; }
+    public bool HighAlert { get; set; }
+    public MedicationCriticality Criticality { get; set; }
+    public string? Instructions { get; set; }
+
+    public int GracePeriodMinutes { get; set; } = 30;
+    public bool NotifyPatient { get; set; }
+    public bool NotifyNurse { get; set; }
+    public bool NotifySupervisor { get; set; }
+    public bool NotifyFamily { get; set; }
+    public bool EscalationEnabled { get; set; }
+}
+
 public class MedicationDoseDto
 {
     public int Id { get; set; }

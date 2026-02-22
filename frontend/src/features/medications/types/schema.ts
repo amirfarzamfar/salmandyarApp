@@ -12,9 +12,9 @@ export const medicationSchema = z.object({
   
   // Scheduling
   frequencyType: z.nativeEnum(MedicationFrequencyType),
-  frequencyDetail: z.string().optional(), // Can be comma separated times or interval number
+  frequencyDetail: z.string().nullable().optional(), // Can be comma separated times or interval number
   startDate: z.string().min(1, 'تاریخ شروع الزامی است'),
-  endDate: z.string().optional(),
+  endDate: z.string().nullable().optional(),
   
   // Safety & Alerts
   criticality: z.nativeEnum(MedicationCriticality),
@@ -30,7 +30,7 @@ export const medicationSchema = z.object({
   notifyFamily: z.boolean().default(false),
   
   // Instructions
-  instructions: z.string().optional(),
+  instructions: z.string().nullable().optional(),
 });
 
 export type MedicationFormData = z.infer<typeof medicationSchema>;

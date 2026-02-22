@@ -5,7 +5,6 @@ import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import { Calendar } from 'lucide-react';
-import { useEffect } from 'react';
 
 const WEEK_DAYS = [
   { id: 6, label: 'شنبه' },
@@ -20,12 +19,10 @@ const WEEK_DAYS = [
 export const Step2_Scheduling = () => {
   const { register, control, setValue, getValues, formState: { errors } } = useFormContext<MedicationFormData>();
   
-  // Use useWatch to ensure re-renders when values change
-  const frequencyType = useWatch({ control, name: 'frequencyType' });
-  const frequencyDetail = useWatch({ control, name: 'frequencyDetail' });
+  const frequencyType = useWatch<MedicationFormData, 'frequencyType'>({ control, name: 'frequencyType' });
+  const frequencyDetail = useWatch<MedicationFormData, 'frequencyDetail'>({ control, name: 'frequencyDetail' });
 
-  // Helper to manage week days selection
-  const handleDayToggle = (dayId: number, currentDetail: string | undefined) => {
+  const handleDayToggle = (dayId: number, currentDetail: string | null | undefined) => {
     // Format: "DAYS:0,1|TIMES:08:00" or simple "0,1|08:00"
     const parts = (currentDetail || '').split('|');
     const daysPart = parts[0] || '';

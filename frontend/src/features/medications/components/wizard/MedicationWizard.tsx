@@ -12,6 +12,7 @@ import { toast } from 'react-hot-toast';
 
 interface MedicationWizardProps {
   patientId: number;
+  initialData?: Partial<MedicationFormData>;
   onSuccess: () => void;
   onCancel: () => void;
   onSubmit: (data: MedicationFormData) => Promise<void>;
@@ -24,9 +25,10 @@ const STEPS = [
   { id: 4, title: 'تنظیمات نهایی', component: Step4_Notifications },
 ];
 
-export const MedicationWizard = ({ patientId, onSuccess, onCancel, onSubmit }: MedicationWizardProps) => {
+export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, onSubmit }: MedicationWizardProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isEditMode = !!initialData;
 
   const methods = useForm<MedicationFormData>({
     resolver: zodResolver(medicationSchema),
@@ -42,6 +44,7 @@ export const MedicationWizard = ({ patientId, onSuccess, onCancel, onSubmit }: M
       notifyNurse: false,
       notifySupervisor: false,
       notifyFamily: false,
+      ...initialData // Override defaults with initialData if present
     },
     mode: 'onChange' // Validate on change for better UX
   });
@@ -63,11 +66,11 @@ export const MedicationWizard = ({ patientId, onSuccess, onCancel, onSubmit }: M
     setIsSubmitting(true);
     try {
       await onSubmit(data);
-      toast.success('دارو با موفقیت ثبت شد');
+      toast.success(isEditMode ? 'دارو با موفقیت ویرایش شد' : 'دارو با موفقیت ثبت شد');
       onSuccess();
     } catch (error) {
       console.error(error);
-      toast.error('خطا در ثبت دارو');
+      toast.error(isEditMode ? 'خطا در ویرایش دارو' : 'خطا در ثبت دارو');
     } finally {
       setIsSubmitting(false);
     }
@@ -91,7 +94,7 @@ export const MedicationWizard = ({ patientId, onSuccess, onCancel, onSubmit }: M
       {/* Header */}
       <div className="bg-gradient-to-l from-teal-600 to-teal-700 p-6 text-white flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-bold">افزودن داروی جدید</h2>
+          <h2 className="text-xl font-bold">{isEditMode ? 'ویرایش دارو' : 'افزودن داروی جدید'}</h2>
           <p className="text-teal-100 text-sm mt-1">
             گام {currentStep} از {STEPS.length}: {STEPS[currentStep - 1].title}
           </p>
@@ -156,7 +159,7 @@ export const MedicationWizard = ({ patientId, onSuccess, onCancel, onSubmit }: M
             ) : (
               <>
                 <Check className="w-5 h-5" />
-                ثبت نهایی
+                {isEditMode ? 'ویرایش نهایی' : 'ثبت نهایی'}
               </>
             )}
           </button>

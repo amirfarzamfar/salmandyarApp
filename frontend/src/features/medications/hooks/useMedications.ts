@@ -27,3 +27,32 @@ export const useCreateMedication = () => {
     },
   });
 };
+
+export const useUpdateMedication = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: MedicationFormData }) => {
+      const { data: res } = await api.put(`/medications/${id}`, data);
+      return res;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['medications', variables.data.careRecipientId] });
+      queryClient.invalidateQueries({ queryKey: ['kardex'] });
+    },
+  });
+};
+
+export const useDeleteMedication = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await api.delete(`/medications/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['medications'] });
+      queryClient.invalidateQueries({ queryKey: ['kardex'] });
+    },
+  });
+};
