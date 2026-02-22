@@ -1,20 +1,83 @@
-import { useFormContext, Controller } from 'react-hook-form';
+import { useFormContext, Controller, useWatch } from 'react-hook-form';
 import { MedicationFormData, MedicationFrequencyType } from '../../types';
 import { TimeListSelector } from '../shared/TimeListSelector';
 import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import { Calendar } from 'lucide-react';
+import { useEffect } from 'react';
+
+const WEEK_DAYS = [
+  { id: 6, label: 'شنبه' },
+  { id: 0, label: 'یک‌شنبه' },
+  { id: 1, label: 'دوشنبه' },
+  { id: 2, label: 'سه‌شنبه' },
+  { id: 3, label: 'چهارشنبه' },
+  { id: 4, label: 'پنج‌شنبه' },
+  { id: 5, label: 'جمعه' },
+];
 
 export const Step2_Scheduling = () => {
-  const { register, control, watch, setValue, formState: { errors } } = useFormContext<MedicationFormData>();
+  const { register, control, setValue, getValues, formState: { errors } } = useFormContext<MedicationFormData>();
   
-  const frequencyType = watch('frequencyType');
-  const isPRN = watch('isPRN');
+  // Use useWatch to ensure re-renders when values change
+  const frequencyType = useWatch({ control, name: 'frequencyType' });
+  const frequencyDetail = useWatch({ control, name: 'frequencyDetail' });
 
-  // Handle PRN toggle effect on Frequency
-  // If PRN is checked in step 3 (Wait, PRN is in step 3 in my plan, but here frequencyType can be PRN too)
-  // Let's stick to the plan.
+  // Helper to manage week days selection
+  const handleDayToggle = (dayId: number, currentDetail: string | undefined) => {
+    // Format: "DAYS:0,1|TIMES:08:00" or simple "0,1|08:00"
+    const parts = (currentDetail || '').split('|');
+    const daysPart = parts[0] || '';
+    const timesPart = parts[1] || '';
+    
+    let currentDays = daysPart ? daysPart.split(',').map(Number) : [];
+    
+    if (currentDays.includes(dayId)) {
+      currentDays = currentDays.filter(d => d !== dayId);
+    } else {
+      currentDays.push(dayId);
+    }
+    
+    const newDaysStr = currentDays.join(',');
+    const newValue = `${newDaysStr}|${timesPart}`;
+    setValue('frequencyDetail', newValue, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const handleWeeklyTimesChange = (newTimes: string[]) => {
+    const currentDetail = getValues('frequencyDetail');
+    const parts = (currentDetail || '').split('|');
+    const daysPart = parts[0] || '';
+    
+    const newTimesStr = newTimes.join(',');
+    setValue('frequencyDetail', `${daysPart}|${newTimesStr}`, { shouldValidate: true, shouldDirty: true });
+  };
+
+  const getWeeklyDays = () => {
+    // Force dependency on frequencyDetail to ensure re-render
+    const detail = frequencyDetail || ''; 
+    if (!detail) return [];
+    
+    if (!detail.includes('|') && Number(frequencyType) === MedicationFrequencyType.Weekly) {
+         // If we switched to Weekly but format is still Daily (just times), return empty days
+         return [];
+    }
+    
+    const [daysStr] = detail.split('|');
+    return daysStr ? daysStr.split(',').map(d => parseInt(d)).filter(n => !isNaN(n)) : [];
+  };
+
+  const getWeeklyTimes = () => {
+    const detail = frequencyDetail || '';
+    if (!detail) return [];
+    
+    if (!detail.includes('|')) {
+        return [];
+    }
+
+    const [, timesStr] = detail.split('|');
+    return timesStr ? timesStr.split(',').filter(Boolean) : [];
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
@@ -31,16 +94,29 @@ export const Step2_Scheduling = () => {
             <label className="block text-sm font-medium text-gray-700">
               الگوی تکرار
             </label>
-            <select
-              {...register('frequencyType', { valueAsNumber: true })}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all outline-none bg-white"
-            >
-              <option value={MedicationFrequencyType.Daily}>روزانه (ساعات مشخص)</option>
-              <option value={MedicationFrequencyType.Weekly}>هفتگی</option>
-              <option value={MedicationFrequencyType.PRN}>PRN (در صورت نیاز)</option>
-              <option value={MedicationFrequencyType.Interval}>بازه زمانی (هر X ساعت)</option>
-              <option value={MedicationFrequencyType.SpecificDays}>روزهای خاص</option>
-            </select>
+            <Controller
+              control={control}
+              name="frequencyType"
+              render={({ field }) => (
+                <select
+                  value={field.value}
+                  onChange={(e) => {
+                    const newType = Number(e.target.value);
+                    field.onChange(newType);
+                    
+                    // Reset frequency detail when type changes to avoid format mismatch
+                    // This ensures the UI renders correctly for the new type
+                    setValue('frequencyDetail', '', { shouldValidate: true, shouldDirty: true });
+                  }}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all outline-none bg-white"
+                >
+                  <option value={MedicationFrequencyType.Daily}>روزانه (همه روزها)</option>
+                  <option value={MedicationFrequencyType.Weekly}>هفتگی (روزهای خاص)</option>
+                  <option value={MedicationFrequencyType.PRN}>PRN (در صورت نیاز)</option>
+                  <option value={MedicationFrequencyType.Interval}>بازه زمانی (هر X ساعت)</option>
+                </select>
+              )}
+            />
           </div>
 
           {/* Dynamic Frequency Detail Input */}
@@ -55,11 +131,51 @@ export const Step2_Scheduling = () => {
                 name="frequencyDetail"
                 render={({ field }) => (
                   <TimeListSelector
-                    value={field.value ? field.value.split(',').filter(Boolean) : []}
+                    value={field.value && !field.value.includes('|') ? field.value.split(',').filter(Boolean) : []}
                     onChange={(times) => field.onChange(times.join(','))}
                   />
                 )}
               />
+            ) : Number(frequencyType) === MedicationFrequencyType.Weekly ? (
+              <div className="space-y-4 animate-in fade-in duration-300">
+                 {/* Week Days Selector */}
+                 <div className="space-y-2">
+                    <span className="text-xs text-gray-500">روزهای مصرف:</span>
+                    <div className="flex flex-wrap gap-2">
+                        {WEEK_DAYS.map((day) => {
+                            const selectedDays = getWeeklyDays();
+                            const isSelected = selectedDays.includes(day.id);
+                            
+                            return (
+                                <button
+                                    key={day.id}
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleDayToggle(day.id, frequencyDetail);
+                                    }}
+                                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
+                                        isSelected 
+                                        ? 'bg-teal-600 text-white border-teal-600 shadow-md shadow-teal-200' 
+                                        : 'bg-white text-gray-600 border-gray-200 hover:border-teal-300 hover:bg-teal-50'
+                                    }`}
+                                >
+                                    {day.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                 </div>
+
+                 {/* Times Selector for Weekly */}
+                 <div className="space-y-2 pt-2 border-t border-gray-100">
+                    <span className="text-xs text-gray-500">ساعات مصرف در روزهای انتخاب شده:</span>
+                    <TimeListSelector
+                        value={getWeeklyTimes()}
+                        onChange={handleWeeklyTimesChange}
+                    />
+                 </div>
+              </div>
             ) : Number(frequencyType) === MedicationFrequencyType.Interval ? (
               <div className="relative">
                 <input
