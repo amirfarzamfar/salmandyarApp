@@ -15,4 +15,5 @@ public interface IAssessmentService
     Task<List<AssessmentFormDto>> GetActiveFormsByTypeAsync(AssessmentType type);
     Task<UserProfileDto> SubmitAssessmentAsync(string userId, SubmitAssessmentDto dto);
     Task<UserProfileDto?> GetUserProfileAsync(string userId);
+    Task<List<AssessmentFormDto>> GetAvailableAssessmentsForUserAsync(string userId, AssessmentType roleType);
 }

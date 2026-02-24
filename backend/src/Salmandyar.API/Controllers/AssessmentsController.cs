@@ -106,4 +106,15 @@ public class AssessmentsController : ControllerBase
         if (profile == null) return NotFound("Profile not found.");
         return Ok(profile);
     }
+
+    [HttpGet("available")]
+    [Authorize]
+    public async Task<IActionResult> GetAvailableAssessments([FromQuery] AssessmentType type)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        var forms = await _assessmentService.GetAvailableAssessmentsForUserAsync(userId, type);
+        return Ok(forms);
+    }
 }

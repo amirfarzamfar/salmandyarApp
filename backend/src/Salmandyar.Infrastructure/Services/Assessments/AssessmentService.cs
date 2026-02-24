@@ -292,6 +292,42 @@ public class AssessmentService : IAssessmentService
         return tags;
     }
 
+    public async Task<List<AssessmentFormDto>> GetAvailableAssessmentsForUserAsync(string userId, AssessmentType roleType)
+    {
+        // 1. Get IDs of assessments the user has already submitted
+        var submittedFormIds = await _context.AssessmentSubmissions
+            .Where(s => s.UserId == userId)
+            .Select(s => s.FormId)
+            .ToListAsync();
+
+        // 2. Get public active assessments matching the role
+        // Assuming "Nurse" users see NurseAssessment, "Senior" see SeniorAssessment.
+        // We also include "Exam" type if relevant, but let's stick to roleType first.
+        var publicForms = await _context.AssessmentForms
+            .Include(f => f.Questions)
+                .ThenInclude(q => q.Options)
+            .Where(f => f.IsActive && f.Type == roleType && !submittedFormIds.Contains(f.Id))
+            .ToListAsync();
+
+        // 3. Get assigned assessments specifically for this user that are not completed
+        var assignedFormIds = await _context.AssessmentAssignments
+            .Where(a => a.UserId == userId && !a.IsDeleted && 
+                       (a.Status == AssessmentAssignmentStatus.Pending || a.Status == AssessmentAssignmentStatus.InProgress))
+            .Select(a => a.FormId)
+            .ToListAsync();
+
+        var assignedForms = await _context.AssessmentForms
+            .Include(f => f.Questions)
+                .ThenInclude(q => q.Options)
+            .Where(f => assignedFormIds.Contains(f.Id) && f.IsActive && !submittedFormIds.Contains(f.Id))
+            .ToListAsync();
+
+        // Merge and return unique list
+        var allForms = publicForms.UnionBy(assignedForms, f => f.Id).ToList();
+
+        return allForms.Select(MapToDto).ToList();
+    }
+
     private AssessmentFormDto MapToDto(AssessmentForm form)
     {
         return new AssessmentFormDto

@@ -41,6 +41,11 @@ export const assessmentService = {
     return response.data;
   },
 
+  getAvailableExams: async (type: AssessmentType) => {
+    const response = await api.get<AssessmentForm[]>('/assessments/available', { params: { type } });
+    return response.data;
+  },
+
   submitAssessment: async (data: SubmitAssessmentDto) => {
     const response = await api.post<UserProfileDto>('/assessments/submit', data);
     return response.data;
