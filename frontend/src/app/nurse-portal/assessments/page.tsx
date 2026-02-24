@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { assessmentService } from '@/services/assessment.service';
+import { userEvaluationService } from '@/services/user-evaluation.service';
 import { AssessmentForm, AssessmentType } from '@/types/assessment';
 import { ClipboardCheck, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -16,9 +16,10 @@ export default function NurseAssessmentsPage() {
 
   const loadForms = async () => {
     try {
-      // Fetch assessments specifically for Nurses
-      const data = await assessmentService.getFormsByType(AssessmentType.NurseAssessment);
-      setForms(data);
+      // Fetch assessments specifically for Nurses (User Evaluations)
+      // Using AssessmentType.Nurse (12) instead of legacy NurseAssessment (0)
+      const data = await userEvaluationService.getFormsByType(AssessmentType.Nurse);
+      setForms(data as unknown as AssessmentForm[]);
     } catch (error) {
       console.error('Failed to load assessments:', error);
     } finally {
@@ -51,7 +52,7 @@ export default function NurseAssessmentsPage() {
           {forms.map((form) => (
             <Link 
               key={form.id} 
-              href={`/nurse-portal/assessments/${form.id}`}
+              href={`/nurse-portal/assessments/${form.id}?source=user-eval`}
               className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all flex items-center justify-between group"
             >
               <div>

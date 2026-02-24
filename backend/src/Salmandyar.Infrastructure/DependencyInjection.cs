@@ -64,6 +64,7 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentService, AssessmentService>();
         services.AddScoped<IMatchingService, MatchingService>();
         services.AddScoped<IAssessmentAssignmentService, AssessmentAssignmentService>();
+        services.AddScoped<IAssessmentReportService, AssessmentReportService>();
 
         // User Evaluation Module
         services.AddScoped<IUserEvaluationService, UserEvaluationService>();

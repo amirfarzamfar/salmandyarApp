@@ -319,7 +319,7 @@ public class AssessmentService : IAssessmentService
         var assignedForms = await _context.AssessmentForms
             .Include(f => f.Questions)
                 .ThenInclude(q => q.Options)
-            .Where(f => assignedFormIds.Contains(f.Id) && f.IsActive && !submittedFormIds.Contains(f.Id))
+            .Where(f => assignedFormIds.Contains(f.Id) && f.IsActive && f.Type == roleType && !submittedFormIds.Contains(f.Id))
             .ToListAsync();
 
         // Merge and return unique list

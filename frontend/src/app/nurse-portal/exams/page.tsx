@@ -17,12 +17,8 @@ export default function ExamsPage() {
   useEffect(() => {
     const loadExams = async () => {
       try {
-        // Determine type based on role
-        // Default to NurseAssessment if role is Nurse, otherwise check if Caregiver/Senior
-        let type = AssessmentType.NurseAssessment;
-        if (user?.role === 'Senior' || user?.role === 'Caregiver') {
-          type = AssessmentType.SeniorAssessment;
-        }
+        // Fetch exams specifically
+        const type = AssessmentType.Exam;
         
         // Fetch exams (general + assigned)
         const data = await assessmentService.getAvailableExams(type);
@@ -96,7 +92,7 @@ export default function ExamsPage() {
                     ? "bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-300"
                     : "bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-300"
                 )}>
-                  {exam.type === AssessmentType.NurseAssessment ? "عمومی" : "اختصاصی"}
+                  {exam.type === AssessmentType.NurseAssessment ? "عمومی" : "آزمون"}
                 </span>
               </div>
 
