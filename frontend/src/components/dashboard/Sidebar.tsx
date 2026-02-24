@@ -24,6 +24,16 @@ const navigation = [
         { name: 'تطبیق هوشمند', href: '/dashboard/admin/matching', icon: Brain }
     ]
   },
+  {
+      name: 'مدیریت ارزیابی کاربران',
+      href: '/dashboard/admin/user-evaluations',
+      icon: UserCheck,
+      subItems: [
+          { name: 'لیست فرم‌های ارزیابی', href: '/dashboard/admin/user-evaluations', icon: List },
+          { name: 'مدیریت ارزیابی کاربران', href: '/dashboard/admin/user-evaluations/user-assignments', icon: UserCheck },
+          { name: 'ایجاد فرم ارزیابی', href: '/dashboard/admin/user-evaluations/create', icon: FileText }
+      ]
+  },
   { name: 'مدیریت پرسنل', href: '/dashboard/personnel', icon: UserCog },
   { name: 'گزارش‌ها', href: '/dashboard/reports', icon: FileText },
   { 

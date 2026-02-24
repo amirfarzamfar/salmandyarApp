@@ -9,6 +9,7 @@ public class AssessmentAssignmentDto
     public string UserFullName { get; set; } = string.Empty;
     public int FormId { get; set; }
     public string FormTitle { get; set; } = string.Empty;
+    public AssessmentType FormType { get; set; }
     public DateTime AssignedDate { get; set; }
     public DateTime? Deadline { get; set; }
     public DateTime? StartDate { get; set; }

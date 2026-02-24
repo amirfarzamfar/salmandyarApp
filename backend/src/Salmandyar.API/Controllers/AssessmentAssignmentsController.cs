@@ -66,9 +66,9 @@ public class AssessmentAssignmentsController : ControllerBase
     }
 
     [HttpGet("summaries")]
-    public async Task<ActionResult<List<UserAssessmentSummaryDto>>> GetUserSummaries([FromQuery] string? role, [FromQuery] bool? isActive)
+    public async Task<ActionResult<List<UserAssessmentSummaryDto>>> GetUserSummaries([FromQuery] string? role, [FromQuery] bool? isActive, [FromQuery] AssessmentType? formType, [FromQuery] bool excludeExams = false)
     {
-        var result = await _service.GetUserAssessmentSummariesAsync(role, isActive);
+        var result = await _service.GetUserAssessmentSummariesAsync(role, isActive, formType, excludeExams);
         return Ok(result);
     }
 

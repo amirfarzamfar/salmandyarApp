@@ -54,13 +54,36 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
             .FirstAsync(a => a.Id == assignment.Id);
             
         // Trigger Notification
+        string title = "ارزیابی جدید";
+        string message = $"فرم ارزیابی «{created.Form.Title}» برای شما فعال شد.";
+        string link = "/dashboard/my-assessments";
+
+        if (created.Form.Type == AssessmentType.Exam)
+        {
+            title = "آزمون جدید";
+            message = $"آزمون «{created.Form.Title}» به شما تخصیص داده شده است. لطفا در اسرع وقت اقدام نمایید.";
+            link = "/nurse-portal/exams"; // Assuming exams are mostly for nurses
+        }
+        else if (created.Form.Type == AssessmentType.NurseAssessment || created.Form.Type == AssessmentType.SpecializedAssessment)
+        {
+            title = "ارزیابی شغلی";
+            message = $"فرم ارزیابی «{created.Form.Title}» جهت تکمیل پرونده پرسنلی شما فعال شد.";
+            link = "/nurse-portal/assessments";
+        }
+        else if (created.Form.Type == AssessmentType.SeniorAssessment)
+        {
+            title = "ارزیابی سلامت";
+            message = $"فرم ارزیابی «{created.Form.Title}» جهت تکمیل پرونده سلامت شما فعال شد.";
+            link = "/portal/assessments";
+        }
+
         await _notificationService.CreateNotificationAsync(
             dto.UserId,
-            "آزمون جدید",
-            $"آزمون «{created.Form.Title}» به شما تخصیص داده شده است. لطفا در اسرع وقت اقدام نمایید.",
+            title,
+            message,
             NotificationType.Assessment,
             referenceId: assignment.Id.ToString(),
-            link: $"/dashboard/my-assessments"
+            link: link
         );
 
         return MapToDto(created);
@@ -79,7 +102,7 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
         return assignments.Select(a => MapToDto(a)).ToList();
     }
 
-    public async Task<List<UserAssessmentSummaryDto>> GetUserAssessmentSummariesAsync(string? role = null, bool? isActive = null)
+    public async Task<List<UserAssessmentSummaryDto>> GetUserAssessmentSummariesAsync(string? role = null, bool? isActive = null, AssessmentType? formType = null, bool excludeExams = false)
     {
         var query = _context.Users.AsQueryable();
 
@@ -105,15 +128,30 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
 
         var userIds = users.Select(u => u.Id).ToList();
         
-        var assignments = await _context.AssessmentAssignments
-            .Where(a => userIds.Contains(a.UserId))
-            .ToListAsync();
+        var assignmentsQuery = _context.AssessmentAssignments
+            .Include(a => a.Form)
+            .Where(a => userIds.Contains(a.UserId));
+
+        if (formType.HasValue)
+        {
+            assignmentsQuery = assignmentsQuery.Where(a => a.Form.Type == formType.Value);
+        }
+        
+        if (excludeExams)
+        {
+             assignmentsQuery = assignmentsQuery.Where(a => a.Form.Type != AssessmentType.Exam);
+        }
+
+        var assignments = await assignmentsQuery.ToListAsync();
 
         var summaries = new List<UserAssessmentSummaryDto>();
 
         foreach (var user in users)
         {
             var userAssignments = assignments.Where(a => a.UserId == user.Id).ToList();
+            
+            // If user has NO assignments of this type, maybe skip them? Or show 0?
+            // Usually we show all users and their stats.
             
             summaries.Add(new UserAssessmentSummaryDto
             {
@@ -176,6 +214,7 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
             UserFullName = $"{entity.User.FirstName} {entity.User.LastName}",
             FormId = entity.FormId,
             FormTitle = entity.Form.Title,
+            FormType = entity.Form.Type,
             AssignedDate = entity.AssignedDate,
             Deadline = entity.Deadline,
             IsMandatory = entity.IsMandatory,
