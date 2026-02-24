@@ -1129,6 +1129,225 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool?>("BooleanResponse")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SelectedOptionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubmissionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TextResponse")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.HasIndex("SelectedOptionId");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.ToTable("UserEvaluationAnswers", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AssignedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("CompletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("Deadline")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMandatory")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SubmissionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FormId");
+
+                    b.HasIndex("SubmissionId")
+                        .IsUnique()
+                        .HasFilter("[SubmissionId] IS NOT NULL");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserEvaluationAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationForm", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserEvaluationForms", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ScoreValue")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QuestionId");
+
+                    b.ToTable("UserEvaluationOptions", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Weight")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FormId");
+
+                    b.ToTable("UserEvaluationQuestions", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationSubmission", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AnalysisResultJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("CareRecipientId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("SubmittedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("TotalScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CareRecipientId");
+
+                    b.HasIndex("FormId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("UserEvaluationSubmissions", (string)null);
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.UserNotification", b =>
                 {
                     b.Property<int>("Id")
@@ -1563,6 +1782,102 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("ServiceDefinition");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationAnswer", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationQuestion", "Question")
+                        .WithMany()
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationOption", "SelectedOption")
+                        .WithMany()
+                        .HasForeignKey("SelectedOptionId");
+
+                    b.HasOne("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationSubmission", "Submission")
+                        .WithMany("Answers")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+
+                    b.Navigation("SelectedOption");
+
+                    b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationAssignment", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationForm", "Form")
+                        .WithMany()
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationSubmission", "Submission")
+                        .WithOne()
+                        .HasForeignKey("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationAssignment", "SubmissionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Form");
+
+                    b.Navigation("Submission");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationOption", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationQuestion", "Question")
+                        .WithMany("Options")
+                        .HasForeignKey("QuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Question");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationQuestion", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationForm", "Form")
+                        .WithMany("Questions")
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Form");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationSubmission", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
+                        .WithMany()
+                        .HasForeignKey("CareRecipientId");
+
+                    b.HasOne("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationForm", "Form")
+                        .WithMany()
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("CareRecipient");
+
+                    b.Navigation("Form");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.UserNotification", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.User", "User")
@@ -1641,6 +1956,21 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("CareRecipients");
 
                     b.Navigation("CaregiverProfile");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationForm", b =>
+                {
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationQuestion", b =>
+                {
+                    b.Navigation("Options");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationSubmission", b =>
+                {
+                    b.Navigation("Answers");
                 });
 #pragma warning restore 612, 618
         }

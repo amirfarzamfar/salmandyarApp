@@ -1,18 +1,16 @@
-import { UserEvaluation, CreateUserEvaluation, UserEvaluationSummary, AssessmentType } from '@/types/user-evaluation';
+import { UserEvaluation, CreateUserEvaluation, UserEvaluationSummary, AssessmentType, UserEvaluationForm, CreateUserEvaluationFormDto } from '@/types/user-evaluation';
 import api from '@/lib/axios';
 
 export const userEvaluationService = {
+    // Assignments
     async assignEvaluation(data: CreateUserEvaluation): Promise<UserEvaluation> {
-        const response = await api.post<UserEvaluation>('/admin/assignments', data);
+        const response = await api.post<UserEvaluation>('/admin/user-evaluation-assignments', data);
         return response.data;
     },
 
     async getUserEvaluations(userId: string): Promise<UserEvaluation[]> {
-        const response = await api.get<UserEvaluation[]>(`/admin/assignments/user/${userId}`);
-        // Filter out Exams on frontend if backend returns mixed types
-        // Although we updated backend DTO to include FormType, the GetUserAssignments endpoint might not filter.
-        // But since we want "User Evaluation Management" to NOT show Exams, we filter here.
-        return response.data.filter(e => e.formType !== AssessmentType.Exam);
+        const response = await api.get<UserEvaluation[]>(`/admin/user-evaluation-assignments/user/${userId}`);
+        return response.data;
     },
 
     async getUserSummaries(role?: string, isActive?: boolean): Promise<UserEvaluationSummary[]> {
@@ -20,13 +18,8 @@ export const userEvaluationService = {
         if (role) params.append('role', role);
         if (isActive !== undefined) params.append('isActive', isActive.toString());
         
-        // Use the new excludeExams parameter
-        params.append('excludeExams', 'true');
-
-        const response = await api.get<any[]>(`/admin/assignments/summaries?${params.toString()}`);
+        const response = await api.get<any[]>(`/admin/user-evaluation-assignments/summaries?${params.toString()}`);
         
-        // Map backend DTO (UserAssessmentSummaryDto) to UserEvaluationSummary
-        // Backend DTO: TotalAssigned -> Frontend: totalEvaluations
         return response.data.map(item => ({
             userId: item.userId,
             fullName: item.fullName,
@@ -40,7 +33,61 @@ export const userEvaluationService = {
     },
 
     async getEvaluationById(id: number): Promise<UserEvaluation> {
-        const response = await api.get<UserEvaluation>(`/admin/assignments/${id}`);
+        const response = await api.get<UserEvaluation>(`/admin/user-evaluation-assignments/${id}`);
+        return response.data;
+    },
+
+    async getAvailableEvaluations(type: AssessmentType): Promise<UserEvaluationForm[]> {
+        const response = await api.get<UserEvaluationForm[]>('/UserEvaluations/available', { params: { type } });
+        return response.data;
+    },
+
+    async getFormById(id: number): Promise<UserEvaluationForm> {
+        const response = await api.get<UserEvaluationForm>(`/UserEvaluations/forms/details/${id}`);
+        return response.data;
+    },
+
+    async submitEvaluation(data: any): Promise<any> { // Using any for simplicity as DTOs match
+        const response = await api.post('/UserEvaluations/submit', data);
+        return response.data;
+    },
+
+    // Forms
+    async getAllForms(): Promise<UserEvaluationForm[]> {
+        const response = await api.get<UserEvaluationForm[]>('/UserEvaluations/forms');
+        return response.data;
+    },
+
+    async getFormById(id: number): Promise<UserEvaluationForm> {
+        const response = await api.get<UserEvaluationForm>(`/UserEvaluations/forms/details/${id}`);
+        return response.data;
+    },
+
+    async createForm(data: CreateUserEvaluationFormDto): Promise<UserEvaluationForm> {
+        const response = await api.post<UserEvaluationForm>('/UserEvaluations/forms', data);
+        return response.data;
+    },
+
+    async updateForm(id: number, data: CreateUserEvaluationFormDto): Promise<UserEvaluationForm> {
+        const response = await api.put<UserEvaluationForm>(`/UserEvaluations/forms/${id}`, data);
+        return response.data;
+    },
+
+    async deleteForm(id: number): Promise<void> {
+        await api.delete(`/UserEvaluations/forms/${id}`);
+    },
+
+    async toggleForm(id: number): Promise<void> {
+        await api.patch(`/UserEvaluations/forms/${id}/toggle`);
+    },
+    
+    async getActiveForm(type: AssessmentType): Promise<UserEvaluationForm> {
+        const response = await api.get<UserEvaluationForm>(`/UserEvaluations/forms/${type}`);
+        return response.data;
+    },
+
+    async getFormsByType(type: AssessmentType): Promise<UserEvaluationForm[]> {
+        const response = await api.get<UserEvaluationForm[]>(`/UserEvaluations/forms/list/${type}`);
         return response.data;
     }
 };

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.Assessments;
+using Salmandyar.Domain.Entities.UserEvaluations;
 using Salmandyar.Domain.Entities.Medications;
 
 namespace Salmandyar.Infrastructure.Persistence;
@@ -34,6 +35,14 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<QuestionAnswer> QuestionAnswers { get; set; }
     public DbSet<AssessmentAssignment> AssessmentAssignments { get; set; }
     public DbSet<UserNotification> UserNotifications { get; set; }
+
+    // User Evaluation Module
+    public DbSet<UserEvaluationForm> UserEvaluationForms { get; set; }
+    public DbSet<UserEvaluationQuestion> UserEvaluationQuestions { get; set; }
+    public DbSet<UserEvaluationOption> UserEvaluationOptions { get; set; }
+    public DbSet<UserEvaluationSubmission> UserEvaluationSubmissions { get; set; }
+    public DbSet<UserEvaluationAnswer> UserEvaluationAnswers { get; set; }
+    public DbSet<UserEvaluationAssignment> UserEvaluationAssignments { get; set; }
 
     // Medication Module
     public DbSet<PatientMedication> PatientMedications { get; set; }
@@ -256,6 +265,63 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<QuestionAnswer>()
+            .HasOne(a => a.Submission)
+            .WithMany(s => s.Answers)
+            .HasForeignKey(a => a.SubmissionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // User Evaluation Module Configurations
+        builder.Entity<UserEvaluationForm>().ToTable("UserEvaluationForms");
+        builder.Entity<UserEvaluationQuestion>().ToTable("UserEvaluationQuestions");
+        builder.Entity<UserEvaluationOption>().ToTable("UserEvaluationOptions");
+        builder.Entity<UserEvaluationSubmission>().ToTable("UserEvaluationSubmissions");
+        builder.Entity<UserEvaluationAnswer>().ToTable("UserEvaluationAnswers");
+        builder.Entity<UserEvaluationAssignment>().ToTable("UserEvaluationAssignments");
+
+        builder.Entity<UserEvaluationAssignment>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UserEvaluationAssignment>()
+            .HasOne(a => a.Form)
+            .WithMany()
+            .HasForeignKey(a => a.FormId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<UserEvaluationAssignment>()
+            .HasOne(a => a.Submission)
+            .WithOne()
+            .HasForeignKey<UserEvaluationAssignment>(a => a.SubmissionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<UserEvaluationQuestion>()
+            .Property(q => q.Tags)
+            .HasConversion(
+                v => string.Join(',', v),
+                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
+            );
+
+        builder.Entity<UserEvaluationQuestion>()
+            .HasOne(q => q.Form)
+            .WithMany(f => f.Questions)
+            .HasForeignKey(q => q.FormId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UserEvaluationOption>()
+            .HasOne(o => o.Question)
+            .WithMany(q => q.Options)
+            .HasForeignKey(o => o.QuestionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UserEvaluationSubmission>()
+            .HasOne(s => s.Form)
+            .WithMany()
+            .HasForeignKey(s => s.FormId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<UserEvaluationAnswer>()
             .HasOne(a => a.Submission)
             .WithMany(s => s.Answers)
             .HasForeignKey(a => a.SubmissionId)

@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { assessmentService } from '@/services/assessment.service';
+import { userEvaluationService } from '@/services/user-evaluation.service';
 import { AssessmentForm, SubmitAssessmentDto } from '@/types/assessment';
 import AssessmentTaker from '@/components/assessments/AssessmentTaker';
 import { ArrowRight } from 'lucide-react';
@@ -11,6 +12,8 @@ import Swal from 'sweetalert2';
 export default function PatientAssessmentDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const source = searchParams.get('source');
   const [form, setForm] = useState<AssessmentForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -34,7 +37,11 @@ export default function PatientAssessmentDetailPage() {
   const handleSubmit = async (data: SubmitAssessmentDto) => {
     setSubmitting(true);
     try {
-      await assessmentService.submitAssessment(data);
+      if (source === 'user-eval') {
+          await userEvaluationService.submitEvaluation(data);
+      } else {
+          await assessmentService.submitAssessment(data);
+      }
       
       await Swal.fire({
         icon: 'success',

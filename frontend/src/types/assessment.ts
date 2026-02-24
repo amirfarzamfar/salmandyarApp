@@ -6,10 +6,22 @@ export enum QuestionType {
 }
 
 export enum AssessmentType {
+  // Legacy
   NurseAssessment = 0,
   SeniorAssessment = 1,
   SpecializedAssessment = 2,
   Exam = 3,
+
+  // Roles
+  Manager = 10,
+  Supervisor = 11,
+  Nurse = 12,
+  AssistantNurse = 13,
+  Physiotherapist = 14,
+  ElderlyCareAssistant = 15,
+  Elderly = 16,
+  Patient = 17,
+  PatientFamily = 18
 }
 
 export interface AssessmentForm {

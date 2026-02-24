@@ -4,6 +4,7 @@ import { useForm, useFieldArray, SubmitHandler, Control, UseFormRegister, UseFor
 import { Plus, Trash2, Save, FileText } from 'lucide-react';
 import { CreateAssessmentFormDto, QuestionType, AssessmentType } from '@/types/assessment';
 import { useEffect } from 'react';
+import { roleTranslations } from '@/utils/role-translation';
 
 interface AssessmentFormBuilderProps {
   initialData?: CreateAssessmentFormDto;
@@ -12,12 +13,24 @@ interface AssessmentFormBuilderProps {
   title: string;
 }
 
+const roleTypes = [
+  AssessmentType.Manager,
+  AssessmentType.Supervisor,
+  AssessmentType.Nurse,
+  AssessmentType.AssistantNurse,
+  AssessmentType.Physiotherapist,
+  AssessmentType.ElderlyCareAssistant,
+  AssessmentType.Elderly,
+  AssessmentType.Patient,
+  AssessmentType.PatientFamily
+];
+
 export default function AssessmentFormBuilder({ initialData, onSubmit, loading, title }: AssessmentFormBuilderProps) {
   const { register, control, handleSubmit, watch, setValue, reset, getValues, formState: { errors } } = useForm<CreateAssessmentFormDto>({
     defaultValues: initialData || {
       title: '',
       description: '',
-      type: AssessmentType.NurseAssessment,
+      type: AssessmentType.Nurse,
       questions: [
         {
           question: '',
@@ -102,14 +115,16 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm text-slate-400">نوع آزمون</label>
+              <label className="text-sm text-slate-400">نوع نقش (جهت نمایش فرم)</label>
               <select
                 {...register('type')}
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-teal-500 outline-none"
               >
-                <option value={AssessmentType.NurseAssessment}>ارزیابی پرستار / سالمندیار</option>
-                <option value={AssessmentType.SeniorAssessment}>ارزیابی سالمند / بیمار</option>
-                <option value={AssessmentType.SpecializedAssessment}>تخصصی</option>
+                {roleTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {roleTranslations[AssessmentType[type]] || AssessmentType[type]}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

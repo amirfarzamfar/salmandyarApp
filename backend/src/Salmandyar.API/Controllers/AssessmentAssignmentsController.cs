@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Salmandyar.Application.DTOs.Assessments;
 using Salmandyar.Application.Services.Assessments;
+using Salmandyar.Domain.Enums;
 using System.Security.Claims;
 
 namespace Salmandyar.API.Controllers;

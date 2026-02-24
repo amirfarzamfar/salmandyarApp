@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { Plus, ClipboardList, Activity, Trash2, Edit, Power, Users, UserPlus, FileText } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { assessmentService } from '@/services/assessment.service';
+import { userEvaluationService } from '@/services/user-evaluation.service';
 import { toast } from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { useState } from 'react';
 import { AssignExamToUsersModal } from '@/components/admin/assessments/AssignExamToUsersModal';
-import { AssessmentType } from '@/types/assessment';
+import { AssessmentType } from '@/types/user-evaluation';
 
 export default function UserEvaluationsListPage() {
   const queryClient = useQueryClient();
@@ -17,13 +17,13 @@ export default function UserEvaluationsListPage() {
   const { data: forms, isLoading } = useQuery({
     queryKey: ['user-evaluations'],
     queryFn: async () => {
-      const allForms = await assessmentService.getAllForms();
-      return allForms.filter((f: any) => f.type !== AssessmentType.Exam);
+      const allForms = await userEvaluationService.getAllForms();
+      return allForms;
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: assessmentService.deleteForm,
+    mutationFn: userEvaluationService.deleteForm,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-evaluations'] });
       toast.success('فرم ارزیابی حذف شد');
@@ -32,7 +32,7 @@ export default function UserEvaluationsListPage() {
   });
 
   const toggleMutation = useMutation({
-    mutationFn: assessmentService.toggleForm,
+    mutationFn: userEvaluationService.toggleForm,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-evaluations'] });
       toast.success('وضعیت تغییر کرد');

@@ -2,8 +2,8 @@
 
 import { useState, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { assessmentService } from '@/services/assessment.service';
-import { CreateAssessmentFormDto, AssessmentType } from '@/types/assessment';
+import { userEvaluationService } from '@/services/user-evaluation.service';
+import { CreateUserEvaluationFormDto, AssessmentType } from '@/types/user-evaluation';
 import { toast } from 'react-hot-toast';
 import AssessmentFormBuilder from '@/components/admin/assessments/AssessmentFormBuilder';
 import { useQuery } from '@tanstack/react-query';
@@ -15,14 +15,14 @@ export default function EditUserEvaluationPage({ params }: { params: Promise<{ i
 
   // Fetch existing data
   const { data: form, isLoading, error } = useQuery({
-    queryKey: ['assessment', id],
-    queryFn: () => assessmentService.getFormById(Number(id)),
+    queryKey: ['user-evaluation', id],
+    queryFn: () => userEvaluationService.getFormById(Number(id)),
   });
 
-  const onSubmit = async (data: CreateAssessmentFormDto) => {
+  const onSubmit = async (data: any) => {
     try {
       setSaving(true);
-      await assessmentService.updateForm(Number(id), data);
+      await userEvaluationService.updateForm(Number(id), data as CreateUserEvaluationFormDto);
       toast.success('فرم ارزیابی با موفقیت ویرایش شد');
       router.push('/dashboard/admin/user-evaluations');
     } catch (error) {
@@ -36,7 +36,7 @@ export default function EditUserEvaluationPage({ params }: { params: Promise<{ i
   if (isLoading) return <div className="p-10 text-center text-black">در حال بارگذاری...</div>;
   if (error || !form) return <div className="p-10 text-center text-red-400">خطا در دریافت اطلاعات فرم</div>;
   
-  const initialData: CreateAssessmentFormDto = {
+  const initialData: CreateUserEvaluationFormDto = {
       title: form.title,
       description: form.description,
       type: form.type,
@@ -56,7 +56,7 @@ export default function EditUserEvaluationPage({ params }: { params: Promise<{ i
 
   return (
     <AssessmentFormBuilder 
-        initialData={initialData}
+        initialData={initialData as any}
         onSubmit={onSubmit} 
         loading={saving} 
         title="ویرایش فرم ارزیابی"

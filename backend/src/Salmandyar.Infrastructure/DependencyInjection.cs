@@ -24,6 +24,8 @@ using Salmandyar.Application.Services.Users;
 using Salmandyar.Infrastructure.Services.Users;
 using Salmandyar.Application.Services.Assessments;
 using Salmandyar.Infrastructure.Services.Assessments;
+using Salmandyar.Application.Services.UserEvaluations;
+using Salmandyar.Infrastructure.Services.UserEvaluations;
 using Salmandyar.Application.Services.Medications;
 using Salmandyar.Infrastructure.Services.Medications;
 
@@ -62,6 +64,10 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentService, AssessmentService>();
         services.AddScoped<IMatchingService, MatchingService>();
         services.AddScoped<IAssessmentAssignmentService, AssessmentAssignmentService>();
+
+        // User Evaluation Module
+        services.AddScoped<IUserEvaluationService, UserEvaluationService>();
+        services.AddScoped<IUserEvaluationAssignmentService, UserEvaluationAssignmentService>();
 
         // Notifications
         services.AddScoped<INotificationService, LoggerNotificationService>();

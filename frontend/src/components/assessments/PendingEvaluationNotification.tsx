@@ -8,15 +8,27 @@ import Link from 'next/link';
 import { AlertCircle, ChevronLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { userEvaluationService } from '@/services/user-evaluation.service';
+
 export default function PendingEvaluationNotification() {
     const { user } = useUser();
 
     // Determine relevant assessment types based on user role
     const getRelevantTypes = () => {
         if (!user) return [];
-        if (user.role === 'Nurse') return [AssessmentType.NurseAssessment, AssessmentType.SpecializedAssessment];
-        if (user.role === 'Senior' || user.role === 'Family') return [AssessmentType.SeniorAssessment];
-        return [];
+        const types: AssessmentType[] = [];
+        
+        // Legacy types
+        if (user.role === 'Nurse') types.push(AssessmentType.NurseAssessment, AssessmentType.SpecializedAssessment);
+        if (user.role === 'Senior' || user.role === 'Family') types.push(AssessmentType.SeniorAssessment);
+        
+        // New Role-based type
+        const roleType = AssessmentType[user.role as keyof typeof AssessmentType];
+        if (typeof roleType === 'number') {
+             types.push(roleType);
+        }
+        
+        return [...new Set(types)];
     };
 
     const types = getRelevantTypes();
@@ -26,7 +38,13 @@ export default function PendingEvaluationNotification() {
         queryFn: async () => {
             if (!types.length) return [];
             // Fetch for all relevant types
-            const promises = types.map(type => assessmentService.getAvailableExams(type));
+            const promises = types.map(type => {
+                if (type >= 10) {
+                    return userEvaluationService.getAvailableEvaluations(type);
+                }
+                return assessmentService.getAvailableExams(type);
+            });
+            
             const results = await Promise.all(promises);
             // Flatten and remove duplicates by ID just in case
             const allForms = results.flat();
@@ -63,7 +81,9 @@ export default function PendingEvaluationNotification() {
                             {pendingForms.map((form: any) => (
                                 <Link 
                                     key={form.id} 
-                                    href={user.role === 'Nurse' ? `/nurse-portal/assessments/${form.id}` : `/portal/assessments/${form.id}`}
+                                    href={user.role === 'Nurse' 
+                                        ? `/nurse-portal/assessments/${form.id}${form.type >= 10 ? '?source=user-eval' : ''}`
+                                        : `/portal/assessments/${form.id}${form.type >= 10 ? '?source=user-eval' : ''}`}
                                     className="block"
                                 >
                                     <div className="flex items-center justify-between bg-white dark:bg-gray-800 p-3 rounded-xl border border-amber-100 dark:border-amber-800/50 hover:border-amber-300 dark:hover:border-amber-600 transition-colors group cursor-pointer">

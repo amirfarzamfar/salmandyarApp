@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { assessmentService } from '@/services/assessment.service';
 import { userEvaluationService } from '@/services/user-evaluation.service';
-import { AssessmentForm, AssessmentType } from '@/types/assessment';
+import { UserEvaluationForm, AssessmentType } from '@/types/user-evaluation';
 import { X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -15,7 +14,7 @@ interface AssignEvaluationModalProps {
 }
 
 export function AssignEvaluationModal({ userId, isOpen, onClose, onSuccess }: AssignEvaluationModalProps) {
-    const [forms, setForms] = useState<AssessmentForm[]>([]);
+    const [forms, setForms] = useState<UserEvaluationForm[]>([]);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     
@@ -34,9 +33,8 @@ export function AssignEvaluationModal({ userId, isOpen, onClose, onSuccess }: As
     const fetchForms = async () => {
         setLoading(true);
         try {
-            const data = await assessmentService.getAllForms();
-            // Filter out exams
-            setForms(data.filter(f => f.isActive && f.type !== AssessmentType.Exam)); 
+            const data = await userEvaluationService.getAllForms();
+            setForms(data.filter(f => f.isActive)); 
         } catch (error) {
             toast.error('خطا در دریافت لیست ارزیابی‌ها');
         } finally {
