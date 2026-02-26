@@ -20,49 +20,53 @@ const getChartData = (vitals: any[], key: string, limit = 10) => {
   return slice.map(v => ({ value: v[key] }));
 };
 
-const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusColor }: any) => (
-  <PortalCard className="relative overflow-hidden group hover:shadow-soft-lg transition-all duration-500" noPadding>
-    <div className="p-4 md:p-6 relative z-10">
-      <div className="flex items-center justify-between mb-3 md:mb-4">
-        <div className={`p-2 md:p-3 rounded-2xl ${color} bg-opacity-10 backdrop-blur-sm transition-colors group-hover:bg-opacity-20`}>
-          <Icon className={`w-5 h-5 md:w-6 md:h-6 ${color.replace('bg-', 'text-')}`} strokeWidth={1.5} />
+const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusColor }: any) => {
+  const textColor = color.replace("bg-", "text-");
+
+  return (
+    <PortalCard className="relative overflow-hidden group hover:shadow-soft-lg transition-all duration-500" noPadding>
+      <div className="p-4 md:p-6 relative z-10">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <div className={`p-2 md:p-3 rounded-2xl ${color} text-white shadow-md transition-transform group-hover:scale-105`}>
+            <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" strokeWidth={1.5} />
+          </div>
+          <span className={`text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full ${statusColor} bg-opacity-10 text-opacity-100`}>
+            {trend}
+          </span>
         </div>
-        <span className={`text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full ${statusColor} bg-opacity-10 text-opacity-100`}>
-          {trend}
-        </span>
+        
+        <div className="space-y-0.5 md:space-y-1">
+          <span className="text-xs md:text-sm font-medium text-gray-500 block">{title}</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">{value}</span>
+            <span className="text-xs md:text-sm text-gray-400 font-medium">{unit}</span>
+          </div>
+        </div>
       </div>
       
-      <div className="space-y-0.5 md:space-y-1">
-        <span className="text-xs md:text-sm font-medium text-gray-500 block">{title}</span>
-        <div className="flex items-baseline gap-1">
-          <span className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">{value}</span>
-          <span className="text-xs md:text-sm text-gray-400 font-medium">{unit}</span>
-        </div>
+      <div className="absolute bottom-0 left-0 right-0 h-16 md:h-24 opacity-20 group-hover:opacity-30 transition-opacity duration-500">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id={`gradient-${title}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="currentColor" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <Area 
+              type="monotone" 
+              dataKey="value" 
+              stroke="currentColor" 
+              fill={`url(#gradient-${title})`} 
+              className={textColor}
+              strokeWidth={3}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
-    </div>
-    
-    <div className="absolute bottom-0 left-0 right-0 h-16 md:h-24 opacity-20 group-hover:opacity-30 transition-opacity duration-500">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data}>
-          <defs>
-            <linearGradient id={`gradient-${title}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="currentColor" stopOpacity={0.8}/>
-              <stop offset="95%" stopColor="currentColor" stopOpacity={0}/>
-            </linearGradient>
-          </defs>
-          <Area 
-            type="monotone" 
-            dataKey="value" 
-            stroke="currentColor" 
-            fill={`url(#gradient-${title})`} 
-            className={`${color.replace('bg-', 'text-')}`}
-            strokeWidth={3}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
-  </PortalCard>
-);
+    </PortalCard>
+  );
+};
 
 interface HealthSnapshotProps {
   patientId: number;
