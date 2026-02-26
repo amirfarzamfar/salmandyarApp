@@ -19,7 +19,8 @@ export default function PatientAssessmentsPage() {
   const loadForms = async () => {
     try {
       // Fetch assessments specifically for Seniors/Patients
-      const data = await assessmentService.getFormsByType(AssessmentType.SeniorAssessment);
+      // Using getAvailableExams to filter out already submitted assessments
+      const data = await assessmentService.getAvailableExams(AssessmentType.SeniorAssessment);
       setForms(data);
     } catch (error) {
       console.error('Failed to load assessments:', error);

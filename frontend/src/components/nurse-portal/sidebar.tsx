@@ -12,7 +12,7 @@ export function NurseSidebar() {
 
   const menuItems = [
     { icon: LayoutDashboard, label: "داشبورد", href: "/nurse-portal" },
-    { icon: Activity, label: "علائم حیاتی", href: "/nurse-portal/vital-signs" },
+    { icon: Activity, label: "مدیریت بیماران", href: "/nurse-portal/patient-management" },
     { icon: Users, label: "بیماران", href: "/nurse-portal/patients" },
     { icon: ClipboardCheck, label: "ارزیابی‌ها", href: "/nurse-portal/assessments" },
     { icon: GraduationCap, label: "آزمون‌ها", href: "/nurse-portal/exams" },

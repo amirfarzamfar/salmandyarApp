@@ -18,7 +18,7 @@ export default function NurseAssessmentsPage() {
     try {
       // Fetch assessments specifically for Nurses (User Evaluations)
       // Using AssessmentType.Nurse (12) instead of legacy NurseAssessment (0)
-      const data = await userEvaluationService.getFormsByType(AssessmentType.Nurse);
+      const data = await userEvaluationService.getAvailableEvaluations(AssessmentType.Nurse);
       setForms(data as unknown as AssessmentForm[]);
     } catch (error) {
       console.error('Failed to load assessments:', error);

@@ -91,8 +91,19 @@ public class AssessmentsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
-        var profile = await _assessmentService.SubmitAssessmentAsync(userId, dto);
-        return Ok(profile);
+        try
+        {
+            var profile = await _assessmentService.SubmitAssessmentAsync(userId, dto);
+            return Ok(profile);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.Message);
+        }
     }
 
     [HttpGet("profile")]

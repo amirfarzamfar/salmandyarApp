@@ -162,6 +162,15 @@ public class AssessmentService : IAssessmentService
 
         if (form == null) throw new Exception("Form not found");
 
+        // Check for existing submission
+        var existingSubmission = await _context.AssessmentSubmissions
+            .AnyAsync(s => s.UserId == userId && s.FormId == dto.FormId);
+            
+        if (existingSubmission)
+        {
+            throw new InvalidOperationException("User has already submitted this assessment.");
+        }
+
         var submission = new AssessmentSubmission
         {
             FormId = dto.FormId,
