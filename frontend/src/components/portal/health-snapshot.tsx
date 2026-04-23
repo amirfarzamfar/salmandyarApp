@@ -30,7 +30,7 @@ const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusC
           <div className={`p-2 md:p-3 rounded-2xl ${color} text-white shadow-md transition-transform group-hover:scale-105`}>
             <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" strokeWidth={1.5} />
           </div>
-          <span className={`text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full ${statusColor} bg-opacity-10 text-opacity-100`}>
+          <span className={`text-[10px] md:text-xs font-bold px-2 py-0.5 md:px-3 md:py-1 rounded-full ${statusColor} text-white shadow-sm`}>
             {trend}
           </span>
         </div>
@@ -120,7 +120,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
           unit="mmHg" 
           icon={Activity} 
           color="bg-blue-500" 
-          statusColor="bg-green-500 text-green-700"
+          statusColor="bg-green-500"
           trend="نرمال"
           data={getChartData(vitals || [], "systolicBloodPressure")}
         />
@@ -130,7 +130,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
           unit="bpm" 
           icon={Heart} 
           color="bg-rose-500" 
-          statusColor="bg-green-500 text-green-700"
+          statusColor="bg-green-500"
           trend="عالی"
           data={getChartData(vitals || [], "pulseRate")}
         />
@@ -140,7 +140,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
           unit="%" 
           icon={Droplet} 
           color="bg-sky-500" 
-          statusColor="bg-blue-500 text-blue-700"
+          statusColor="bg-blue-500"
           trend="پایدار"
           data={getChartData(vitals || [], "oxygenSaturation")}
         />
@@ -150,7 +150,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
           unit="°C" 
           icon={Thermometer} 
           color="bg-orange-500" 
-          statusColor="bg-green-500 text-green-700"
+          statusColor="bg-green-500"
           trend="طبیعی"
           data={getChartData(vitals || [], "bodyTemperature")}
         />
