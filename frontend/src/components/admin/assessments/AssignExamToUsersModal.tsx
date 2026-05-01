@@ -5,6 +5,24 @@ import { userService, UserListDto } from '@/services/user.service';
 import { assessmentAssignmentService } from '@/services/assessment-assignment.service';
 import { X, Search, UserPlus, Check, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import DatePicker from 'react-multi-date-picker';
+import persian from 'react-date-object/calendars/persian';
+import persian_fa from 'react-date-object/locales/persian_fa';
+import TimePicker from 'react-multi-date-picker/plugins/time_picker';
+import DateObject from 'react-date-object';
+
+function toIsoString(date: unknown): string {
+    if (!date) return '';
+    if (date instanceof Date) return date.toISOString();
+    if (date instanceof DateObject) return new Date(date.valueOf()).toISOString();
+    if (typeof date === 'object' && date !== null && 'valueOf' in date) {
+        const valueOf = (date as { valueOf?: unknown }).valueOf;
+        if (typeof valueOf === 'function') {
+            return new Date((valueOf as () => number)()).toISOString();
+        }
+    }
+    return '';
+}
 
 interface AssignExamToUsersModalProps {
     formId: number;
@@ -44,6 +62,13 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
         }, 500);
         return () => clearTimeout(timeoutId);
     }, [searchTerm]);
+
+    useEffect(() => {
+        if (!startDate || !deadline) return;
+        if (new Date(deadline).getTime() < new Date(startDate).getTime()) {
+            setDeadline('');
+        }
+    }, [startDate, deadline]);
 
     const fetchUsers = async () => {
         setLoading(true);
@@ -87,8 +112,8 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                 assessmentAssignmentService.assignAssessment({
                     userId,
                     formId,
-                    startDate: startDate ? new Date(startDate).toISOString() : undefined,
-                    deadline: deadline ? new Date(deadline).toISOString() : undefined,
+                    startDate: startDate || undefined,
+                    deadline: deadline || undefined,
                     isMandatory
                 }).then(() => {
                     successCount++;
@@ -200,20 +225,40 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-1">تاریخ شروع (اختیاری)</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        className="w-full bg-slate-800 border-slate-700 text-white rounded-md focus:ring-teal-500 focus:border-teal-500 p-2 text-sm"
+                                    <DatePicker
+                                        value={startDate ? new Date(startDate) : undefined}
+                                        onChange={(date: unknown) => {
+                                            const iso = toIsoString(date);
+                                            setStartDate(iso);
+                                        }}
+                                        calendar={persian}
+                                        locale={persian_fa}
+                                        plugins={[<TimePicker key="time-picker" position="bottom" />]}
+                                        calendarPosition="bottom-right"
+                                        containerClassName="w-full"
+                                        inputClass="w-full bg-slate-800 border border-slate-700 text-white rounded-md focus:ring-teal-500 focus:border-teal-500 p-2 text-sm outline-none"
+                                        format="YYYY/MM/DD HH:mm"
+                                        placeholder="انتخاب تاریخ..."
+                                        minDate={new Date()}
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-1">مهلت انجام (اختیاری)</label>
-                                    <input
-                                        type="datetime-local"
-                                        value={deadline}
-                                        onChange={(e) => setDeadline(e.target.value)}
-                                        className="w-full bg-slate-800 border-slate-700 text-white rounded-md focus:ring-teal-500 focus:border-teal-500 p-2 text-sm"
+                                    <DatePicker
+                                        value={deadline ? new Date(deadline) : undefined}
+                                        onChange={(date: unknown) => {
+                                            const iso = toIsoString(date);
+                                            setDeadline(iso);
+                                        }}
+                                        calendar={persian}
+                                        locale={persian_fa}
+                                        plugins={[<TimePicker key="time-picker" position="bottom" />]}
+                                        calendarPosition="bottom-right"
+                                        containerClassName="w-full"
+                                        inputClass="w-full bg-slate-800 border border-slate-700 text-white rounded-md focus:ring-teal-500 focus:border-teal-500 p-2 text-sm outline-none"
+                                        format="YYYY/MM/DD HH:mm"
+                                        placeholder="انتخاب تاریخ..."
+                                        minDate={startDate ? new Date(startDate) : new Date()}
                                     />
                                 </div>
                             </div>

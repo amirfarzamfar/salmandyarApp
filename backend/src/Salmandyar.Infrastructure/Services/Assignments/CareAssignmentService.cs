@@ -31,32 +31,40 @@ public class CareAssignmentService : ICareAssignmentService
         var startDateUtc = dto.StartDate.ToUniversalTime();
         var endDateUtc = dto.EndDate?.ToUniversalTime();
 
-        // 1. Overlap Check for Caregiver
-        var caregiverConflict = await _context.CareAssignments
-            .AnyAsync(a => a.CaregiverId == dto.CaregiverId &&
-                           a.Status == AssignmentStatus.Active &&
-                           (endDateUtc == null || a.StartDate < endDateUtc) &&
-                           (a.EndDate == null || a.EndDate > startDateUtc));
+        // 1. Prevent duplicate assignment for the same patient+caregiver in the same time window
+        var duplicate = await _context.CareAssignments
+            .FirstOrDefaultAsync(a => a.PatientId == dto.PatientId &&
+                                      a.CaregiverId == dto.CaregiverId &&
+                                      a.Status == AssignmentStatus.Active &&
+                                      (endDateUtc == null || a.StartDate < endDateUtc) &&
+                                      (a.EndDate == null || a.EndDate > startDateUtc) &&
+                                      (
+                                          a.AssignmentType != AssignmentType.ShiftBased ||
+                                          dto.AssignmentType != AssignmentType.ShiftBased ||
+                                          a.ShiftSlot == dto.ShiftSlot
+                                      ));
 
-        if (caregiverConflict)
+        if (duplicate != null)
         {
-            // Just for debugging, let's log the details if we could, or return more specific error
-            throw new InvalidOperationException($"پرستار انتخاب شده در این بازه زمانی مشغول است. تداخل زمانی وجود دارد.");
+            return await MapToDto(duplicate);
         }
 
         // 2. Active Primary Caregiver Check
         if (dto.IsPrimaryCaregiver)
         {
-            var hasPrimary = await _context.CareAssignments
-                .AnyAsync(a => a.PatientId == dto.PatientId &&
-                               a.Status == AssignmentStatus.Active &&
-                               a.IsPrimaryCaregiver &&
-                               (endDateUtc == null || a.StartDate < endDateUtc) &&
-                               (a.EndDate == null || a.EndDate > startDateUtc));
-            
-            if (hasPrimary)
+            var existingPrimaries = await _context.CareAssignments
+                .Where(a => a.PatientId == dto.PatientId &&
+                            a.CaregiverId != dto.CaregiverId &&
+                            a.Status == AssignmentStatus.Active &&
+                            a.IsPrimaryCaregiver &&
+                            (endDateUtc == null || a.StartDate < endDateUtc) &&
+                            (a.EndDate == null || a.EndDate > startDateUtc))
+                .ToListAsync();
+
+            foreach (var primary in existingPrimaries)
             {
-                throw new InvalidOperationException("این بیمار در حال حاضر یک پرستار اصلی فعال دارد.");
+                primary.IsPrimaryCaregiver = false;
+                primary.LastModifiedAt = DateTimeOffset.UtcNow;
             }
         }
 
@@ -91,33 +99,42 @@ public class CareAssignmentService : ICareAssignmentService
         var startDateUtc = dto.StartDate.ToUniversalTime();
         var endDateUtc = dto.EndDate?.ToUniversalTime();
 
-        // 1. Overlap Check for Caregiver (Excluding current assignment)
-        var caregiverConflict = await _context.CareAssignments
-            .AnyAsync(a => a.Id != id && 
+        // 1. Prevent duplicate assignment for the same patient+caregiver in the same time window (excluding current)
+        var duplicateConflict = await _context.CareAssignments
+            .AnyAsync(a => a.Id != id &&
+                           a.PatientId == dto.PatientId &&
                            a.CaregiverId == dto.CaregiverId &&
                            a.Status == AssignmentStatus.Active &&
                            (endDateUtc == null || a.StartDate < endDateUtc) &&
-                           (a.EndDate == null || a.EndDate > startDateUtc));
+                           (a.EndDate == null || a.EndDate > startDateUtc) &&
+                           (
+                               a.AssignmentType != AssignmentType.ShiftBased ||
+                               dto.AssignmentType != AssignmentType.ShiftBased ||
+                               a.ShiftSlot == dto.ShiftSlot
+                           ));
 
-        if (caregiverConflict)
+        if (duplicateConflict)
         {
-            throw new InvalidOperationException("پرستار انتخاب شده در این بازه زمانی مشغول است.");
+            throw new InvalidOperationException("این تخصیص قبلاً در این بازه زمانی ثبت شده است.");
         }
 
         // 2. Active Primary Caregiver Check (Excluding current assignment)
         if (dto.IsPrimaryCaregiver)
         {
-            var hasPrimary = await _context.CareAssignments
-                .AnyAsync(a => a.Id != id &&
-                               a.PatientId == dto.PatientId &&
-                               a.Status == AssignmentStatus.Active &&
-                               a.IsPrimaryCaregiver &&
-                               (endDateUtc == null || a.StartDate < endDateUtc) &&
-                               (a.EndDate == null || a.EndDate > startDateUtc));
-            
-            if (hasPrimary)
+            var existingPrimaries = await _context.CareAssignments
+                .Where(a => a.Id != id &&
+                            a.PatientId == dto.PatientId &&
+                            a.CaregiverId != dto.CaregiverId &&
+                            a.Status == AssignmentStatus.Active &&
+                            a.IsPrimaryCaregiver &&
+                            (endDateUtc == null || a.StartDate < endDateUtc) &&
+                            (a.EndDate == null || a.EndDate > startDateUtc))
+                .ToListAsync();
+
+            foreach (var primary in existingPrimaries)
             {
-                throw new InvalidOperationException("این بیمار در حال حاضر یک پرستار اصلی فعال دارد.");
+                primary.IsPrimaryCaregiver = false;
+                primary.LastModifiedAt = DateTimeOffset.UtcNow;
             }
         }
 
