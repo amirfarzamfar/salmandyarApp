@@ -51,6 +51,12 @@ export interface Medication {
     notifySupervisor: boolean;
     notifyFamily: boolean;
     escalationEnabled: boolean;
+
+    totalQuantity: number;
+    alertLimit: number;
+    alertLowStockPatient: boolean;
+    alertLowStockNurse: boolean;
+    alertLowStockFamily: boolean;
 }
 
 export interface CreateMedicationDto {
@@ -74,6 +80,12 @@ export interface CreateMedicationDto {
     notifySupervisor: boolean;
     notifyFamily: boolean;
     escalationEnabled: boolean;
+
+    totalQuantity: number;
+    alertLimit: number;
+    alertLowStockPatient: boolean;
+    alertLowStockNurse: boolean;
+    alertLowStockFamily: boolean;
 }
 
 export interface MedicationDose {

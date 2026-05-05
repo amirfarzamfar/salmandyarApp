@@ -44,6 +44,11 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
       notifyNurse: false,
       notifySupervisor: false,
       notifyFamily: false,
+      totalQuantity: 0,
+      alertLimit: 0,
+      alertLowStockPatient: false,
+      alertLowStockNurse: false,
+      alertLowStockFamily: false,
       ...initialData // Override defaults with initialData if present
     },
     mode: 'onChange' // Validate on change for better UX
@@ -81,7 +86,7 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
       case 1: return ['name', 'form', 'dosage', 'route'];
       case 2: return ['frequencyType', 'startDate', 'endDate', 'frequencyDetail'];
       case 3: return ['criticality', 'highAlert', 'isPRN'];
-      case 4: return ['gracePeriodMinutes', 'escalationEnabled'];
+      case 4: return ['gracePeriodMinutes', 'escalationEnabled', 'totalQuantity', 'alertLimit'];
       default: return [];
     }
   };

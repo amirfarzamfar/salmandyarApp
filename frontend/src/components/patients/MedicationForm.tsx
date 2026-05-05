@@ -27,7 +27,12 @@ export default function MedicationForm({ patientId, onSuccess, onCancel, onSubmi
     notifyNurse: false,
     notifySupervisor: false,
     notifyFamily: false,
-    escalationEnabled: false
+    escalationEnabled: false,
+    totalQuantity: 0,
+    alertLimit: 0,
+    alertLowStockPatient: false,
+    alertLowStockNurse: false,
+    alertLowStockFamily: false
   });
   const [timeEntries, setTimeEntries] = useState<string[]>(['']);
 
@@ -291,6 +296,69 @@ export default function MedicationForm({ patientId, onSuccess, onCancel, onSubmi
              value={formData.instructions || ''}
              onChange={e => setFormData({ ...formData, instructions: e.target.value })}
            />
+        </div>
+
+        <div className="border-t pt-4 mt-4">
+            <h4 className="text-md font-semibold text-gray-800 mb-3">موجودی و هشدار اتمام دارو</h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">تعداد کل دارو (موجود)</label>
+                    <input
+                        type="number"
+                        min="0"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                        value={formData.totalQuantity || 0}
+                        onChange={e => setFormData({ ...formData, totalQuantity: Number(e.target.value) })}
+                    />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700">آستانه هشدار (تعداد)</label>
+                    <input
+                        type="number"
+                        min="0"
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500"
+                        value={formData.alertLimit || 0}
+                        onChange={e => setFormData({ ...formData, alertLimit: Number(e.target.value) })}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">وقتی موجودی به این عدد رسید هشدار ارسال می‌شود</p>
+                </div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+                <p className="text-sm font-medium text-gray-700">ارسال هشدار اتمام دارو به:</p>
+                <div className="flex flex-wrap gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.alertLowStockPatient}
+                            onChange={e => setFormData({...formData, alertLowStockPatient: e.target.checked})}
+                            className="rounded text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-600">بیمار</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.alertLowStockNurse}
+                            onChange={e => setFormData({...formData, alertLowStockNurse: e.target.checked})}
+                            className="rounded text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-600">پرستار</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                            type="checkbox" 
+                            checked={formData.alertLowStockFamily}
+                            onChange={e => setFormData({...formData, alertLowStockFamily: e.target.checked})}
+                            className="rounded text-teal-600 focus:ring-teal-500"
+                        />
+                        <span className="text-sm text-gray-600">خانواده</span>
+                    </label>
+                </div>
+            </div>
         </div>
 
         <div className="border-t pt-4 mt-4">

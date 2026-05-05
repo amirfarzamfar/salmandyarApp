@@ -82,6 +82,48 @@ export const Step1_DrugInfo = () => {
           )}
         </div>
       </div>
+
+      <div className="space-y-4">
+        <h4 className="font-semibold text-gray-800">موجودی و هشدار اتمام دارو</h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">تعداد کل دارو (موجود)</label>
+            <input
+              type="number"
+              {...register('totalQuantity', {
+                valueAsNumber: true,
+                setValueAs: (v) => {
+                  if (v === '' || v === null || v === undefined) return 0;
+                  const n = typeof v === 'number' ? v : Number(v);
+                  return Number.isFinite(n) ? n : 0;
+                }
+              })}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all outline-none"
+              placeholder="مثلا: 30"
+              min="0"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">آستانه هشدار (تعداد)</label>
+            <input
+              type="number"
+              {...register('alertLimit', {
+                valueAsNumber: true,
+                setValueAs: (v) => {
+                  if (v === '' || v === null || v === undefined) return 0;
+                  const n = typeof v === 'number' ? v : Number(v);
+                  return Number.isFinite(n) ? n : 0;
+                }
+              })}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all outline-none"
+              placeholder="مثلا: 5"
+              min="0"
+            />
+            <p className="text-xs text-gray-500">وقتی موجودی به این عدد برسد هشدار ارسال می‌شود (گیرندگان در مرحله تنظیمات نهایی).</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

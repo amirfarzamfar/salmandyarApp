@@ -12,11 +12,13 @@ public class MedicationService : IMedicationService
 {
     private readonly ApplicationDbContext _context;
     private readonly INotificationService _notificationService;
+    private readonly IUserNotificationService _userNotificationService;
 
-    public MedicationService(ApplicationDbContext context, INotificationService notificationService)
+    public MedicationService(ApplicationDbContext context, INotificationService notificationService, IUserNotificationService userNotificationService)
     {
         _context = context;
         _notificationService = notificationService;
+        _userNotificationService = userNotificationService;
     }
 
     public async Task<MedicationDto> AddMedicationAsync(CreateMedicationDto dto)
@@ -42,6 +44,11 @@ public class MedicationService : IMedicationService
             NotifySupervisor = dto.NotifySupervisor,
             NotifyFamily = dto.NotifyFamily,
             EscalationEnabled = dto.EscalationEnabled,
+            TotalQuantity = dto.TotalQuantity,
+            AlertLimit = dto.AlertLimit,
+            AlertLowStockPatient = dto.AlertLowStockPatient,
+            AlertLowStockNurse = dto.AlertLowStockNurse,
+            AlertLowStockFamily = dto.AlertLowStockFamily,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -86,6 +93,11 @@ public class MedicationService : IMedicationService
         medication.NotifySupervisor = dto.NotifySupervisor;
         medication.NotifyFamily = dto.NotifyFamily;
         medication.EscalationEnabled = dto.EscalationEnabled;
+        medication.TotalQuantity = dto.TotalQuantity;
+        medication.AlertLimit = dto.AlertLimit;
+        medication.AlertLowStockPatient = dto.AlertLowStockPatient;
+        medication.AlertLowStockNurse = dto.AlertLowStockNurse;
+        medication.AlertLowStockFamily = dto.AlertLowStockFamily;
         medication.UpdatedAt = DateTime.UtcNow;
 
         if (scheduleChanged)
@@ -195,7 +207,18 @@ public class MedicationService : IMedicationService
 
     public async Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId)
     {
-        var dose = await _context.MedicationDoses.FindAsync(doseId);
+        var dose = await _context.MedicationDoses
+            .Include(d => d.PatientMedication)
+            .ThenInclude(m => m.CareRecipient)
+            .ThenInclude(cr => cr.User)
+            .Include(d => d.PatientMedication)
+            .ThenInclude(m => m.CareRecipient)
+            .ThenInclude(cr => cr.ResponsibleNurse)
+            .Include(d => d.PatientMedication)
+            .ThenInclude(m => m.CareRecipient)
+            .ThenInclude(cr => cr.FamilyMember)
+            .FirstOrDefaultAsync(d => d.Id == doseId);
+            
         if (dose == null) throw new KeyNotFoundException("Dose not found");
 
         dose.Status = dto.Status;
@@ -207,6 +230,45 @@ public class MedicationService : IMedicationService
         dose.SideEffectDescription = dto.SideEffectDescription;
         dose.AttachmentPath = dto.AttachmentPath;
         dose.UpdatedAt = DateTime.UtcNow;
+
+        if (dto.Status == DoseStatus.Taken)
+        {
+            var med = dose.PatientMedication;
+            med.TotalQuantity = Math.Max(0, med.TotalQuantity - 1);
+
+            if (med.AlertLimit > 0 && med.TotalQuantity == med.AlertLimit)
+            {
+                var cr = med.CareRecipient;
+                var message = $"هشدار: موجودی داروی {med.Name} رو به اتمام است. موجودی فعلی: {med.TotalQuantity}";
+
+                if (med.AlertLowStockPatient && cr.User != null)
+                {
+                    if (!string.IsNullOrEmpty(cr.User.PhoneNumber))
+                        await _notificationService.SendSmsAsync(cr.User.PhoneNumber, message);
+                    if (!string.IsNullOrEmpty(cr.User.Email))
+                        await _notificationService.SendEmailAsync(cr.User.Email, "Low Medication Stock", message);
+                    await _userNotificationService.CreateNotificationAsync(cr.UserId, "هشدار اتمام دارو", message, NotificationType.Alert);
+                }
+
+                if (med.AlertLowStockNurse && cr.ResponsibleNurse != null && cr.ResponsibleNurseId != null)
+                {
+                    if (!string.IsNullOrEmpty(cr.ResponsibleNurse.PhoneNumber))
+                        await _notificationService.SendSmsAsync(cr.ResponsibleNurse.PhoneNumber, message);
+                    if (!string.IsNullOrEmpty(cr.ResponsibleNurse.Email))
+                        await _notificationService.SendEmailAsync(cr.ResponsibleNurse.Email, "Low Medication Stock", message);
+                    await _userNotificationService.CreateNotificationAsync(cr.ResponsibleNurseId, "هشدار اتمام دارو", message, NotificationType.Alert);
+                }
+
+                if (med.AlertLowStockFamily && cr.FamilyMember != null && cr.FamilyMemberId != null)
+                {
+                    if (!string.IsNullOrEmpty(cr.FamilyMember.PhoneNumber))
+                        await _notificationService.SendSmsAsync(cr.FamilyMember.PhoneNumber, message);
+                    if (!string.IsNullOrEmpty(cr.FamilyMember.Email))
+                        await _notificationService.SendEmailAsync(cr.FamilyMember.Email, "Low Medication Stock", message);
+                    await _userNotificationService.CreateNotificationAsync(cr.FamilyMemberId, "هشدار اتمام دارو", message, NotificationType.Alert);
+                }
+            }
+        }
 
         // Create Audit Log
         var auditLog = new Domain.Entities.AuditLog
@@ -470,7 +532,12 @@ public class MedicationService : IMedicationService
             NotifyNurse = m.NotifyNurse,
             NotifySupervisor = m.NotifySupervisor,
             NotifyFamily = m.NotifyFamily,
-            EscalationEnabled = m.EscalationEnabled
+            EscalationEnabled = m.EscalationEnabled,
+            TotalQuantity = m.TotalQuantity,
+            AlertLimit = m.AlertLimit,
+            AlertLowStockPatient = m.AlertLowStockPatient,
+            AlertLowStockNurse = m.AlertLowStockNurse,
+            AlertLowStockFamily = m.AlertLowStockFamily
         };
     }
 }

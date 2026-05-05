@@ -72,6 +72,31 @@ export const Step4_Notifications = () => {
         </div>
       </div>
 
+      {/* Stock Alerts */}
+      <div className="space-y-4">
+        <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+          <Bell className="w-5 h-5 text-teal-600" />
+          موجودی و هشدار اتمام دارو
+        </h4>
+        <p className="text-xs text-gray-500">گیرندگان هشدار اتمام دارو را انتخاب کنید (تعداد و آستانه در مرحله مشخصات دارو ثبت می‌شود).</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { id: 'alertLowStockPatient', label: 'ارسال هشدار اتمام به بیمار' },
+            { id: 'alertLowStockNurse', label: 'ارسال هشدار اتمام به پرستار' },
+            { id: 'alertLowStockFamily', label: 'ارسال هشدار اتمام به خانواده' },
+          ].map((item) => (
+            <label key={item.id} className="flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+              <input
+                type="checkbox"
+                {...register(item.id as any)}
+                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 border-gray-300"
+              />
+              <span className="text-sm font-medium text-gray-700">{item.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       {/* Instructions */}
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">

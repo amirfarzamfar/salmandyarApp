@@ -29,6 +29,13 @@ export const medicationSchema = z.object({
   notifySupervisor: z.boolean().default(false),
   notifyFamily: z.boolean().default(false),
   
+  // Stock & Inventory
+  totalQuantity: z.number().min(0).default(0),
+  alertLimit: z.number().min(0).default(0),
+  alertLowStockPatient: z.boolean().default(false),
+  alertLowStockNurse: z.boolean().default(false),
+  alertLowStockFamily: z.boolean().default(false),
+  
   // Instructions
   instructions: z.string().nullable().optional(),
 });

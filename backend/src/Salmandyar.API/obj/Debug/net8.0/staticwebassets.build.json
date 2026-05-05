@@ -1,1 +1,11 @@
-{"Version":1,"Hash":"wC3bA2olDME0lZ6sJSosmk9jCP959gBpOskfDC3UPkk=","Source":"Salmandyar.API","BasePath":"_content/Salmandyar.API","Mode":"Default","ManifestType":"Build","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}
+{
+  "Version": 1,
+  "Hash": "mTqJcAqZD3DQuWnDpFJH4RotLjr8vp4f5bz3smyNwJE=",
+  "Source": "Salmandyar.API",
+  "BasePath": "_content/Salmandyar.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}

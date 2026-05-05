@@ -24,6 +24,12 @@ public class MedicationDto
     public bool NotifySupervisor { get; set; }
     public bool NotifyFamily { get; set; }
     public bool EscalationEnabled { get; set; }
+
+    public int TotalQuantity { get; set; }
+    public int AlertLimit { get; set; }
+    public bool AlertLowStockPatient { get; set; }
+    public bool AlertLowStockNurse { get; set; }
+    public bool AlertLowStockFamily { get; set; }
 }
 
 public class CreateMedicationDto
@@ -48,6 +54,12 @@ public class CreateMedicationDto
     public bool NotifySupervisor { get; set; }
     public bool NotifyFamily { get; set; }
     public bool EscalationEnabled { get; set; }
+
+    public int TotalQuantity { get; set; }
+    public int AlertLimit { get; set; }
+    public bool AlertLowStockPatient { get; set; }
+    public bool AlertLowStockNurse { get; set; }
+    public bool AlertLowStockFamily { get; set; }
 }
 
 public class UpdateMedicationDto
@@ -71,6 +83,12 @@ public class UpdateMedicationDto
     public bool NotifySupervisor { get; set; }
     public bool NotifyFamily { get; set; }
     public bool EscalationEnabled { get; set; }
+
+    public int TotalQuantity { get; set; }
+    public int AlertLimit { get; set; }
+    public bool AlertLowStockPatient { get; set; }
+    public bool AlertLowStockNurse { get; set; }
+    public bool AlertLowStockFamily { get; set; }
 }
 
 public class MedicationDoseDto

@@ -34,6 +34,12 @@ public class PatientMedication
     public bool NotifyFamily { get; set; }
     public bool EscalationEnabled { get; set; }
 
+    public int TotalQuantity { get; set; }
+    public int AlertLimit { get; set; }
+    public bool AlertLowStockPatient { get; set; }
+    public bool AlertLowStockNurse { get; set; }
+    public bool AlertLowStockFamily { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public string? CreatedByUserId { get; set; }
