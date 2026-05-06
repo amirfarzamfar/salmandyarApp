@@ -196,9 +196,11 @@ export function AssignmentWizard({ isOpen, onClose, onSuccess, initialData }: As
                   {...register("shiftSlot")}
                   className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-teal-500 outline-none transition-all"
                 >
-                  <option value={ShiftSlot.Morning}>صبح</option>
-                  <option value={ShiftSlot.Evening}>عصر</option>
-                  <option value={ShiftSlot.Night}>شب</option>
+                  <option value={ShiftSlot.Morning}>صبح (۷ تا ۱۳)</option>
+                  <option value={ShiftSlot.Evening}>عصر (۱۳ تا ۱۹)</option>
+                  <option value={ShiftSlot.Long}>لانگ (۷ تا ۱۹)</option>
+                  <option value={ShiftSlot.Night}>شب (۱۹ تا ۷)</option>
+                  <option value={ShiftSlot.TwentyFourHour}>۲۴ ساعته (۷ تا ۷)</option>
                 </select>
               </div>
             )}

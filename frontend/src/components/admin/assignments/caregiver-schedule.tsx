@@ -1,9 +1,9 @@
 "use client";
 
-import { AssignmentDto, AssignmentStatus } from "@/types/assignment";
+import { AssignmentDto, AssignmentStatus, ShiftSlot } from "@/types/assignment";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
 import { faIR } from "date-fns/locale";
-import { User, Stethoscope, Clock } from "lucide-react";
+import { User, Stethoscope, Clock, CalendarDays } from "lucide-react";
 
 interface CaregiverScheduleProps {
   assignments: AssignmentDto[];
@@ -23,6 +23,18 @@ export function CaregiverSchedule({ assignments, onEdit }: CaregiverScheduleProp
 
   const formatPersianDate = (date: Date) => {
     return new Intl.DateTimeFormat('fa-IR-u-ca-persian', { month: 'long', day: 'numeric' }).format(date);
+  };
+
+  const getShiftSlotLabel = (slot?: ShiftSlot) => {
+    if (slot === undefined || slot === null) return "نامشخص";
+    switch(slot) {
+      case ShiftSlot.Morning: return "صبح";
+      case ShiftSlot.Evening: return "عصر";
+      case ShiftSlot.Night: return "شب";
+      case ShiftSlot.Long: return "لانگ";
+      case ShiftSlot.TwentyFourHour: return "۲۴ ساعته";
+      default: return "نامشخص";
+    }
   };
 
   return (
@@ -63,10 +75,18 @@ export function CaregiverSchedule({ assignments, onEdit }: CaregiverScheduleProp
                     <span className="truncate opacity-90">{assignment.patientName}</span>
                   </div>
 
-                  {/* Time Row */}
-                  <div className="flex items-center gap-1.5 text-[10px] opacity-75 bg-black/5 dark:bg-white/5 rounded px-1.5 py-0.5 w-fit">
-                    <Clock size={10} />
-                    <span>{format(new Date(assignment.startDate), 'HH:mm')}</span>
+                  {/* Shift/Time Row */}
+                  <div className="flex items-center justify-between mt-2 pt-2 border-t border-black/5 dark:border-white/10">
+                    <div className="flex items-center gap-1.5 text-[10px] opacity-75 bg-black/5 dark:bg-white/5 rounded px-1.5 py-0.5 w-fit">
+                      <Clock size={10} />
+                      <span>{format(new Date(assignment.startDate), 'HH:mm')}</span>
+                    </div>
+                    {assignment.shiftSlot !== undefined && assignment.shiftSlot !== ShiftSlot.None && (
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-900/50 rounded px-1.5 py-0.5 w-fit">
+                        <CalendarDays size={10} />
+                        <span>شیفت {getShiftSlotLabel(assignment.shiftSlot)}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
