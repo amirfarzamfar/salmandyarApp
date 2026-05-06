@@ -8,10 +8,11 @@ import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
-import { X, Bell, User, Shield, Users, Calendar, Check } from 'lucide-react';
+import { X, Bell, User, Shield, Users, Calendar } from 'lucide-react';
 import { ServiceDefinition } from '@/types/service';
 import { serviceReminderService } from '@/services/service-reminder.service';
 import Swal from 'sweetalert2';
+import { RecipientChip } from '@/components/reminders/RecipientChip';
 
 const schema = z.object({
   careRecipientId: z.number().optional(), // Added for global mode
@@ -91,24 +92,6 @@ export default function ServiceReminderForm({ patientId, definitions, onSuccess,
     }
   };
 
-  const RecipientChip = ({ label, icon: Icon, field }: any) => {
-    const isChecked = watch(field);
-    return (
-      <div 
-        onClick={() => setValue(field, !isChecked)}
-        className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
-          isChecked 
-            ? 'bg-teal-50 border-teal-200 text-teal-700 shadow-sm' 
-            : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'
-        }`}
-      >
-        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isChecked ? 'bg-teal-100' : 'bg-gray-100'}`}>
-            {isChecked ? <Check className="w-3 h-3" /> : <Icon className="w-3 h-3" />}
-        </div>
-        <span className="text-sm font-medium">{label}</span>
-      </div>
-    );
-  };
 
   return (
     <div className="bg-white rounded-2xl shadow-xl overflow-hidden max-w-lg w-full">
@@ -172,9 +155,9 @@ export default function ServiceReminderForm({ patientId, definitions, onSuccess,
         <div>
             <label className="block text-sm font-bold text-gray-700 mb-3">گیرندگان هشدار</label>
             <div className="flex flex-wrap gap-3">
-                <RecipientChip label="بیمار / خانواده" icon={User} field="notifyPatient" />
-                <RecipientChip label="سوپروایزر" icon={Users} field="notifySupervisor" />
-                <RecipientChip label="ادمین سیستم" icon={Shield} field="notifyAdmin" />
+                <RecipientChip label="بیمار / خانواده" icon={User} checked={watch('notifyPatient')} onClick={() => setValue('notifyPatient', !watch('notifyPatient'))} />
+                <RecipientChip label="سوپروایزر" icon={Users} checked={watch('notifySupervisor')} onClick={() => setValue('notifySupervisor', !watch('notifySupervisor'))} />
+                <RecipientChip label="ادمین سیستم" icon={Shield} checked={watch('notifyAdmin')} onClick={() => setValue('notifyAdmin', !watch('notifyAdmin'))} />
             </div>
             <p className="text-xs text-gray-400 mt-2 pr-1">
                 * پیامک و ایمیل برای افراد انتخاب شده ارسال خواهد شد.

@@ -76,6 +76,8 @@ namespace Salmandyar.API.Controllers
             var reminder = await _context.ServiceReminders.FindAsync(id);
             if (reminder == null) return NotFound();
 
+            var oldScheduledTime = reminder.ScheduledTime;
+
             reminder.ServiceDefinitionId = dto.ServiceDefinitionId;
             reminder.ScheduledTime = dto.ScheduledTime;
             reminder.Note = dto.Note;
@@ -83,7 +85,7 @@ namespace Salmandyar.API.Controllers
             reminder.NotifyAdmin = dto.NotifyAdmin;
             reminder.NotifySupervisor = dto.NotifySupervisor;
             
-            if (Math.Abs((reminder.ScheduledTime - dto.ScheduledTime).TotalMinutes) > 1)
+            if (Math.Abs((oldScheduledTime - dto.ScheduledTime).TotalMinutes) > 1)
             {
                 reminder.IsSent = false;
                 reminder.SentAt = null;

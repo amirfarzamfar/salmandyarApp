@@ -2,8 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Salmandyar.Infrastructure.Persistence;
 using Salmandyar.Application.Services.Notifications;
+using Salmandyar.Domain.Enums;
 
 namespace Salmandyar.Infrastructure.BackgroundServices
 {
@@ -44,6 +46,8 @@ namespace Salmandyar.Infrastructure.BackgroundServices
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
+                var userNotificationService = scope.ServiceProvider.GetRequiredService<IUserNotificationService>();
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Salmandyar.Domain.Entities.User>>();
 
                 var now = DateTime.UtcNow;
 
@@ -51,7 +55,11 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                 var dueReminders = await dbContext.ServiceReminders
                     .Include(r => r.CareRecipient)
                         .ThenInclude(cr => cr.User)
+                    .Include(r => r.CareRecipient)
+                        .ThenInclude(cr => cr.FamilyMember)
+                    .Include(r => r.TargetUser)
                     .Include(r => r.ServiceDefinition)
+                    .Include(r => r.CareService)
                     .Where(r => !r.IsSent && r.ScheduledTime <= now)
                     .ToListAsync();
 
@@ -59,22 +67,116 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                 {
                     try
                     {
-                        var message = $"Reminder: {reminder.ServiceDefinition.Title} for {reminder.CareRecipient.FirstName} {reminder.CareRecipient.LastName} is due now.";
-                        
-                        // Notify Patient/Family
-                        if (reminder.NotifyPatient && reminder.CareRecipient.User != null)
+                        var serviceTime = reminder.CareService?.StartTime ?? reminder.CareService?.PerformedAt;
+                        var whenText = serviceTime.HasValue
+                            ? $"زمان خدمت: {serviceTime.Value:yyyy-MM-dd HH:mm}"
+                            : "";
+
+                        var note = string.IsNullOrWhiteSpace(reminder.Note) ? "" : $" - {reminder.Note}";
+                        var message = $"یادآوری خدمت: {reminder.ServiceDefinition.Title} برای {reminder.CareRecipient.FirstName} {reminder.CareRecipient.LastName}{note}. {whenText}".Trim();
+
+                        if (reminder.TargetUserId != null)
                         {
-                            if (!string.IsNullOrEmpty(reminder.CareRecipient.User.PhoneNumber))
-                                await notificationService.SendSmsAsync(reminder.CareRecipient.User.PhoneNumber, message);
-                            
-                            if (!string.IsNullOrEmpty(reminder.CareRecipient.User.Email))
-                                await notificationService.SendEmailAsync(reminder.CareRecipient.User.Email, "Service Reminder", message);
+                            if (reminder.SendInApp)
+                            {
+                                await userNotificationService.CreateNotificationAsync(
+                                    reminder.TargetUserId,
+                                    "یادآوری خدمت",
+                                    message,
+                                    NotificationType.Reminder,
+                                    referenceId: reminder.CareServiceId?.ToString(),
+                                    link: null
+                                );
+                            }
+
+                            if (reminder.TargetUser != null)
+                            {
+                                if (reminder.SendSms && !string.IsNullOrEmpty(reminder.TargetUser.PhoneNumber))
+                                    await notificationService.SendSmsAsync(reminder.TargetUser.PhoneNumber, message);
+
+                                if (reminder.SendEmail && !string.IsNullOrEmpty(reminder.TargetUser.Email))
+                                    await notificationService.SendEmailAsync(reminder.TargetUser.Email, "Service Reminder", message);
+                            }
+                        }
+
+                        if (reminder.NotifyPatient)
+                        {
+                            var patientUser = reminder.CareRecipient.User ?? reminder.CareRecipient.FamilyMember;
+                            if (patientUser != null)
+                            {
+                                if (reminder.SendInApp)
+                                {
+                                    await userNotificationService.CreateNotificationAsync(
+                                        patientUser.Id,
+                                        "یادآوری خدمت",
+                                        message,
+                                        NotificationType.Reminder,
+                                        referenceId: reminder.CareServiceId?.ToString(),
+                                        link: null
+                                    );
+                                }
+
+                                if (reminder.SendSms && !string.IsNullOrEmpty(patientUser.PhoneNumber))
+                                    await notificationService.SendSmsAsync(patientUser.PhoneNumber, message);
+
+                                if (reminder.SendEmail && !string.IsNullOrEmpty(patientUser.Email))
+                                    await notificationService.SendEmailAsync(patientUser.Email, "Service Reminder", message);
+                            }
+                        }
+
+                        if (reminder.NotifySupervisor && !string.IsNullOrEmpty(reminder.CareRecipient.ResponsibleNurseId))
+                        {
+                            var supervisor = await userManager.FindByIdAsync(reminder.CareRecipient.ResponsibleNurseId);
+                            if (supervisor != null)
+                            {
+                                if (reminder.SendInApp)
+                                {
+                                    await userNotificationService.CreateNotificationAsync(
+                                        supervisor.Id,
+                                        "یادآوری خدمت",
+                                        message,
+                                        NotificationType.Reminder,
+                                        referenceId: reminder.CareServiceId?.ToString(),
+                                        link: null
+                                    );
+                                }
+
+                                if (reminder.SendSms && !string.IsNullOrEmpty(supervisor.PhoneNumber))
+                                    await notificationService.SendSmsAsync(supervisor.PhoneNumber, message);
+
+                                if (reminder.SendEmail && !string.IsNullOrEmpty(supervisor.Email))
+                                    await notificationService.SendEmailAsync(supervisor.Email, "Service Reminder", message);
+                            }
                         }
 
                         // Notify Admin/Supervisor (Simulated via hardcoded admin email for now or fetched from roles)
                         if (reminder.NotifyAdmin)
                         {
-                            await notificationService.SendEmailAsync("admin@salmandyar.com", "Admin Alert: Service Due", message);
+                            var admins = new List<Salmandyar.Domain.Entities.User>();
+                            admins.AddRange(await userManager.GetUsersInRoleAsync("Admin"));
+                            admins.AddRange(await userManager.GetUsersInRoleAsync("SuperAdmin"));
+                            admins = admins.GroupBy(a => a.Id).Select(g => g.First()).ToList();
+
+                            foreach (var admin in admins)
+                            {
+                                if (reminder.SendInApp)
+                                {
+                                    await userNotificationService.CreateNotificationAsync(
+                                        admin.Id,
+                                        "هشدار ادمین: خدمت سررسید",
+                                        message,
+                                        NotificationType.Alert,
+                                        referenceId: reminder.CareServiceId?.ToString(),
+                                        link: null
+                                    );
+                                }
+
+                                if (reminder.SendSms && !string.IsNullOrEmpty(admin.PhoneNumber))
+                                    await notificationService.SendSmsAsync(admin.PhoneNumber, message);
+
+                                if (reminder.SendEmail && !string.IsNullOrEmpty(admin.Email))
+                                    await notificationService.SendEmailAsync(admin.Email, "Admin Alert: Service Due", message);
+                            }
                         }
 
                         // Update Status

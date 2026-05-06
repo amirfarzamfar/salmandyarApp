@@ -70,6 +70,22 @@ export interface CreateCareService {
   description: string;
   notes: string;
   performerId?: string;
+  reminderOptions?: CareServiceReminderOptions;
+}
+
+export interface CareServiceReminderOptions {
+  enabled: boolean;
+  dayBefore: boolean;
+  hoursBefore?: number | null;
+  note?: string;
+  smsToPatient: boolean;
+  smsToSupervisor: boolean;
+  smsToAdmin: boolean;
+  smsToPerformer: boolean;
+  inAppToPatient: boolean;
+  inAppToSupervisor: boolean;
+  inAppToAdmin: boolean;
+  inAppToPerformer: boolean;
 }
 
 export interface NursingReport {

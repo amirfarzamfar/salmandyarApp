@@ -186,6 +186,8 @@ public class PatientService : IPatientService
 
         _context.CareServices.Add(entity);
         await _context.SaveChangesAsync();
+
+        await UpsertCareServiceRemindersAsync(entity, dto.ReminderOptions);
     }
 
     public async Task<int> UpdateCareServiceAsync(int serviceId, UpdateCareServiceDto dto)
@@ -229,6 +231,18 @@ public class PatientService : IPatientService
 
         _context.CareServices.Update(service);
         await _context.SaveChangesAsync();
+
+        if (dto.Status != CareServiceStatus.Planned)
+        {
+            await DeleteCareServiceRemindersAsync(service.Id);
+        }
+        else
+        {
+            if (dto.ReminderOptions != null)
+            {
+                await UpsertCareServiceRemindersAsync(service, dto.ReminderOptions);
+            }
+        }
         
         return service.CareRecipientId;
     }
@@ -243,6 +257,148 @@ public class PatientService : IPatientService
         await _context.SaveChangesAsync();
         
         return careRecipientId;
+    }
+
+    private async Task UpsertCareServiceRemindersAsync(CareService service, CareServiceReminderOptionsDto? options)
+    {
+        await DeleteCareServiceRemindersAsync(service.Id);
+
+        if (options == null || !options.Enabled)
+        {
+            return;
+        }
+
+        var serviceTime = service.StartTime ?? service.PerformedAt;
+        var now = DateTime.UtcNow;
+
+        var recipient = await _context.CareRecipients
+            .AsNoTracking()
+            .Where(c => c.Id == service.CareRecipientId)
+            .Select(c => new
+            {
+                c.UserId,
+                c.FamilyMemberId,
+                c.ResponsibleNurseId,
+                c.FirstName,
+                c.LastName
+            })
+            .FirstAsync();
+
+        var scheduledTimes = new List<DateTime>();
+
+        if (options.DayBefore)
+        {
+            scheduledTimes.Add(serviceTime.AddDays(-1));
+        }
+
+        if (options.HoursBefore.HasValue && options.HoursBefore.Value > 0)
+        {
+            scheduledTimes.Add(serviceTime.AddHours(-options.HoursBefore.Value));
+        }
+
+        scheduledTimes = scheduledTimes
+            .Select(t => t.Kind == DateTimeKind.Utc ? t : t.ToUniversalTime())
+            .Distinct()
+            .Where(t => t > now)
+            .OrderBy(t => t)
+            .ToList();
+
+        if (!scheduledTimes.Any())
+        {
+            return;
+        }
+
+        var reminderTemplates = new List<(string? TargetUserId, bool NotifyAdmin, bool SendSms, bool SendInApp)>();
+
+        if (options.SmsToPatient || options.InAppToPatient)
+        {
+            var targetUserId = recipient.UserId ?? recipient.FamilyMemberId;
+            reminderTemplates.Add((targetUserId, false, options.SmsToPatient, options.InAppToPatient));
+        }
+
+        if (options.SmsToSupervisor || options.InAppToSupervisor)
+        {
+            reminderTemplates.Add((recipient.ResponsibleNurseId, false, options.SmsToSupervisor, options.InAppToSupervisor));
+        }
+
+        if (options.SmsToPerformer || options.InAppToPerformer)
+        {
+            reminderTemplates.Add((service.PerformerId, false, options.SmsToPerformer, options.InAppToPerformer));
+        }
+
+        if (options.SmsToAdmin || options.InAppToAdmin)
+        {
+            reminderTemplates.Add((null, true, options.SmsToAdmin, options.InAppToAdmin));
+        }
+
+        reminderTemplates = reminderTemplates
+            .Where(t => (t.NotifyAdmin || !string.IsNullOrWhiteSpace(t.TargetUserId)) && (t.SendSms || t.SendInApp))
+            .Distinct()
+            .ToList();
+
+        if (!reminderTemplates.Any())
+        {
+            return;
+        }
+
+        var note = options.Note ?? string.Empty;
+
+        var reminders = new List<ServiceReminder>();
+        foreach (var scheduledTime in scheduledTimes)
+        {
+            foreach (var template in reminderTemplates)
+            {
+                reminders.Add(new ServiceReminder
+                {
+                    CareRecipientId = service.CareRecipientId,
+                    ServiceDefinitionId = service.ServiceDefinitionId,
+                    CareServiceId = service.Id,
+                    TargetUserId = template.TargetUserId,
+                    ScheduledTime = scheduledTime,
+                    Note = note,
+                    NotifyPatient = false,
+                    NotifyAdmin = template.NotifyAdmin,
+                    NotifySupervisor = false,
+                    SendSms = template.SendSms,
+                    SendEmail = false,
+                    SendInApp = template.SendInApp,
+                    IsSent = false
+                });
+            }
+        }
+
+        var deduped = reminders
+            .GroupBy(r => new { r.CareServiceId, r.ScheduledTime, r.TargetUserId, r.NotifyAdmin })
+            .Select(g =>
+            {
+                var first = g.First();
+                first.SendSms = g.Any(x => x.SendSms);
+                first.SendInApp = g.Any(x => x.SendInApp);
+                if (string.IsNullOrWhiteSpace(first.Note))
+                {
+                    first.Note = g.Select(x => x.Note).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)) ?? string.Empty;
+                }
+                return first;
+            })
+            .ToList();
+
+        _context.ServiceReminders.AddRange(deduped);
+        await _context.SaveChangesAsync();
+    }
+
+    private async Task DeleteCareServiceRemindersAsync(int careServiceId)
+    {
+        var existing = await _context.ServiceReminders
+            .Where(r => r.CareServiceId == careServiceId)
+            .ToListAsync();
+
+        if (existing.Count == 0)
+        {
+            return;
+        }
+
+        _context.ServiceReminders.RemoveRange(existing);
+        await _context.SaveChangesAsync();
     }
 
     public async Task<List<NursingReportDto>> GetNursingReportsAsync(int patientId)

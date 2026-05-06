@@ -57,7 +57,8 @@ public record CreateCareServiceDto(
     DateTime? EndTime,
     string Description,
     string Notes,
-    string? PerformerId = null // Optional override for performer
+    string? PerformerId = null, // Optional override for performer
+    CareServiceReminderOptionsDto? ReminderOptions = null
 );
 
 public record UpdateCareServiceDto(
@@ -68,7 +69,23 @@ public record UpdateCareServiceDto(
     string Description,
     string Notes,
     CareServiceStatus Status,
-    string? PerformerId = null
+    string? PerformerId = null,
+    CareServiceReminderOptionsDto? ReminderOptions = null
+);
+
+public record CareServiceReminderOptionsDto(
+    bool Enabled,
+    bool DayBefore,
+    int? HoursBefore,
+    string? Note,
+    bool SmsToPatient,
+    bool SmsToSupervisor,
+    bool SmsToAdmin,
+    bool SmsToPerformer,
+    bool InAppToPatient,
+    bool InAppToSupervisor,
+    bool InAppToAdmin,
+    bool InAppToPerformer
 );
 
 public record NursingReportDto(

@@ -94,6 +94,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .Property(v => v.MeasuredAt)
             .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
+        builder.Entity<ServiceReminder>()
+            .Property(r => r.ScheduledTime)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
         builder.Entity<ServiceReminder>().ToTable("ServiceReminders");
         builder.Entity<NotificationSettings>().ToTable("NotificationSettings");
         
@@ -183,6 +187,18 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(r => r.ServiceDefinitionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ServiceReminder>()
+            .HasOne(r => r.CareService)
+            .WithMany()
+            .HasForeignKey(r => r.CareServiceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ServiceReminder>()
+            .HasOne(r => r.TargetUser)
+            .WithMany()
+            .HasForeignKey(r => r.TargetUserId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // CareAssignment Configurations
         builder.Entity<CareAssignment>()

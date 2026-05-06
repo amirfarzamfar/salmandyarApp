@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.DTOs.Assessments.Reports;
 using Salmandyar.Application.Services.Assessments;
@@ -90,6 +94,10 @@ public class AssessmentReportService : IAssessmentReportService
 
     public async Task<List<UserExamResultDto>> GetExamUserReportsAsync(int examId, ReportFilterDto filter)
     {
+        var totalQuestionsInExam = await _context.AssessmentQuestions
+            .AsNoTracking()
+            .CountAsync(q => q.FormId == examId);
+
         var query = _context.AssessmentSubmissions
             .AsNoTracking()
             .Include(s => s.User)
@@ -126,68 +134,33 @@ public class AssessmentReportService : IAssessmentReportService
         var submissions = await query.ToListAsync();
 
         return submissions.Select(s => {
-            // Calculate correct/incorrect
-            // Logic: If Question is multiple choice, check SelectedOption.IsCorrect
-            // If Text, it might need manual grading, but for now assuming auto-graded or just boolean
-            
             int correct = 0;
             int incorrect = 0;
-            int unanswered = 0;
 
             foreach (var ans in s.Answers)
             {
                 if (ans.SelectedOptionId.HasValue)
                 {
-                    // Assuming we can check if the selected option is correct
-                    // We need to know which option is correct.
-                    // The Option entity has IsCorrect.
-                    // We included Answers -> SelectedOption (Wait, I need to include SelectedOption in query)
-                    // Or Answers -> Question -> Options.
-                    
-                    var selectedOpt = ans.Question.Options.FirstOrDefault(o => o.Id == ans.SelectedOptionId);
+                    var selectedOpt = ans.Question.Options.FirstOrDefault(o => o.Id == ans.SelectedOptionId.Value);
                     if (selectedOpt != null)
                     {
-                        if (selectedOpt.IsCorrect) correct++;
+                        if (selectedOpt.ScoreValue > 0) correct++;
                         else incorrect++;
                     }
                     else
                     {
-                         // Should not happen if ID is valid
                          incorrect++;
                     }
                 }
                 else if (ans.BooleanResponse.HasValue)
                 {
-                    // Handle True/False if applicable
-                    // Need to know correct answer for Boolean question
-                    // Assuming for now we count based on score
-                    // If Question.Weight > 0 and Score > 0 -> Correct?
-                    // Better to rely on score calculation logic which presumably populated TotalScore
-                    // But here we need counts.
-                    
-                    // Simplification: Check if the answer yielded points.
-                    // We don't have score per answer stored in QuestionAnswer directly in the entity definition I saw?
-                    // Wait, I saw QuestionAnswer.cs earlier.
-                    // It has SelectedOptionId, TextResponse, BooleanResponse.
-                    // It DOES NOT have "ScoreObtained".
-                    // So we must recalculate or infer.
-                    
-                    // Let's use the Option's IsCorrect property.
-                     var selectedOpt = ans.Question.Options.FirstOrDefault(o => o.Id == ans.SelectedOptionId);
-                     if (selectedOpt != null && selectedOpt.IsCorrect) correct++;
-                     else incorrect++;
-                }
-                else
-                {
-                    unanswered++;
+                    if (ans.BooleanResponse.Value) correct++;
+                    else incorrect++;
                 }
             }
-            
-            // Total questions in the form?
-            // We can get it from s.Answers.Count or fetch Form.Questions.Count
-            // s.Answers only contains answered questions? Or all?
-            // Usually submission contains all if initialized, but let's assume answers count = questions count for now
-            // or we might need to fetch the form to know total questions.
+
+            var attempted = correct + incorrect;
+            var unanswered = Math.Max(0, totalQuestionsInExam - attempted);
             
             return new UserExamResultDto
             {
@@ -201,7 +174,7 @@ public class AssessmentReportService : IAssessmentReportService
                 CorrectCount = correct,
                 IncorrectCount = incorrect,
                 UnansweredCount = unanswered,
-                TotalQuestions = s.Answers.Count
+                TotalQuestions = totalQuestionsInExam
             };
         }).ToList();
     }
@@ -235,15 +208,17 @@ public class AssessmentReportService : IAssessmentReportService
                 QuestionText = a.Question.Text,
                 Weight = a.Question.Weight,
                 SelectedOptionId = a.SelectedOptionId,
-                SelectedOptionText = a.SelectedOption?.Text,
+                SelectedOptionText = a.SelectedOption?.Text ?? (a.BooleanResponse.HasValue ? (a.BooleanResponse.Value ? "بله" : "خیر") : null),
                 TextResponse = a.TextResponse,
-                IsCorrect = a.SelectedOption?.IsCorrect ?? false, // Simplification
-                ScoreObtained = a.SelectedOption?.ScoreValue ?? 0, // Simplification
+                IsCorrect = a.SelectedOption != null
+                    ? a.SelectedOption.ScoreValue > 0 && a.SelectedOption.ScoreValue == a.Question.Options.Max(o => o.ScoreValue)
+                    : (a.BooleanResponse.HasValue && a.BooleanResponse.Value),
+                ScoreObtained = (a.SelectedOption?.ScoreValue ?? (a.BooleanResponse.HasValue ? (a.BooleanResponse.Value ? 1 : 0) : 0)) * a.Question.Weight,
                 Options = a.Question.Options.Select(o => new OptionDetailDto
                 {
                     Id = o.Id,
                     Text = o.Text,
-                    IsCorrect = o.IsCorrect,
+                    IsCorrect = o.ScoreValue > 0 && o.ScoreValue == a.Question.Options.Max(x => x.ScoreValue),
                     ScoreValue = o.ScoreValue
                 }).ToList()
             }).ToList()
@@ -280,6 +255,7 @@ public class AssessmentReportService : IAssessmentReportService
         {
             var qAnswers = answers.Where(a => a.QuestionId == question.Id).ToList();
             var totalAnswers = qAnswers.Count;
+            var maxScoreValue = question.Options.Any() ? question.Options.Max(o => o.ScoreValue) : 0;
             
             var qDto = new QuestionAnalysisDto
             {
@@ -294,13 +270,13 @@ public class AssessmentReportService : IAssessmentReportService
             foreach (var option in question.Options)
             {
                 var selectionCount = qAnswers.Count(a => a.SelectedOptionId == option.Id);
-                if (option.IsCorrect) correctCount += selectionCount;
+                if (maxScoreValue > 0 && option.ScoreValue == maxScoreValue) correctCount += selectionCount;
 
                 qDto.Options.Add(new OptionAnalysisDto
                 {
                     OptionId = option.Id,
                     OptionText = option.Text,
-                    IsCorrect = option.IsCorrect,
+                    IsCorrect = maxScoreValue > 0 && option.ScoreValue == maxScoreValue,
                     SelectionCount = selectionCount,
                     SelectionPercentage = totalAnswers > 0 ? (double)selectionCount / totalAnswers * 100 : 0
                 });

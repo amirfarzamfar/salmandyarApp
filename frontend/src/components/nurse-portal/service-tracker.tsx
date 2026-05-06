@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PortalCard } from "@/components/portal/ui/portal-card";
-import { CheckCircle2, Clock, CalendarDays, Plus, Timer, MoreVertical, X, Save, Loader2, Bell, Trash2, Edit2, AlertCircle, MapPin, User } from "lucide-react";
+import { CheckCircle2, Clock, CalendarDays, Plus, Timer, MoreVertical, X, Save, Loader2, Bell, Trash2, Edit2, AlertCircle, MapPin, User, Shield, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { nursePortalService } from "@/services/nurse-portal.service";
@@ -39,6 +39,7 @@ export function ServiceTracker({ patientId }: { patientId?: number }) {
     register,
     handleSubmit,
     control,
+    watch,
     reset,
     setValue,
     formState: { errors, isSubmitting },
@@ -46,8 +47,21 @@ export function ServiceTracker({ patientId }: { patientId?: number }) {
     resolver: zodResolver(careServiceFormSchema),
     defaultValues: {
         performedAt: new Date().toISOString(),
+        reminderEnabled: false,
+        reminderDayBefore: true,
+        reminderHoursBefore: 3,
+        smsToPatient: false,
+        smsToSupervisor: false,
+        smsToAdmin: false,
+        smsToPerformer: true,
+        inAppToPatient: false,
+        inAppToSupervisor: true,
+        inAppToAdmin: false,
+        inAppToPerformer: true,
     }
   });
+
+  const reminderEnabled = watch('reminderEnabled');
 
   useEffect(() => {
     fetchData();
@@ -137,6 +151,21 @@ export function ServiceTracker({ patientId }: { patientId?: number }) {
         description: data.description || '',
         notes: data.notes || '',
         status: CareServiceStatus.Planned
+        ,
+        reminderOptions: data.reminderEnabled ? {
+            enabled: true,
+            dayBefore: data.reminderDayBefore ?? true,
+            hoursBefore: (data.reminderHoursBefore ?? 0) > 0 ? data.reminderHoursBefore : null,
+            note: data.reminderNote || '',
+            smsToPatient: data.smsToPatient ?? false,
+            smsToSupervisor: data.smsToSupervisor ?? false,
+            smsToAdmin: data.smsToAdmin ?? false,
+            smsToPerformer: data.smsToPerformer ?? false,
+            inAppToPatient: data.inAppToPatient ?? false,
+            inAppToSupervisor: data.inAppToSupervisor ?? false,
+            inAppToAdmin: data.inAppToAdmin ?? false,
+            inAppToPerformer: data.inAppToPerformer ?? false,
+        } : undefined
       };
 
       if (editingService) {
@@ -476,6 +505,97 @@ export function ServiceTracker({ patientId }: { patientId?: number }) {
                                             />
                                         )}
                                     />
+                                </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                                <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-4 py-3 flex items-center justify-between text-white">
+                                    <div className="flex items-center gap-2">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                            <Bell className="w-4 h-4" />
+                                        </div>
+                                        <div>
+                                            <div className="text-sm font-black">تنظیم یادآور</div>
+                                            <div className="text-[11px] text-teal-100">ارسال پیامک و نوتیف داخل اپ</div>
+                                        </div>
+                                    </div>
+                                    <label className="inline-flex items-center gap-2 text-xs font-black">
+                                        <input type="checkbox" {...register('reminderEnabled')} className="w-4 h-4" />
+                                        فعال
+                                    </label>
+                                </div>
+
+                                <div className={cn("p-4 space-y-4", !reminderEnabled && "opacity-60 pointer-events-none")}>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <label className="flex items-center gap-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+                                            <input type="checkbox" {...register('reminderDayBefore')} className="w-4 h-4" />
+                                            یک روز قبل
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-gray-600 dark:text-gray-300">چند ساعت قبل</span>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                max={168}
+                                                {...register('reminderHoursBefore', { valueAsNumber: true })}
+                                                className="w-20 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl text-sm font-bold text-center"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-xs font-black text-gray-700 dark:text-gray-200 mb-2">گیرندگان پیامک</div>
+                                        <div className="flex flex-wrap gap-3">
+                                            <div onClick={() => setValue('smsToPatient', !(watch('smsToPatient') ?? false))} className={cn("cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all", (watch('smsToPatient') ?? false) ? "bg-teal-50 border-teal-200 text-teal-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50")}>
+                                                <User className="w-4 h-4" />
+                                                <span className="text-sm font-medium">بیمار/خانواده</span>
+                                            </div>
+                                            <div onClick={() => setValue('smsToSupervisor', !(watch('smsToSupervisor') ?? false))} className={cn("cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all", (watch('smsToSupervisor') ?? false) ? "bg-teal-50 border-teal-200 text-teal-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50")}>
+                                                <Users className="w-4 h-4" />
+                                                <span className="text-sm font-medium">سوپروایزر</span>
+                                            </div>
+                                            <div onClick={() => setValue('smsToPerformer', !(watch('smsToPerformer') ?? false))} className={cn("cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all", (watch('smsToPerformer') ?? false) ? "bg-teal-50 border-teal-200 text-teal-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50")}>
+                                                <User className="w-4 h-4" />
+                                                <span className="text-sm font-medium">انجام‌دهنده</span>
+                                            </div>
+                                            <div onClick={() => setValue('smsToAdmin', !(watch('smsToAdmin') ?? false))} className={cn("cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all", (watch('smsToAdmin') ?? false) ? "bg-teal-50 border-teal-200 text-teal-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50")}>
+                                                <Shield className="w-4 h-4" />
+                                                <span className="text-sm font-medium">ادمین</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-xs font-black text-gray-700 dark:text-gray-200 mb-2">گیرندگان نوتیف داخل اپ</div>
+                                        <div className="flex flex-wrap gap-3">
+                                            <div onClick={() => setValue('inAppToPatient', !(watch('inAppToPatient') ?? false))} className={cn("cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all", (watch('inAppToPatient') ?? false) ? "bg-teal-50 border-teal-200 text-teal-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50")}>
+                                                <User className="w-4 h-4" />
+                                                <span className="text-sm font-medium">بیمار/خانواده</span>
+                                            </div>
+                                            <div onClick={() => setValue('inAppToSupervisor', !(watch('inAppToSupervisor') ?? false))} className={cn("cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all", (watch('inAppToSupervisor') ?? false) ? "bg-teal-50 border-teal-200 text-teal-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50")}>
+                                                <Users className="w-4 h-4" />
+                                                <span className="text-sm font-medium">سوپروایزر</span>
+                                            </div>
+                                            <div onClick={() => setValue('inAppToPerformer', !(watch('inAppToPerformer') ?? false))} className={cn("cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all", (watch('inAppToPerformer') ?? false) ? "bg-teal-50 border-teal-200 text-teal-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50")}>
+                                                <User className="w-4 h-4" />
+                                                <span className="text-sm font-medium">انجام‌دهنده</span>
+                                            </div>
+                                            <div onClick={() => setValue('inAppToAdmin', !(watch('inAppToAdmin') ?? false))} className={cn("cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all", (watch('inAppToAdmin') ?? false) ? "bg-teal-50 border-teal-200 text-teal-700" : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50")}>
+                                                <Shield className="w-4 h-4" />
+                                                <span className="text-sm font-medium">ادمین</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-black text-gray-700 dark:text-gray-200 mb-2">متن یادآور (اختیاری)</label>
+                                        <input
+                                            type="text"
+                                            {...register('reminderNote')}
+                                            className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-800 border-none rounded-xl focus:ring-2 focus:ring-medical-500 text-sm font-medium"
+                                            placeholder="مثلاً: حتماً تجهیزات همراه باشد"
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

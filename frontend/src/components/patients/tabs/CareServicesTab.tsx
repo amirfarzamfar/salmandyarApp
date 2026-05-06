@@ -13,7 +13,7 @@ import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import TimePicker from 'react-multi-date-picker/plugins/time_picker';
 import { HubConnectionBuilder, LogLevel, HttpTransportType } from '@microsoft/signalr';
-import { Plus, CheckCircle, Clock, XCircle, AlertCircle, Bell, Calendar, ChevronDown } from 'lucide-react';
+import { Plus, CheckCircle, Clock, XCircle, AlertCircle, Bell, Calendar, ChevronDown, Shield, Users, User } from 'lucide-react';
 import ServiceReminderForm from '../ServiceReminderForm';
 
 export default function CareServicesTab({ patientId }: { patientId: number }) {
@@ -32,6 +32,7 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
     register,
     handleSubmit,
     control,
+    watch,
     reset,
     setValue,
     formState: { errors, isSubmitting },
@@ -40,9 +41,22 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
     defaultValues: {
       performedAt: new Date().toISOString(),
       // Ensure time is in HH:mm format (24-hour)
-      time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+      reminderEnabled: false,
+      reminderDayBefore: true,
+      reminderHoursBefore: 3,
+      smsToPatient: false,
+      smsToSupervisor: false,
+      smsToAdmin: false,
+      smsToPerformer: true,
+      inAppToPatient: false,
+      inAppToSupervisor: true,
+      inAppToAdmin: false,
+      inAppToPerformer: true,
     }
   });
+
+  const reminderEnabled = watch('reminderEnabled');
 
   useEffect(() => {
     fetchData();
@@ -166,7 +180,21 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
         description: data.description || '',
         notes: data.notes || '',
         performerId: data.performerId || undefined,
-        status: editingService ? editingService.status : CareServiceStatus.Planned
+        status: editingService ? editingService.status : CareServiceStatus.Planned,
+        reminderOptions: data.reminderEnabled ? {
+          enabled: true,
+          dayBefore: data.reminderDayBefore ?? true,
+          hoursBefore: (data.reminderHoursBefore ?? 0) > 0 ? data.reminderHoursBefore : null,
+          note: data.reminderNote || '',
+          smsToPatient: data.smsToPatient ?? false,
+          smsToSupervisor: data.smsToSupervisor ?? false,
+          smsToAdmin: data.smsToAdmin ?? false,
+          smsToPerformer: data.smsToPerformer ?? false,
+          inAppToPatient: data.inAppToPatient ?? false,
+          inAppToSupervisor: data.inAppToSupervisor ?? false,
+          inAppToAdmin: data.inAppToAdmin ?? false,
+          inAppToPerformer: data.inAppToPerformer ?? false,
+        } : undefined
       };
 
       if (editingService) {
@@ -450,6 +478,97 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
                         placeholder="توضیحات تکمیلی..."
                     />
+                </div>
+
+                <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+                    <div className="bg-gradient-to-r from-teal-600 to-teal-500 px-4 py-3 flex items-center justify-between text-white">
+                        <div className="flex items-center gap-2">
+                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                                <Bell className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <div className="text-sm font-black">تنظیم یادآور</div>
+                                <div className="text-[11px] text-teal-100">گیرندگان و کانال ارسال</div>
+                            </div>
+                        </div>
+                        <label className="inline-flex items-center gap-2 text-xs font-black">
+                            <input type="checkbox" {...register('reminderEnabled')} className="w-4 h-4" />
+                            فعال
+                        </label>
+                    </div>
+
+                    <div className={`p-4 space-y-4 ${!reminderEnabled ? 'opacity-60 pointer-events-none' : ''}`}>
+                        <div className="grid grid-cols-2 gap-4">
+                            <label className="flex items-center gap-2 text-xs font-bold text-gray-700">
+                                <input type="checkbox" {...register('reminderDayBefore')} className="w-4 h-4" />
+                                یک روز قبل
+                            </label>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-700">چند ساعت قبل</span>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={168}
+                                    {...register('reminderHoursBefore', { valueAsNumber: true })}
+                                    className="w-20 px-3 py-2 bg-gray-50 rounded-xl text-sm font-bold text-center"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="text-xs font-black text-gray-800 mb-2">گیرندگان پیامک</div>
+                            <div className="flex flex-wrap gap-3">
+                                <div onClick={() => setValue('smsToPatient', !(watch('smsToPatient') ?? false))} className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${(watch('smsToPatient') ?? false) ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                                    <User className="w-4 h-4" />
+                                    <span className="text-sm font-medium">بیمار/خانواده</span>
+                                </div>
+                                <div onClick={() => setValue('smsToSupervisor', !(watch('smsToSupervisor') ?? false))} className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${(watch('smsToSupervisor') ?? false) ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                                    <Users className="w-4 h-4" />
+                                    <span className="text-sm font-medium">سوپروایزر</span>
+                                </div>
+                                <div onClick={() => setValue('smsToPerformer', !(watch('smsToPerformer') ?? false))} className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${(watch('smsToPerformer') ?? false) ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                                    <User className="w-4 h-4" />
+                                    <span className="text-sm font-medium">انجام‌دهنده</span>
+                                </div>
+                                <div onClick={() => setValue('smsToAdmin', !(watch('smsToAdmin') ?? false))} className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${(watch('smsToAdmin') ?? false) ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                                    <Shield className="w-4 h-4" />
+                                    <span className="text-sm font-medium">ادمین</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div className="text-xs font-black text-gray-800 mb-2">گیرندگان نوتیف داخل اپ</div>
+                            <div className="flex flex-wrap gap-3">
+                                <div onClick={() => setValue('inAppToPatient', !(watch('inAppToPatient') ?? false))} className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${(watch('inAppToPatient') ?? false) ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                                    <User className="w-4 h-4" />
+                                    <span className="text-sm font-medium">بیمار/خانواده</span>
+                                </div>
+                                <div onClick={() => setValue('inAppToSupervisor', !(watch('inAppToSupervisor') ?? false))} className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${(watch('inAppToSupervisor') ?? false) ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                                    <Users className="w-4 h-4" />
+                                    <span className="text-sm font-medium">سوپروایزر</span>
+                                </div>
+                                <div onClick={() => setValue('inAppToPerformer', !(watch('inAppToPerformer') ?? false))} className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${(watch('inAppToPerformer') ?? false) ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                                    <User className="w-4 h-4" />
+                                    <span className="text-sm font-medium">انجام‌دهنده</span>
+                                </div>
+                                <div onClick={() => setValue('inAppToAdmin', !(watch('inAppToAdmin') ?? false))} className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${(watch('inAppToAdmin') ?? false) ? 'bg-teal-50 border-teal-200 text-teal-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}>
+                                    <Shield className="w-4 h-4" />
+                                    <span className="text-sm font-medium">ادمین</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-black text-gray-800 mb-2">متن یادآور (اختیاری)</label>
+                            <input
+                                type="text"
+                                {...register('reminderNote')}
+                                className="w-full px-4 py-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-teal-500 text-sm font-medium"
+                                placeholder="مثلاً: لطفاً قبل از مراجعه تماس بگیرید"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="flex justify-end pt-2">
