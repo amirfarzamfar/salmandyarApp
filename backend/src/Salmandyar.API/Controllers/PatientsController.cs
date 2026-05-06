@@ -64,35 +64,72 @@ public class PatientsController : ControllerBase
     [HttpPost("{id}/services")]
     public async Task<IActionResult> AddService(int id, [FromBody] CreateCareServiceDto dto)
     {
-        if (id != dto.CareRecipientId) return BadRequest();
+        if (id != dto.CareRecipientId) return BadRequest(new { error = "شناسه بیمار نامعتبر است" });
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
 
-        await _patientService.AddCareServiceAsync(userId, dto);
-        
-        await _hubContext.Clients.Group($"Patient_{dto.CareRecipientId}").SendAsync("ReceiveServiceUpdate");
-        
-        return Ok();
+        try
+        {
+            await _patientService.AddCareServiceAsync(userId, dto);
+
+            await _hubContext.Clients.Group($"Patient_{dto.CareRecipientId}").SendAsync("ReceiveServiceUpdate");
+
+            return Ok();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { error = ex.Message });
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            return BadRequest(new { error = "اطلاعات ارسال‌شده معتبر نیست" });
+        }
     }
 
     [HttpPut("services/{serviceId}")]
     public async Task<IActionResult> UpdateService(int serviceId, [FromBody] UpdateCareServiceDto dto)
     {
-        var patientId = await _patientService.UpdateCareServiceAsync(serviceId, dto);
-        
-        await _hubContext.Clients.Group($"Patient_{patientId}").SendAsync("ReceiveServiceUpdate");
-        
-        return NoContent();
+        try
+        {
+            var patientId = await _patientService.UpdateCareServiceAsync(serviceId, dto);
+
+            await _hubContext.Clients.Group($"Patient_{patientId}").SendAsync("ReceiveServiceUpdate");
+
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { error = ex.Message });
+        }
     }
 
     [HttpDelete("services/{serviceId}")]
     public async Task<IActionResult> DeleteService(int serviceId)
     {
-        var patientId = await _patientService.DeleteCareServiceAsync(serviceId);
-        
-        await _hubContext.Clients.Group($"Patient_{patientId}").SendAsync("ReceiveServiceUpdate");
-        
-        return NoContent();
+        try
+        {
+            var patientId = await _patientService.DeleteCareServiceAsync(serviceId);
+
+            await _hubContext.Clients.Group($"Patient_{patientId}").SendAsync("ReceiveServiceUpdate");
+
+            return NoContent();
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     // Reports

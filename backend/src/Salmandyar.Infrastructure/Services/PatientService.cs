@@ -150,6 +150,18 @@ public class PatientService : IPatientService
         // Use provided PerformerId if available (for Admin override), otherwise use logged-in user
         var finalPerformerId = !string.IsNullOrEmpty(dto.PerformerId) ? dto.PerformerId : performerId;
 
+        var careRecipientExists = await _context.CareRecipients.AnyAsync(c => c.Id == dto.CareRecipientId);
+        if (!careRecipientExists)
+        {
+            throw new ArgumentException("بیمار یافت نشد");
+        }
+
+        var serviceDefinitionExists = await _context.ServiceDefinitions.AnyAsync(d => d.Id == dto.ServiceDefinitionId && d.IsActive);
+        if (!serviceDefinitionExists)
+        {
+            throw new ArgumentException("خدمت نامعتبر است");
+        }
+
         // Validation: EndTime > StartTime
         if (dto.StartTime.HasValue && dto.EndTime.HasValue && dto.EndTime < dto.StartTime)
         {
@@ -197,6 +209,12 @@ public class PatientService : IPatientService
 
         // Determine the effective PerformerId (new one if provided, else existing)
         var effectivePerformerId = !string.IsNullOrEmpty(dto.PerformerId) ? dto.PerformerId : service.PerformerId;
+
+        var serviceDefinitionExists = await _context.ServiceDefinitions.AnyAsync(d => d.Id == dto.ServiceDefinitionId && d.IsActive);
+        if (!serviceDefinitionExists)
+        {
+            throw new ArgumentException("خدمت نامعتبر است");
+        }
 
         // Validation: EndTime > StartTime
         if (dto.StartTime.HasValue && dto.EndTime.HasValue && dto.EndTime < dto.StartTime)
@@ -251,6 +269,8 @@ public class PatientService : IPatientService
     {
         var service = await _context.CareServices.FindAsync(serviceId);
         if (service == null) throw new KeyNotFoundException($"Service with ID {serviceId} not found.");
+
+        await DeleteCareServiceRemindersAsync(service.Id);
 
         var careRecipientId = service.CareRecipientId;
         _context.CareServices.Remove(service);

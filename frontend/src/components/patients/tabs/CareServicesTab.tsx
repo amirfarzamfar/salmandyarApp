@@ -213,7 +213,8 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
       fetchData();
     } catch (error) {
       console.error("Error saving service", error);
-      alert("خطا در ثبت خدمت. لطفاً مجدداً تلاش کنید.");
+      const serverMessage = (error as any)?.response?.data?.error;
+      alert(serverMessage || "خطا در ثبت خدمت. لطفاً مجدداً تلاش کنید.");
     }
   };
 

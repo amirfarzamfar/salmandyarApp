@@ -67,7 +67,7 @@ namespace Salmandyar.Infrastructure.Migrations
                 column: "CareServiceId",
                 principalTable: "CareServices",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.NoAction);
         }
 
         /// <inheritdoc />

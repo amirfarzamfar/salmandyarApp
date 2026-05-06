@@ -182,7 +182,8 @@ export function ServiceTracker({ patientId }: { patientId?: number }) {
       fetchData();
     } catch (error) {
       console.error("Error saving service", error);
-      toast.error("خطا در ذخیره خدمت");
+      const serverMessage = (error as any)?.response?.data?.error;
+      toast.error(serverMessage || "خطا در ذخیره خدمت");
     }
   };
 

@@ -192,7 +192,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasOne(r => r.CareService)
             .WithMany()
             .HasForeignKey(r => r.CareServiceId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.NoAction);
 
         builder.Entity<ServiceReminder>()
             .HasOne(r => r.TargetUser)
