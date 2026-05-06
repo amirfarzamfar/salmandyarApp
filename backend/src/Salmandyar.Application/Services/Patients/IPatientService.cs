@@ -4,8 +4,8 @@ namespace Salmandyar.Application.Services.Patients;
 
 public interface IPatientService
 {
-    Task<List<PatientListDto>> GetAllPatientsAsync();
-    Task<PatientDto?> GetPatientByIdAsync(int id);
+    Task<List<PatientListDto>> GetAllPatientsAsync(string? caregiverId = null);
+    Task<PatientDto?> GetPatientByIdAsync(int id, string? caregiverId = null);
     
     // Vitals
     Task<List<VitalSignDto>> GetVitalSignsAsync(int patientId);

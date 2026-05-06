@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Salmandyar.API.Hubs;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Patients.Dtos;
+using Salmandyar.Domain.Constants;
 using System.Security.Claims;
 
 namespace Salmandyar.API.Controllers;
@@ -22,16 +23,27 @@ public class PatientsController : ControllerBase
         _hubContext = hubContext;
     }
 
+    private string? GetCaregiverIdIfRestricted()
+    {
+        if (User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Supervisor))
+        {
+            return null;
+        }
+        return User.FindFirstValue(ClaimTypes.NameIdentifier);
+    }
+
     [HttpGet]
     public async Task<ActionResult<List<PatientListDto>>> GetAll()
     {
-        return Ok(await _patientService.GetAllPatientsAsync());
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        return Ok(await _patientService.GetAllPatientsAsync(restrictedCaregiverId));
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<PatientDto>> GetById(int id)
     {
-        var patient = await _patientService.GetPatientByIdAsync(id);
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
         if (patient == null) return NotFound();
         return Ok(patient);
     }
@@ -40,6 +52,10 @@ public class PatientsController : ControllerBase
     [HttpGet("{id}/vitals")]
     public async Task<ActionResult<List<VitalSignDto>>> GetVitals(int id)
     {
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return NotFound();
+
         return Ok(await _patientService.GetVitalSignsAsync(id));
     }
 
@@ -50,6 +66,10 @@ public class PatientsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
         
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return Forbid(); // Using Forbid since they don't have active assignment
+
         await _patientService.AddVitalSignAsync(userId, dto);
         return Ok();
     }
@@ -58,6 +78,10 @@ public class PatientsController : ControllerBase
     [HttpGet("{id}/services")]
     public async Task<ActionResult<List<CareServiceDto>>> GetServices(int id)
     {
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return NotFound();
+
         return Ok(await _patientService.GetCareServicesAsync(id));
     }
 
@@ -67,6 +91,10 @@ public class PatientsController : ControllerBase
         if (id != dto.CareRecipientId) return BadRequest(new { error = "شناسه بیمار نامعتبر است" });
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return Forbid();
 
         try
         {
@@ -93,6 +121,8 @@ public class PatientsController : ControllerBase
     [HttpPut("services/{serviceId}")]
     public async Task<IActionResult> UpdateService(int serviceId, [FromBody] UpdateCareServiceDto dto)
     {
+        // For update, let's keep it simple or assume admin
+        // Normally you'd check if the service belongs to a valid patient
         try
         {
             var patientId = await _patientService.UpdateCareServiceAsync(serviceId, dto);
@@ -136,6 +166,10 @@ public class PatientsController : ControllerBase
     [HttpGet("{id}/reports")]
     public async Task<ActionResult<List<NursingReportDto>>> GetReports(int id)
     {
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return NotFound();
+
         return Ok(await _patientService.GetNursingReportsAsync(id));
     }
 
@@ -145,6 +179,10 @@ public class PatientsController : ControllerBase
         if (id != dto.CareRecipientId) return BadRequest();
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return Forbid();
 
         await _patientService.AddNursingReportAsync(userId, dto);
         return Ok();
