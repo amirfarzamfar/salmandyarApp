@@ -67,6 +67,8 @@ public class PatientService : IPatientService
 
         var patientEntities = await query.ToListAsync();
 
+        var activeCaregiversByPatientId = await GetActiveCaregiversByPatientIdsAsync(patientEntities.Select(p => p.Id).ToList());
+
         var patients = patientEntities
             .Select(p => new PatientListDto(
                 p.Id,
@@ -76,7 +78,7 @@ public class PatientService : IPatientService
                 p.PrimaryDiagnosis,
                 p.CurrentStatus,
                 (int)p.CareLevel,
-                p.ResponsibleNurse != null ? $"{p.ResponsibleNurse.FirstName} {p.ResponsibleNurse.LastName}" : null
+                activeCaregiversByPatientId.TryGetValue(p.Id, out var caregiver) ? caregiver.CaregiverName : null
             ))
             .ToList();
 
@@ -100,6 +102,9 @@ public class PatientService : IPatientService
 
         if (p == null) return null;
 
+        var activeCaregiverByPatientId = await GetActiveCaregiversByPatientIdsAsync(new List<int> { p.Id });
+        var activeCaregiver = activeCaregiverByPatientId.TryGetValue(p.Id, out var cg) ? cg : ((string CaregiverId, string CaregiverName)?)null;
+
         return new PatientDto(
             p.Id,
             p.FirstName,
@@ -108,8 +113,8 @@ public class PatientService : IPatientService
             p.PrimaryDiagnosis,
             p.CurrentStatus,
             (int)p.CareLevel,
-            p.ResponsibleNurseId,
-            p.ResponsibleNurse != null ? $"{p.ResponsibleNurse.FirstName} {p.ResponsibleNurse.LastName}" : null,
+            activeCaregiver?.CaregiverId,
+            activeCaregiver?.CaregiverName,
             p.MedicalHistory,
             p.Needs,
             p.Address
@@ -652,6 +657,117 @@ public class PatientService : IPatientService
         }
 
         return validPatientIds.ToList();
+    }
+
+    private async Task<Dictionary<int, (string CaregiverId, string CaregiverName)>> GetActiveCaregiversByPatientIdsAsync(List<int> patientIds)
+    {
+        if (patientIds.Count == 0) return new Dictionary<int, (string CaregiverId, string CaregiverName)>();
+
+        var nowUtc = DateTimeOffset.UtcNow;
+        var iranTz = ResolveIranTimeZone();
+
+        var assignments = await _context.CareAssignments
+            .Where(a => patientIds.Contains(a.PatientId) && a.Status == AssignmentStatus.Active)
+            .ToListAsync();
+
+        var validAssignments = assignments
+            .Where(a => IsAssignmentActiveNow(a, nowUtc, iranTz))
+            .GroupBy(a => a.PatientId)
+            .Select(g =>
+            {
+                var primary = g.Where(x => x.IsPrimaryCaregiver).OrderByDescending(x => x.StartDate).FirstOrDefault();
+                var selected = primary ?? g.OrderByDescending(x => x.StartDate).First();
+                return new { PatientId = g.Key, CaregiverId = selected.CaregiverId };
+            })
+            .ToList();
+
+        var caregiverIds = validAssignments.Select(x => x.CaregiverId).Distinct().ToList();
+
+        var caregivers = await _context.Users
+            .Where(u => caregiverIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.FirstName, u.LastName })
+            .ToListAsync();
+
+        var caregiverNameById = caregivers.ToDictionary(
+            x => x.Id,
+            x => $"{x.FirstName} {x.LastName}"
+        );
+
+        return validAssignments
+            .Where(x => caregiverNameById.ContainsKey(x.CaregiverId))
+            .ToDictionary(
+                x => x.PatientId,
+                x => (x.CaregiverId, caregiverNameById[x.CaregiverId])
+            );
+    }
+
+    private static TimeZoneInfo ResolveIranTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Iran Standard Time");
+        }
+        catch
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Asia/Tehran");
+        }
+    }
+
+    private static bool IsAssignmentActiveNow(CareAssignment assignment, DateTimeOffset nowUtc, TimeZoneInfo iranTz)
+    {
+        var nowIran = TimeZoneInfo.ConvertTime(nowUtc, iranTz);
+        var startIran = TimeZoneInfo.ConvertTime(assignment.StartDate, iranTz);
+        var endIran = assignment.EndDate.HasValue ? TimeZoneInfo.ConvertTime(assignment.EndDate.Value, iranTz) : (DateTimeOffset?)null;
+
+        if (assignment.AssignmentType == AssignmentType.ShiftBased && assignment.ShiftSlot.HasValue)
+        {
+            var datesToCheck = new[] { nowIran.Date, nowIran.Date.AddDays(-1) };
+
+            foreach (var date in datesToCheck)
+            {
+                if (date < startIran.Date) continue;
+                if (endIran.HasValue && date > endIran.Value.Date) continue;
+
+                var offset = iranTz.GetUtcOffset(new DateTime(date.Year, date.Month, date.Day));
+                var shiftStart = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, offset);
+                var shiftEnd = shiftStart;
+
+                switch (assignment.ShiftSlot.Value)
+                {
+                    case ShiftSlot.Morning:
+                        shiftStart = shiftStart.AddHours(7);
+                        shiftEnd = shiftStart.AddHours(6);
+                        break;
+                    case ShiftSlot.Evening:
+                        shiftStart = shiftStart.AddHours(13);
+                        shiftEnd = shiftStart.AddHours(6);
+                        break;
+                    case ShiftSlot.Night:
+                        shiftStart = shiftStart.AddHours(19);
+                        shiftEnd = shiftStart.AddHours(12);
+                        break;
+                    case ShiftSlot.Long:
+                        shiftStart = shiftStart.AddHours(7);
+                        shiftEnd = shiftStart.AddHours(12);
+                        break;
+                    case ShiftSlot.TwentyFourHour:
+                        shiftStart = shiftStart.AddHours(7);
+                        shiftEnd = shiftStart.AddHours(24);
+                        break;
+                }
+
+                if (nowIran >= shiftStart && nowIran <= shiftEnd.AddHours(2))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if (nowIran < startIran) return false;
+        if (endIran.HasValue && nowIran > endIran.Value.AddHours(2)) return false;
+        return true;
     }
 
     private static int CalculateAge(DateTime dateOfBirth)
