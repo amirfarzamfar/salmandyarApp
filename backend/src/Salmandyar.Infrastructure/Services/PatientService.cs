@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Patients.Dtos;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Infrastructure.Persistence;
@@ -18,8 +19,44 @@ public class PatientService : IPatientService
 
     public async Task<List<PatientListDto>> GetAllPatientsAsync(string? caregiverId = null)
     {
+        // Auto-sync users who have Patient or Elderly roles but no CareRecipient record
+        // This ensures previously registered patients show up in the admin panel
+        var validUserIds = await _context.Users
+            .Join(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u, ur })
+            .Join(_context.Roles, x => x.ur.RoleId, r => r.Id, (x, r) => new { x.u, r.Name })
+            .Where(x => x.Name == Roles.Patient || x.Name == Roles.Elderly)
+            .Select(x => x.u.Id)
+            .Distinct()
+            .ToListAsync();
+
+        var existingCareRecipientUserIds = await _context.CareRecipients
+            .Where(cr => cr.UserId != null && validUserIds.Contains(cr.UserId))
+            .Select(cr => cr.UserId)
+            .ToListAsync();
+
+        var missingUserIds = validUserIds.Except(existingCareRecipientUserIds).ToList();
+
+        if (missingUserIds.Any())
+        {
+            var missingUsers = await _context.Users.Where(u => missingUserIds.Contains(u.Id)).ToListAsync();
+            var newCareRecipients = missingUsers.Select(u => new CareRecipient
+            {
+                UserId = u.Id,
+                FirstName = u.FirstName ?? "نامشخص",
+                LastName = u.LastName ?? "نامشخص",
+                DateOfBirth = DateTime.UtcNow.AddYears(-60),
+                PrimaryDiagnosis = "نامشخص",
+                CareLevel = CareLevel.Level1
+            }).ToList();
+
+            _context.CareRecipients.AddRange(newCareRecipients);
+            await _context.SaveChangesAsync();
+        }
+
+        // Get existing care recipients that are linked to valid Patient/Elderly users
         var query = _context.CareRecipients
             .Include(p => p.ResponsibleNurse)
+            .Where(cr => cr.UserId != null && validUserIds.Contains(cr.UserId))
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(caregiverId))
@@ -28,7 +65,9 @@ public class PatientService : IPatientService
             query = query.Where(p => validPatientIds.Contains(p.Id));
         }
 
-        return await query
+        var patientEntities = await query.ToListAsync();
+
+        var patients = patientEntities
             .Select(p => new PatientListDto(
                 p.Id,
                 p.FirstName,
@@ -39,7 +78,9 @@ public class PatientService : IPatientService
                 (int)p.CareLevel,
                 p.ResponsibleNurse != null ? $"{p.ResponsibleNurse.FirstName} {p.ResponsibleNurse.LastName}" : null
             ))
-            .ToListAsync();
+            .ToList();
+
+        return patients;
     }
 
     public async Task<PatientDto?> GetPatientByIdAsync(int id, string? caregiverId = null)
@@ -72,6 +113,59 @@ public class PatientService : IPatientService
             p.MedicalHistory,
             p.Needs,
             p.Address
+        );
+    }
+
+    public async Task CreatePatientForUserAsync(string userId, string firstName, string lastName)
+    {
+        var existing = await _context.CareRecipients.AnyAsync(c => c.UserId == userId);
+        if (!existing)
+        {
+            var entity = new CareRecipient
+            {
+                UserId = userId,
+                FirstName = firstName,
+                LastName = lastName,
+                DateOfBirth = DateTime.UtcNow.AddYears(-60), // Default date, can be updated later
+                PrimaryDiagnosis = "نامشخص",
+                CareLevel = CareLevel.Level1
+            };
+            _context.CareRecipients.Add(entity);
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<PatientDto> CreatePatientAsync(CreatePatientDto dto)
+    {
+        var entity = new CareRecipient
+        {
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            DateOfBirth = dto.DateOfBirth,
+            PrimaryDiagnosis = dto.PrimaryDiagnosis,
+            CurrentStatus = dto.CurrentStatus,
+            CareLevel = (CareLevel)dto.CareLevel,
+            MedicalHistory = dto.MedicalHistory ?? string.Empty,
+            Needs = dto.Needs ?? string.Empty,
+            Address = dto.Address ?? string.Empty
+        };
+
+        _context.CareRecipients.Add(entity);
+        await _context.SaveChangesAsync();
+
+        return new PatientDto(
+            entity.Id,
+            entity.FirstName,
+            entity.LastName,
+            entity.DateOfBirth,
+            entity.PrimaryDiagnosis,
+            entity.CurrentStatus,
+            (int)entity.CareLevel,
+            entity.ResponsibleNurseId,
+            null,
+            entity.MedicalHistory,
+            entity.Needs,
+            entity.Address
         );
     }
 

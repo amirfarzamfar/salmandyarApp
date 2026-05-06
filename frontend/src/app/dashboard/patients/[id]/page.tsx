@@ -69,13 +69,13 @@ export default function PatientProfilePage() {
       <div className="bg-white p-6 rounded-xl shadow-sm flex items-center justify-between">
         <div className="flex items-center">
           <div className="h-16 w-16 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 text-2xl font-bold ml-4">
-            {patient.firstName[0]}
+            {patient.firstName ? patient.firstName[0] : '?'}
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{patient.firstName} {patient.lastName}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{patient.firstName || 'نامشخص'} {patient.lastName || ''}</h1>
             <div className="flex items-center text-gray-500 mt-1">
-              <span className="ml-4">سن: {patient.age} سال</span>
-              <span className="ml-4">تشخیص: {patient.primaryDiagnosis}</span>
+              <span className="ml-4">سن: {patient.age ?? 'نامشخص'} سال</span>
+              <span className="ml-4">تشخیص: {patient.primaryDiagnosis || 'نامشخص'}</span>
               <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                 patient.currentStatus === 'Critical' ? 'bg-red-100 text-red-800' :
                 patient.currentStatus === 'Stable' ? 'bg-green-100 text-green-800' :

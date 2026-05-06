@@ -25,7 +25,7 @@ public class PatientsController : ControllerBase
 
     private string? GetCaregiverIdIfRestricted()
     {
-        if (User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Supervisor))
+        if (User.IsInRole(Roles.SuperAdmin) || User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Supervisor))
         {
             return null;
         }
@@ -46,6 +46,14 @@ public class PatientsController : ControllerBase
         var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
         if (patient == null) return NotFound();
         return Ok(patient);
+    }
+
+    [HttpPost]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
+    public async Task<ActionResult<PatientDto>> CreatePatient([FromBody] CreatePatientDto dto)
+    {
+        var patient = await _patientService.CreatePatientAsync(dto);
+        return CreatedAtAction(nameof(GetById), new { id = patient.Id }, patient);
     }
 
     // Vital Signs

@@ -25,3 +25,15 @@ public record PatientListDto(
     int CareLevel,
     string? ResponsibleNurseName
 );
+
+public record CreatePatientDto(
+    string FirstName,
+    string LastName,
+    DateTime DateOfBirth,
+    string PrimaryDiagnosis,
+    string CurrentStatus,
+    int CareLevel,
+    string? MedicalHistory,
+    string? Needs,
+    string? Address
+);

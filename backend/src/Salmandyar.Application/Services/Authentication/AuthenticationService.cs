@@ -1,6 +1,8 @@
 using Salmandyar.Application.Common.Interfaces.Authentication;
 using Salmandyar.Application.Common.Interfaces.Identity;
 using Salmandyar.Application.Services.Authentication.Dtos;
+using Salmandyar.Application.Services.Patients;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 
 namespace Salmandyar.Application.Services.Authentication;
@@ -9,11 +11,13 @@ public class AuthenticationService : IAuthenticationService
 {
     private readonly IIdentityService _identityService;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IPatientService _patientService;
 
-    public AuthenticationService(IIdentityService identityService, IJwtTokenGenerator jwtTokenGenerator)
+    public AuthenticationService(IIdentityService identityService, IJwtTokenGenerator jwtTokenGenerator, IPatientService patientService)
     {
         _identityService = identityService;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _patientService = patientService;
     }
 
     public async Task<AuthenticationResponse> RegisterAsync(RegisterRequest request)
@@ -46,6 +50,11 @@ public class AuthenticationService : IAuthenticationService
         if (!success)
         {
             throw new Exception($"ثبت‌نام با خطا مواجه شد: {string.Join(", ", errors)}");
+        }
+
+        if (request.Role == Roles.Patient || request.Role == Roles.Elderly)
+        {
+            await _patientService.CreatePatientForUserAsync(user.Id, request.FirstName, request.LastName);
         }
 
         var token = _jwtTokenGenerator.GenerateToken(user, new[] { request.Role });

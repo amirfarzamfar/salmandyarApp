@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { patientService } from '@/services/patient.service';
 import { PatientList } from '@/types/patient';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Search, Filter } from 'lucide-react';
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<PatientList[]>([]);
@@ -21,30 +21,31 @@ export default function PatientsPage() {
       setPatients(data);
     } catch (error) {
       console.error('Error fetching patients:', error);
-      // Mock data for demo if API fails (Optional, but good for preview)
-      setPatients([
-        { id: 1, firstName: 'احمد', lastName: 'رضایی', age: 75, primaryDiagnosis: 'دیابت نوع ۲', currentStatus: 'Stable', responsibleNurseName: 'سارا محمدی' },
-        { id: 2, firstName: 'زهرا', lastName: 'کریمی', age: 82, primaryDiagnosis: 'فشار خون بالا', currentStatus: 'Recovering', responsibleNurseName: 'علی اکبری' },
-      ]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredPatients = patients.filter(p => 
-    p.firstName.includes(searchTerm) || 
-    p.lastName.includes(searchTerm) ||
-    p.primaryDiagnosis.includes(searchTerm)
-  );
+  const filteredPatients = patients?.filter(p => {
+    const term = searchTerm.toLowerCase();
+    return (
+      (p.firstName || '').toLowerCase().includes(term) || 
+      (p.lastName || '').toLowerCase().includes(term) ||
+      (p.primaryDiagnosis || '').toLowerCase().includes(term)
+    );
+  }) || [];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">مدیریت بیماران</h1>
-        <button className="flex items-center px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
-          <Plus className="ml-2 h-5 w-5" />
-          ثبت بیمار جدید
-        </button>
+      </div>
+
+      <div className="bg-blue-50 text-blue-800 p-4 rounded-xl shadow-sm text-sm">
+        <p>
+          <strong>توجه:</strong> لیست بیماران و سالمندان به صورت خودکار از قسمت مدیریت کاربران (کاربرانی که نقش «بیمار» یا «سالمند» دارند) همگام‌سازی می‌شود. 
+          برای افزودن بیمار جدید، لطفا از بخش <Link href="/dashboard/admin/users" className="text-blue-600 underline font-medium">مدیریت کاربران</Link> اقدام کنید و نقش کاربر را به «بیمار» یا «سالمند» تغییر دهید.
+        </p>
       </div>
 
       {/* Filters */}
@@ -94,15 +95,15 @@ export default function PatientsPage() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">
-                          {patient.firstName[0]}
+                          {patient.firstName ? patient.firstName[0] : '?'}
                         </div>
                         <div className="mr-4">
-                          <div className="text-sm font-medium text-gray-900">{patient.firstName} {patient.lastName}</div>
+                          <div className="text-sm font-medium text-gray-900">{patient.firstName || 'نامشخص'} {patient.lastName || ''}</div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age} سال</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{patient.primaryDiagnosis}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age ?? 'نامشخص'} سال</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{patient.primaryDiagnosis || 'نامشخص'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.responsibleNurseName || 'تعیین نشده'}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${

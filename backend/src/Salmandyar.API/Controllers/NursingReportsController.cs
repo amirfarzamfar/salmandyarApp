@@ -24,7 +24,7 @@ public class NursingReportsController : ControllerBase
 
     private string? GetCaregiverIdIfRestricted()
     {
-        if (User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Supervisor))
+        if (User.IsInRole(Roles.SuperAdmin) || User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Supervisor))
         {
             return null;
         }

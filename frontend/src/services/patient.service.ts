@@ -6,6 +6,10 @@ export const patientService = {
     const response = await api.get<PatientList[]>('/patients');
     return response.data;
   },
+  create: async (data: any) => {
+    const response = await api.post<Patient>('/patients', data);
+    return response.data;
+  },
   getById: async (id: number) => {
     try {
       const response = await api.get<Patient>(`/patients/${id}`);
