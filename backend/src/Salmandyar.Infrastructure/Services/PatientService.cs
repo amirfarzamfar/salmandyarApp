@@ -62,7 +62,7 @@ public class PatientService : IPatientService
         if (!string.IsNullOrEmpty(caregiverId))
         {
             var validPatientIds = await GetValidPatientIdsForCaregiverAsync(caregiverId);
-            query = query.Where(p => validPatientIds.Contains(p.Id));
+            query = query.Where(p => validPatientIds.Contains(p.Id) || p.UserId == caregiverId || p.FamilyMemberId == caregiverId);
         }
 
         var patientEntities = await query.ToListAsync();
@@ -87,20 +87,23 @@ public class PatientService : IPatientService
 
     public async Task<PatientDto?> GetPatientByIdAsync(int id, string? caregiverId = null)
     {
-        if (!string.IsNullOrEmpty(caregiverId))
-        {
-            var validPatientIds = await GetValidPatientIdsForCaregiverAsync(caregiverId);
-            if (!validPatientIds.Contains(id))
-            {
-                return null;
-            }
-        }
-
         var p = await _context.CareRecipients
             .Include(p => p.ResponsibleNurse)
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (p == null) return null;
+
+        if (!string.IsNullOrEmpty(caregiverId))
+        {
+            if (p.UserId != caregiverId && p.FamilyMemberId != caregiverId)
+            {
+                var validPatientIds = await GetValidPatientIdsForCaregiverAsync(caregiverId);
+                if (!validPatientIds.Contains(id))
+                {
+                    return null;
+                }
+            }
+        }
 
         var activeCaregiverByPatientId = await GetActiveCaregiversByPatientIdsAsync(new List<int> { p.Id });
         var activeCaregiver = activeCaregiverByPatientId.TryGetValue(p.Id, out var cg) ? cg : ((string CaregiverId, string CaregiverName)?)null;
@@ -110,6 +113,7 @@ public class PatientService : IPatientService
             p.FirstName,
             p.LastName,
             p.DateOfBirth,
+            CalculateAge(p.DateOfBirth),
             p.PrimaryDiagnosis,
             p.CurrentStatus,
             (int)p.CareLevel,
@@ -163,6 +167,7 @@ public class PatientService : IPatientService
             entity.FirstName,
             entity.LastName,
             entity.DateOfBirth,
+            CalculateAge(entity.DateOfBirth),
             entity.PrimaryDiagnosis,
             entity.CurrentStatus,
             (int)entity.CareLevel,

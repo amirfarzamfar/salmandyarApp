@@ -6,17 +6,20 @@ import { CheckCircle2, Clock, Pill, List } from "lucide-react";
 import { CardSkeleton } from "./ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useKardex, useLogDose } from "@/features/medications/hooks/useKardex";
-import { DoseStatus } from "@/types/medication";
+import { DoseStatus, MedicationDose } from "@/types/medication";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 import { useState } from "react";
 import { PatientMedicationList } from "@/features/medications/components/patient/PatientMedicationList";
 import { X } from "lucide-react";
 
-export function MedicationTimeline() {
-  const patientId = 1; // TODO: Get from context
+interface MedicationTimelineProps {
+  patientId?: number;
+}
+
+export function MedicationTimeline({ patientId }: MedicationTimelineProps) {
   const today = format(new Date(), 'yyyy-MM-dd');
-  const { data: doses, isLoading } = useKardex(patientId, today);
+  const { data: doses, isLoading } = useKardex(patientId ?? 0, today);
   const { mutate: logDose } = useLogDose();
   const [showList, setShowList] = useState(false);
 
@@ -32,7 +35,11 @@ export function MedicationTimeline() {
 
   if (isLoading) return <CardSkeleton />;
 
-  const pendingCount = doses?.filter((d: any) => d.status === DoseStatus.Scheduled || d.status === DoseStatus.Due).length || 0;
+  if (!patientId) {
+    return <CardSkeleton />;
+  }
+
+  const pendingCount = doses?.filter((d: MedicationDose) => d.status === DoseStatus.Scheduled || d.status === DoseStatus.Due).length || 0;
 
   return (
     <div className="mb-10">
@@ -61,7 +68,7 @@ export function MedicationTimeline() {
         </div>
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x mandatory scrollbar-hide">
-            {doses.map((dose: any) => (
+            {doses.map((dose: MedicationDose) => (
             <PortalCard 
                 key={dose.id} 
                 variant={dose.status === DoseStatus.Taken ? 'calm' : 'default'}

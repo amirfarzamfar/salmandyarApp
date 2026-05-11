@@ -18,25 +18,72 @@ import Link from "next/link";
 import { patientService } from "@/services/patient.service";
 import { Patient } from "@/types/patient";
 import { PatientDetailsModal } from "@/components/portal/patient-details-modal";
+import { useUser } from "@/components/auth/UserContext";
 
 export default function PortalPage() {
   const [isElderMode, setIsElderMode] = useState(false);
   const [isFamilyMode, setIsFamilyMode] = useState(false);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
-  const patientId = 1; // TODO: Get from auth context
+  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading: userLoading } = useUser();
 
   useEffect(() => {
     const fetchPatient = async () => {
+        if (!user) {
+            setPatient(null);
+            setIsLoading(false);
+            return;
+        }
+
         try {
-            const data = await patientService.getById(patientId);
+            setIsLoading(true);
+            const accessiblePatient = await patientService.getAccessiblePatient();
+            if (!accessiblePatient) {
+                setPatient(null);
+                return;
+            }
+
+            const data = await patientService.getById(accessiblePatient.id);
             setPatient(data);
         } catch (error) {
             console.error("Failed to fetch patient", error);
+            setPatient(null);
+        } finally {
+            setIsLoading(false);
         }
     };
-    fetchPatient();
-  }, [patientId]);
+
+    if (!userLoading) {
+      fetchPatient();
+    }
+  }, [user, userLoading]);
+
+  const patientId = patient?.id;
+
+  if (userLoading || isLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-10">
+        <div className="animate-pulse space-y-6">
+          <div className="h-28 rounded-3xl bg-gray-100" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="h-40 rounded-3xl bg-gray-100" />
+            <div className="h-40 rounded-3xl bg-gray-100" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!patientId) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 md:px-8 py-12">
+        <div className="bg-white border border-dashed border-gray-200 rounded-3xl p-8 text-center text-gray-500">
+          اطلاعات پرونده بیمار برای این حساب کاربری یافت نشد.
+        </div>
+      </div>
+    );
+  }
 
   // Stagger variants for the main content
   const containerVariants = {
@@ -123,7 +170,7 @@ export default function PortalPage() {
 
           {/* Section: Medication - High Priority */}
           <motion.section variants={itemVariants}>
-            <MedicationTimeline />
+            <MedicationTimeline patientId={patientId} />
           </motion.section>
 
           {/* Section: Assessments */}

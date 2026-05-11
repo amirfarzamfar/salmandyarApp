@@ -5,6 +5,7 @@ public record PatientDto(
     string FirstName,
     string LastName,
     DateTime DateOfBirth,
+    int Age,
     string PrimaryDiagnosis,
     string CurrentStatus,
     int CareLevel,
