@@ -200,7 +200,7 @@ public class PatientService : IPatientService
             .ToListAsync();
     }
 
-    public async Task AddVitalSignAsync(string recorderId, CreateVitalSignDto dto)
+    public async Task<AddVitalSignResultDto> AddVitalSignAsync(string recorderId, CreateVitalSignDto dto)
     {
         // Calculate MAP
         var map = (double)(dto.SystolicBloodPressure + 2 * dto.DiastolicBloodPressure) / 3;
@@ -237,6 +237,81 @@ public class PatientService : IPatientService
 
         _context.VitalSigns.Add(entity);
         await _context.SaveChangesAsync();
+
+        var patient = await _context.CareRecipients
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == dto.CareRecipientId);
+
+        var patientName = patient == null
+            ? dto.CareRecipientId.ToString()
+            : $"{patient.FirstName} {patient.LastName}";
+
+        var recentVitals = await _context.VitalSigns
+            .AsNoTracking()
+            .Where(v => v.CareRecipientId == dto.CareRecipientId)
+            .OrderByDescending(v => v.MeasuredAt)
+            .Take(3)
+            .ToListAsync();
+
+        var alerts = VitalSignAlertEvaluator.Evaluate(recentVitals);
+
+        var recipients = new List<string> { recorderId };
+
+        if (!string.IsNullOrWhiteSpace(patient?.ResponsibleNurseId))
+        {
+            recipients.Add(patient.ResponsibleNurseId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(patient?.UserId))
+        {
+            recipients.Add(patient.UserId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(patient?.FamilyMemberId))
+        {
+            recipients.Add(patient.FamilyMemberId);
+        }
+
+        if (alerts.Count == 0)
+        {
+            recipients = recipients
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToList();
+
+            return new AddVitalSignResultDto(
+                entity.Id,
+                dto.CareRecipientId,
+                entity.MeasuredAt,
+                patientName,
+                recipients,
+                alerts
+            );
+        }
+
+        var adminUserIds = await _context.Users
+            .Join(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u.Id, ur.RoleId })
+            .Join(_context.Roles, x => x.RoleId, r => r.Id, (x, r) => new { x.Id, r.Name })
+            .Where(x => x.Name == Roles.Admin || x.Name == Roles.SuperAdmin || x.Name == Roles.Supervisor)
+            .Select(x => x.Id)
+            .Distinct()
+            .ToListAsync();
+
+        recipients.AddRange(adminUserIds);
+
+        recipients = recipients
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToList();
+
+        return new AddVitalSignResultDto(
+            entity.Id,
+            dto.CareRecipientId,
+            entity.MeasuredAt,
+            patientName,
+            recipients,
+            alerts
+        );
     }
 
     public async Task<List<CareServiceDto>> GetCareServicesAsync(int patientId)

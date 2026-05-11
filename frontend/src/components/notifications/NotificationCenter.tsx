@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, Check, Clock, AlertTriangle, FileText } from 'lucide-react';
 import { notificationService, UserNotification, NotificationType } from '@/services/notification.service';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-hot-toast';
 
 export function NotificationCenter() {
     const [notifications, setNotifications] = useState<UserNotification[]>([]);
@@ -19,6 +18,15 @@ export function NotificationCenter() {
         const interval = setInterval(fetchUnreadCount, 60000); // Poll every minute
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        const handleRefresh = () => {
+            fetchUnreadCount();
+            if (isOpen) fetchNotifications();
+        };
+        window.addEventListener('notifications:refresh', handleRefresh);
+        return () => window.removeEventListener('notifications:refresh', handleRefresh);
+    }, [isOpen]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

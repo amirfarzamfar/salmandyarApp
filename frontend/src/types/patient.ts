@@ -43,6 +43,24 @@ export interface VitalSign {
   glasgowComaScale?: number;
 }
 
+export type VitalAlertSeverity = 'Warning' | 'Critical';
+
+export interface VitalSignAlert {
+  code: string;
+  severity: VitalAlertSeverity;
+  title: string;
+  message: string;
+}
+
+export interface AddVitalSignResult {
+  vitalSignId: number;
+  careRecipientId: number;
+  measuredAt: string;
+  patientName: string;
+  recipientUserIds: string[];
+  alerts: VitalSignAlert[];
+}
+
 import { ServiceCategory, CareServiceStatus } from './service';
 export { ServiceCategory, CareServiceStatus };
 

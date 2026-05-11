@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { QueryProvider } from "@/providers/query-provider";
 import { UserProvider } from "@/components/auth/UserContext";
+import { ToastProvider } from "@/components/ui/toast-provider";
+import { RealtimeNotificationListener } from "@/components/notifications/RealtimeNotificationListener";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -35,6 +37,8 @@ export default function RootLayout({
         >
           <QueryProvider >
             <UserProvider>
+              <ToastProvider />
+              <RealtimeNotificationListener />
               {children}
             </UserProvider>
           </QueryProvider>

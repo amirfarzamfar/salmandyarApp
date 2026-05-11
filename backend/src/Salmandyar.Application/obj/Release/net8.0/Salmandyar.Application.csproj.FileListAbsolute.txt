@@ -1,0 +1,16 @@
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\bin\Release\net8.0\Salmandyar.Application.deps.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\bin\Release\net8.0\Salmandyar.Application.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\bin\Release\net8.0\Salmandyar.Application.pdb
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\bin\Release\net8.0\Salmandyar.Domain.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\bin\Release\net8.0\Salmandyar.Domain.pdb
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandyar.Application.csproj.AssemblyReference.cache
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandyar.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandyar.Application.AssemblyInfoInputs.cache
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandyar.Application.AssemblyInfo.cs
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandyar.Application.csproj.CoreCompileInputs.cache
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandyar.Application.sourcelink.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandy.378C2F84.Up2Date
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandyar.Application.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\refint\Salmandyar.Application.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\Salmandyar.Application.pdb
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Release\net8.0\ref\Salmandyar.Application.dll

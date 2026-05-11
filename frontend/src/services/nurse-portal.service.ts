@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { PatientList, VitalSign, NursingReport, CareService, Medication, MedicationSchedule, CreateMedicationSchedule } from '@/types/patient';
+import { PatientList, VitalSign, NursingReport, CareService, Medication, MedicationSchedule, CreateMedicationSchedule, AddVitalSignResult } from '@/types/patient';
 import { SubmitNursingReportDto } from '@/types/report';
 
 export interface CreateVitalSignRequest {
@@ -32,7 +32,8 @@ export const nursePortalService = {
   },
 
   addVitalSign: async (patientId: number, data: CreateVitalSignRequest) => {
-    await api.post(`/patients/${patientId}/vitals`, data);
+    const response = await api.post<AddVitalSignResult>(`/patients/${patientId}/vitals`, data);
+    return response.data;
   },
 
   getPatientReports: async (patientId: number) => {

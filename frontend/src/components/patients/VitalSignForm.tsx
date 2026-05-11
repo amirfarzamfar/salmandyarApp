@@ -95,7 +95,7 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
       // Ensure measuredAt is valid ISO string
       const measuredAtISO = new Date(data.measuredAt).toISOString();
       
-      await patientService.addVitalSign(patientId, {
+      const result = await patientService.addVitalSign(patientId, {
         ...data,
         measuredAt: measuredAtISO,
         careRecipientId: patientId
@@ -108,6 +108,21 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
         timer: 1500,
         showConfirmButton: false
       });
+
+      if (result?.alerts?.length) {
+        const severity = result.alerts.some(a => a.severity === 'Critical') ? 'error' : 'warning';
+        const html = `<div style="text-align:right;direction:rtl"><div style="font-weight:700;margin-bottom:8px">${result.patientName}</div><ul style="margin:0;padding-right:18px">${result.alerts
+          .slice(0, 5)
+          .map(a => `<li style="margin-bottom:4px">${a.title}</li>`)
+          .join('')}</ul></div>`;
+        await Swal.fire({
+          title: severity === 'error' ? 'هشدار فوری' : 'هشدار بالینی',
+          html,
+          icon: severity as any,
+          confirmButtonText: 'متوجه شدم',
+          confirmButtonColor: severity === 'error' ? '#ef4444' : '#f59e0b'
+        });
+      }
       onSuccess();
     } catch (error: any) {
       const serverMsg = error?.response?.data?.error || 'مشکلی در ثبت اطلاعات پیش آمد';

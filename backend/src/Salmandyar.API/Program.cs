@@ -70,5 +70,6 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ServiceHub>("/serviceHub").RequireCors(corsPolicyName);
+app.MapHub<NotificationHub>("/notificationHub").RequireCors(corsPolicyName);
 
 app.Run();

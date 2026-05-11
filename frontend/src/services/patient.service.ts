@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { Patient, PatientList, VitalSign, CareService, NursingReport, CreateCareService } from '@/types/patient';
+import { Patient, PatientList, VitalSign, CareService, NursingReport, CreateCareService, AddVitalSignResult } from '@/types/patient';
 
 export const patientService = {
   getAll: async () => {
@@ -24,7 +24,8 @@ export const patientService = {
     return response.data;
   },
   addVitalSign: async (id: number, data: any) => {
-    await api.post(`/patients/${id}/vitals`, data);
+    const response = await api.post<AddVitalSignResult>(`/patients/${id}/vitals`, data);
+    return response.data;
   },
   getServices: async (id: number) => {
     const response = await api.get<CareService[]>(`/patients/${id}/services`);

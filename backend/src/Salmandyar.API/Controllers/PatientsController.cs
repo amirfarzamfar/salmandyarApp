@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.SignalR;
 using Salmandyar.API.Hubs;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Patients.Dtos;
+using Salmandyar.Application.Services.Notifications;
+using Salmandyar.Domain.Enums;
 using Salmandyar.Domain.Constants;
 using System.Security.Claims;
 
@@ -16,11 +18,19 @@ public class PatientsController : ControllerBase
 {
     private readonly IPatientService _patientService;
     private readonly IHubContext<ServiceHub> _hubContext;
+    private readonly IHubContext<NotificationHub> _notificationHub;
+    private readonly IUserNotificationService _userNotifications;
 
-    public PatientsController(IPatientService patientService, IHubContext<ServiceHub> hubContext)
+    public PatientsController(
+        IPatientService patientService,
+        IHubContext<ServiceHub> hubContext,
+        IHubContext<NotificationHub> notificationHub,
+        IUserNotificationService userNotifications)
     {
         _patientService = patientService;
         _hubContext = hubContext;
+        _notificationHub = notificationHub;
+        _userNotifications = userNotifications;
     }
 
     private string? GetCaregiverIdIfRestricted()
@@ -78,8 +88,41 @@ public class PatientsController : ControllerBase
         var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
         if (patient == null) return Forbid(); // Using Forbid since they don't have active assignment
 
-        await _patientService.AddVitalSignAsync(userId, dto);
-        return Ok();
+        var result = await _patientService.AddVitalSignAsync(userId, dto);
+
+        await _hubContext.Clients.Group($"Patient_{dto.CareRecipientId}").SendAsync("ReceiveVitalUpdate");
+
+        if (result.Alerts.Count > 0)
+        {
+            var severity = result.Alerts.Max(a => a.Severity);
+            var title = severity == VitalAlertSeverity.Critical ? "هشدار فوری علائم حیاتی" : "هشدار علائم حیاتی";
+            var alertTitles = string.Join("، ", result.Alerts.Select(a => a.Title).Take(3));
+            var message = $"{result.PatientName}: {alertTitles}";
+            var link = $"/dashboard/patients/{dto.CareRecipientId}?tab=vitals";
+
+            foreach (var recipientId in result.RecipientUserIds)
+            {
+                await _userNotifications.CreateNotificationAsync(
+                    recipientId,
+                    title,
+                    message,
+                    NotificationType.Alert,
+                    referenceId: result.VitalSignId.ToString(),
+                    link: link
+                );
+
+                await _notificationHub.Clients.Group($"User_{recipientId}").SendAsync("ReceiveNotification", new
+                {
+                    title,
+                    message,
+                    link,
+                    severity = severity.ToString(),
+                    patientId = result.CareRecipientId,
+                    vitalSignId = result.VitalSignId
+                });
+            }
+        }
+        return Ok(result);
     }
 
     // Services

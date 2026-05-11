@@ -3,7 +3,9 @@ import { patientService } from '@/services/patient.service';
 import { VitalSign, CareLevel } from '@/types/patient';
 import VitalSignForm from '../VitalSignForm';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Activity, Clock, AlertCircle } from 'lucide-react';
+import { Activity, Clock, AlertCircle, X } from 'lucide-react';
+import { evaluateVitalAlerts } from '@/utils/vital-alerts';
+import { HubConnectionBuilder, HttpTransportType, LogLevel } from '@microsoft/signalr';
 
 interface Props {
   patientId: number;
@@ -16,8 +18,16 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
   const [nextDue, setNextDue] = useState<Date | null>(null);
   const [selectedCareLevel, setSelectedCareLevel] = useState<CareLevel>(careLevel);
   const [now, setNow] = useState(new Date());
+  const [dismissedAlertKey, setDismissedAlertKey] = useState<string | null>(null);
 
   const expectedTime = useMemo(() => nextDue || new Date(), [nextDue]);
+  const vitalsDesc = useMemo(
+    () => [...vitals].sort((a, b) => new Date(b.measuredAt).getTime() - new Date(a.measuredAt).getTime()),
+    [vitals]
+  );
+  const alerts = useMemo(() => evaluateVitalAlerts(vitalsDesc), [vitalsDesc]);
+  const alertKey = useMemo(() => alerts.map(a => `${a.code}:${a.severity}`).join('|'), [alerts]);
+  const showAlertBanner = alerts.length > 0 && dismissedAlertKey !== alertKey;
 
   useEffect(() => {
     setSelectedCareLevel(careLevel);
@@ -61,6 +71,37 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
   useEffect(() => {
     fetchVitals();
   }, [fetchVitals]);
+
+  useEffect(() => {
+    if (!patientId) return;
+
+    const connection = new HubConnectionBuilder()
+      .withUrl("http://localhost:5016/serviceHub", {
+        skipNegotiation: true,
+        transport: HttpTransportType.WebSockets
+      })
+      .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect()
+      .build();
+
+    const startConnection = async () => {
+      try {
+        await connection.start();
+        await connection.invoke("JoinPatientGroup", patientId.toString());
+        connection.on("ReceiveVitalUpdate", () => {
+          fetchVitals();
+        });
+      } catch (err) {
+        console.error("SignalR Connection Error: ", err);
+      }
+    };
+
+    startConnection();
+
+    return () => {
+      connection.stop();
+    };
+  }, [patientId, fetchVitals]);
 
   const handleCareLevelChange = (level: CareLevel) => {
     setSelectedCareLevel(level);
@@ -122,6 +163,30 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
 
   return (
     <div className="space-y-6">
+      {showAlertBanner && (
+        <div className={`relative rounded-xl border p-4 ${alerts.some(a => a.severity === 'Critical') ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'}`}>
+          <button
+            onClick={() => setDismissedAlertKey(alertKey)}
+            className="absolute top-3 left-3 p-1.5 rounded-full bg-white/70 hover:bg-white text-gray-500 hover:text-gray-800 transition-colors"
+            aria-label="بستن"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-start gap-3">
+            <AlertCircle className={`w-5 h-5 mt-0.5 ${alerts.some(a => a.severity === 'Critical') ? 'text-red-600' : 'text-amber-600'}`} />
+            <div className="flex-1">
+              <div className="font-bold text-sm text-gray-900">هشدار علائم حیاتی</div>
+              <div className="mt-2 text-xs text-gray-700 flex flex-wrap gap-2">
+                {alerts.slice(0, 6).map(a => (
+                  <span key={a.code} className={`px-2 py-1 rounded-full border ${a.severity === 'Critical' ? 'bg-white border-red-200 text-red-700' : 'bg-white border-amber-200 text-amber-700'}`}>
+                    {a.title}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Header Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className={`p-4 rounded-xl border flex items-center justify-between ${status.bg}`}>

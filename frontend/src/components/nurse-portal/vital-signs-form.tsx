@@ -100,13 +100,20 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
     }
 
     try {
-      await nursePortalService.addVitalSign(patientId, {
+      const result = await nursePortalService.addVitalSign(patientId, {
         ...data,
         measuredAt: new Date(data.measuredAt).toISOString(),
         careRecipientId: patientId
       });
       
       toast.success("علائم حیاتی با موفقیت ثبت شد");
+
+      if (result?.alerts?.length) {
+        const titles = result.alerts.map(a => a.title).slice(0, 3).join('، ');
+        const text = `${result.patientName}: ${titles}`;
+        if (result.alerts.some(a => a.severity === 'Critical')) toast.error(text, { duration: 8000 });
+        else toast(text, { duration: 7000 });
+      }
       onSuccess();
     } catch (error) {
       console.error(error);

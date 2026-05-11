@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { PortalCard } from "@/components/portal/ui/portal-card";
 import { PortalButton } from "@/components/portal/ui/portal-button";
-import { Heart, Activity, Thermometer, Droplet, Plus, BarChart2, Clock, Calendar } from "lucide-react";
+import { Heart, Activity, Thermometer, Droplet, Plus, BarChart2, Clock, Calendar, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { toast } from "react-hot-toast";
@@ -11,6 +11,8 @@ import { VitalsChart } from "./vitals-chart";
 import { NurseVitalSignsForm } from "./vital-signs-form";
 import { NurseVitalSignsList } from "./vital-signs-list";
 import { VitalSign, CareLevel } from "@/types/patient";
+import { evaluateVitalAlerts } from "@/utils/vital-alerts";
+import { HubConnectionBuilder, HttpTransportType, LogLevel } from "@microsoft/signalr";
 
 interface Props {
   patientId: number;
@@ -23,6 +25,10 @@ export function VitalsManager({ patientId, careLevel = CareLevel.Level2 }: Props
   const [vitals, setVitals] = useState<VitalSign[]>([]);
   const [nextDue, setNextDue] = useState<Date | null>(null);
   const [now, setNow] = useState(new Date());
+  const [dismissedAlertKey, setDismissedAlertKey] = useState<string | null>(null);
+  const alerts = useMemo(() => evaluateVitalAlerts(vitals), [vitals]);
+  const alertKey = useMemo(() => alerts.map(a => `${a.code}:${a.severity}`).join('|'), [alerts]);
+  const showAlertBanner = alerts.length > 0 && dismissedAlertKey !== alertKey;
 
   // Live timer
   useEffect(() => {
@@ -45,6 +51,37 @@ export function VitalsManager({ patientId, careLevel = CareLevel.Level2 }: Props
   useEffect(() => {
     fetchVitals();
   }, [fetchVitals]);
+
+  useEffect(() => {
+    if (!patientId) return;
+
+    const connection = new HubConnectionBuilder()
+      .withUrl("http://localhost:5016/serviceHub", {
+        skipNegotiation: true,
+        transport: HttpTransportType.WebSockets
+      })
+      .configureLogging(LogLevel.Information)
+      .withAutomaticReconnect()
+      .build();
+
+    const startConnection = async () => {
+      try {
+        await connection.start();
+        await connection.invoke("JoinPatientGroup", patientId.toString());
+        connection.on("ReceiveVitalUpdate", () => {
+          fetchVitals();
+        });
+      } catch (err) {
+        console.error("SignalR Connection Error: ", err);
+      }
+    };
+
+    startConnection();
+
+    return () => {
+      connection.stop();
+    };
+  }, [patientId, fetchVitals]);
 
   // Calculate Next Due
   useEffect(() => {
@@ -101,6 +138,30 @@ export function VitalsManager({ patientId, careLevel = CareLevel.Level2 }: Props
 
   return (
     <div className="space-y-6">
+      {showAlertBanner && (
+        <PortalCard className={`relative border-none shadow-soft-xl ${alerts.some(a => a.severity === 'Critical') ? 'bg-rose-50 dark:bg-rose-950/30' : 'bg-amber-50 dark:bg-amber-950/30'}`}>
+          <button
+            onClick={() => setDismissedAlertKey(alertKey)}
+            className="absolute top-3 left-3 p-1.5 rounded-full bg-white/70 hover:bg-white text-gray-500 hover:text-gray-800 dark:bg-gray-900/30 dark:hover:bg-gray-900/50 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+            aria-label="بستن"
+          >
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-start gap-3">
+            <Activity className={`w-5 h-5 mt-0.5 ${alerts.some(a => a.severity === 'Critical') ? 'text-rose-600' : 'text-amber-600'}`} />
+            <div className="flex-1">
+              <div className="text-sm font-black text-gray-800 dark:text-gray-100">هشدار علائم حیاتی</div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {alerts.slice(0, 6).map(a => (
+                  <span key={a.code} className={`text-[11px] font-bold px-2 py-1 rounded-full border ${a.severity === 'Critical' ? 'bg-white/70 border-rose-200 text-rose-700 dark:bg-rose-900/20 dark:border-rose-900/40 dark:text-rose-300' : 'bg-white/70 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-900/40 dark:text-amber-300'}`}>
+                    {a.title}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </PortalCard>
+      )}
       {/* Header / Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-2">
         <div>

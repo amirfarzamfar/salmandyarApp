@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import "../portal/portal.css"; // Reuse the premium portal theme
 import { NurseBottomNav } from "@/components/nurse-portal/bottom-nav";
 import { NurseSidebar } from "@/components/nurse-portal/sidebar";
-import { ToastProvider } from "@/components/ui/toast-provider";
 
 export const metadata: Metadata = {
   title: "پنل پرستار | سالمندیار",
@@ -16,8 +15,6 @@ export default function NursePortalLayout({
 }>) {
   return (
     <div className="min-h-screen bg-neutral-warm-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 font-sans selection:bg-medical-200 selection:text-medical-900 pb-24 md:pb-0">
-      <ToastProvider />
-      
       {/* Desktop Sidebar */}
       <NurseSidebar />
       
