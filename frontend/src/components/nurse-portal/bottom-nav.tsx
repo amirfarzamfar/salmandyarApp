@@ -8,7 +8,7 @@ export function NurseBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-4 left-4 right-4 bg-white/80 backdrop-blur-2xl border border-white/40 py-4 px-4 md:hidden z-50 shadow-soft-lg rounded-3xl">
+    <nav className="fixed bottom-4 left-4 right-4 bg-white/80 backdrop-blur-2xl border border-white/40 py-4 px-4 md:hidden z-40 shadow-soft-lg rounded-3xl">
       <div className="flex justify-between items-center max-w-md mx-auto overflow-x-auto scrollbar-hide gap-2">
         <NavItem icon={Users} label="بیماران" href="/nurse-portal" active={pathname === '/nurse-portal'} />
         <NavItem icon={ClipboardCheck} label="ارزیابی‌ها" href="/nurse-portal/assessments" active={pathname === '/nurse-portal/assessments'} />
