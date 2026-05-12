@@ -228,8 +228,15 @@ public class UserManagementService : IUserManagementService
         if (user == null) return false;
 
         var currentRoles = await _userManager.GetRolesAsync(user);
-        var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
-        if (!removeResult.Succeeded) return false;
+        if (currentRoles.Any())
+        {
+            var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+            if (!removeResult.Succeeded)
+            {
+                Console.WriteLine($"Failed to remove roles: {string.Join(", ", removeResult.Errors.Select(e => e.Description))}");
+                return false;
+            }
+        }
 
         var addResult = await _userManager.AddToRoleAsync(user, dto.Role);
         
@@ -238,6 +245,10 @@ public class UserManagementService : IUserManagementService
             await _auditLogService.LogAsync(adminId, "ChangeRole", "User", userId, 
                 $"Changed role from {string.Join(",", currentRoles)} to {dto.Role}", null);
             return true;
+        }
+        else
+        {
+            Console.WriteLine($"Failed to add role: {string.Join(", ", addResult.Errors.Select(e => e.Description))}");
         }
         return false;
     }
