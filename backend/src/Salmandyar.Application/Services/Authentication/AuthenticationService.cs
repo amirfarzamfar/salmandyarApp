@@ -112,4 +112,34 @@ public class AuthenticationService : IAuthenticationService
             throw new Exception($"تغییر رمز عبور با خطا مواجه شد: {string.Join(", ", errors)}");
         }
     }
+
+    public async Task<string> ForgotPasswordAsync(ForgotPasswordRequest request)
+    {
+        var user = await _identityService.GetUserByIdentifierAsync(request.Identifier);
+        if (user == null)
+        {
+            // Do not reveal that the user does not exist
+            return string.Empty;
+        }
+
+        var token = await _identityService.GeneratePasswordResetTokenAsync(user);
+        // In a real application, you would send this token via email or SMS.
+        // For demonstration purposes, we are returning it.
+        return token;
+    }
+
+    public async Task ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var user = await _identityService.GetUserByIdentifierAsync(request.Identifier);
+        if (user == null)
+        {
+            throw new Exception("کاربر یافت نشد.");
+        }
+
+        var (success, errors) = await _identityService.ResetPasswordAsync(user, request.Token, request.NewPassword);
+        if (!success)
+        {
+            throw new Exception($"بازیابی رمز عبور با خطا مواجه شد: {string.Join(", ", errors)}");
+        }
+    }
 }

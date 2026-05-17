@@ -7,7 +7,7 @@ import { userEvaluationService } from '@/services/user-evaluation.service';
 import { toast } from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { useState } from 'react';
-import { AssignExamToUsersModal } from '@/components/admin/assessments/AssignExamToUsersModal';
+import { AssignEvaluationToUsersModal } from '@/components/admin/user-evaluations/AssignEvaluationToUsersModal';
 import { AssessmentType } from '@/types/user-evaluation';
 
 export default function UserEvaluationsListPage() {
@@ -159,7 +159,7 @@ export default function UserEvaluationsListPage() {
       )}
 
       {assignModalData && (
-        <AssignExamToUsersModal
+        <AssignEvaluationToUsersModal
             formId={assignModalData.id}
             formTitle={assignModalData.title}
             isOpen={true}

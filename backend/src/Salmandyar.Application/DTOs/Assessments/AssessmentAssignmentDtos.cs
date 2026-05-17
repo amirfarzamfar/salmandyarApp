@@ -52,6 +52,16 @@ public class CreateAssessmentAssignmentDto
     public bool IsMandatory { get; set; }
 }
 
+public class BulkAssignAssessmentDto
+{
+    public List<string>? UserIds { get; set; }
+    public List<string>? Roles { get; set; }
+    public int FormId { get; set; }
+    public DateTime? Deadline { get; set; }
+    public DateTime? StartDate { get; set; }
+    public bool IsMandatory { get; set; }
+}
+
 public class UserAssessmentSummaryDto
 {
     public string UserId { get; set; } = string.Empty;

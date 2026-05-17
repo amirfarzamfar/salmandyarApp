@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 using Salmandyar.Application.DTOs.UserEvaluations;
 using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Application.Services.UserEvaluations;
+using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.UserEvaluations;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Infrastructure.Persistence;
@@ -12,11 +14,13 @@ public class UserEvaluationAssignmentService : IUserEvaluationAssignmentService
 {
     private readonly ApplicationDbContext _context;
     private readonly IUserNotificationService _notificationService;
+    private readonly UserManager<User> _userManager;
 
-    public UserEvaluationAssignmentService(ApplicationDbContext context, IUserNotificationService notificationService)
+    public UserEvaluationAssignmentService(ApplicationDbContext context, IUserNotificationService notificationService, UserManager<User> userManager)
     {
         _context = context;
         _notificationService = notificationService;
+        _userManager = userManager;
     }
 
     public async Task<UserEvaluationAssignmentDto> AssignEvaluationAsync(CreateUserEvaluationAssignmentDto dto)
@@ -81,6 +85,66 @@ public class UserEvaluationAssignmentService : IUserEvaluationAssignmentService
         );
 
         return MapToDto(created);
+    }
+
+    public async Task<List<UserEvaluationAssignmentDto>> BulkAssignEvaluationAsync(BulkAssignUserEvaluationDto dto)
+    {
+        var targetUserIds = new HashSet<string>();
+
+        if (dto.UserIds != null && dto.UserIds.Any())
+        {
+            foreach (var id in dto.UserIds)
+            {
+                targetUserIds.Add(id);
+            }
+        }
+
+        if (dto.Roles != null && dto.Roles.Any())
+        {
+            foreach (var role in dto.Roles)
+            {
+                var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+                foreach (var user in usersInRole)
+                {
+                    if (user.IsActive)
+                    {
+                        targetUserIds.Add(user.Id);
+                    }
+                }
+            }
+        }
+
+        if (!targetUserIds.Any())
+        {
+            return new List<UserEvaluationAssignmentDto>();
+        }
+
+        var results = new List<UserEvaluationAssignmentDto>();
+
+        foreach (var userId in targetUserIds)
+        {
+            try
+            {
+                var singleDto = new CreateUserEvaluationAssignmentDto
+                {
+                    UserId = userId,
+                    FormId = dto.FormId,
+                    Deadline = dto.Deadline,
+                    StartDate = dto.StartDate,
+                    IsMandatory = dto.IsMandatory
+                };
+                
+                var result = await AssignEvaluationAsync(singleDto);
+                results.Add(result);
+            }
+            catch (InvalidOperationException)
+            {
+                // Skip if already assigned
+                continue;
+            }
+        }
+
+        return results;
     }
 
     public async Task<List<UserEvaluationAssignmentDto>> GetUserAssignmentsAsync(string userId)

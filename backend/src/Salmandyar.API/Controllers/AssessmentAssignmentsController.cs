@@ -33,6 +33,13 @@ public class AssessmentAssignmentsController : ControllerBase
         }
     }
 
+    [HttpPost("bulk")]
+    public async Task<ActionResult<List<AssessmentAssignmentDto>>> BulkAssignAssessment(BulkAssignAssessmentDto dto)
+    {
+        var results = await _service.BulkAssignAssessmentAsync(dto);
+        return Ok(results);
+    }
+
     [HttpGet("{id}")]
     public async Task<ActionResult<AssessmentAssignmentDto>> GetAssignment(int id)
     {

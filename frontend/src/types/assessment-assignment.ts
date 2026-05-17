@@ -48,6 +48,15 @@ export interface CreateAssessmentAssignment {
     isMandatory: boolean;
 }
 
+export interface BulkAssignAssessment {
+    userIds?: string[];
+    roles?: string[];
+    formId: number;
+    deadline?: string;
+    startDate?: string;
+    isMandatory: boolean;
+}
+
 export interface UserAssessmentSummary {
     userId: string;
     fullName: string;

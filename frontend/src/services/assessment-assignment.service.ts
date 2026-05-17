@@ -1,9 +1,14 @@
-import { AssessmentAssignment, CreateAssessmentAssignment, UserAssessmentSummary } from '@/types/assessment-assignment';
+import { AssessmentAssignment, BulkAssignAssessment, CreateAssessmentAssignment, UserAssessmentSummary } from '@/types/assessment-assignment';
 import api from '@/lib/axios';
 
 export const assessmentAssignmentService = {
     async assignAssessment(data: CreateAssessmentAssignment): Promise<AssessmentAssignment> {
         const response = await api.post<AssessmentAssignment>('/admin/assignments', data);
+        return response.data;
+    },
+
+    async bulkAssignAssessment(data: BulkAssignAssessment): Promise<AssessmentAssignment[]> {
+        const response = await api.post<AssessmentAssignment[]>('/admin/assignments/bulk', data);
         return response.data;
     },
 

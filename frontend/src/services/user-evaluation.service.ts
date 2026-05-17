@@ -1,10 +1,15 @@
-import { UserEvaluation, CreateUserEvaluation, UserEvaluationSummary, AssessmentType, UserEvaluationForm, CreateUserEvaluationFormDto } from '@/types/user-evaluation';
+import { UserEvaluation, BulkAssignUserEvaluation, CreateUserEvaluation, UserEvaluationSummary, AssessmentType, UserEvaluationForm, CreateUserEvaluationFormDto } from '@/types/user-evaluation';
 import api from '@/lib/axios';
 
 export const userEvaluationService = {
     // Assignments
     async assignEvaluation(data: CreateUserEvaluation): Promise<UserEvaluation> {
         const response = await api.post<UserEvaluation>('/admin/user-evaluation-assignments', data);
+        return response.data;
+    },
+
+    async bulkAssignEvaluation(data: BulkAssignUserEvaluation): Promise<UserEvaluation[]> {
+        const response = await api.post<UserEvaluation[]>('/admin/user-evaluation-assignments/bulk', data);
         return response.data;
     },
 
@@ -55,11 +60,6 @@ export const userEvaluationService = {
     // Forms
     async getAllForms(): Promise<UserEvaluationForm[]> {
         const response = await api.get<UserEvaluationForm[]>('/UserEvaluations/forms');
-        return response.data;
-    },
-
-    async getFormById(id: number): Promise<UserEvaluationForm> {
-        const response = await api.get<UserEvaluationForm>(`/UserEvaluations/forms/details/${id}`);
         return response.data;
     },
 

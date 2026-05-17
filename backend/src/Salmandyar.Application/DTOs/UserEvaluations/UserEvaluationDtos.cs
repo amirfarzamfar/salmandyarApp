@@ -109,6 +109,16 @@ public class CreateUserEvaluationAssignmentDto
     public bool IsMandatory { get; set; }
 }
 
+public class BulkAssignUserEvaluationDto
+{
+    public List<string>? UserIds { get; set; }
+    public List<string>? Roles { get; set; }
+    public int FormId { get; set; }
+    public DateTime? Deadline { get; set; }
+    public DateTime? StartDate { get; set; }
+    public bool IsMandatory { get; set; }
+}
+
 public class UserEvaluationSummaryDto
 {
     public string UserId { get; set; } = string.Empty;

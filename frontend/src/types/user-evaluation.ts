@@ -96,7 +96,18 @@ export interface UserEvaluation {
 export interface CreateUserEvaluation {
     userId: string;
     formId: number;
-    dueDate?: string;
+    deadline?: string;
+    startDate?: string;
+    isMandatory: boolean;
+}
+
+export interface BulkAssignUserEvaluation {
+    userIds?: string[];
+    roles?: string[];
+    formId: number;
+    deadline?: string;
+    startDate?: string;
+    isMandatory: boolean;
 }
 
 export interface UserEvaluationSummary {

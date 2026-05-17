@@ -11,6 +11,7 @@ interface AssessmentFormBuilderProps {
   onSubmit: (data: CreateAssessmentFormDto) => Promise<void>;
   loading: boolean;
   title: string;
+  allowedTypes?: number[];
 }
 
 const roleTypes = [
@@ -25,7 +26,7 @@ const roleTypes = [
   AssessmentType.PatientFamily
 ];
 
-export default function AssessmentFormBuilder({ initialData, onSubmit, loading, title }: AssessmentFormBuilderProps) {
+export default function AssessmentFormBuilder({ initialData, onSubmit, loading, title, allowedTypes }: AssessmentFormBuilderProps) {
   const { register, control, handleSubmit, watch, setValue, reset, getValues, formState: { errors } } = useForm<CreateAssessmentFormDto>({
     defaultValues: initialData || {
       title: '',
@@ -120,7 +121,7 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
                 {...register('type')}
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-teal-500 outline-none"
               >
-                {roleTypes.map((type) => (
+                {(allowedTypes?.length ? allowedTypes : roleTypes).map((type) => (
                   <option key={type} value={type}>
                     {roleTranslations[AssessmentType[type]] || AssessmentType[type]}
                   </option>

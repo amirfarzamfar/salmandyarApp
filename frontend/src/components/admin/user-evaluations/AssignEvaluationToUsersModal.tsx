@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { userService, UserListDto } from '@/services/user.service';
-import { assessmentAssignmentService } from '@/services/assessment-assignment.service';
-import { X, Search, UserPlus, Check, Loader2 } from 'lucide-react';
+import { userEvaluationService } from '@/services/user-evaluation.service';
+import { Check, Loader2, Search, UserPlus, X } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
@@ -24,7 +24,7 @@ function toIsoString(date: unknown): string {
     return '';
 }
 
-interface AssignExamToUsersModalProps {
+interface AssignEvaluationToUsersModalProps {
     formId: number;
     formTitle: string;
     isOpen: boolean;
@@ -32,8 +32,8 @@ interface AssignExamToUsersModalProps {
     onSuccess: () => void;
 }
 
-export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onSuccess }: AssignExamToUsersModalProps) {
-    const [step, setStep] = useState<1 | 2>(1); // 1: Select Users, 2: Configure Settings
+export function AssignEvaluationToUsersModal({ formId, formTitle, isOpen, onClose, onSuccess }: AssignEvaluationToUsersModalProps) {
+    const [step, setStep] = useState<1 | 2>(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [users, setUsers] = useState<UserListDto[]>([]);
     const [loading, setLoading] = useState(false);
@@ -41,10 +41,19 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
     const [selectedRoles, setSelectedRoles] = useState<Set<string>>(new Set());
     const [submitting, setSubmitting] = useState(false);
 
-    // Settings
     const [startDate, setStartDate] = useState<string>('');
     const [deadline, setDeadline] = useState<string>('');
     const [isMandatory, setIsMandatory] = useState(false);
+
+    const roleOptions: Array<{ value: string; label: string }> = [
+        { value: 'Nurse', label: 'پرستاران' },
+        { value: 'ElderlyCareAssistant', label: 'سالمندیاران' },
+        { value: 'AssistantNurse', label: 'کمک‌پرستاران' },
+        { value: 'Physiotherapist', label: 'فیزیوتراپ‌ها' },
+        { value: 'Elderly', label: 'سالمندان' },
+        { value: 'Patient', label: 'بیماران' },
+        { value: 'PatientFamily', label: 'خانواده بیمار' }
+    ];
 
     useEffect(() => {
         if (isOpen) {
@@ -82,7 +91,7 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                 isActive: true
             });
             setUsers(result.items);
-        } catch (error) {
+        } catch {
             toast.error('خطا در دریافت لیست کاربران');
         } finally {
             setLoading(false);
@@ -98,16 +107,6 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
         }
         setSelectedUserIds(newSelected);
     };
-
-    const roleOptions: Array<{ value: string; label: string }> = [
-        { value: 'Nurse', label: 'پرستاران' },
-        { value: 'ElderlyCareAssistant', label: 'سالمندیاران' },
-        { value: 'AssistantNurse', label: 'کمک‌پرستاران' },
-        { value: 'Physiotherapist', label: 'فیزیوتراپ‌ها' },
-        { value: 'Elderly', label: 'سالمندان' },
-        { value: 'Patient', label: 'بیماران' },
-        { value: 'PatientFamily', label: 'خانواده بیمار' }
-    ];
 
     const toggleRole = (role: string) => {
         const newSelected = new Set(selectedRoles);
@@ -126,9 +125,8 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
         }
 
         setSubmitting(true);
-
         try {
-            const results = await assessmentAssignmentService.bulkAssignAssessment({
+            const results = await userEvaluationService.bulkAssignEvaluation({
                 userIds: selectedUserIds.size ? Array.from(selectedUserIds) : undefined,
                 roles: selectedRoles.size ? Array.from(selectedRoles) : undefined,
                 formId,
@@ -145,7 +143,7 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
             }
 
             toast.error('هیچ تخصیص جدیدی ثبت نشد (ممکن است قبلا تخصیص داده شده باشد)');
-        } catch (error) {
+        } catch {
             toast.error('خطای سیستمی رخ داد');
         } finally {
             setSubmitting(false);
@@ -159,9 +157,9 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
             <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
                 <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-800/50">
                     <div>
-                        <h3 className="text-lg font-bold text-white">تخصیص آزمون: {formTitle}</h3>
+                        <h3 className="text-lg font-bold text-white">تخصیص ارزیابی: {formTitle}</h3>
                         <p className="text-xs text-slate-400">
-                            {step === 1 ? 'انتخاب کاربران' : 'تنظیمات آزمون'}
+                            {step === 1 ? 'انتخاب کاربران/نقش‌ها' : 'تنظیمات ارزیابی'}
                         </p>
                     </div>
                     <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
@@ -211,8 +209,8 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                                 </div>
                             ) : (
                                 <div className="space-y-2">
-                                    {users.map(user => (
-                                        <div 
+                                    {users.map((user) => (
+                                        <div
                                             key={user.id}
                                             onClick={() => toggleUser(user.id)}
                                             className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-all ${
@@ -222,10 +220,13 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                                             }`}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                                                    selectedUserIds.has(user.id) ? 'bg-teal-500 text-white' : 'bg-slate-700 text-slate-300'
-                                                }`}>
-                                                    {user.firstName?.[0]}{user.lastName?.[0]}
+                                                <div
+                                                    className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                                                        selectedUserIds.has(user.id) ? 'bg-teal-500 text-white' : 'bg-slate-700 text-slate-300'
+                                                    }`}
+                                                >
+                                                    {user.firstName?.[0]}
+                                                    {user.lastName?.[0]}
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-medium text-white">
@@ -236,9 +237,7 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                                                     </div>
                                                 </div>
                                             </div>
-                                            {selectedUserIds.has(user.id) && (
-                                                <Check className="w-5 h-5 text-teal-400" />
-                                            )}
+                                            {selectedUserIds.has(user.id) && <Check className="w-5 h-5 text-teal-400" />}
                                         </div>
                                     ))}
                                 </div>
@@ -294,13 +293,13 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                             <div className="flex items-center gap-2 pt-2">
                                 <input
                                     type="checkbox"
-                                    id="isMandatoryBulk"
+                                    id="isMandatoryBulkUserEval"
                                     checked={isMandatory}
                                     onChange={(e) => setIsMandatory(e.target.checked)}
                                     className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-teal-500 focus:ring-teal-500"
                                 />
-                                <label htmlFor="isMandatoryBulk" className="text-sm text-slate-300">
-                                    این آزمون اجباری است
+                                <label htmlFor="isMandatoryBulkUserEval" className="text-sm text-slate-300">
+                                    این ارزیابی اجباری است
                                 </label>
                             </div>
                         </div>
@@ -353,3 +352,4 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
         </div>
     );
 }
+

@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { LoginRequest, RegisterRequest, AuthResponse, ChangePasswordRequest } from '@/types/auth';
+import { LoginRequest, RegisterRequest, AuthResponse, ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest } from '@/types/auth';
 
 export const authService = {
   login: async (data: LoginRequest) => {
@@ -12,6 +12,14 @@ export const authService = {
   },
   changePassword: async (data: ChangePasswordRequest) => {
     const response = await api.post('/auth/change-password', data);
+    return response.data;
+  },
+  forgotPassword: async (data: ForgotPasswordRequest) => {
+    const response = await api.post('/auth/forgot-password', data);
+    return response.data;
+  },
+  resetPassword: async (data: ResetPasswordRequest) => {
+    const response = await api.post('/auth/reset-password', data);
     return response.data;
   },
   updateProfile: async (data: { firstName: string; lastName: string; email: string; phoneNumber: string }) => {

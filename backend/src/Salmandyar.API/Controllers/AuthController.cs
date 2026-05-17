@@ -93,6 +93,36 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
+    {
+        try
+        {
+            var token = await _authService.ForgotPasswordAsync(request);
+            // In a real application, you would send this token via email or SMS.
+            // Since this is a demo, we return it to the client for the next step.
+            return Ok(new { message = "در صورت وجود حساب کاربری، کد بازیابی ارسال شد.", token = token });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
+    {
+        try
+        {
+            await _authService.ResetPasswordAsync(request);
+            return Ok(new { message = "رمز عبور با موفقیت بازیابی شد." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPut("profile")]
     [Authorize]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserProfileDto dto)

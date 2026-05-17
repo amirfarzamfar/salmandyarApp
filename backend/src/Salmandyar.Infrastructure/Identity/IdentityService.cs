@@ -70,4 +70,19 @@ public class IdentityService : IIdentityService
     {
         return await _userManager.GetRolesAsync(user);
     }
+
+    public async Task<string> GeneratePasswordResetTokenAsync(User user)
+    {
+        return await _userManager.GeneratePasswordResetTokenAsync(user);
+    }
+
+    public async Task<(bool Success, string[] Errors)> ResetPasswordAsync(User user, string token, string newPassword)
+    {
+        var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+        if (!result.Succeeded)
+        {
+            return (false, result.Errors.Select(e => e.Description).ToArray());
+        }
+        return (true, Array.Empty<string>());
+    }
 }
