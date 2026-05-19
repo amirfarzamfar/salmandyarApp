@@ -41,6 +41,8 @@ export interface Question {
   weight: number;
   tags: string[];
   order: number;
+  questionKey?: string;
+  nextQuestionKey?: string;
 }
 
 export interface Option {
@@ -48,6 +50,7 @@ export interface Option {
   text: string;
   value: number; // ScoreValue
   order: number;
+  nextQuestionKey?: string;
 }
 
 export interface CreateAssessmentFormDto {
@@ -64,12 +67,15 @@ export interface CreateQuestionDto {
   tags: string[];
   options: CreateOptionDto[];
   order: number;
+  questionKey?: string;
+  nextQuestionKey?: string;
 }
 
 export interface CreateOptionDto {
   text: string;
   scoreValue: number;
   order: number;
+  nextQuestionKey?: string;
 }
 
 export interface MatchingResult {

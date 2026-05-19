@@ -18,6 +18,8 @@ public class CreateQuestionDto
     public List<string> Tags { get; set; } = new List<string>();
     public List<CreateOptionDto> Options { get; set; } = new List<CreateOptionDto>();
     public int Order { get; set; }
+    public string? QuestionKey { get; set; }
+    public string? NextQuestionKey { get; set; }
 }
 
 public class CreateOptionDto
@@ -25,6 +27,7 @@ public class CreateOptionDto
     public string Text { get; set; } = string.Empty;
     public int ScoreValue { get; set; }
     public int Order { get; set; }
+    public string? NextQuestionKey { get; set; }
 }
 
 public class AssessmentFormDto
@@ -46,6 +49,8 @@ public class QuestionDto
     public int Weight { get; set; }
     public List<string> Tags { get; set; } = new List<string>();
     public int Order { get; set; }
+    public string? QuestionKey { get; set; }
+    public string? NextQuestionKey { get; set; }
 }
 
 public class OptionDto
@@ -54,6 +59,7 @@ public class OptionDto
     public string Text { get; set; } = string.Empty;
     public int Value { get; set; }
     public int Order { get; set; }
+    public string? NextQuestionKey { get; set; }
 }
 
 public class SubmitAssessmentDto

@@ -32,11 +32,14 @@ public class AssessmentService : IAssessmentService
                 Weight = q.Weight,
                 Tags = q.Tags,
                 Order = q.Order == 0 ? index : q.Order,
+                QuestionKey = string.IsNullOrEmpty(q.QuestionKey) ? Guid.NewGuid().ToString() : q.QuestionKey,
+                NextQuestionKey = q.NextQuestionKey,
                 Options = q.Options.Select((o, oIndex) => new AssessmentOption
                 {
                     Text = o.Text,
                     ScoreValue = o.ScoreValue,
-                    Order = o.Order == 0 ? oIndex : o.Order
+                    Order = o.Order == 0 ? oIndex : o.Order,
+                    NextQuestionKey = o.NextQuestionKey
                 }).ToList()
             }).ToList()
         };
@@ -95,11 +98,14 @@ public class AssessmentService : IAssessmentService
             Weight = q.Weight,
             Tags = q.Tags,
             Order = q.Order == 0 ? index : q.Order,
+            QuestionKey = string.IsNullOrEmpty(q.QuestionKey) ? Guid.NewGuid().ToString() : q.QuestionKey,
+            NextQuestionKey = q.NextQuestionKey,
             Options = q.Options.Select((o, oIndex) => new AssessmentOption
             {
                 Text = o.Text,
                 ScoreValue = o.ScoreValue,
-                Order = o.Order == 0 ? oIndex : o.Order
+                Order = o.Order == 0 ? oIndex : o.Order,
+                NextQuestionKey = o.NextQuestionKey
             }).ToList()
         }).ToList();
 
@@ -354,12 +360,15 @@ public class AssessmentService : IAssessmentService
                 Weight = q.Weight,
                 Tags = q.Tags,
                 Order = q.Order,
+                QuestionKey = q.QuestionKey,
+                NextQuestionKey = q.NextQuestionKey,
                 Options = q.Options.OrderBy(o => o.Order).Select(o => new OptionDto
                 {
                     Id = o.Id,
                     Text = o.Text,
                     Value = o.ScoreValue,
-                    Order = o.Order
+                    Order = o.Order,
+                    NextQuestionKey = o.NextQuestionKey
                 }).ToList()
             }).ToList()
         };

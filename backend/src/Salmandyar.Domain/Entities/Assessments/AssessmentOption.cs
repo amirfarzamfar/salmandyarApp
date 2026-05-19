@@ -10,4 +10,6 @@ public class AssessmentOption
     public int ScoreValue { get; set; } // Points for selecting this option
     public bool IsCorrect { get; set; } // Mainly for quizzes, optional for surveys
     public int Order { get; set; }
+    
+    public string? NextQuestionKey { get; set; }
 }

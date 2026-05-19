@@ -1,6 +1,6 @@
 'use client';
 
-import { useForm, useFieldArray, SubmitHandler, Control, UseFormRegister, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import { useForm, useFieldArray, SubmitHandler, Control, UseFormRegister, UseFormWatch, UseFormSetValue, UseFormGetValues } from 'react-hook-form';
 import { Plus, Trash2, Save, FileText } from 'lucide-react';
 import { CreateAssessmentFormDto, QuestionType, AssessmentType } from '@/types/assessment';
 import { useEffect } from 'react';
@@ -34,6 +34,7 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
       type: AssessmentType.Nurse,
       questions: [
         {
+          questionKey: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           question: '',
           type: QuestionType.MultipleChoice,
           weight: 1,
@@ -139,13 +140,14 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
                 <button
                   type="button"
                   onClick={() => append({ 
-                    question: '', 
-                    type: QuestionType.MultipleChoice, 
-                    weight: 1, 
-                    tags: [], 
-                    order: fields.length,
-                    options: [] 
-                  })}
+                  questionKey: `q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                  question: '', 
+                  type: QuestionType.MultipleChoice, 
+                  weight: 1, 
+                  tags: [], 
+                  order: fields.length,
+                  options: [] 
+                })}
                   className="text-sm flex items-center gap-1 text-teal-400 hover:text-teal-300"
                 >
                   <Plus size={16} />
@@ -164,6 +166,7 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
                       watch={watch}
                       setValue={setValue}
                       getValues={getValues}
+                      allQuestions={watch('questions')}
                    />
                 ))}
              </div>
@@ -182,7 +185,8 @@ function QuestionItem({
     remove, 
     watch, 
     setValue,
-    getValues
+    getValues,
+    allQuestions
 }: { 
     index: number, 
     control: Control<CreateAssessmentFormDto>, 
@@ -190,7 +194,8 @@ function QuestionItem({
     remove: (index: number) => void,
     watch: UseFormWatch<CreateAssessmentFormDto>,
     setValue: UseFormSetValue<CreateAssessmentFormDto>,
-    getValues: any // Added getValues
+    getValues: UseFormGetValues<CreateAssessmentFormDto>,
+    allQuestions: CreateAssessmentFormDto['questions']
 }) {
     const type = watch(`questions.${index}.type`);
     const { fields: optionFields, append: appendOption, remove: removeOption, replace: replaceOptions } = useFieldArray({
@@ -218,21 +223,21 @@ function QuestionItem({
         }
     }, []);
 
-    const addTag = (e: any) => {
+    const addTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            const val = e.target.value.trim();
+            const val = e.currentTarget.value.trim();
             if (val) {
                 const currentTags = watch(`questions.${index}.tags`) || [];
                 setValue(`questions.${index}.tags`, [...currentTags, val]);
-                e.target.value = '';
+                e.currentTarget.value = '';
             }
         }
     };
 
     const removeTag = (tagIndex: number) => {
         const currentTags = watch(`questions.${index}.tags`) || [];
-        setValue(`questions.${index}.tags`, currentTags.filter((_: any, i: number) => i !== tagIndex));
+        setValue(`questions.${index}.tags`, currentTags.filter((_: string, i: number) => i !== tagIndex));
     };
 
     // Handle type change manually to ensure realtime update - Removed old handler
@@ -316,6 +321,25 @@ function QuestionItem({
                                 />
                             </div>
                         </div>
+
+                        {/* Question Jump */}
+                        <div className="flex items-center gap-2">
+                            <label className="text-xs text-slate-400">پرش کل سوال:</label>
+                            <select
+                                {...register(`questions.${index}.nextQuestionKey`)}
+                                className="w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 outline-none"
+                            >
+                                <option value="">سوال بعدی (پیش‌فرض)</option>
+                                {allQuestions.map((q, qIndex) => {
+                                    if (qIndex === index) return null;
+                                    return (
+                                        <option key={q.questionKey || qIndex} value={q.questionKey}>
+                                            {`پرش به: ${qIndex + 1}. ${q.question ? (q.question.substring(0, 15) + '...') : 'سوال جدید'}`}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                        </div>
                     </div>
 
                     {/* Options Builder (For MultipleChoice AND TrueFalse) */}
@@ -324,7 +348,7 @@ function QuestionItem({
                         <div className="pl-4 border-r-2 border-slate-700 space-y-2 mt-2">
                             <label className="text-xs text-slate-500 block mb-1">گزینه‌ها:</label>
                             {/* We use fields from useFieldArray but need to sync if options are reset externally */}
-                            {(optionFields.length > 0 ? optionFields : watch(`questions.${index}.options`))?.map((opt: any, optIndex: number) => (
+                            {(optionFields.length > 0 ? optionFields : watch(`questions.${index}.options`))?.map((opt: { id?: string | number }, optIndex: number) => (
                                 <div key={opt.id || optIndex} className="flex gap-2 items-center">
                                     <input
                                         {...register(`questions.${index}.options.${optIndex}.text`)}
@@ -337,6 +361,20 @@ function QuestionItem({
                                         placeholder="امتیاز"
                                         className="w-16 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-white text-center"
                                     />
+                                    <select
+                                        {...register(`questions.${index}.options.${optIndex}.nextQuestionKey`)}
+                                        className="w-32 bg-slate-800 border border-slate-700 rounded px-2 py-1 text-xs text-slate-300 outline-none"
+                                    >
+                                        <option value="">سوال بعدی (پیش‌فرض)</option>
+                                        {allQuestions.map((q, qIndex) => {
+                                            if (qIndex === index) return null; // Don't allow selecting itself
+                                            return (
+                                                <option key={q.questionKey || qIndex} value={q.questionKey}>
+                                                    {`پرش به: ${qIndex + 1}. ${q.question ? (q.question.substring(0, 15) + '...') : 'سوال جدید'}`}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
                                     {Number(watch(`questions.${index}.type`)) === QuestionType.MultipleChoice && (
                                         <button type="button" onClick={() => removeOption(optIndex)} className="text-red-400 hover:text-red-300">
                                             <Trash2 size={14} />

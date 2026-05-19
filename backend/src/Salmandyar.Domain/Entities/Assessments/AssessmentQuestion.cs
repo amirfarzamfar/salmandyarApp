@@ -18,5 +18,8 @@ public class AssessmentQuestion
 
     public int Order { get; set; }
 
+    public string? QuestionKey { get; set; }
+    public string? NextQuestionKey { get; set; }
+
     public virtual ICollection<AssessmentOption> Options { get; set; } = new List<AssessmentOption>();
 }

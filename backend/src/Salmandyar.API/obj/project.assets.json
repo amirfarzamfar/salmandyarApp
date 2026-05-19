@@ -4407,11 +4407,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\Salmandyar.API.csproj",
+      "projectUniqueName": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Api\\Salmandyar.API.csproj",
       "projectName": "Salmandyar.API",
-      "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\Salmandyar.API.csproj",
+      "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Api\\Salmandyar.API.csproj",
       "packagesPath": "C:\\Users\\amirFarzam\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\obj\\",
+      "outputPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Api\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\amirFarzam\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -4429,8 +4429,8 @@
             "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj": {
               "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj"
             },
-            "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\Salmandyar.Infrastructure.csproj": {
-              "projectPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\Salmandyar.Infrastructure.csproj"
+            "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\Salmandyar.Infrastructure.csproj": {
+              "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\Salmandyar.Infrastructure.csproj"
             }
           }
         }

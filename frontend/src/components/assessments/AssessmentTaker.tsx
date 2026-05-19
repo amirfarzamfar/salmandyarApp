@@ -45,11 +45,75 @@ export default function AssessmentTaker({ form, onSubmit, loading, careRecipient
     }));
   };
 
+  const getVisibleQuestions = () => {
+    if (!form.questions || form.questions.length === 0) return [];
+    
+    const sortedQuestions = [...form.questions].sort((a, b) => a.order - b.order);
+    const visible = [];
+    const visited = new Set();
+    
+    let currentQuestion: typeof sortedQuestions[0] | undefined = sortedQuestions[0];
+    
+    while (currentQuestion && !visited.has(currentQuestion.questionId)) {
+      visible.push(currentQuestion);
+      visited.add(currentQuestion.questionId);
+      
+      const answer = answers[currentQuestion.questionId];
+      
+      let isAnswered = false;
+      if (answer) {
+         if (Number(currentQuestion.type) === QuestionType.MultipleChoice && answer.selectedOptionId !== undefined) isAnswered = true;
+         if (Number(currentQuestion.type) === QuestionType.TrueFalse && answer.booleanResponse !== undefined) isAnswered = true;
+         if ((Number(currentQuestion.type) === QuestionType.ShortAnswer || Number(currentQuestion.type) === QuestionType.LongAnswer) && !!answer.textResponse?.trim()) isAnswered = true;
+      }
+
+      if (!isAnswered) {
+        break; // Stop showing more questions until this one is answered
+      }
+      
+      let nextKey = currentQuestion.nextQuestionKey;
+      
+      if (Number(currentQuestion.type) === QuestionType.MultipleChoice && answer.selectedOptionId) {
+        const selectedOpt = currentQuestion.options?.find(o => o.id === answer.selectedOptionId);
+        if (selectedOpt?.nextQuestionKey) {
+          nextKey = selectedOpt.nextQuestionKey;
+        }
+      } else if (Number(currentQuestion.type) === QuestionType.TrueFalse && answer.booleanResponse !== undefined) {
+         const expectedScore = answer.booleanResponse ? 1 : 0;
+         const selectedOpt = currentQuestion.options?.find(o => o.value === expectedScore || (o as unknown as {scoreValue?: number}).scoreValue === expectedScore);
+         if (selectedOpt?.nextQuestionKey) {
+            nextKey = selectedOpt.nextQuestionKey;
+         }
+      }
+      
+      let nextQ = null;
+      if (nextKey) {
+         nextQ = sortedQuestions.find(q => q.questionKey === nextKey);
+      }
+      
+      if (nextQ) {
+         currentQuestion = nextQ;
+      } else {
+         const currentIndex = sortedQuestions.findIndex(q => q.questionId === currentQuestion.questionId);
+         currentQuestion = sortedQuestions[currentIndex + 1];
+      }
+    }
+    
+    return visible;
+  };
+
+  const visibleQuestions = getVisibleQuestions();
+
   const validate = () => {
-    // Check if all required questions are answered? 
-    // For now, let's assume all questions are required to ensure completeness.
-    for (const q of form.questions) {
-      if (!answers[q.questionId]) {
+    for (const q of visibleQuestions) {
+      const ans = answers[q.questionId];
+      let isAnswered = false;
+      if (ans) {
+         if (Number(q.type) === QuestionType.MultipleChoice && ans.selectedOptionId !== undefined) isAnswered = true;
+         if (Number(q.type) === QuestionType.TrueFalse && ans.booleanResponse !== undefined) isAnswered = true;
+         if ((Number(q.type) === QuestionType.ShortAnswer || Number(q.type) === QuestionType.LongAnswer) && !!ans.textResponse?.trim()) isAnswered = true;
+      }
+      if (!isAnswered) {
         setError(`لطفا به سوال "${q.question}" پاسخ دهید.`);
         return false;
       }
@@ -61,10 +125,14 @@ export default function AssessmentTaker({ form, onSubmit, loading, careRecipient
   const handleSubmit = () => {
     if (!validate()) return;
 
+    // Only submit answers for visible questions
+    const visibleQuestionIds = new Set(visibleQuestions.map(q => q.questionId));
+    const finalAnswers = Object.values(answers).filter(a => visibleQuestionIds.has(a.questionId));
+
     const submitData: SubmitAssessmentDto = {
       formId: form.id,
       careRecipientId,
-      answers: Object.values(answers)
+      answers: finalAnswers
     };
 
     onSubmit(submitData);
@@ -78,7 +146,7 @@ export default function AssessmentTaker({ form, onSubmit, loading, careRecipient
       </div>
 
       <div className="space-y-6">
-        {form.questions.sort((a, b) => a.order - b.order).map((q, index) => (
+        {visibleQuestions.map((q, index) => (
           <div key={q.questionId} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 transition-all hover:shadow-md">
             <div className="flex gap-3 mb-4">
               <span className="flex-shrink-0 w-8 h-8 bg-teal-50 text-teal-600 rounded-full flex items-center justify-center font-bold text-sm">
