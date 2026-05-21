@@ -12,9 +12,9 @@ import DatePicker, { DateObject } from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import TimePicker from 'react-multi-date-picker/plugins/time_picker';
-import { HubConnectionBuilder, LogLevel, HttpTransportType } from '@microsoft/signalr';
 import { Plus, CheckCircle, Clock, XCircle, AlertCircle, Bell, Calendar, ChevronDown, Shield, Users, User } from 'lucide-react';
 import ServiceReminderForm from '../ServiceReminderForm';
+import { createHubConnection } from '@/lib/network';
 
 export default function CareServicesTab({ patientId }: { patientId: number }) {
   const [services, setServices] = useState<CareService[]>([]);
@@ -63,14 +63,9 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
 
     if (!patientId) return;
 
-    const connection = new HubConnectionBuilder()
-        .withUrl("http://localhost:5016/serviceHub", {
-            skipNegotiation: true,
-            transport: HttpTransportType.WebSockets
-        })
-        .configureLogging(LogLevel.Information)
-        .withAutomaticReconnect()
-        .build();
+    const connection = createHubConnection({
+        hubPath: '/serviceHub',
+    });
 
     const startConnection = async () => {
         try {

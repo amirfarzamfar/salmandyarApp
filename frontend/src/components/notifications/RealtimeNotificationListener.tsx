@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
-import { HubConnectionBuilder, HttpTransportType, LogLevel } from '@microsoft/signalr';
 import { toast } from 'react-hot-toast';
 import { AlertOctagon, AlertTriangle, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { createHubConnection } from '@/lib/network';
 
 type RealtimeNotificationPayload = {
   title: string;
@@ -22,15 +22,10 @@ export function RealtimeNotificationListener() {
     const token = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (!token) return;
 
-    const connection = new HubConnectionBuilder()
-      .withUrl('http://localhost:5016/notificationHub', {
-        accessTokenFactory: () => token,
-        skipNegotiation: true,
-        transport: HttpTransportType.WebSockets,
-      })
-      .configureLogging(LogLevel.Information)
-      .withAutomaticReconnect()
-      .build();
+    const connection = createHubConnection({
+      hubPath: '/notificationHub',
+      accessTokenFactory: () => token,
+    });
 
     const start = async () => {
       try {

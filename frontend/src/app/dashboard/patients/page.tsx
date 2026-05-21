@@ -72,22 +72,23 @@ export default function PatientsPage() {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">نام و نام خانوادگی</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">بیمار</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">سن</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تشخیص</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">تشخیص اصلی</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">پرستار مسئول</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت پروفایل</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">وضعیت فعلی</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">عملیات</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">در حال بارگذاری...</td>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">در حال بارگذاری...</td>
                 </tr>
               ) : filteredPatients.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500">بیماری یافت نشد.</td>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500">بیماری یافت نشد.</td>
                 </tr>
               ) : (
                 filteredPatients.map((patient) => (
@@ -105,6 +106,17 @@ export default function PatientsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.age ?? 'نامشخص'} سال</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{patient.primaryDiagnosis || 'نامشخص'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{patient.responsibleNurseName || 'تعیین نشده'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {patient.isProfileCompleted ? (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          تکمیل شده
+                        </span>
+                      ) : (
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                          ناقص
+                        </span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         patient.currentStatus === 'Critical' ? 'bg-red-100 text-red-800' :

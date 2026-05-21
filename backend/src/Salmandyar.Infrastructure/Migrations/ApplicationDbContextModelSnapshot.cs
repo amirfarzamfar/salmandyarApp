@@ -909,6 +909,333 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("NursingReportDetail", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.Address", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("City")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FullAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<int>("PatientProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("State")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientProfileId")
+                        .IsUnique();
+
+                    b.ToTable("Addresses", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.Allergy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AllergyType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientProfileId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientProfileId");
+
+                    b.ToTable("Allergies", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.ElderlyAssessment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConsciousnessLevel")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DailyActivityAbility")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FallRisk")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("HasFecalIncontinence")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasUrinaryIncontinence")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NutritionStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SwallowingDisorder")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientProfileId")
+                        .IsUnique();
+
+                    b.ToTable("ElderlyAssessments", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.EmergencyContact", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Relationship")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientProfileId")
+                        .IsUnique();
+
+                    b.ToTable("EmergencyContacts", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.MedicalHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("HasAlzheimers")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasAsthma")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasCOPD")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasCancer")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasDiabetes")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasHeartDisease")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasHypertension")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasKidneyFailure")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasParkinsons")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasPsychiatricDisorders")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasStroke")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("OtherDiseases")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientProfileId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientProfileId")
+                        .IsUnique();
+
+                    b.ToTable("MedicalHistories", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttendingPhysician")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("BloodGroup")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CompletionPercentage")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CurrentStep")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DynamicAnswersJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FatherName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("HasBedsore")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasHomeOxygen")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasPEG")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasTracheostomy")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasUrinaryCatheter")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasVentilator")
+                        .HasColumnType("bit");
+
+                    b.Property<double?>("Height")
+                        .HasColumnType("float");
+
+                    b.Property<string>("HospitalizationHistory")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MaritalStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MobileNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MobilityStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NationalCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhysicianPhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PreviousHospital")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ProfileImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SurgeryHistory")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("UsesWalker")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("UsesWheelchair")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("WalkingAbility")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Weight")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("PatientProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.UploadedDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DocumentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("FileUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientProfileId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UploadDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientProfileId");
+
+                    b.ToTable("UploadedDocuments", (string)null);
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.ReportCategory", b =>
                 {
                     b.Property<int>("Id")
@@ -1788,6 +2115,83 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("Report");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.Address", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", "PatientProfile")
+                        .WithOne("Address")
+                        .HasForeignKey("Salmandyar.Domain.Entities.PatientProfile.Address", "PatientProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PatientProfile");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.Allergy", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", "PatientProfile")
+                        .WithMany("Allergies")
+                        .HasForeignKey("PatientProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PatientProfile");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.ElderlyAssessment", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", "PatientProfile")
+                        .WithOne("ElderlyAssessment")
+                        .HasForeignKey("Salmandyar.Domain.Entities.PatientProfile.ElderlyAssessment", "PatientProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PatientProfile");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.EmergencyContact", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", "PatientProfile")
+                        .WithOne("EmergencyContact")
+                        .HasForeignKey("Salmandyar.Domain.Entities.PatientProfile.EmergencyContact", "PatientProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PatientProfile");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.MedicalHistory", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", "PatientProfile")
+                        .WithOne("MedicalHistory")
+                        .HasForeignKey("Salmandyar.Domain.Entities.PatientProfile.MedicalHistory", "PatientProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PatientProfile");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "User")
+                        .WithOne("PatientProfile")
+                        .HasForeignKey("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.UploadedDocument", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", "PatientProfile")
+                        .WithMany("Documents")
+                        .HasForeignKey("PatientProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("PatientProfile");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.ReportItem", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.ReportCategory", "Category")
@@ -1998,6 +2402,21 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("Details");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", b =>
+                {
+                    b.Navigation("Address");
+
+                    b.Navigation("Allergies");
+
+                    b.Navigation("Documents");
+
+                    b.Navigation("ElderlyAssessment");
+
+                    b.Navigation("EmergencyContact");
+
+                    b.Navigation("MedicalHistory");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.ReportCategory", b =>
                 {
                     b.Navigation("Items");
@@ -2013,6 +2432,8 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("CareRecipients");
 
                     b.Navigation("CaregiverProfile");
+
+                    b.Navigation("PatientProfile");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationForm", b =>

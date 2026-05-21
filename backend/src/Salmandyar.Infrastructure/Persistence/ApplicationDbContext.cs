@@ -4,6 +4,7 @@ using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.Assessments;
 using Salmandyar.Domain.Entities.UserEvaluations;
 using Salmandyar.Domain.Entities.Medications;
+using Salmandyar.Domain.Entities.PatientProfile;
 
 namespace Salmandyar.Infrastructure.Persistence;
 
@@ -47,6 +48,15 @@ public class ApplicationDbContext : IdentityDbContext<User>
     // Medication Module
     public DbSet<PatientMedication> PatientMedications { get; set; }
     public DbSet<MedicationDose> MedicationDoses { get; set; }
+
+    // Patient Profile Module
+    public DbSet<PatientProfile> PatientProfiles { get; set; }
+    public DbSet<Address> Addresses { get; set; }
+    public DbSet<EmergencyContact> EmergencyContacts { get; set; }
+    public DbSet<MedicalHistory> MedicalHistories { get; set; }
+    public DbSet<Allergy> Allergies { get; set; }
+    public DbSet<ElderlyAssessment> ElderlyAssessments { get; set; }
+    public DbSet<UploadedDocument> UploadedDocuments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -364,5 +374,56 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(d => d.TakenByUserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Patient Profile Configurations
+        builder.Entity<PatientProfile>().ToTable("PatientProfiles");
+        builder.Entity<Address>().ToTable("Addresses");
+        builder.Entity<EmergencyContact>().ToTable("EmergencyContacts");
+        builder.Entity<MedicalHistory>().ToTable("MedicalHistories");
+        builder.Entity<Allergy>().ToTable("Allergies");
+        builder.Entity<ElderlyAssessment>().ToTable("ElderlyAssessments");
+        builder.Entity<UploadedDocument>().ToTable("UploadedDocuments");
+
+        builder.Entity<PatientProfile>()
+            .HasOne(p => p.User)
+            .WithOne(u => u.PatientProfile)
+            .HasForeignKey<PatientProfile>(p => p.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PatientProfile>()
+            .HasOne(p => p.Address)
+            .WithOne(a => a.PatientProfile)
+            .HasForeignKey<Address>(a => a.PatientProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PatientProfile>()
+            .HasOne(p => p.EmergencyContact)
+            .WithOne(e => e.PatientProfile)
+            .HasForeignKey<EmergencyContact>(e => e.PatientProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PatientProfile>()
+            .HasOne(p => p.MedicalHistory)
+            .WithOne(m => m.PatientProfile)
+            .HasForeignKey<MedicalHistory>(m => m.PatientProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PatientProfile>()
+            .HasOne(p => p.ElderlyAssessment)
+            .WithOne(e => e.PatientProfile)
+            .HasForeignKey<ElderlyAssessment>(e => e.PatientProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Allergy>()
+            .HasOne(a => a.PatientProfile)
+            .WithMany(p => p.Allergies)
+            .HasForeignKey(a => a.PatientProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UploadedDocument>()
+            .HasOne(d => d.PatientProfile)
+            .WithMany(p => p.Documents)
+            .HasForeignKey(d => d.PatientProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

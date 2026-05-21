@@ -19,4 +19,5 @@ public class User : IdentityUser
     // Navigation properties
     public virtual CaregiverProfile? CaregiverProfile { get; set; }
     public virtual ICollection<CareRecipient> CareRecipients { get; set; } = new List<CareRecipient>(); // If user is Family
+    public virtual Salmandyar.Domain.Entities.PatientProfile.PatientProfile? PatientProfile { get; set; }
 }

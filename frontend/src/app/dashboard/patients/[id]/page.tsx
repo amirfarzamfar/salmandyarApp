@@ -10,10 +10,12 @@ import MedicationsTab from '@/components/patients/tabs/MedicationsTab';
 import CareServicesTab from '@/components/patients/tabs/CareServicesTab';
 import NursingReportsTab from '@/components/patients/tabs/NursingReportsTab';
 import TimelineTab from '@/components/patients/tabs/TimelineTab';
-import { Activity, ClipboardList, Clock, FileText, User, Pill } from 'lucide-react';
+import { Activity, ClipboardList, Clock, FileText, User, Pill, ClipboardCheck } from 'lucide-react';
+import PatientProfileTab from '@/components/patients/tabs/PatientProfileTab';
 
 const tabs = [
   { id: 'overview', label: 'نمای کلی', icon: User },
+  { id: 'profile', label: 'پروفایل درمانی', icon: ClipboardCheck },
   { id: 'vitals', label: 'علائم حیاتی', icon: Activity },
   { id: 'medications', label: 'داروها', icon: Pill },
   { id: 'services', label: 'خدمات', icon: ClipboardList },
@@ -116,6 +118,7 @@ export default function PatientProfilePage() {
 
         <div className="p-6">
           {activeTab === 'overview' && <OverviewTab patient={patient} />}
+          {activeTab === 'profile' && <PatientProfileTab userId={patient.userId} />}
           {activeTab === 'vitals' && <VitalSignsTab patientId={patient.id} careLevel={patient.careLevel} />}
           {activeTab === 'medications' && <MedicationsTab patientId={patient.id} />}
           {activeTab === 'services' && <CareServicesTab patientId={patient.id} />}

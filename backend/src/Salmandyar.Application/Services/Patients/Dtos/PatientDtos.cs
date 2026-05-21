@@ -2,6 +2,7 @@ namespace Salmandyar.Application.Services.Patients.Dtos;
 
 public record PatientDto(
     int Id,
+    string? UserId,
     string FirstName,
     string LastName,
     DateTime DateOfBirth,
@@ -18,13 +19,15 @@ public record PatientDto(
 
 public record PatientListDto(
     int Id,
+    string? UserId,
     string FirstName,
     string LastName,
     int Age,
     string PrimaryDiagnosis,
     string CurrentStatus,
     int CareLevel,
-    string? ResponsibleNurseName
+    string? ResponsibleNurseName,
+    bool IsProfileCompleted
 );
 
 public record CreatePatientDto(

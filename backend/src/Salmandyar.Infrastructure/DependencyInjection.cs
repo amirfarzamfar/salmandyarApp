@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Salmandyar.Application.Common.Interfaces;
 using Salmandyar.Application.Common.Interfaces.Authentication;
 using Salmandyar.Application.Common.Interfaces.Identity;
 using Salmandyar.Application.Services.Patients;
@@ -69,6 +70,7 @@ public static class DependencyInjection
         // User Evaluation Module
         services.AddScoped<IUserEvaluationService, UserEvaluationService>();
         services.AddScoped<IUserEvaluationAssignmentService, UserEvaluationAssignmentService>();
+        services.AddScoped<IPatientProfileService, PatientProfileService>();
 
         // Notifications
         services.AddScoped<INotificationService, LoggerNotificationService>();
@@ -106,7 +108,9 @@ public static class DependencyInjection
                 {
                     var accessToken = context.Request.Query["access_token"];
                     var path = context.HttpContext.Request.Path;
-                    if (!string.IsNullOrWhiteSpace(accessToken) && path.StartsWithSegments("/notificationHub"))
+                    if (!string.IsNullOrWhiteSpace(accessToken) &&
+                        (path.StartsWithSegments("/notificationHub") ||
+                         path.StartsWithSegments("/serviceHub")))
                     {
                         context.Token = accessToken;
                     }

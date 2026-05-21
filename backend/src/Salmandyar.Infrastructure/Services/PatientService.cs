@@ -69,16 +69,23 @@ public class PatientService : IPatientService
 
         var activeCaregiversByPatientId = await GetActiveCaregiversByPatientIdsAsync(patientEntities.Select(p => p.Id).ToList());
 
+        var userIds = patientEntities.Where(p => p.UserId != null).Select(p => p.UserId).ToList();
+        var profileCompletionDict = await _context.PatientProfiles
+            .Where(p => userIds.Contains(p.UserId))
+            .ToDictionaryAsync(p => p.UserId, p => p.IsCompleted);
+
         var patients = patientEntities
             .Select(p => new PatientListDto(
                 p.Id,
+                p.UserId,
                 p.FirstName,
                 p.LastName,
                 CalculateAge(p.DateOfBirth),
                 p.PrimaryDiagnosis,
                 p.CurrentStatus,
                 (int)p.CareLevel,
-                activeCaregiversByPatientId.TryGetValue(p.Id, out var caregiver) ? caregiver.CaregiverName : null
+                activeCaregiversByPatientId.TryGetValue(p.Id, out var caregiver) ? caregiver.CaregiverName : null,
+                p.UserId != null && profileCompletionDict.TryGetValue(p.UserId, out var isCompleted) && isCompleted
             ))
             .ToList();
 
@@ -110,6 +117,7 @@ public class PatientService : IPatientService
 
         return new PatientDto(
             p.Id,
+            p.UserId,
             p.FirstName,
             p.LastName,
             p.DateOfBirth,
@@ -164,6 +172,7 @@ public class PatientService : IPatientService
 
         return new PatientDto(
             entity.Id,
+            entity.UserId,
             entity.FirstName,
             entity.LastName,
             entity.DateOfBirth,

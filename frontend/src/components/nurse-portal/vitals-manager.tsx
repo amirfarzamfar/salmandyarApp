@@ -12,7 +12,7 @@ import { NurseVitalSignsForm } from "./vital-signs-form";
 import { NurseVitalSignsList } from "./vital-signs-list";
 import { VitalSign, CareLevel } from "@/types/patient";
 import { evaluateVitalAlerts } from "@/utils/vital-alerts";
-import { HubConnectionBuilder, HttpTransportType, LogLevel } from "@microsoft/signalr";
+import { createHubConnection } from "@/lib/network";
 
 interface Props {
   patientId: number;
@@ -55,14 +55,9 @@ export function VitalsManager({ patientId, careLevel = CareLevel.Level2 }: Props
   useEffect(() => {
     if (!patientId) return;
 
-    const connection = new HubConnectionBuilder()
-      .withUrl("http://localhost:5016/serviceHub", {
-        skipNegotiation: true,
-        transport: HttpTransportType.WebSockets
-      })
-      .configureLogging(LogLevel.Information)
-      .withAutomaticReconnect()
-      .build();
+    const connection = createHubConnection({
+      hubPath: "/serviceHub",
+    });
 
     const startConnection = async () => {
       try {

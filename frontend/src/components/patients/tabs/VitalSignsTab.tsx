@@ -5,7 +5,7 @@ import VitalSignForm from '../VitalSignForm';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Activity, Clock, AlertCircle, X } from 'lucide-react';
 import { evaluateVitalAlerts } from '@/utils/vital-alerts';
-import { HubConnectionBuilder, HttpTransportType, LogLevel } from '@microsoft/signalr';
+import { createHubConnection } from '@/lib/network';
 
 interface Props {
   patientId: number;
@@ -75,14 +75,9 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
   useEffect(() => {
     if (!patientId) return;
 
-    const connection = new HubConnectionBuilder()
-      .withUrl("http://localhost:5016/serviceHub", {
-        skipNegotiation: true,
-        transport: HttpTransportType.WebSockets
-      })
-      .configureLogging(LogLevel.Information)
-      .withAutomaticReconnect()
-      .build();
+    const connection = createHubConnection({
+      hubPath: '/serviceHub',
+    });
 
     const startConnection = async () => {
       try {

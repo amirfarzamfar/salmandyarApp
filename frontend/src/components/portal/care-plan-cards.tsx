@@ -6,9 +6,9 @@ import { CalendarDays, ChevronLeft, Clock, Stethoscope, History } from "lucide-r
 import { serviceReminderService } from "@/services/service-reminder.service";
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { CareServiceStatus, CareService } from "@/types/patient";
-import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { ServiceDetailModal } from "./service-detail-modal";
 import { ServiceHistoryModal } from "./service-history-modal";
+import { createHubConnection } from "@/lib/network";
 
 interface PlannedItem {
   id: string;
@@ -79,11 +79,9 @@ export function CarePlanCards({ patientId }: { patientId?: number }) {
 
     fetchData();
 
-    const connection = new HubConnectionBuilder()
-      .withUrl("http://localhost:5016/serviceHub")
-      .configureLogging(LogLevel.Information)
-      .withAutomaticReconnect()
-      .build();
+    const connection = createHubConnection({
+      hubPath: "/serviceHub",
+    });
 
     const startConnection = async () => {
       try {

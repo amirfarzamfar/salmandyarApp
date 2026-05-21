@@ -8,6 +8,7 @@ export enum CareLevel {
 
 export interface PatientList {
   id: number;
+  userId?: string;
   firstName: string;
   lastName: string;
   age: number;
@@ -15,6 +16,7 @@ export interface PatientList {
   currentStatus: string;
   careLevel: CareLevel;
   responsibleNurseName?: string;
+  isProfileCompleted?: boolean;
 }
 
 export interface Patient extends PatientList {

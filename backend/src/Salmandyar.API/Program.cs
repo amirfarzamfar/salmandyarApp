@@ -18,16 +18,30 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 
 const string corsPolicyName = "AllowNextApp";
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: corsPolicyName,
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
+            var origins = (allowedOrigins is { Length: > 0 }
+                ? allowedOrigins
+                : builder.Environment.IsDevelopment()
+                    ? ["http://localhost:3000", "http://localhost:3001"]
+                    : [])
+                .Select(origin => origin.Trim().TrimEnd('/'))
+                .Where(origin => !string.IsNullOrWhiteSpace(origin))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+
+            if (origins.Length > 0)
+            {
+                policy.WithOrigins(origins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod()
+                      .AllowCredentials();
+            }
         });
 });
 

@@ -12,7 +12,7 @@ import { DocumentCards } from "@/components/portal/document-cards";
 import { QuickConnect } from "@/components/portal/quick-connect";
 import { PrivacyBadge } from "@/components/portal/ui/privacy-badge";
 import { cn } from "@/lib/utils";
-import { Eye, Smartphone, ShieldCheck, ClipboardCheck, ArrowLeft } from "lucide-react";
+import { Eye, Smartphone, ShieldCheck, ClipboardCheck, ArrowLeft, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { patientService } from "@/services/patient.service";
@@ -174,7 +174,24 @@ export default function PortalPage() {
           </motion.section>
 
           {/* Section: Assessments */}
-          <motion.section variants={itemVariants}>
+          <motion.section variants={itemVariants} className="space-y-4">
+             <Link href="/portal/profile">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all group cursor-pointer">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                            <User size={24} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-gray-900">پرونده پزشکی من</h3>
+                            <p className="text-xs text-gray-500 mt-1 font-medium">مشاهده اطلاعات درمانی، داروها و مدارک</p>
+                        </div>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                        <ArrowLeft className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+                    </div>
+                </div>
+             </Link>
+             
              <Link href="/portal/assessments">
                 <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all group cursor-pointer">
                     <div className="flex items-center gap-4">
