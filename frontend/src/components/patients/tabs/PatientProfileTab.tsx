@@ -1,48 +1,57 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { PatientProfileService, PatientProfileDto } from '@/services/patient-profile.service';
 import { Loader2, Activity, AlertCircle, FileText, Upload, Heart, Phone, Edit, User } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { resolveApiUrl } from '@/lib/network';
 import DateObject from "react-date-object";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import Link from 'next/link';
 import { useUser } from '@/components/auth/UserContext';
+import { useQuery } from '@tanstack/react-query';
 
 interface Props {
   userId?: string;
 }
 
+const maritalStatusLabels: Record<string, string> = {
+  Single: 'مجرد',
+  Married: 'متاهل',
+  Widowed: 'همسر فوت شده',
+  Divorced: 'مطلقه',
+};
+
+const mobilityStatusLabels: Record<string, string> = {
+  Independent: 'مستقل',
+  NeedsAssistance: 'نیاز به کمک',
+  Bedridden: 'بستری (بدون حرکت)',
+};
+const totalProfileSteps = 8;
+
 export default function PatientProfileTab({ userId }: Props) {
   const { user } = useUser();
   const isAdminOrNurse = user?.role === 'Admin' || user?.role === 'Nurse';
-  const [profile, setProfile] = useState<PatientProfileDto | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const isOwnProfile = !!user?.id && userId === user.id;
 
-  useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      setError('شناسه کاربری یافت نشد.');
-      return;
-    }
-
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const data = await PatientProfileService.getUserProfile(userId);
-        setProfile(data);
-      } catch (err: any) {
-        setError(err.response?.data || 'پروفایل یافت نشد.');
-      } finally {
-        setLoading(false);
+  const { data: profile, isLoading: loading, error } = useQuery<PatientProfileDto>({
+    queryKey: ['patientProfile', isOwnProfile ? 'me' : userId],
+    queryFn: () => {
+      if (isOwnProfile) {
+        return PatientProfileService.getMyProfile();
       }
-    };
 
-    fetchProfile();
-  }, [userId]);
+      if (!userId) {
+        throw new Error('شناسه کاربری یافت نشد.');
+      }
+
+      return PatientProfileService.getUserProfile(userId);
+    },
+    enabled: isOwnProfile || !!userId,
+    retry: false,
+  });
 
   if (loading) {
     return (
@@ -56,7 +65,7 @@ export default function PatientProfileTab({ userId }: Props) {
     return (
       <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center gap-3">
         <AlertCircle className="w-5 h-5" />
-        <p>{error || 'خطا در بارگذاری پروفایل.'}</p>
+        <p>{error instanceof Error ? error.message : 'خطا در بارگذاری پروفایل.'}</p>
       </div>
     );
   }
@@ -64,12 +73,29 @@ export default function PatientProfileTab({ userId }: Props) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     try {
-      const date = new Date(dateString);
-      return new DateObject(date).convert(persian, persian_fa).format("YYYY/MM/DD");
+      const parsedDate = new Date(dateString);
+      if (Number.isNaN(parsedDate.getTime())) {
+        return dateString;
+      }
+
+      const safeDate = new Date(Date.UTC(
+        parsedDate.getUTCFullYear(),
+        parsedDate.getUTCMonth(),
+        parsedDate.getUTCDate(),
+        12
+      ));
+
+      return new DateObject(safeDate).convert(persian, persian_fa).format("YYYY/MM/DD");
     } catch {
       return dateString;
     }
   };
+
+  const formatEnumLabel = (value: string | undefined, labels: Record<string, string>) => {
+    if (!value) return '-';
+    return labels[value] ?? value;
+  };
+  const displayCurrentStep = Math.min(Math.max(profile.currentStep || 1, 1), totalProfileSteps);
 
   return (
     <div className="space-y-6">
@@ -100,7 +126,7 @@ export default function PatientProfileTab({ userId }: Props) {
         <div className="flex-1 w-full max-w-md">
           <div className="flex justify-between text-sm mb-2">
             <span className="font-medium text-teal-600">{profile.completionPercentage}% تکمیل شده</span>
-            <span className="text-gray-400">مرحله {profile.currentStep} از 8</span>
+            <span className="text-gray-400">مرحله {displayCurrentStep} از {totalProfileSteps}</span>
           </div>
           <Progress value={profile.completionPercentage} className="h-2" />
         </div>
@@ -131,7 +157,7 @@ export default function PatientProfileTab({ userId }: Props) {
             </div>
             <div className="flex justify-between border-b pb-2 border-gray-50">
               <span className="text-gray-500">وضعیت تأهل:</span>
-              <span className="font-medium">{profile.maritalStatus || '-'}</span>
+              <span className="font-medium">{formatEnumLabel(profile.maritalStatus, maritalStatusLabels)}</span>
             </div>
           </div>
         </div>
@@ -183,7 +209,7 @@ export default function PatientProfileTab({ userId }: Props) {
             </div>
             <div className="flex justify-between border-b pb-2 border-gray-50">
               <span className="text-gray-500">وضعیت حرکتی:</span>
-              <span className="font-medium">{profile.mobilityStatus || '-'}</span>
+              <span className="font-medium">{formatEnumLabel(profile.mobilityStatus, mobilityStatusLabels)}</span>
             </div>
             <div className="flex gap-2 pt-2">
               {profile.usesWheelchair && <Badge>استفاده از ویلچر</Badge>}
@@ -228,7 +254,7 @@ export default function PatientProfileTab({ userId }: Props) {
             {profile.documents.map((doc, idx) => (
               <a 
                 key={idx} 
-                href={doc.fileUrl} 
+                href={resolveApiUrl(doc.fileUrl)} 
                 target="_blank" 
                 rel="noreferrer"
                 className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +17,23 @@ namespace Salmandyar.API.Controllers;
 [Authorize]
 public class PatientProfileController : ControllerBase
 {
+    private static readonly HashSet<string> AllowedDocumentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "NationalId",
+        "Insurance",
+        "LabTest",
+        "CT_MRI",
+        "Prescription"
+    };
+
+    private static readonly HashSet<string> AllowedDocumentExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".pdf",
+        ".jpg",
+        ".jpeg",
+        ".png"
+    };
+
     private readonly IPatientProfileService _profileService;
 
     public PatientProfileController(IPatientProfileService profileService)
@@ -59,6 +80,15 @@ public class PatientProfileController : ControllerBase
         return Ok(updatedProfile);
     }
 
+    [HttpPost("me/documents")]
+    public async Task<ActionResult<UploadedDocumentDto>> UploadMyDocument([FromForm] UploadPatientDocumentFormDto form)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        return await UploadDocumentForUserAsync(userId, form);
+    }
+
     [HttpPost("me/complete")]
     public async Task<ActionResult<PatientProfileDto>> CompleteMyProfile()
     {
@@ -77,7 +107,7 @@ public class PatientProfileController : ControllerBase
     }
 
     // Admin Endpoints
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     [HttpGet("user/{userId}")]
     public async Task<ActionResult<PatientProfileDto>> GetUserProfile(string userId)
     {
@@ -87,11 +117,78 @@ public class PatientProfileController : ControllerBase
         return Ok(profile);
     }
 
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     [HttpPut("user/{userId}")]
     public async Task<ActionResult<PatientProfileDto>> UpdateUserProfile(string userId, [FromBody] UpdatePatientProfileDto dto)
     {
         var updatedProfile = await _profileService.UpdateProfileAsync(userId, dto);
         return Ok(updatedProfile);
     }
+
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
+    [HttpPost("user/{userId}/documents")]
+    public async Task<ActionResult<UploadedDocumentDto>> UploadUserDocument(string userId, [FromForm] UploadPatientDocumentFormDto form)
+    {
+        return await UploadDocumentForUserAsync(userId, form);
+    }
+
+    private async Task<ActionResult<UploadedDocumentDto>> UploadDocumentForUserAsync(string userId, UploadPatientDocumentFormDto form)
+    {
+        if (form.File == null || form.File.Length == 0)
+            return BadRequest("فایلی برای بارگذاری انتخاب نشده است.");
+
+        if (string.IsNullOrWhiteSpace(form.DocumentType) || !AllowedDocumentTypes.Contains(form.DocumentType))
+            return BadRequest("نوع مدرک معتبر نیست.");
+
+        if (form.File.Length > 5 * 1024 * 1024)
+            return BadRequest("حجم فایل نباید بیشتر از ۵ مگابایت باشد.");
+
+        var extension = Path.GetExtension(form.File.FileName);
+        if (string.IsNullOrWhiteSpace(extension) || !AllowedDocumentExtensions.Contains(extension))
+            return BadRequest("فرمت فایل مجاز نیست.");
+
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "patient-profiles");
+        if (!Directory.Exists(uploadsFolder))
+        {
+            Directory.CreateDirectory(uploadsFolder);
+        }
+
+        var safeDocumentType = form.DocumentType.Replace(" ", "_");
+        var fileName = $"{userId}_{safeDocumentType}_{Guid.NewGuid():N}{extension}";
+        var filePath = Path.Combine(uploadsFolder, fileName);
+
+        await using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await form.File.CopyToAsync(stream);
+        }
+
+        var fileUrl = $"/uploads/patient-profiles/{fileName}";
+        var updatedProfile = await _profileService.UpdateProfileAsync(userId, new UpdatePatientProfileDto
+        {
+            Documents = new List<UploadedDocumentDto>
+            {
+                new UploadedDocumentDto
+                {
+                    DocumentType = form.DocumentType,
+                    FileUrl = fileUrl
+                }
+            }
+        });
+
+        var uploadedDocument = updatedProfile.Documents.LastOrDefault(d =>
+            string.Equals(d.FileUrl, fileUrl, StringComparison.OrdinalIgnoreCase));
+
+        return Ok(uploadedDocument ?? new UploadedDocumentDto
+        {
+            DocumentType = form.DocumentType,
+            FileUrl = fileUrl,
+            UploadDate = DateTime.UtcNow
+        });
+    }
+}
+
+public class UploadPatientDocumentFormDto
+{
+    public string? DocumentType { get; set; }
+    public IFormFile? File { get; set; }
 }

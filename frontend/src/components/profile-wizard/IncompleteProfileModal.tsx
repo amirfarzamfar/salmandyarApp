@@ -9,26 +9,34 @@ import { Button } from '@/components/ui/Button';
 import { ClipboardList } from 'lucide-react';
 import { useUser } from '@/components/auth/UserContext';
 
+const allowedProfileRoles = new Set(['Patient', 'Elderly']);
+
 export default function IncompleteProfileModal() {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
   const [isOpen, setIsOpen] = useState(false);
+  const canCompleteHealthProfile = !!user?.role && allowedProfileRoles.has(user.role);
 
   const { data: profileStatus, isLoading } = useQuery({
     queryKey: ['profileStatus'],
     queryFn: PatientProfileService.getMyProfileStatus,
-    enabled: !!user && !userLoading && user.role !== 'Admin' && user.role !== 'Nurse',
+    enabled: !!user && !userLoading && canCompleteHealthProfile,
     retry: false
   });
 
   useEffect(() => {
+    if (!canCompleteHealthProfile) {
+      setIsOpen(false);
+      return;
+    }
+
     if (profileStatus && (!profileStatus.hasProfile || !profileStatus.isCompleted)) {
       // Don't show if we are already on the wizard page
       if (!window.location.pathname.includes('/profile-wizard')) {
         setIsOpen(true);
       }
     }
-  }, [profileStatus]);
+  }, [canCompleteHealthProfile, profileStatus]);
 
   const handleComplete = () => {
     setIsOpen(false);

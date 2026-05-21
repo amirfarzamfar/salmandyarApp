@@ -25,6 +25,18 @@ export function getApiBaseUrl() {
   return apiBaseUrl;
 }
 
+export function getApiOrigin() {
+  return apiOrigin;
+}
+
+export function resolveApiUrl(path?: string | null) {
+  if (!path) return "";
+  if (/^https?:\/\//i.test(path)) return path;
+
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  return apiOrigin ? `${apiOrigin}${normalizedPath}` : normalizedPath;
+}
+
 export function getHubUrl(hubPath: string) {
   const normalizedHubPath = hubPath.startsWith("/") ? hubPath : `/${hubPath}`;
   return apiOrigin ? `${apiOrigin}${normalizedHubPath}` : normalizedHubPath;

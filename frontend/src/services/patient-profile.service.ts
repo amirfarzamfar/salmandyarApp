@@ -72,13 +72,16 @@ export interface MedicalHistoryDto {
 }
 
 export interface AllergyDto {
+  id?: number;
   allergyType?: string;
   description?: string;
 }
 
 export interface UploadedDocumentDto {
+  id?: number;
   documentType?: string;
   fileUrl?: string;
+  uploadDate?: string;
 }
 
 export interface ElderlyAssessmentDto {
@@ -114,6 +117,19 @@ export const PatientProfileService = {
     return response.data;
   },
 
+  uploadMyDocument: async (documentType: string, file: File): Promise<UploadedDocumentDto> => {
+    const formData = new FormData();
+    formData.append('documentType', documentType);
+    formData.append('file', file);
+
+    const response = await api.post('/PatientProfile/me/documents', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
   completeMyProfile: async (): Promise<PatientProfileDto> => {
     const response = await api.post('/PatientProfile/me/complete');
     return response.data;
@@ -127,6 +143,19 @@ export const PatientProfileService = {
   
   updateUserProfile: async (userId: string, data: Partial<PatientProfileDto>): Promise<PatientProfileDto> => {
     const response = await api.put(`/PatientProfile/user/${userId}`, data);
+    return response.data;
+  },
+
+  uploadUserDocument: async (userId: string, documentType: string, file: File): Promise<UploadedDocumentDto> => {
+    const formData = new FormData();
+    formData.append('documentType', documentType);
+    formData.append('file', file);
+
+    const response = await api.post(`/PatientProfile/user/${userId}/documents`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   }
 };
