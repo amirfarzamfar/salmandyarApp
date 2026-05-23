@@ -10,7 +10,7 @@ import { assignmentService } from "@/services/assignment.service";
 import { userService } from "@/services/user.service";
 import { toast } from "react-hot-toast";
 import { nursePortalService } from "@/services/nurse-portal.service";
-import { Loader2, X, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
@@ -138,15 +138,15 @@ export function AssignmentWizard({ isOpen, onClose, onSuccess, initialData }: As
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center sticky top-0 bg-white dark:bg-gray-800 z-10">
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">تخصیص پرستار به بیمار</h2>
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-gray-800">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b bg-white p-4 dark:border-gray-700 dark:bg-gray-800 sm:p-6">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 sm:text-xl">تخصیص پرستار به بیمار</h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors">
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 p-4 sm:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">بیمار</label>
@@ -281,9 +281,9 @@ export function AssignmentWizard({ isOpen, onClose, onSuccess, initialData }: As
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
-            <Button type="button" variant="ghost" onClick={onClose}>انصراف</Button>
-            <Button type="submit" disabled={isLoading}>
+          <div className="flex flex-col-reverse gap-3 border-t pt-4 dark:border-gray-700 sm:flex-row sm:justify-end">
+            <Button type="button" variant="ghost" onClick={onClose} className="w-full sm:w-auto">انصراف</Button>
+            <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
               {isLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : null}
               {initialData ? "ویرایش تخصیص" : "ثبت تخصیص"}
             </Button>

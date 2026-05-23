@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { userService, UserListDto, UserFilterDto } from '@/services/user.service';
 import api from '@/lib/axios';
-import { Search, UserCog, Ban, CheckCircle, Shield, History, MoreVertical, Eye, Lock } from 'lucide-react';
+import { Search, UserCog, Ban, CheckCircle, Shield, Lock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { translateRole } from '@/utils/role-translation';
@@ -167,11 +167,40 @@ export default function UsersPage() {
     }
   };
 
+  const renderActionButtons = (user: UserListDto) => (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        onClick={() => handleRoleChange(user)}
+        title="تغییر نقش"
+        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm text-slate-500 transition-colors hover:bg-purple-50 hover:text-purple-600"
+      >
+        <UserCog className="h-4 w-4" />
+        <span className="sm:hidden">نقش</span>
+      </button>
+      <button
+        onClick={() => handleResetPassword(user)}
+        title="تغییر رمز"
+        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm text-slate-500 transition-colors hover:bg-orange-50 hover:text-orange-600"
+      >
+        <Lock className="h-4 w-4" />
+        <span className="sm:hidden">رمز</span>
+      </button>
+      <button
+        onClick={() => handleForceLogout(user)}
+        title="خروج اجباری"
+        className="inline-flex items-center gap-1 rounded-lg px-2.5 py-2 text-sm text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+      >
+        <Shield className="h-4 w-4" />
+        <span className="sm:hidden">خروج</span>
+      </button>
+    </div>
+  );
+
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-slate-800">مدیریت کاربران</h1>
-        <div className="flex gap-2">
+        <div className="flex w-full gap-2 sm:w-auto">
             <button 
               onClick={async () => {
                 try {
@@ -181,7 +210,7 @@ export default function UsersPage() {
                   alert('Connection failed: ' + e.message + ' - ' + (e.response?.data || 'No response'));
                 }
               }}
-              className="px-4 py-2 bg-slate-200 rounded-lg text-sm"
+              className="w-full rounded-lg bg-slate-200 px-4 py-2 text-sm sm:w-auto"
             >
               تست اتصال
             </button>
@@ -189,8 +218,8 @@ export default function UsersPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end">
-        <div className="flex-1 min-w-[200px]">
+      <div className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[minmax(0,1fr)_12rem_12rem]">
+        <div className="min-w-0">
           <label className="block text-sm font-medium text-slate-700 mb-1">جستجو</label>
           <div className="relative">
             <Search className="absolute right-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -204,7 +233,7 @@ export default function UsersPage() {
           </div>
         </div>
 
-        <div className="w-48">
+        <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">نقش</label>
           <select
             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
@@ -219,7 +248,7 @@ export default function UsersPage() {
           </select>
         </div>
 
-        <div className="w-48">
+        <div>
           <label className="block text-sm font-medium text-slate-700 mb-1">وضعیت</label>
           <select
             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500"
@@ -242,7 +271,67 @@ export default function UsersPage() {
 
       {/* Table */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="lg:hidden divide-y divide-slate-200">
+          {loading ? (
+            <div className="py-8 text-center text-slate-500">در حال بارگذاری...</div>
+          ) : users.length === 0 ? (
+            <div className="py-8 text-center text-slate-500">کاربری یافت نشد</div>
+          ) : (
+            users.map((user) => (
+              <div key={user.id} className="space-y-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-teal-100 font-bold text-teal-600">
+                      {user.firstName[0]}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-slate-900">{user.firstName} {user.lastName}</div>
+                      <div className="truncate text-xs text-slate-500">{user.nationalCode || 'بدون کد ملی'}</div>
+                    </div>
+                  </div>
+                  <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    user.role === 'Admin' ? 'bg-purple-100 text-purple-800' :
+                    user.role === 'Nurse' ? 'bg-blue-100 text-blue-800' :
+                    'bg-slate-100 text-slate-800'
+                  }`}>
+                    {translateRole(user.role)}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 rounded-lg bg-slate-50 p-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <div className="text-xs text-slate-500">شماره تماس</div>
+                    <div className="text-slate-700">{user.phoneNumber}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">ایمیل</div>
+                    <div className="truncate text-slate-700">{user.email || '-'}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">تاریخ عضویت</div>
+                    <div className="text-slate-700">{new Date(user.createdAt).toLocaleDateString('fa-IR')}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">وضعیت</div>
+                    <button
+                      onClick={() => handleStatusChange(user)}
+                      className={`mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+                        user.isActive ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'
+                      }`}
+                    >
+                      {user.isActive ? <CheckCircle className="h-3 w-3" /> : <Ban className="h-3 w-3" />}
+                      {user.isActive ? 'فعال' : 'مسدود'}
+                    </button>
+                  </div>
+                </div>
+
+                {renderActionButtons(user)}
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
           <table className="w-full text-right">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
@@ -303,29 +392,7 @@ export default function UsersPage() {
                       {new Date(user.createdAt).toLocaleDateString('fa-IR')}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                         <button 
-                           onClick={() => handleRoleChange(user)}
-                           title="تغییر نقش" 
-                           className="p-1 text-slate-400 hover:text-purple-600 transition-colors"
-                         >
-                            <UserCog className="w-5 h-5" />
-                         </button>
-                         <button 
-                           onClick={() => handleResetPassword(user)}
-                           title="تغییر رمز" 
-                           className="p-1 text-slate-400 hover:text-orange-600 transition-colors"
-                         >
-                            <Lock className="w-5 h-5" />
-                         </button>
-                         <button 
-                           onClick={() => handleForceLogout(user)}
-                           title="خروج اجباری" 
-                           className="p-1 text-slate-400 hover:text-red-600 transition-colors"
-                         >
-                            <Shield className="w-5 h-5" />
-                         </button>
-                      </div>
+                      {renderActionButtons(user)}
                     </td>
                   </tr>
                 ))
@@ -335,22 +402,22 @@ export default function UsersPage() {
         </div>
         
         {/* Pagination */}
-        <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+        <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="text-sm text-slate-500">
             نمایش {((filter.pageNumber - 1) * filter.pageSize) + 1} تا {Math.min(filter.pageNumber * filter.pageSize, totalCount)} از {totalCount} کاربر
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 self-end sm:self-auto">
             <button
               onClick={() => setFilter({ ...filter, pageNumber: Math.max(1, filter.pageNumber - 1) })}
               disabled={filter.pageNumber === 1}
-              className="px-3 py-1 border border-slate-300 rounded text-sm disabled:opacity-50"
+              className="rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-50"
             >
               قبلی
             </button>
             <button
               onClick={() => setFilter({ ...filter, pageNumber: filter.pageNumber + 1 })}
               disabled={filter.pageNumber * filter.pageSize >= totalCount}
-              className="px-3 py-1 border border-slate-300 rounded text-sm disabled:opacity-50"
+              className="rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-50"
             >
               بعدی
             </button>

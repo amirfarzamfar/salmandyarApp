@@ -1,12 +1,16 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { Menu, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { AuthResponse } from '@/types/auth';
 import { translateRole } from '@/utils/role-translation';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
 
-export default function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export default function Header({ onMenuClick }: HeaderProps) {
   const [user, setUser] = useState<AuthResponse | null>(null);
 
   useEffect(() => {
@@ -25,9 +29,17 @@ export default function Header() {
   const roleName = translateRole(user?.role);
 
   return (
-    <header className="bg-white shadow-sm h-16 flex items-center justify-between px-6 z-10">
-      <div className="flex items-center flex-1">
-        <div className="relative w-full max-w-md">
+    <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center justify-between gap-3 bg-white px-4 py-3 shadow-sm sm:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 lg:hidden"
+          aria-label="باز کردن منو"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="relative hidden w-full max-w-md sm:block">
           <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
@@ -38,13 +50,20 @@ export default function Header() {
           />
         </div>
       </div>
-      <div className="flex items-center space-x-4 space-x-reverse">
+      <div className="flex items-center gap-3 sm:gap-4">
+        <button
+          type="button"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 transition-colors hover:bg-slate-50 sm:hidden"
+          aria-label="جستجو"
+        >
+          <Search className="h-5 w-5" />
+        </button>
         <NotificationCenter />
         <div className="flex items-center">
-          <div className="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center text-teal-800 font-bold">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100 font-bold text-teal-800">
             {initial}
           </div>
-          <div className="mr-3 flex flex-col">
+          <div className="mr-3 hidden min-w-0 flex-col sm:flex">
             <span className="text-sm font-medium text-gray-700">{fullName}</span>
             {roleName && <span className="text-xs text-gray-500">{roleName}</span>}
           </div>

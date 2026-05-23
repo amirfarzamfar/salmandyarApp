@@ -6,7 +6,7 @@ import { assignmentService } from "@/services/assignment.service";
 import { CaregiverSchedule } from "@/components/admin/assignments/caregiver-schedule";
 import { AssignmentWizard } from "@/components/admin/assignments/assignment-wizard";
 import { Button } from "@/components/ui/Button";
-import { Plus, Calendar as CalendarIcon, Filter, Clock } from "lucide-react";
+import { Plus, Filter, Clock } from "lucide-react";
 import { startOfMonth, endOfMonth } from "date-fns";
 
 import { AssignmentDto } from "@/types/assignment";
@@ -44,7 +44,7 @@ export default function ShiftManagementPage() {
   };
 
   return (
-    <div className="p-6 space-y-6 bg-gray-50/50 dark:bg-gray-900 min-h-screen">
+    <div className="space-y-6 bg-gray-50/50 dark:bg-gray-900">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-black text-gray-800 dark:text-gray-100 flex items-center gap-2">
@@ -53,11 +53,11 @@ export default function ShiftManagementPage() {
           </h1>
           <p className="text-sm text-gray-500 mt-1">برنامه‌ریزی و مدیریت زمان‌بندی پرستاران و بیماران</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
           <Button 
             variant={isFilterOpen ? "secondary" : "outline"}
             onClick={() => setIsFilterOpen(!isFilterOpen)} 
-            className="gap-2 bg-white dark:bg-gray-800"
+            className="gap-2 bg-white dark:bg-gray-800 sm:w-auto"
           >
             <Filter size={16} />
             فیلترها
@@ -67,7 +67,7 @@ export default function ShiftManagementPage() {
               setEditingAssignment(null);
               setIsWizardOpen(true);
             }} 
-            className="gap-2 bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-600/20"
+            className="gap-2 bg-teal-600 text-white shadow-lg shadow-teal-600/20 hover:bg-teal-700 sm:w-auto"
           >
             <Plus size={16} />
             تخصیص جدید
@@ -76,7 +76,7 @@ export default function ShiftManagementPage() {
       </div>
 
       {isFilterOpen && (
-        <div className="p-4 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 grid grid-cols-1 md:grid-cols-3 gap-4 animate-in slide-in-from-top-2">
+        <div className="grid grid-cols-1 gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm animate-in slide-in-from-top-2 dark:border-gray-700 dark:bg-gray-800 md:grid-cols-3">
           <div className="space-y-1">
             <label className="text-xs font-medium text-gray-500">کد بیمار</label>
             <input 

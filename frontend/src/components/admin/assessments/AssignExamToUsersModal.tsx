@@ -156,10 +156,10 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
 
     return (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-900 border border-slate-700 rounded-xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-800/50">
-                    <div>
-                        <h3 className="text-lg font-bold text-white">تخصیص آزمون: {formTitle}</h3>
+            <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-slate-700 bg-slate-900 shadow-2xl">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-800 bg-slate-800/50 p-4">
+                    <div className="min-w-0">
+                        <h3 className="truncate text-base font-bold text-white sm:text-lg">تخصیص آزمون: {formTitle}</h3>
                         <p className="text-xs text-slate-400">
                             {step === 1 ? 'انتخاب کاربران' : 'تنظیمات آزمون'}
                         </p>
@@ -174,7 +174,7 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                         <div className="space-y-4">
                             <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
                                 <div className="text-sm font-medium text-slate-200 mb-2">تخصیص بر اساس نقش</div>
-                                <div className="grid grid-cols-2 gap-2">
+                                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                                     {roleOptions.map((r) => (
                                         <label key={r.value} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
                                             <input
@@ -227,11 +227,11 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                                                 }`}>
                                                     {user.firstName?.[0]}{user.lastName?.[0]}
                                                 </div>
-                                                <div>
+                                                <div className="min-w-0">
                                                     <div className="text-sm font-medium text-white">
                                                         {user.firstName} {user.lastName}
                                                     </div>
-                                                    <div className="text-xs text-slate-400">
+                                                    <div className="truncate text-xs text-slate-400">
                                                         {user.phoneNumber} | {user.role}
                                                     </div>
                                                 </div>
@@ -250,7 +250,7 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                                 {selectedUserIds.size} کاربر و {selectedRoles.size} نقش انتخاب شده‌اند.
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-1">تاریخ شروع (اختیاری)</label>
                                     <DatePicker
@@ -307,11 +307,11 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                     )}
                 </div>
 
-                <div className="p-4 border-t border-slate-800 bg-slate-800/50 flex justify-between">
+                <div className="flex flex-col-reverse gap-3 border-t border-slate-800 bg-slate-800/50 p-4 sm:flex-row sm:items-center sm:justify-between">
                     {step === 2 ? (
                         <button
                             onClick={() => setStep(1)}
-                            className="px-4 py-2 text-slate-400 hover:text-white transition-colors"
+                            className="px-4 py-2 text-right text-slate-400 transition-colors hover:text-white sm:text-right"
                             disabled={submitting}
                         >
                             بازگشت
@@ -324,7 +324,7 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                         <button
                             onClick={() => setStep(2)}
                             disabled={selectedUserIds.size === 0 && selectedRoles.size === 0}
-                            className="px-4 py-2 bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-white transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                             مرحله بعد
                             <UserPlus size={18} />
@@ -333,7 +333,7 @@ export function AssignExamToUsersModal({ formId, formTitle, isOpen, onClose, onS
                         <button
                             onClick={handleSubmit}
                             disabled={submitting}
-                            className="px-6 py-2 bg-teal-500 hover:bg-teal-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-teal-500 px-6 py-2 text-white transition-colors hover:bg-teal-600 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                         >
                             {submitting ? (
                                 <>

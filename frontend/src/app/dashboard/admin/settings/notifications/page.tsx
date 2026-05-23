@@ -87,7 +87,7 @@ export default function NotificationSettingsPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-gray-800">تنظیمات ارسال پیام</h1>
         <div className="text-sm text-gray-500">مدیریت درگاه‌های ایمیل و پیامک</div>
       </div>
@@ -96,7 +96,7 @@ export default function NotificationSettingsPage() {
         
         {/* Email Settings Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-500 p-4 flex justify-between items-center text-white">
+            <div className="flex flex-col gap-3 bg-gradient-to-r from-blue-600 to-blue-500 p-4 text-white sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                     <Mail className="w-5 h-5" />
                     <h2 className="font-bold">تنظیمات ایمیل (SMTP)</h2>
@@ -152,7 +152,7 @@ export default function NotificationSettingsPage() {
 
         {/* SMS Settings Card */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-teal-600 to-teal-500 p-4 flex justify-between items-center text-white">
+            <div className="flex flex-col gap-3 bg-gradient-to-r from-teal-600 to-teal-500 p-4 text-white sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                     <MessageSquare className="w-5 h-5" />
                     <h2 className="font-bold">تنظیمات پیامک (SMS)</h2>
@@ -199,7 +199,7 @@ export default function NotificationSettingsPage() {
             <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="flex items-center gap-2 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 transition-all transform active:scale-95 disabled:opacity-70"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3 font-bold text-white shadow-lg shadow-indigo-200 transition-all active:scale-95 disabled:opacity-70 hover:bg-indigo-700 sm:w-auto"
             >
                 <Save className="w-5 h-5" />
                 {isSubmitting ? 'در حال ذخیره...' : 'ذخیره تنظیمات'}

@@ -23,7 +23,7 @@ export default function MatchingPage() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-8">
+    <div className="mx-auto max-w-6xl space-y-8">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <Brain className="text-teal-400" />
@@ -36,7 +36,7 @@ export default function MatchingPage() {
 
       {/* Search Box */}
       <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 shadow-lg">
-        <form onSubmit={handleSearch} className="flex gap-4 items-end">
+        <form onSubmit={handleSearch} className="flex flex-col gap-4 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
             <label className="text-sm font-medium text-slate-300">شناسه سالمند / بیمار</label>
             <div className="relative">
@@ -51,7 +51,7 @@ export default function MatchingPage() {
           </div>
           <button
             type="submit"
-            className="bg-teal-500 hover:bg-teal-600 text-white px-8 py-3 rounded-lg font-medium transition-colors flex items-center gap-2"
+            className="flex items-center justify-center gap-2 rounded-lg bg-teal-500 px-8 py-3 font-medium text-white transition-colors hover:bg-teal-600 sm:w-auto"
           >
             <Search size={18} />
             جستجو و تحلیل

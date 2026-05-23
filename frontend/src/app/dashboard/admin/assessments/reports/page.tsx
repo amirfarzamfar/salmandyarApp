@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { assessmentReportService } from '@/services/assessment-report.service';
 import { ExamStatisticsDto } from '@/types/assessment-report';
-import { Eye, FileText, Download } from 'lucide-react';
+import { Eye, Download } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 export default function AssessmentReportsPage() {
@@ -57,11 +57,11 @@ export default function AssessmentReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold text-white">گزارش آزمون‌ها</h1>
         <button 
           onClick={exportToCSV}
-          className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center text-sm transition-colors"
+          className="inline-flex w-full items-center justify-center rounded-md bg-teal-600 px-4 py-2 text-sm text-white transition-colors hover:bg-teal-700 disabled:opacity-60 sm:w-auto"
           disabled={loading || stats.length === 0}
         >
           <Download className="w-4 h-4 ml-2" />
@@ -70,7 +70,49 @@ export default function AssessmentReportsPage() {
       </div>
 
       <div className="bg-slate-800 rounded-lg shadow border border-slate-700 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-slate-700 md:hidden">
+          {loading ? (
+            <div className="px-4 py-6 text-center text-slate-400">در حال بارگذاری...</div>
+          ) : stats.length === 0 ? (
+            <div className="px-4 py-6 text-center text-slate-400">هیچ آزمونی یافت نشد.</div>
+          ) : (
+            stats.map((exam) => (
+              <div key={exam.examId} className="space-y-3 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-medium text-white">{exam.title}</div>
+                    <div className="mt-1 text-xs text-slate-400">{exam.isActive ? 'فعال' : 'غیرفعال'}</div>
+                  </div>
+                  <span className="rounded-md bg-slate-700 px-2 py-1 text-xs text-slate-300">{exam.totalAttempts} شرکت‌کننده</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-900/40 p-3 text-sm text-slate-300">
+                  <div>
+                    <div className="text-xs text-slate-500">میانگین نمره</div>
+                    <div className="font-bold text-teal-400">{exam.averageScore.toFixed(1)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-500">بازه نمره</div>
+                    <div>{exam.minScore} - {exam.maxScore}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-xs text-slate-500">آخرین شرکت</div>
+                    <div>{exam.lastAttemptDate ? new Date(exam.lastAttemptDate).toLocaleDateString('fa-IR') : '-'}</div>
+                  </div>
+                </div>
+                <Link
+                  href={`/dashboard/admin/assessments/reports/${exam.examId}`}
+                  className="inline-flex items-center gap-1 text-sm text-teal-400 hover:text-teal-300"
+                  title="مشاهده جزئیات"
+                >
+                  <Eye className="h-4 w-4" />
+                  مشاهده جزئیات
+                </Link>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-full divide-y divide-slate-700">
             <thead className="bg-slate-900/50">
               <tr>

@@ -69,23 +69,23 @@ export default function UserEvaluationsListPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <h1 className="text-2xl font-bold text-black flex items-center gap-2">
           <FileText className="text-teal-400" />
           مدیریت ارزیابی کاربران
         </h1>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           <Link
             href="/dashboard/admin/user-evaluations/user-assignments"
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700"
           >
             <Users size={18} />
             تخصیص به کاربران
           </Link>
           <Link
             href="/dashboard/admin/user-evaluations/create"
-            className="flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-600 text-white rounded-lg transition-colors"
+            className="flex items-center justify-center gap-2 rounded-lg bg-teal-500 px-4 py-2 text-white transition-colors hover:bg-teal-600"
           >
             <Plus size={18} />
             ایجاد فرم ارزیابی
@@ -132,17 +132,17 @@ export default function UserEvaluationsListPage() {
                         <span>{getTypeLabel(form.type)}</span>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => setAssignModalData({ id: form.id, title: form.title })}
-                            className="flex-1 py-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 rounded-lg text-sm text-center transition-colors flex items-center justify-center gap-2"
+                            className="flex-1 min-w-[7rem] rounded-lg bg-blue-600/10 py-2 text-center text-sm text-blue-400 transition-colors hover:bg-blue-600/20 flex items-center justify-center gap-2"
                             title="تخصیص به کاربران"
                         >
                             <UserPlus size={16} /> تخصیص
                         </button>
                         <Link 
                             href={`/dashboard/admin/user-evaluations/${form.id}/edit`}
-                            className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm text-center transition-colors flex items-center justify-center gap-2"
+                            className="flex-1 min-w-[7rem] rounded-lg bg-slate-700 py-2 text-center text-sm text-white transition-colors hover:bg-slate-600 flex items-center justify-center gap-2"
                         >
                             <Edit size={16} /> ویرایش
                         </Link>

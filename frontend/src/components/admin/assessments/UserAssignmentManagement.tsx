@@ -3,7 +3,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import { assessmentAssignmentService } from '@/services/assessment-assignment.service';
 import { UserAssessmentSummary, AssessmentAssignment, AssessmentAssignmentStatus } from '@/types/assessment-assignment';
-import { Search, Filter, ChevronDown, ChevronUp, Plus, Eye, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
+import { Filter, ChevronDown, ChevronUp, Plus, Eye, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { AssignAssessmentModal } from './AssignAssessmentModal';
 import { AssessmentResultView } from './AssessmentResultView';
@@ -92,14 +92,121 @@ export default function UserAssignmentManagement() {
     }
   };
 
+  const renderAssignmentsContent = (summary: UserAssessmentSummary) => {
+    if (loadingAssignments === summary.userId) {
+      return <div className="py-4 text-center text-sm text-slate-400">در حال دریافت اطلاعات...</div>;
+    }
+
+    const assignments = userAssignments[summary.userId];
+
+    if (!assignments || assignments.length === 0) {
+      return (
+        <div className="rounded-md border border-dashed border-slate-700 py-4 text-center text-sm text-slate-500">
+          هیچ آزمونی برای این کاربر یافت نشد.
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="space-y-3 md:hidden">
+          {assignments.map((assignment) => (
+            <div key={assignment.id} className="rounded-lg border border-slate-700 bg-slate-800 p-3">
+              <div className="mb-2 flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-medium text-white">{assignment.formTitle}</div>
+                  <div className="mt-1 text-xs text-slate-400">
+                    تاریخ تخصیص: {new Date(assignment.assignedDate).toLocaleDateString('fa-IR')}
+                  </div>
+                </div>
+                {getStatusBadge(assignment.status)}
+              </div>
+              <div className="grid grid-cols-1 gap-2 text-sm text-slate-300 sm:grid-cols-2">
+                <div>مهلت: {assignment.deadline ? new Date(assignment.deadline).toLocaleDateString('fa-IR') : '-'}</div>
+                <div>نمره: <span className="font-bold text-white">{assignment.score !== undefined ? assignment.score : '-'}</span></div>
+                <div>
+                  نوع: {assignment.isMandatory ? (
+                    <span className="rounded bg-red-400/10 px-2 py-0.5 text-xs text-red-400">اجباری</span>
+                  ) : (
+                    <span className="text-xs text-slate-400">اختیاری</span>
+                  )}
+                </div>
+              </div>
+              {assignment.status === AssessmentAssignmentStatus.Completed && (
+                <button
+                  onClick={() => setViewResultAssignment(assignment)}
+                  className="mt-3 inline-flex items-center gap-1 text-xs text-teal-400 hover:text-teal-300"
+                >
+                  <Eye className="h-4 w-4" />
+                  مشاهده پاسخ‌ها
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden overflow-hidden rounded-md border border-slate-700 md:block">
+          <table className="min-w-full divide-y divide-slate-700 bg-slate-800">
+            <thead className="bg-slate-900">
+              <tr>
+                <th className="px-4 py-2 text-right text-xs text-slate-400">نام آزمون</th>
+                <th className="px-4 py-2 text-right text-xs text-slate-400">تاریخ تخصیص</th>
+                <th className="px-4 py-2 text-right text-xs text-slate-400">مهلت</th>
+                <th className="px-4 py-2 text-center text-xs text-slate-400">اجباری</th>
+                <th className="px-4 py-2 text-center text-xs text-slate-400">وضعیت</th>
+                <th className="px-4 py-2 text-center text-xs text-slate-400">نمره</th>
+                <th className="px-4 py-2 text-center text-xs text-slate-400">عملیات</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-700">
+              {assignments.map((assignment) => (
+                <tr key={assignment.id} className="hover:bg-slate-700/50">
+                  <td className="px-4 py-2 text-sm text-white">{assignment.formTitle}</td>
+                  <td className="px-4 py-2 text-sm text-slate-400">{new Date(assignment.assignedDate).toLocaleDateString('fa-IR')}</td>
+                  <td className="px-4 py-2 text-sm text-slate-400">
+                    {assignment.deadline ? new Date(assignment.deadline).toLocaleDateString('fa-IR') : '-'}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    {assignment.isMandatory ? (
+                      <span className="rounded bg-red-400/10 px-2 py-0.5 text-xs text-red-400">اجباری</span>
+                    ) : (
+                      <span className="text-xs text-slate-400">اختیاری</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    {getStatusBadge(assignment.status)}
+                  </td>
+                  <td className="px-4 py-2 text-center text-sm font-bold text-white">
+                    {assignment.score !== undefined ? assignment.score : '-'}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    {assignment.status === AssessmentAssignmentStatus.Completed && (
+                      <button
+                        onClick={() => setViewResultAssignment(assignment)}
+                        className="mx-auto flex items-center justify-center text-xs text-teal-400 hover:text-teal-300"
+                      >
+                        <Eye className="ml-1 h-4 w-4" />
+                        مشاهده پاسخ‌ها
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </>
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-slate-800 p-4 rounded-lg shadow border border-slate-700 flex flex-wrap gap-4 items-center">
+      <div className="grid grid-cols-1 gap-4 rounded-lg border border-slate-700 bg-slate-800 p-4 shadow sm:grid-cols-2 lg:max-w-xl">
         <div className="relative">
           <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <select
-            className="w-48 bg-slate-700 border-slate-600 text-white text-sm rounded-md pr-10 pl-3 py-2 focus:ring-teal-500 focus:border-teal-500"
+            className="w-full rounded-md border-slate-600 bg-slate-700 py-2 pr-10 pl-3 text-sm text-white focus:border-teal-500 focus:ring-teal-500"
             value={filterRole}
             onChange={(e) => setFilterRole(e.target.value)}
           >
@@ -114,7 +221,7 @@ export default function UserAssignmentManagement() {
         <div className="relative">
           <Filter className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <select
-            className="w-48 bg-slate-700 border-slate-600 text-white text-sm rounded-md pr-10 pl-3 py-2 focus:ring-teal-500 focus:border-teal-500"
+            className="w-full rounded-md border-slate-600 bg-slate-700 py-2 pr-10 pl-3 text-sm text-white focus:border-teal-500 focus:ring-teal-500"
             value={filterActive}
             onChange={(e) => setFilterActive(e.target.value)}
           >
@@ -127,7 +234,74 @@ export default function UserAssignmentManagement() {
 
       {/* Users Table */}
       <div className="bg-slate-800 rounded-lg shadow border border-slate-700 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="divide-y divide-slate-700 md:hidden">
+          {loading ? (
+            <div className="px-4 py-6 text-center text-slate-400">در حال بارگذاری...</div>
+          ) : summaries.length === 0 ? (
+            <div className="px-4 py-6 text-center text-slate-400">کاربری یافت نشد.</div>
+          ) : (
+            summaries.map((summary) => (
+              <div key={summary.userId} className="p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center">
+                    <div className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-500/10 font-bold text-teal-500">
+                      {summary.fullName.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-white">{summary.fullName}</div>
+                      <div className="text-xs text-slate-400">{summary.role}</div>
+                    </div>
+                  </div>
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${summary.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {summary.isActive ? 'فعال' : 'غیرفعال'}
+                  </span>
+                </div>
+
+                <div className="mt-3 grid grid-cols-2 gap-3 rounded-lg bg-slate-900/40 p-3 text-sm">
+                  <div>
+                    <div className="text-xs text-slate-400">تعداد آزمون</div>
+                    <div className="text-slate-200">{summary.totalAssigned}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-slate-400">تکمیل شده</div>
+                    <div className="font-medium text-green-400">{summary.completed}</div>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={() => handleAssignClick(summary.userId)}
+                    className="inline-flex items-center gap-1 rounded-lg bg-teal-500/10 px-3 py-2 text-sm text-teal-400 hover:bg-teal-500/20"
+                    title="تخصیص آزمون"
+                  >
+                    <Plus className="h-4 w-4" />
+                    تخصیص آزمون
+                  </button>
+                  <button
+                    onClick={() => toggleExpand(summary.userId)}
+                    className="inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-700"
+                    title="مشاهده جزئیات"
+                  >
+                    {expandedUserId === summary.userId ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    جزئیات
+                  </button>
+                </div>
+
+                {expandedUserId === summary.userId && (
+                  <div className="mt-4 rounded-lg border border-slate-700 bg-slate-900/30 p-4">
+                    <h4 className="mb-3 flex items-center text-sm font-bold text-slate-300">
+                      <Clock className="ml-2 h-4 w-4 text-teal-400" />
+                      تاریخچه آزمون‌های {summary.fullName}
+                    </h4>
+                    {renderAssignmentsContent(summary)}
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="min-w-full divide-y divide-slate-700">
             <thead className="bg-slate-900/50">
               <tr>
@@ -202,61 +376,8 @@ export default function UserAssignmentManagement() {
                             
                             {loadingAssignments === summary.userId ? (
                               <div className="text-center py-4 text-slate-400 text-sm">در حال دریافت اطلاعات...</div>
-                            ) : !userAssignments[summary.userId] || userAssignments[summary.userId].length === 0 ? (
-                              <div className="text-center py-4 text-slate-500 text-sm border border-dashed border-slate-700 rounded-md">
-                                هیچ آزمونی برای این کاربر یافت نشد.
-                              </div>
                             ) : (
-                              <div className="overflow-hidden rounded-md border border-slate-700">
-                                <table className="min-w-full divide-y divide-slate-700 bg-slate-800">
-                                  <thead className="bg-slate-900">
-                                    <tr>
-                                      <th className="px-4 py-2 text-right text-xs text-slate-400">نام آزمون</th>
-                                      <th className="px-4 py-2 text-right text-xs text-slate-400">تاریخ تخصیص</th>
-                                      <th className="px-4 py-2 text-right text-xs text-slate-400">مهلت</th>
-                                      <th className="px-4 py-2 text-center text-xs text-slate-400">اجباری</th>
-                                      <th className="px-4 py-2 text-center text-xs text-slate-400">وضعیت</th>
-                                      <th className="px-4 py-2 text-center text-xs text-slate-400">نمره</th>
-                                      <th className="px-4 py-2 text-center text-xs text-slate-400">عملیات</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-700">
-                                    {userAssignments[summary.userId].map((assignment) => (
-                                      <tr key={assignment.id} className="hover:bg-slate-700/50">
-                                        <td className="px-4 py-2 text-sm text-white">{assignment.formTitle}</td>
-                                        <td className="px-4 py-2 text-sm text-slate-400">{new Date(assignment.assignedDate).toLocaleDateString('fa-IR')}</td>
-                                        <td className="px-4 py-2 text-sm text-slate-400">
-                                          {assignment.deadline ? new Date(assignment.deadline).toLocaleDateString('fa-IR') : '-'}
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                            {assignment.isMandatory ? (
-                                                <span className="text-red-400 text-xs bg-red-400/10 px-2 py-0.5 rounded">اجباری</span>
-                                            ) : (
-                                                <span className="text-slate-400 text-xs">اختیاری</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                            {getStatusBadge(assignment.status)}
-                                        </td>
-                                        <td className="px-4 py-2 text-center text-sm font-bold text-white">
-                                          {assignment.score !== undefined ? assignment.score : '-'}
-                                        </td>
-                                        <td className="px-4 py-2 text-center">
-                                            {assignment.status === AssessmentAssignmentStatus.Completed && (
-                                                <button 
-                                                    onClick={() => setViewResultAssignment(assignment)}
-                                                    className="text-teal-400 hover:text-teal-300 text-xs flex items-center justify-center mx-auto"
-                                                >
-                                                    <Eye className="w-4 h-4 ml-1" />
-                                                    مشاهده پاسخ‌ها
-                                                </button>
-                                            )}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
+                              renderAssignmentsContent(summary)
                             )}
                           </div>
                         </td>

@@ -177,14 +177,14 @@ export default function ReportConfigManager() {
   };
 
   return (
-    <div className="p-6 h-[calc(100vh-4rem)] flex flex-col">
-      <div className="flex justify-between items-center mb-6">
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-2xl font-bold">مدیریت ساختار گزارش پرستاری</h1>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 overflow-hidden">
+      <div className="grid flex-1 grid-cols-1 gap-4 xl:grid-cols-3">
         {/* Column 1: Categories */}
-        <div className="col-span-1 bg-white p-4 rounded shadow flex flex-col h-full">
+        <div className="col-span-1 flex min-h-[18rem] flex-col rounded-xl bg-white p-4 shadow">
           <div className="flex justify-between items-center mb-4 pb-2 border-b">
             <h2 className="font-bold text-lg">۱. دسته‌بندی‌ها</h2>
             <button onClick={() => openCategoryModal()} className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">+</button>
@@ -207,7 +207,7 @@ export default function ReportConfigManager() {
         </div>
 
         {/* Column 2: Items */}
-        <div className="col-span-1 bg-white p-4 rounded shadow flex flex-col h-full">
+        <div className="col-span-1 flex min-h-[18rem] flex-col rounded-xl bg-white p-4 shadow">
           <div className="flex justify-between items-center mb-4 pb-2 border-b">
             <h2 className="font-bold text-lg">۲. آیتم‌های اصلی</h2>
             {selectedCategory && (
@@ -241,7 +241,7 @@ export default function ReportConfigManager() {
         </div>
 
         {/* Column 3: Sub-Items (Fields) */}
-        <div className="col-span-1 bg-white p-4 rounded shadow flex flex-col h-full">
+        <div className="col-span-1 flex min-h-[18rem] flex-col rounded-xl bg-white p-4 shadow">
           <div className="flex justify-between items-center mb-4 pb-2 border-b">
             <h2 className="font-bold text-lg">۳. زیر‌دسته‌ها (فیلدها)</h2>
             {selectedItem && (
@@ -277,8 +277,8 @@ export default function ReportConfigManager() {
 
       {/* Category Modal */}
       {isCategoryModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-4 sm:p-6">
             <h3 className="font-bold text-lg mb-4">{editingCategory ? 'ویرایش دسته‌بندی' : 'افزودن دسته‌بندی جدید'}</h3>
             <form onSubmit={catSubmit(onCategorySubmit)} className="space-y-4">
               <div>
@@ -293,9 +293,9 @@ export default function ReportConfigManager() {
                 <input type="checkbox" {...catRegister('isActive')} id="catIsActive" className="w-4 h-4" />
                 <label htmlFor="catIsActive" className="text-sm">فعال</label>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" onClick={() => setIsCategoryModalOpen(false)} className="px-4 py-2 text-gray-600">انصراف</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">ذخیره</button>
+                <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">ذخیره</button>
               </div>
             </form>
           </div>
@@ -304,8 +304,8 @@ export default function ReportConfigManager() {
 
       {/* Item Modal */}
       {isItemModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-4 sm:p-6">
             <h3 className="font-bold text-lg mb-4">{editingItem ? 'ویرایش آیتم اصلی' : 'افزودن آیتم اصلی'}</h3>
             <form onSubmit={itemSubmit(onItemSubmit)} className="space-y-4">
               <div>
@@ -324,9 +324,9 @@ export default function ReportConfigManager() {
                 <input type="checkbox" {...itemRegister('isActive')} id="itemIsActive" className="w-4 h-4" />
                 <label htmlFor="itemIsActive" className="text-sm">فعال</label>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" onClick={() => setIsItemModalOpen(false)} className="px-4 py-2 text-gray-600">انصراف</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">ذخیره</button>
+                <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">ذخیره</button>
               </div>
             </form>
           </div>
@@ -335,8 +335,8 @@ export default function ReportConfigManager() {
 
       {/* Sub-Item Modal */}
       {isSubItemModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg w-96">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-4 sm:p-6">
             <h3 className="font-bold text-lg mb-4">{editingSubItem ? 'ویرایش زیر‌دسته' : 'افزودن زیر‌دسته جدید'}</h3>
             <form onSubmit={subSubmit(onSubItemSubmit)} className="space-y-4">
               <div>
@@ -360,9 +360,9 @@ export default function ReportConfigManager() {
                 <input type="checkbox" {...subRegister('isActive')} id="subIsActive" className="w-4 h-4" />
                 <label htmlFor="subIsActive" className="text-sm">فعال</label>
               </div>
-              <div className="flex justify-end gap-2 mt-4">
+              <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
                 <button type="button" onClick={() => setIsSubItemModalOpen(false)} className="px-4 py-2 text-gray-600">انصراف</button>
-                <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded">ذخیره</button>
+                <button type="submit" className="rounded bg-green-600 px-4 py-2 text-white">ذخیره</button>
               </div>
             </form>
           </div>

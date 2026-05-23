@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2 } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 
 const navigation = [
@@ -47,7 +47,12 @@ const navigation = [
   },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({});
@@ -57,16 +62,41 @@ export default function Sidebar() {
   };
   const handleLogout = () => {
     authService.logout();
+    onClose();
     router.push('/login');
   };
 
+  const handleNavigate = () => {
+    onClose();
+  };
+
   return (
-    <div className="flex flex-col w-64 bg-slate-900 text-white min-h-screen">
-      <div className="flex items-center justify-center h-16 border-b border-slate-800">
+    <>
+      <div
+        className={`fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+          isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
+        }`}
+        onClick={onClose}
+      />
+
+      <aside
+        className={`fixed inset-y-0 right-0 z-50 flex w-[88vw] max-w-64 flex-col bg-slate-900 text-white shadow-2xl transition-transform duration-300 lg:w-64 ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        } lg:translate-x-0`}
+      >
+      <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
         <span className="text-xl font-bold text-teal-400">سالمندیار</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white lg:hidden"
+          aria-label="بستن منو"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
-      <div className="flex-1 flex flex-col overflow-y-auto">
-        <nav className="flex-1 px-2 py-4 space-y-1">
+      <div className="flex flex-1 flex-col overflow-y-auto">
+        <nav className="flex-1 space-y-1 px-2 py-4">
           {navigation.map((item) => {
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const isSubItemActive = hasSubItems && item.subItems?.some(sub => pathname === sub.href);
@@ -97,6 +127,7 @@ export default function Sidebar() {
                   ) : (
                     <Link
                         href={item.href}
+                        onClick={handleNavigate}
                         className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors ${
                         isActive
                             ? 'bg-slate-800 text-teal-400'
@@ -121,6 +152,7 @@ export default function Sidebar() {
                                 <Link
                                     key={sub.name}
                                     href={sub.href}
+                                    onClick={handleNavigate}
                                     className={`group flex items-center px-2 py-2 text-xs font-medium rounded-md transition-colors ${
                                     isSubActive
                                         ? 'text-teal-400 bg-slate-800/50'
@@ -147,6 +179,7 @@ export default function Sidebar() {
           خروج از حساب
         </button>
       </div>
-    </div>
+      </aside>
+    </>
   );
 }

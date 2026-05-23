@@ -88,11 +88,11 @@ export default function ExamReportDetailPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex items-start gap-4">
           <button 
             onClick={() => router.back()} 
-            className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"
+            className="rounded-full bg-slate-800 p-2 transition-colors hover:bg-slate-700"
           >
             <ArrowLeft className="w-5 h-5 text-slate-300" />
           </button>
@@ -107,7 +107,7 @@ export default function ExamReportDetailPage() {
         {activeTab === 'users' && (
           <button 
             onClick={exportUsersToCSV}
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md flex items-center text-sm transition-colors"
+            className="inline-flex w-full items-center justify-center rounded-md bg-teal-600 px-4 py-2 text-sm text-white transition-colors hover:bg-teal-700 disabled:opacity-60 sm:w-auto"
             disabled={loading || filteredUsers.length === 0}
           >
             <Download className="w-4 h-4 ml-2" />
@@ -117,9 +117,9 @@ export default function ExamReportDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-700">
+      <div className="flex flex-wrap gap-2 border-b border-slate-700">
         <button
-          className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
+          className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
             activeTab === 'users' 
               ? 'border-teal-500 text-teal-400' 
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -132,7 +132,7 @@ export default function ExamReportDetailPage() {
           </div>
         </button>
         <button
-          className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
+          className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 ${
             activeTab === 'analytics' 
               ? 'border-teal-500 text-teal-400' 
               : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -185,7 +185,45 @@ function UsersListTable({ users }: { users: UserExamResultDto[] }) {
 
   return (
     <div className="bg-slate-800 rounded-lg shadow border border-slate-700 overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="divide-y divide-slate-700 md:hidden">
+        {users.map((user) => (
+          <div key={user.submissionId} className="space-y-3 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-medium text-white">{user.userFullName}</div>
+                <div className="text-xs text-slate-400">{user.userId}</div>
+              </div>
+              <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${user.isPassed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                {user.isPassed ? 'قبول' : 'رد'}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 rounded-lg bg-slate-900/40 p-3 text-sm text-slate-300">
+              <div>
+                <div className="text-xs text-slate-500">تاریخ</div>
+                <div>{new Date(user.startDate).toLocaleDateString('fa-IR')}</div>
+              </div>
+              <div>
+                <div className="text-xs text-slate-500">نمره</div>
+                <div className="font-bold text-white">{user.totalScore}</div>
+              </div>
+              <div className="col-span-2 flex flex-wrap gap-3 text-xs">
+                <span className="flex items-center text-green-400"><CheckCircle className="ml-1 h-4 w-4" /> {user.correctCount} صحیح</span>
+                <span className="flex items-center text-red-400"><XCircle className="ml-1 h-4 w-4" /> {user.incorrectCount} غلط</span>
+                <span className="flex items-center text-gray-400"><HelpCircle className="ml-1 h-4 w-4" /> {user.unansweredCount} بدون پاسخ</span>
+              </div>
+            </div>
+            <Link
+              href={`/dashboard/admin/assessments/reports/attempt/${user.submissionId}`}
+              className="inline-flex items-center gap-1 text-sm text-teal-400 hover:text-teal-300"
+            >
+              <Eye className="h-4 w-4" />
+              مشاهده پاسخ‌نامه
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full divide-y divide-slate-700">
           <thead className="bg-slate-900/50">
             <tr>

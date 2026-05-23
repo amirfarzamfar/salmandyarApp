@@ -39,7 +39,79 @@ export function CaregiverSchedule({ assignments, onEdit }: CaregiverScheduleProp
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div className="grid grid-cols-7 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+      <div className="border-b border-gray-100 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-900/50 md:hidden">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-sm font-bold text-gray-700 dark:text-gray-200">برنامه هفتگی</div>
+            <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">برای مشاهده جزئیات هر روز اسکرول کنید.</div>
+          </div>
+          <div className="rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700 dark:bg-teal-900/40 dark:text-teal-200">
+            {assignments.length} تخصیص
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4 p-4 md:hidden">
+        {days.map(day => {
+          const dayAssignments = getAssignmentsForDay(day);
+          return (
+            <div key={day.toString()} className="rounded-xl border border-gray-100 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+              <div className="mb-3 flex items-start justify-between gap-3 border-b border-gray-200 pb-3 dark:border-gray-700">
+                <div>
+                  <div className="font-bold text-gray-700 dark:text-gray-200">{format(day, 'EEEE', { locale: faIR })}</div>
+                  <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">{formatPersianDate(day)}</div>
+                </div>
+                <div className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-300">
+                  {dayAssignments.length} مورد
+                </div>
+              </div>
+
+              {dayAssignments.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-200 px-3 py-4 text-center text-sm text-gray-400 dark:border-gray-700 dark:text-gray-500">
+                  تخصیصی برای این روز ثبت نشده است.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {dayAssignments.map(assignment => (
+                    <div
+                      key={assignment.id}
+                      onClick={() => onEdit?.(assignment)}
+                      className={`cursor-pointer rounded-xl border p-3 text-xs font-medium transition-all hover:shadow-md ${
+                        assignment.status === AssignmentStatus.Active
+                          ? 'border-teal-100 bg-teal-50 text-teal-900 dark:border-teal-800 dark:bg-teal-900/20 dark:text-teal-100'
+                          : 'border-gray-100 bg-white text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                      }`}
+                    >
+                      <div className="mb-1.5 flex items-center gap-1.5 border-b border-black/5 pb-1.5 dark:border-white/10">
+                        <Stethoscope size={14} className="shrink-0 text-teal-600 dark:text-teal-400" />
+                        <span className="truncate font-bold">{assignment.caregiverName}</span>
+                      </div>
+                      <div className="mb-2 flex items-center gap-1.5">
+                        <User size={14} className="shrink-0 text-gray-500 dark:text-gray-400" />
+                        <span className="truncate opacity-90">{assignment.patientName}</span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-black/5 pt-2 dark:border-white/10">
+                        <div className="flex w-fit items-center gap-1.5 rounded bg-black/5 px-1.5 py-0.5 text-[10px] opacity-75 dark:bg-white/5">
+                          <Clock size={10} />
+                          <span>{format(new Date(assignment.startDate), 'HH:mm')}</span>
+                        </div>
+                        {assignment.shiftSlot !== undefined && assignment.shiftSlot !== ShiftSlot.None && (
+                          <div className="flex w-fit items-center gap-1.5 rounded bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 dark:bg-teal-900/50 dark:text-teal-300">
+                            <CalendarDays size={10} />
+                            <span>شیفت {getShiftSlotLabel(assignment.shiftSlot)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="hidden md:grid md:grid-cols-7 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
         {days.map(day => (
           <div key={day.toString()} className="p-4 text-center border-l dark:border-gray-700 last:border-l-0">
             <div className="font-bold text-gray-700 dark:text-gray-200">{format(day, 'EEEE', { locale: faIR })}</div>
@@ -48,7 +120,7 @@ export function CaregiverSchedule({ assignments, onEdit }: CaregiverScheduleProp
         ))}
       </div>
       
-      <div className="grid grid-cols-7 min-h-[400px]">
+      <div className="hidden min-h-[400px] md:grid md:grid-cols-7">
         {days.map(day => {
           const dayAssignments = getAssignmentsForDay(day);
           return (
