@@ -8,7 +8,12 @@ import { nursePortalService } from "@/services/nurse-portal.service";
 import { CareServiceStatus, CareService } from "@/types/patient";
 import { ServiceDetailModal } from "./service-detail-modal";
 import { ServiceHistoryModal } from "./service-history-modal";
-import { createHubConnection } from "@/lib/network";
+import {
+  createHubConnection,
+  isRealtimeEnabled,
+  reportSignalRError,
+  stopHubConnectionSafely,
+} from "@/lib/network";
 
 interface PlannedItem {
   id: string;
@@ -75,35 +80,51 @@ export function CarePlanCards({ patientId }: { patientId?: number }) {
   };
 
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || !isRealtimeEnabled()) return;
 
     fetchData();
 
     const connection = createHubConnection({
       hubPath: "/serviceHub",
     });
+    let isActive = true;
+    let startPromise: Promise<void> | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
     const startConnection = async () => {
       try {
-        await connection.start();
-        console.log("Connected to ServiceHub");
+        startPromise = connection.start();
+        await startPromise;
+        if (!isActive) {
+          await stopHubConnectionSafely(connection);
+          return;
+        }
+
         await connection.invoke("JoinPatientGroup", patientId.toString());
         
         connection.on("ReceiveServiceUpdate", () => {
-            console.log("Received service update, refreshing...");
-            fetchData();
+          fetchData();
         });
-
       } catch (err) {
-        console.error("SignalR Connection Error: ", err);
-        setTimeout(startConnection, 5000);
+        if (!isActive) return;
+        reportSignalRError("SignalR service connection error", err);
+        retryTimer = setTimeout(() => {
+          void startConnection();
+        }, 5000);
+      } finally {
+        startPromise = null;
       }
     };
 
-    startConnection();
+    void startConnection();
 
     return () => {
-      connection.stop();
+      isActive = false;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
+      connection.off("ReceiveServiceUpdate");
+      void stopHubConnectionSafely(connection, startPromise);
     };
   }, [patientId]);
 

@@ -5,7 +5,12 @@ import VitalSignForm from '../VitalSignForm';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Activity, Clock, AlertCircle, X } from 'lucide-react';
 import { evaluateVitalAlerts } from '@/utils/vital-alerts';
-import { createHubConnection } from '@/lib/network';
+import {
+  createHubConnection,
+  isRealtimeEnabled,
+  reportSignalRError,
+  stopHubConnectionSafely,
+} from '@/lib/network';
 
 interface Props {
   patientId: number;
@@ -73,28 +78,42 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
   }, [fetchVitals]);
 
   useEffect(() => {
-    if (!patientId) return;
+    if (!patientId || !isRealtimeEnabled()) return;
 
     const connection = createHubConnection({
       hubPath: '/serviceHub',
     });
+    let isActive = true;
+    let startPromise: Promise<void> | null = null;
 
     const startConnection = async () => {
       try {
-        await connection.start();
+        startPromise = connection.start();
+        await startPromise;
+        if (!isActive) {
+          await stopHubConnectionSafely(connection);
+          return;
+        }
+
         await connection.invoke("JoinPatientGroup", patientId.toString());
         connection.on("ReceiveVitalUpdate", () => {
           fetchVitals();
         });
       } catch (err) {
-        console.error("SignalR Connection Error: ", err);
+        if (isActive) {
+          reportSignalRError("SignalR vital connection error", err);
+        }
+      } finally {
+        startPromise = null;
       }
     };
 
-    startConnection();
+    void startConnection();
 
     return () => {
-      connection.stop();
+      isActive = false;
+      connection.off("ReceiveVitalUpdate");
+      void stopHubConnectionSafely(connection, startPromise);
     };
   }, [patientId, fetchVitals]);
 
