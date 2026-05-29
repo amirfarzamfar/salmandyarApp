@@ -8,9 +8,10 @@ import { MedicationFormData } from '../../types';
 
 interface PatientMedicationListProps {
   patientId: number;
+  readOnly?: boolean;
 }
 
-export const PatientMedicationList = ({ patientId }: PatientMedicationListProps) => {
+export const PatientMedicationList = ({ patientId, readOnly }: PatientMedicationListProps) => {
   const { data: medications, isLoading } = useMedications(patientId);
   const { mutateAsync: deleteMedication } = useDeleteMedication();
   const { mutateAsync: updateMedication } = useUpdateMedication();
@@ -63,20 +64,20 @@ export const PatientMedicationList = ({ patientId }: PatientMedicationListProps)
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-gray-800 mb-6">لیست داروهای من</h2>
+      <h2 className="text-xl font-bold text-gray-800 mb-6">لیست داروها</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {medications.map((med: any) => (
           <MedicationCard 
             key={med.id} 
             medication={med} 
-            onEdit={setEditingMedication}
-            onDelete={handleDelete}
+            onEdit={readOnly ? undefined : setEditingMedication}
+            onDelete={readOnly ? undefined : handleDelete}
           />
         ))}
       </div>
 
       {/* Edit Modal */}
-      {editingMedication && (
+      {!readOnly && editingMedication && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
            <MedicationWizard 
              patientId={patientId}

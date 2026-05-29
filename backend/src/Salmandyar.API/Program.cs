@@ -4,7 +4,10 @@ using Salmandyar.Infrastructure;
 using Salmandyar.Infrastructure.Persistence;
 using Salmandyar.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +15,39 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddControllers();
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.AddControllers(options =>
+{
+    var provider = options.ModelBindingMessageProvider;
+    provider.SetValueIsInvalidAccessor(fieldName => $"مقدار وارد شده برای {fieldName} نامعتبر است");
+    provider.SetValueMustBeANumberAccessor(fieldName => $"مقدار وارد شده برای {fieldName} باید عدد باشد");
+    provider.SetAttemptedValueIsInvalidAccessor((value, fieldName) => $"مقدار '{value}' برای {fieldName} نامعتبر است");
+    provider.SetMissingBindRequiredValueAccessor(fieldName => $"فیلد {fieldName} الزامی است");
+    provider.SetMissingKeyOrValueAccessor(() => "مقدار الزامی وارد نشده است");
+    provider.SetValueMustNotBeNullAccessor(fieldName => $"فیلد {fieldName} نباید خالی باشد");
+    provider.SetUnknownValueIsInvalidAccessor(fieldName => $"مقدار وارد شده برای {fieldName} نامعتبر است");
+    provider.SetNonPropertyUnknownValueIsInvalidAccessor(() => "مقدار نامعتبر است");
+    provider.SetNonPropertyValueMustBeANumberAccessor(() => "مقدار وارد شده باید عدد باشد");
+    provider.SetNonPropertyAttemptedValueIsInvalidAccessor(value => $"مقدار '{value}' نامعتبر است");
+}).AddDataAnnotationsLocalization();
+
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(x => x.Value is { Errors.Count: > 0 })
+            .ToDictionary(
+                x => x.Key,
+                x => x.Value!.Errors.Select(e => ToPersianModelError(e.ErrorMessage, x.Key)).ToArray());
+
+        return new BadRequestObjectResult(new
+        {
+            error = "اطلاعات ارسالی نامعتبر است",
+            errors
+        });
+    };
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
@@ -46,6 +81,19 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+var supportedCultures = new[]
+{
+    new CultureInfo("fa-IR"),
+    new CultureInfo("en-US")
+};
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("fa-IR"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 using (var scope = app.Services.CreateScope())
 {
@@ -89,3 +137,23 @@ app.MapHub<ServiceHub>("/serviceHub").RequireCors(corsPolicyName);
 app.MapHub<NotificationHub>("/notificationHub").RequireCors(corsPolicyName);
 
 app.Run();
+
+static string ToPersianModelError(string message, string fieldName)
+{
+    if (string.IsNullOrWhiteSpace(message)) return "مقدار نامعتبر است";
+
+    if (message.Contains("A non-empty request body is required", StringComparison.OrdinalIgnoreCase))
+        return "بدنه درخواست نباید خالی باشد";
+
+    if (message.Contains("The JSON value could not be converted", StringComparison.OrdinalIgnoreCase) ||
+        message.Contains("could not be converted", StringComparison.OrdinalIgnoreCase))
+        return "نوع یا فرمت مقدار ارسالی صحیح نیست";
+
+    if (message.Contains("is required", StringComparison.OrdinalIgnoreCase))
+        return $"فیلد {fieldName} الزامی است";
+
+    if (message.Contains("must be a number", StringComparison.OrdinalIgnoreCase))
+        return $"فیلد {fieldName} باید عدد باشد";
+
+    return message;
+}

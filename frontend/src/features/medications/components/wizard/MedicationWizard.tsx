@@ -74,8 +74,11 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
       toast.success(isEditMode ? 'دارو با موفقیت ویرایش شد' : 'دارو با موفقیت ثبت شد');
       onSuccess();
     } catch (error) {
-      console.error(error);
-      toast.error(isEditMode ? 'خطا در ویرایش دارو' : 'خطا در ثبت دارو');
+      const serverMsg =
+        (error as any)?.response?.data?.error ||
+        (error as any)?.response?.data?.message ||
+        (error as any)?.message;
+      toast.error(serverMsg || (isEditMode ? 'خطا در ویرایش دارو' : 'خطا در ثبت دارو'));
     } finally {
       setIsSubmitting(false);
     }

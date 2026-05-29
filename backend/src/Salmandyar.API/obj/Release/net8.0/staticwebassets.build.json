@@ -1,11 +1,39 @@
 {
   "Version": 1,
-  "Hash": "mTqJcAqZD3DQuWnDpFJH4RotLjr8vp4f5bz3smyNwJE=",
+  "Hash": "s5qln3DuJ3aVugoHFGi/54a/JBN1NBxhdyJ03hjmWjY=",
   "Source": "Salmandyar.API",
   "BasePath": "_content/Salmandyar.API",
   "Mode": "Default",
   "ManifestType": "Build",
   "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": []
+  "DiscoveryPatterns": [
+    {
+      "Name": "Salmandyar.API\\wwwroot",
+      "Source": "Salmandyar.API",
+      "ContentRoot": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\",
+      "BasePath": "_content/Salmandyar.API",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png",
+      "SourceId": "Salmandyar.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\",
+      "BasePath": "_content/Salmandyar.API",
+      "RelativePath": "uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png"
+    }
+  ]
 }

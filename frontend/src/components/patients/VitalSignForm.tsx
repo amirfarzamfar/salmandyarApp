@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { vitalSignSchema, VitalSignFormData, getVitalWarnings } from './VitalSignFormSchema';
@@ -20,7 +20,6 @@ interface Props {
 }
 
 export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCancel }: Props) {
-  const [warnings, setWarnings] = useState<string[]>([]);
   const { register, handleSubmit, watch, setValue, control, formState: { errors, isSubmitting } } = useForm<VitalSignFormData>({
     resolver: zodResolver(vitalSignSchema),
     defaultValues: {
@@ -43,38 +42,38 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
     measuredAt,
   } = watchedValues;
 
-  useEffect(() => {
-    const newWarnings = getVitalWarnings(watchedValues);
-    
-    // Check schedule deviation if expectedTime is provided
+  const warnings = useMemo(() => {
+    const newWarnings = getVitalWarnings({
+      systolicBloodPressure,
+      diastolicBloodPressure,
+      bodyTemperature,
+      oxygenSaturation,
+    });
+
     if (expectedTime && measuredAt) {
-        const measured = new Date(measuredAt).getTime();
-        const expected = expectedTime.getTime();
-        const diffMinutes = (measured - expected) / (1000 * 60);
-        
-        if (Math.abs(diffMinutes) > 30) {
-            const direction = diffMinutes > 0 ? 'تاخیر' : 'زودتر از موعد';
-            newWarnings.push(`زمان ثبت با برنامه زمان‌بندی (${direction} ${Math.abs(Math.round(diffMinutes))} دقیقه) مغایرت دارد.`);
-        }
+      const measured = new Date(measuredAt).getTime();
+      const expected = expectedTime.getTime();
+      const diffMinutes = (measured - expected) / (1000 * 60);
+
+      if (Math.abs(diffMinutes) > 30) {
+        const direction = diffMinutes > 0 ? 'تاخیر' : 'زودتر از موعد';
+        newWarnings.push(`زمان ثبت با برنامه زمان‌بندی (${direction} ${Math.abs(Math.round(diffMinutes))} دقیقه) مغایرت دارد.`);
+      }
     }
 
-    setWarnings(newWarnings);
+    return newWarnings;
   }, [
     systolicBloodPressure,
     diastolicBloodPressure,
-    pulseRate,
-    respiratoryRate,
     bodyTemperature,
     oxygenSaturation,
-    glasgowComaScale,
     measuredAt,
     expectedTime,
-    watchedValues,
   ]);
 
   // Calculate MAP dynamically
-  const sbp = watchedValues.systolicBloodPressure || 0;
-  const dbp = watchedValues.diastolicBloodPressure || 0;
+  const sbp = systolicBloodPressure || 0;
+  const dbp = diastolicBloodPressure || 0;
   const map = sbp && dbp ? Math.round((sbp + 2 * dbp) / 3) : null;
 
   const onSubmit = async (data: VitalSignFormData) => {

@@ -144,3 +144,4 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandy
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Release\net8.0\Salmandyar.API.pdb
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Release\net8.0\Salmandyar.API.genruntimeconfig.cache
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Release\net8.0\ref\Salmandyar.API.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\bin\Release\net8.0\Salmandyar.API.staticwebassets.runtime.json

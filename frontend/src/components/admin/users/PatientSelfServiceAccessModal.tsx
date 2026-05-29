@@ -372,7 +372,7 @@ export function PatientSelfServiceAccessModal({ user, isOpen, onClose, onSaved }
                           return;
                         }
 
-                        setForm((current) => ({ ...current, availableFromDate: formatTehranDateValue(date.toDate()) }));
+                        setForm((current) => ({ ...current, availableFromDate: formatTehranDateValue(date.toDate!()) }));
                       }}
                       calendar={persian}
                       locale={persian_fa}
@@ -395,7 +395,7 @@ export function PatientSelfServiceAccessModal({ user, isOpen, onClose, onSaved }
                           return;
                         }
 
-                        setForm((current) => ({ ...current, availableToDate: formatTehranDateValue(date.toDate()) }));
+                        setForm((current) => ({ ...current, availableToDate: formatTehranDateValue(date.toDate!()) }));
                       }}
                       calendar={persian}
                       locale={persian_fa}

@@ -28,11 +28,16 @@ public class MedicationsController : ControllerBase
 {
     private readonly IMedicationService _medicationService;
     private readonly IPatientService _patientService;
+    private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
 
-    public MedicationsController(IMedicationService medicationService, IPatientService patientService)
+    public MedicationsController(
+        IMedicationService medicationService,
+        IPatientService patientService,
+        IPatientSelfServiceAccessService patientSelfServiceAccessService)
     {
         _medicationService = medicationService;
         _patientService = patientService;
+        _patientSelfServiceAccessService = patientSelfServiceAccessService;
     }
 
     private string? GetCaregiverIdIfRestricted()
@@ -61,13 +66,36 @@ public class MedicationsController : ControllerBase
         var patient = await _patientService.GetPatientByIdAsync(dto.CareRecipientId, restrictedCaregiverId);
         if (patient == null) return Forbid();
 
-        var result = await _medicationService.AddMedicationAsync(dto);
-        return Ok(result);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        try
+        {
+            if (User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily))
+            {
+                await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
+                    userId,
+                    dto.CareRecipientId,
+                    PatientSelfServiceFeatures.MedicationKardex);
+            }
+
+            var result = await _medicationService.AddMedicationAsync(dto);
+            return Ok(result);
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
     public async Task<ActionResult<MedicationDto>> UpdateMedication(int id, [FromBody] UpdateMedicationDto dto)
     {
+        if (User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily))
+        {
+            return Forbid();
+        }
+
         var result = await _medicationService.UpdateMedicationAsync(id, dto);
         return Ok(result);
     }
@@ -75,6 +103,11 @@ public class MedicationsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMedication(int id)
     {
+        if (User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily))
+        {
+            return Forbid();
+        }
+
         try
         {
             await _medicationService.DeleteMedicationAsync(id);

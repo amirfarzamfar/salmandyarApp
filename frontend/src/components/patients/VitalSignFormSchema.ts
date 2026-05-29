@@ -1,14 +1,48 @@
 import { z } from 'zod';
 
+const numberFromForm = <TSchema extends z.ZodTypeAny>(schema: TSchema) =>
+  z.preprocess((value) => {
+    if (value === '' || value === null || value === undefined) return undefined;
+    if (typeof value === 'number' && Number.isNaN(value)) return undefined;
+    return value;
+  }, schema) as unknown as TSchema;
+
+const requiredNumber = (requiredMessage: string, min: number, minMessage: string, max: number, maxMessage: string) =>
+  numberFromForm(
+    z
+      .number({
+        error: (issue) => {
+          if (issue.code !== 'invalid_type') return undefined;
+          if (issue.input === undefined) return requiredMessage;
+          return 'مقدار واردشده باید عدد باشد';
+        },
+      })
+      .min(min, minMessage)
+      .max(max, maxMessage),
+  );
+
+const optionalNumber = (min: number, minMessage: string, max: number, maxMessage: string) =>
+  numberFromForm(
+    z
+      .number({
+        error: (issue) => {
+          if (issue.code !== 'invalid_type') return undefined;
+          return 'مقدار واردشده باید عدد باشد';
+        },
+      })
+      .min(min, minMessage)
+      .max(max, maxMessage),
+  ).optional();
+
 export const vitalSignSchema = z.object({
   measuredAt: z.string().refine((val) => !isNaN(Date.parse(val)), 'زمان نامعتبر است'),
-  systolicBloodPressure: z.number().min(50, 'حداقل ۵۰').max(250, 'حداکثر ۲۵۰'),
-  diastolicBloodPressure: z.number().min(30, 'حداقل ۳۰').max(180, 'حداکثر ۱۸۰'),
-  pulseRate: z.number().min(30, 'حداقل ۳۰').max(220, 'حداکثر ۲۲۰'),
-  respiratoryRate: z.number().min(8, 'حداقل ۸').max(60, 'حداکثر ۶۰'),
-  bodyTemperature: z.number().min(34, 'حداقل ۳۴').max(43, 'حداکثر ۴۳'),
-  oxygenSaturation: z.number().min(50, 'حداقل ۵۰').max(100, 'حداکثر ۱۰۰'),
-  glasgowComaScale: z.number().min(3, 'حداقل ۳').max(15, 'حداکثر ۱۵').optional(),
+  systolicBloodPressure: requiredNumber('فشار سیستولیک الزامی است', 50, 'حداقل ۵۰', 250, 'حداکثر ۲۵۰'),
+  diastolicBloodPressure: requiredNumber('فشار دیاستولیک الزامی است', 30, 'حداقل ۳۰', 180, 'حداکثر ۱۸۰'),
+  pulseRate: requiredNumber('ضربان قلب الزامی است', 30, 'حداقل ۳۰', 220, 'حداکثر ۲۲۰'),
+  respiratoryRate: requiredNumber('تعداد تنفس الزامی است', 8, 'حداقل ۸', 60, 'حداکثر ۶۰'),
+  bodyTemperature: requiredNumber('دمای بدن الزامی است', 34, 'حداقل ۳۴', 43, 'حداکثر ۴۳'),
+  oxygenSaturation: requiredNumber('اشباع اکسیژن الزامی است', 50, 'حداقل ۵۰', 100, 'حداکثر ۱۰۰'),
+  glasgowComaScale: optionalNumber(3, 'حداقل ۳', 15, 'حداکثر ۱۵'),
   note: z.string().max(200, 'حداکثر ۲۰۰ کاراکتر').optional(),
   delayReason: z.string().optional(),
 }).refine((data) => {

@@ -4,7 +4,11 @@ import { type ReactNode, useMemo, useState } from 'react';
 import { X, Stethoscope, ClipboardPenLine, ShieldAlert, Clock3 } from 'lucide-react';
 import VitalSignForm from '@/components/patients/VitalSignForm';
 import { KardexTimeline } from '@/features/medications/components/kardex/KardexTimeline';
+import { MedicationWizard } from '@/features/medications/components/wizard/MedicationWizard';
+import { useCreateMedication } from '@/features/medications/hooks/useMedications';
+import { MedicationFormData } from '@/features/medications/types';
 import { PatientSelfServiceAccessSummary } from '@/types/patient-self-service';
+import { toast } from 'react-hot-toast';
 
 interface PatientSelfServicePanelProps {
   patientId: number;
@@ -20,6 +24,8 @@ export function PatientSelfServicePanel({
   onRefreshAccess
 }: PatientSelfServicePanelProps) {
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [showMedicationWizard, setShowMedicationWizard] = useState(false);
+  const { mutateAsync: createMedication } = useCreateMedication();
 
   const vitalsFeature = useMemo(
     () => accessSummary.features.find((feature) => feature.featureKey === 'VitalSigns'),
@@ -43,6 +49,18 @@ export function PatientSelfServicePanel({
   const handleSuccess = async () => {
     closeModal();
     await onRefreshAccess();
+  };
+
+  const handleMedicationCreated = async () => {
+    setShowMedicationWizard(false);
+    await onRefreshAccess();
+  };
+
+  const handleCreateMedication = async (data: MedicationFormData) => {
+    if (kardexFeature && !kardexFeature.canSubmitNow) {
+      throw new Error(kardexFeature.message || 'امکان ثبت کاردکس برای شما فعال نیست.');
+    }
+    await createMedication(data);
   };
 
   return (
@@ -120,10 +138,37 @@ export function PatientSelfServicePanel({
               <VitalSignForm patientId={patientId} onSuccess={handleSuccess} onCancel={closeModal} />
             ) : (
               <div className="pt-8">
+                <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="text-sm font-bold text-slate-700">برای افزودن داروی جدید، مانند پنل پرستار/ادمین از گزینه زیر استفاده کنید.</div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (kardexFeature && !kardexFeature.canSubmitNow) {
+                        toast.error(kardexFeature.message || 'امکان ثبت کاردکس برای شما فعال نیست.');
+                        return;
+                      }
+                      setShowMedicationWizard(true);
+                    }}
+                    className="rounded-2xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700"
+                  >
+                    افزودن داروی جدید
+                  </button>
+                </div>
                 <KardexTimeline patientId={patientId} />
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {showMedicationWizard && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <MedicationWizard
+            patientId={patientId}
+            onSuccess={handleMedicationCreated}
+            onCancel={() => setShowMedicationWizard(false)}
+            onSubmit={handleCreateMedication}
+          />
         </div>
       )}
     </>

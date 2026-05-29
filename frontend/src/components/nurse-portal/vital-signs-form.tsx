@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { vitalSignSchema, VitalSignFormData, getVitalWarnings } from "../patients/VitalSignFormSchema";
@@ -25,8 +25,7 @@ interface Props {
 }
 
 export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCancel }: Props) {
-  const [warnings, setWarnings] = useState<string[]>([]);
-  const { register, handleSubmit, watch, setValue, control, formState: { errors, isSubmitting } } = useForm<VitalSignFormData>({
+  const { register, handleSubmit, watch, control, formState: { errors, isSubmitting } } = useForm<VitalSignFormData>({
     resolver: zodResolver(vitalSignSchema),
     defaultValues: {
       measuredAt: new Date().toISOString(),
@@ -52,31 +51,32 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
     glasgowComaScale
   } = watchedValues;
 
-  useEffect(() => {
-    const newWarnings = getVitalWarnings(watchedValues);
-    
-    // Check schedule deviation
+  const warnings = useMemo(() => {
+    const newWarnings = getVitalWarnings({
+      systolicBloodPressure,
+      diastolicBloodPressure,
+      bodyTemperature,
+      oxygenSaturation,
+    });
+
     if (expectedTime && measuredAt) {
-        const measured = new Date(measuredAt).getTime();
-        const expected = expectedTime.getTime();
-        const diffMinutes = (measured - expected) / (1000 * 60);
-        
-        if (Math.abs(diffMinutes) > 30) {
-            const direction = diffMinutes > 0 ? 'تاخیر' : 'زودتر از موعد';
-            newWarnings.push(`زمان ثبت با برنامه (${direction} ${Math.abs(Math.round(diffMinutes))} دقیقه) مغایرت دارد.`);
-        }
+      const measured = new Date(measuredAt).getTime();
+      const expected = expectedTime.getTime();
+      const diffMinutes = (measured - expected) / (1000 * 60);
+
+      if (Math.abs(diffMinutes) > 30) {
+        const direction = diffMinutes > 0 ? 'تاخیر' : 'زودتر از موعد';
+        newWarnings.push(`زمان ثبت با برنامه (${direction} ${Math.abs(Math.round(diffMinutes))} دقیقه) مغایرت دارد.`);
+      }
     }
 
-    setWarnings(newWarnings);
+    return newWarnings;
   }, [
     measuredAt,
     systolicBloodPressure,
     diastolicBloodPressure,
-    pulseRate,
-    respiratoryRate,
     bodyTemperature,
     oxygenSaturation,
-    glasgowComaScale,
     expectedTime
   ]);
 
