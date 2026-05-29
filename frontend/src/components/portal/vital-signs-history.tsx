@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { patientService } from "@/services/patient.service";
 import { PortalCard } from "./ui/portal-card";
@@ -8,6 +9,8 @@ import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import { Activity, Thermometer, Droplet, Heart, Clock, User, FileText, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VitalHistoryNote } from "@/components/vitals/vital-history-note";
+import { getVitalAlertsForHistory, getVitalDisplayStatus, getVitalStatusMeta } from "@/utils/vital-alerts";
 
 interface VitalSignsHistoryProps {
   patientId: number;
@@ -57,7 +60,11 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
 
       {/* Mobile View (Cards) */}
       <div className="md:hidden divide-y divide-gray-100">
-        {sortedVitals.map((vital) => (
+        {sortedVitals.map((vital, index) => {
+          const alerts = getVitalAlertsForHistory(sortedVitals, index);
+          const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
+
+          return (
           <div key={vital.id} className="p-4 space-y-3 hover:bg-gray-50/50 transition-colors">
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
               <div className="flex items-center gap-1.5">
@@ -68,6 +75,12 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
                 <Clock size={14} className="text-medical-500" />
                 {new DateObject({ date: new Date(vital.recordedAt), calendar: persian, locale: persian_fa }).format("HH:mm")}
               </div>
+            </div>
+
+            <div className="flex justify-start">
+              <span className={cn("rounded-full border px-2 py-1 text-[10px] font-bold", statusMeta.badgeClassName)}>
+                {statusMeta.label}
+              </span>
             </div>
             
             <div className="grid grid-cols-2 gap-3">
@@ -116,8 +129,16 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
               <User size={12} />
               <span>ثبت کننده: {vital.recorderName}</span>
             </div>
+
+            <VitalHistoryNote
+              alerts={alerts}
+              patientAcknowledgementNote={vital.patientAcknowledgementNote}
+              patientAcknowledgedAt={vital.patientAcknowledgedAt}
+              patientAcknowledgedByName={vital.patientAcknowledgedByName}
+              className="mt-0"
+            />
           </div>
-        ))}
+        )})}
       </div>
 
       {/* Desktop View (Table) */}
@@ -131,10 +152,16 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
               <th className="px-6 py-4 font-medium whitespace-nowrap">دما</th>
               <th className="px-6 py-4 font-medium whitespace-nowrap">اکسیژن</th>
               <th className="px-6 py-4 font-medium whitespace-nowrap">ثبت کننده</th>
+              <th className="px-6 py-4 font-medium whitespace-nowrap">وضعیت</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {sortedVitals.map((vital) => (
+            {sortedVitals.map((vital, index) => {
+              const alerts = getVitalAlertsForHistory(sortedVitals, index);
+              const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
+
+              return (
+              <Fragment key={vital.id}>
               <tr key={vital.id} className="hover:bg-gray-50/50 transition-colors group">
                 <td className="px-6 py-4 text-gray-600 font-medium whitespace-nowrap">
                   <div className="flex items-center gap-2">
@@ -178,8 +205,27 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
                     <span>{vital.recorderName}</span>
                   </div>
                 </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={cn("rounded-full border px-2 py-1 text-xs font-bold", statusMeta.badgeClassName)}>
+                    {statusMeta.label}
+                  </span>
+                </td>
               </tr>
-            ))}
+              {(alerts.length > 0 || vital.patientAcknowledgementNote) && (
+              <tr key={`${vital.id}-note`} className="bg-gray-50/50">
+                <td colSpan={7} className="px-6 pb-4 pt-0">
+                  <VitalHistoryNote
+                    alerts={alerts}
+                    patientAcknowledgementNote={vital.patientAcknowledgementNote}
+                    patientAcknowledgedAt={vital.patientAcknowledgedAt}
+                    patientAcknowledgedByName={vital.patientAcknowledgedByName}
+                    className="mt-0"
+                  />
+                </td>
+              </tr>
+              )}
+              </Fragment>
+            )})}
           </tbody>
         </table>
       </div>

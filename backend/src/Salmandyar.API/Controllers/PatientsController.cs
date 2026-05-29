@@ -8,6 +8,7 @@ using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Domain.Constants;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 
 namespace Salmandyar.API.Controllers;
 
@@ -123,6 +124,40 @@ public class PatientsController : ControllerBase
             }
         }
         return Ok(result);
+    }
+
+    [HttpPost("{id}/vitals/{vitalSignId}/acknowledge")]
+    public async Task<IActionResult> AcknowledgeVitalSign(int id, int vitalSignId, [FromBody] AcknowledgeVitalSignDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return Forbid();
+
+        try
+        {
+            var result = await _patientService.AcknowledgeVitalSignAsync(id, vitalSignId, userId, dto);
+            await _hubContext.Clients.Group($"Patient_{id}").SendAsync("ReceiveVitalUpdate");
+            return Ok(result);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { error = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return StatusCode(500, new { error = "ذخیره تایید مشاهده انجام نشد. به احتمال زیاد سرویس بک‌اند ری‌استارت نشده یا تغییرات پایگاه داده هنوز اعمال نشده است." });
+        }
     }
 
     // Services

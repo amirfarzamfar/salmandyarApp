@@ -12,6 +12,7 @@ public interface IPatientService
     // Vitals
     Task<List<VitalSignDto>> GetVitalSignsAsync(int patientId);
     Task<AddVitalSignResultDto> AddVitalSignAsync(string recorderId, CreateVitalSignDto dto);
+    Task<VitalSignAcknowledgementResultDto> AcknowledgeVitalSignAsync(int patientId, int vitalSignId, string userId, AcknowledgeVitalSignDto dto);
 
     // Services
     Task<List<CareServiceDto>> GetCareServicesAsync(int patientId);

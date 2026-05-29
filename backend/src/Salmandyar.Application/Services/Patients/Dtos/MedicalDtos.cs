@@ -17,7 +17,10 @@ public record VitalSignDto(
     int RespiratoryRate,
     double BodyTemperature,
     int OxygenSaturation,
-    int? GlasgowComaScale
+    int? GlasgowComaScale,
+    DateTime? PatientAcknowledgedAt,
+    string? PatientAcknowledgedByName,
+    string? PatientAcknowledgementNote
 );
 
 public record CreateVitalSignDto(
@@ -32,6 +35,10 @@ public record CreateVitalSignDto(
     double BodyTemperature,
     int OxygenSaturation,
     int? GlasgowComaScale
+);
+
+public record AcknowledgeVitalSignDto(
+    string Note
 );
 
 public record CareServiceDto(

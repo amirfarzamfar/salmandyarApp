@@ -1,5 +1,7 @@
 import { VitalSign, VitalAlertSeverity, VitalSignAlert } from '@/types/patient';
 
+export type VitalDisplayStatus = 'normal' | 'warning' | 'critical';
+
 function addThreshold(
   alerts: VitalSignAlert[],
   codePrefix: string,
@@ -86,6 +88,49 @@ export function evaluateVitalAlerts(vitalsDesc: VitalSign[]): VitalSignAlert[] {
   }
 
   return Array.from(byCode.values()).sort((a, b) => severityRank(b.severity) - severityRank(a.severity));
+}
+
+export function getVitalDisplayStatus(alerts: VitalSignAlert[]): VitalDisplayStatus {
+  if (alerts.some((alert) => alert.severity === 'Critical')) {
+    return 'critical';
+  }
+
+  if (alerts.length > 0) {
+    return 'warning';
+  }
+
+  return 'normal';
+}
+
+export function getVitalStatusMeta(status: VitalDisplayStatus) {
+  if (status === 'critical') {
+    return {
+      label: 'خطرناک',
+      badgeClassName: 'bg-red-100 text-red-700 border-red-200',
+      accentClassName: 'text-red-700',
+      cardClassName: 'bg-red-50 border-red-200',
+    };
+  }
+
+  if (status === 'warning') {
+    return {
+      label: 'غیرنرمال',
+      badgeClassName: 'bg-amber-100 text-amber-700 border-amber-200',
+      accentClassName: 'text-amber-700',
+      cardClassName: 'bg-amber-50 border-amber-200',
+    };
+  }
+
+  return {
+    label: 'نرمال',
+    badgeClassName: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+    accentClassName: 'text-emerald-700',
+    cardClassName: 'bg-emerald-50 border-emerald-200',
+  };
+}
+
+export function getVitalAlertsForHistory(vitalsDesc: VitalSign[], index: number): VitalSignAlert[] {
+  return evaluateVitalAlerts(vitalsDesc.slice(index, index + 3));
 }
 
 function severityRank(s: VitalAlertSeverity) {

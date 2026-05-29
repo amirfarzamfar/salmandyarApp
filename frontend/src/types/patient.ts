@@ -43,6 +43,9 @@ export interface VitalSign {
   bodyTemperature: number;
   oxygenSaturation: number;
   glasgowComaScale?: number;
+  patientAcknowledgedAt?: string | null;
+  patientAcknowledgedByName?: string | null;
+  patientAcknowledgementNote?: string | null;
 }
 
 export type VitalAlertSeverity = 'Warning' | 'Critical';
@@ -61,6 +64,13 @@ export interface AddVitalSignResult {
   patientName: string;
   recipientUserIds: string[];
   alerts: VitalSignAlert[];
+}
+
+export interface VitalSignAcknowledgementResult {
+  vitalSignId: number;
+  patientAcknowledgedAt: string;
+  patientAcknowledgedByName?: string | null;
+  patientAcknowledgementNote: string;
 }
 
 import { ServiceCategory, CareServiceStatus } from './service';

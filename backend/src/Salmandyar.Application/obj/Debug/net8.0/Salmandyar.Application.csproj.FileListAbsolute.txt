@@ -30,3 +30,6 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandy
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Debug\net8.0\refint\Salmandyar.Application.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Debug\net8.0\Salmandyar.Application.pdb
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.Application\obj\Debug\net8.0\ref\Salmandyar.Application.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.Application.deps.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.Application.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.Application.pdb

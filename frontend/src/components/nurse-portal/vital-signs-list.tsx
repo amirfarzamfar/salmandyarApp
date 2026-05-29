@@ -1,9 +1,11 @@
 "use client";
 
 import { VitalSign, CareLevel } from "@/types/patient";
-import { AlertCircle, Clock, CheckCircle2, AlertTriangle, User } from "lucide-react";
+import { AlertCircle, CheckCircle2, AlertTriangle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { getVitalAlertsForHistory, getVitalDisplayStatus, getVitalStatusMeta } from "@/utils/vital-alerts";
+import { VitalHistoryNote } from "@/components/vitals/vital-history-note";
 
 interface Props {
   vitals: VitalSign[];
@@ -39,6 +41,8 @@ export function NurseVitalSignsList({ vitals, careLevel }: Props) {
         const prev = vitals[index + 1];
         const compliance = getComplianceStatus(vital, prev);
         const ComplianceIcon = compliance.icon;
+        const alerts = getVitalAlertsForHistory(vitals, index);
+        const vitalStatusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
 
         return (
           <motion.div
@@ -70,6 +74,9 @@ export function NurseVitalSignsList({ vitals, careLevel }: Props) {
                    <div className={cn("px-2 py-0.5 rounded-lg text-[10px] font-bold flex items-center gap-1", compliance.color)}>
                      <ComplianceIcon size={12} />
                      {compliance.label}
+                   </div>
+                   <div className={cn("px-2 py-0.5 rounded-lg text-[10px] font-bold border", vitalStatusMeta.badgeClassName)}>
+                     {vitalStatusMeta.label}
                    </div>
                    {vital.isLateEntry && (
                      <div className="px-2 py-0.5 rounded-lg bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 text-[10px] font-bold flex items-center gap-1">
@@ -112,9 +119,16 @@ export function NurseVitalSignsList({ vitals, careLevel }: Props) {
                  <span>دلیل تاخیر: {vital.delayReason}</span>
               </div>
             )}
-            
-            {/* Note */}
-            {/* If there was a note field in the type, we would display it here */}
+
+            <div className="mr-3">
+              <VitalHistoryNote
+                alerts={alerts}
+                patientAcknowledgementNote={vital.patientAcknowledgementNote}
+                patientAcknowledgedAt={vital.patientAcknowledgedAt}
+                patientAcknowledgedByName={vital.patientAcknowledgedByName}
+                className="mt-3"
+              />
+            </div>
           </motion.div>
         );
       })}

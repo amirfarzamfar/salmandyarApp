@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Fragment, useEffect, useState, useCallback, useMemo } from 'react';
 import { patientService } from '@/services/patient.service';
 import { VitalSign, CareLevel } from '@/types/patient';
 import VitalSignForm from '../VitalSignForm';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Activity, Clock, AlertCircle, X } from 'lucide-react';
-import { evaluateVitalAlerts } from '@/utils/vital-alerts';
+import { evaluateVitalAlerts, getVitalAlertsForHistory, getVitalDisplayStatus, getVitalStatusMeta } from '@/utils/vital-alerts';
+import { VitalHistoryNote } from '@/components/vitals/vital-history-note';
 import {
   createHubConnection,
   isRealtimeEnabled,
@@ -298,15 +299,19 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
                 <th className="px-4 py-3 text-right font-medium text-gray-500">پرستار</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">فاصله زمانی</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">وضعیت</th>
+              <th className="px-4 py-3 text-right font-medium text-gray-500">هشدار بالینی</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {vitals.map((v, index) => {
-                const prev = vitals[index + 1]; // Since vitals are reversed (newest first)
+              {vitalsDesc.map((v, index) => {
+                const prev = vitalsDesc[index + 1];
                 const compliance = getComplianceStatus(v, prev);
+                const alertsForRow = getVitalAlertsForHistory(vitalsDesc, index);
+                const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alertsForRow));
                 
                 return (
-                <tr key={v.id} className="hover:bg-gray-50 transition-colors">
+                <Fragment key={v.id}>
+                <tr className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
                       <span className="font-medium">{new Date(v.measuredAt).toLocaleTimeString('fa-IR', {hour: '2-digit', minute:'2-digit'})}</span>
@@ -342,7 +347,26 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
                       </div>
                     )}
                   </td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs px-2 py-1 rounded-full border inline-block whitespace-nowrap ${statusMeta.badgeClassName}`}>
+                      {statusMeta.label}
+                    </span>
+                  </td>
                 </tr>
+                {(alertsForRow.length > 0 || v.patientAcknowledgementNote) && (
+                <tr key={`${v.id}-note`} className="bg-gray-50/40">
+                  <td colSpan={11} className="px-4 pb-4 pt-0">
+                    <VitalHistoryNote
+                      alerts={alertsForRow}
+                      patientAcknowledgementNote={v.patientAcknowledgementNote}
+                      patientAcknowledgedAt={v.patientAcknowledgedAt}
+                      patientAcknowledgedByName={v.patientAcknowledgedByName}
+                      className="mt-0"
+                    />
+                  </td>
+                </tr>
+                )}
+                </Fragment>
               )})}
             </tbody>
           </table>

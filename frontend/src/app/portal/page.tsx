@@ -113,7 +113,7 @@ export default function PortalPage() {
       />
 
       {/* Premium UI Control Toggles - Refined Look */}
-      <div className="fixed top-24 right-6 z-50 flex flex-col gap-3 md:top-10 md:right-10">
+      <div className="fixed top-24 right-4 z-30 flex flex-col gap-3 md:top-10 md:right-10">
         <motion.button 
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}

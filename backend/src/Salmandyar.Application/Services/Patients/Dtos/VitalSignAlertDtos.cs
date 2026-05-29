@@ -22,3 +22,9 @@ public record AddVitalSignResultDto(
     List<VitalSignAlertDto> Alerts
 );
 
+public record VitalSignAcknowledgementResultDto(
+    int VitalSignId,
+    DateTime PatientAcknowledgedAt,
+    string? PatientAcknowledgedByName,
+    string PatientAcknowledgementNote
+);

@@ -193,6 +193,7 @@ public class PatientService : IPatientService
         return await _context.VitalSigns
             .Where(v => v.CareRecipientId == patientId)
             .Include(v => v.Recorder)
+            .Include(v => v.PatientAcknowledgedBy)
             .OrderByDescending(v => v.MeasuredAt)
             .Select(v => new VitalSignDto(
                 v.Id,
@@ -209,7 +210,10 @@ public class PatientService : IPatientService
                 v.RespiratoryRate,
                 v.BodyTemperature,
                 v.OxygenSaturation,
-                v.GlasgowComaScale
+                v.GlasgowComaScale,
+                v.PatientAcknowledgedAt,
+                v.PatientAcknowledgedBy != null ? $"{v.PatientAcknowledgedBy.FirstName} {v.PatientAcknowledgedBy.LastName}" : null,
+                v.PatientAcknowledgementNote
             ))
             .ToListAsync();
     }
@@ -325,6 +329,64 @@ public class PatientService : IPatientService
             patientName,
             recipients,
             alerts
+        );
+    }
+
+    public async Task<VitalSignAcknowledgementResultDto> AcknowledgeVitalSignAsync(int patientId, int vitalSignId, string userId, AcknowledgeVitalSignDto dto)
+    {
+        var note = (dto.Note ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(note))
+        {
+            throw new ArgumentException("توضیح اقدام انجام‌شده الزامی است.");
+        }
+
+        var vital = await _context.VitalSigns
+            .Include(v => v.PatientAcknowledgedBy)
+            .FirstOrDefaultAsync(v => v.Id == vitalSignId && v.CareRecipientId == patientId);
+
+        if (vital == null)
+        {
+            throw new KeyNotFoundException("رکورد علائم حیاتی یافت نشد.");
+        }
+
+        var vitalsDescending = await _context.VitalSigns
+            .AsNoTracking()
+            .Where(v => v.CareRecipientId == patientId)
+            .OrderByDescending(v => v.MeasuredAt)
+            .Take(10)
+            .ToListAsync();
+
+        var vitalIndex = vitalsDescending.FindIndex(v => v.Id == vitalSignId);
+        if (vitalIndex < 0)
+        {
+            throw new KeyNotFoundException("رکورد علائم حیاتی یافت نشد.");
+        }
+
+        var relevantVitals = vitalsDescending
+            .Skip(vitalIndex)
+            .Take(3)
+            .ToList();
+
+        var alerts = VitalSignAlertEvaluator.Evaluate(relevantVitals);
+        if (alerts.Count == 0)
+        {
+            throw new InvalidOperationException("برای این رکورد هشدار فعالی وجود ندارد.");
+        }
+
+        vital.PatientAcknowledgedById = userId;
+        vital.PatientAcknowledgedAt = DateTime.UtcNow;
+        vital.PatientAcknowledgementNote = note;
+
+        await _context.SaveChangesAsync();
+
+        var ackUser = vital.PatientAcknowledgedBy;
+        var ackUserName = ackUser != null ? $"{ackUser.FirstName} {ackUser.LastName}" : null;
+
+        return new VitalSignAcknowledgementResultDto(
+            vital.Id,
+            vital.PatientAcknowledgedAt.Value,
+            ackUserName,
+            vital.PatientAcknowledgementNote
         );
     }
 

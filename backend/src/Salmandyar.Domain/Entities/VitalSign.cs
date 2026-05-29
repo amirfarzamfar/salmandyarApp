@@ -10,12 +10,17 @@ public class VitalSign
     public string? RecorderId { get; set; }
     public virtual User? Recorder { get; set; }
 
+    public string? PatientAcknowledgedById { get; set; }
+    public virtual User? PatientAcknowledgedBy { get; set; }
+
     public DateTime RecordedAt { get; set; } // Server time
     public DateTime MeasuredAt { get; set; } // Actual measurement time
+    public DateTime? PatientAcknowledgedAt { get; set; }
     
     public bool IsLateEntry { get; set; }
     public string? DelayReason { get; set; }
     public string? Note { get; set; }
+    public string? PatientAcknowledgementNote { get; set; }
 
     // Vitals
     public int SystolicBloodPressure { get; set; }

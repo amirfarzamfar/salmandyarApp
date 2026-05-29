@@ -104,6 +104,12 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .Property(v => v.MeasuredAt)
             .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
+        builder.Entity<VitalSign>()
+            .Property(v => v.PatientAcknowledgedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
         builder.Entity<ServiceReminder>()
             .Property(r => r.ScheduledTime)
             .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
@@ -141,6 +147,12 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(v => v.RecorderId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<VitalSign>()
+            .HasOne(v => v.PatientAcknowledgedBy)
+            .WithMany()
+            .HasForeignKey(v => v.PatientAcknowledgedById)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<CareService>()
             .HasOne(s => s.Performer)

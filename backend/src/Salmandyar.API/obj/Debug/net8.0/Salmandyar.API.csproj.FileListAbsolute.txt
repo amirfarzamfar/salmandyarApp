@@ -293,3 +293,11 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandy
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.Salmandyar.API.props
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\staticwebassets.pack.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\bin\Debug\net8.0\Salmandyar.API.staticwebassets.runtime.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\appsettings.Development.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\appsettings.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.staticwebassets.runtime.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.exe
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.deps.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.runtimeconfig.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.pdb
