@@ -81,7 +81,7 @@ const totalProfileSteps = 8;
 
 export default function PatientProfileTab({ userId }: Props) {
   const { user } = useUser();
-  const isAdminOrNurse = user?.role === 'Admin' || user?.role === 'Nurse';
+  const canEditProfile = ['Admin', 'SuperAdmin', 'Manager', 'Supervisor', 'Nurse'].includes(user?.role || '');
   const isOwnProfile = !!user?.id && userId === user.id;
 
   const { data: profile, isLoading: loading, error } = useQuery<PatientProfileDto>({
@@ -152,7 +152,7 @@ export default function PatientProfileTab({ userId }: Props) {
         <div>
           <div className="flex items-center gap-4 mb-2">
             <h3 className="text-lg font-bold text-gray-900">وضعیت تکمیل پرونده</h3>
-            {isAdminOrNurse && userId && (
+            {canEditProfile && userId && (
               <Link href={`/portal/profile-wizard?userId=${userId}`}>
                 <button className="flex items-center gap-1 text-sm bg-teal-50 text-teal-600 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors">
                   <Edit className="w-4 h-4" /> ویرایش

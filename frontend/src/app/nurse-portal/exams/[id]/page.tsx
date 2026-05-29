@@ -72,7 +72,7 @@ export default function TakeExamPage() {
     <div className="container mx-auto p-4 md:p-8 max-w-4xl space-y-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/nurse-portal/exams">
-          <Button variant="ghost" size="icon" className="rounded-full">
+          <Button variant="ghost" size="sm" className="rounded-full">
             <ArrowRight className="h-5 w-5" />
           </Button>
         </Link>

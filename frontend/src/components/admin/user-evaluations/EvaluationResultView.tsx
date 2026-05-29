@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { userEvaluationService } from '@/services/user-evaluation.service';
-import { UserEvaluation, QuestionAnswerDetail } from '@/types/user-evaluation';
+import { UserEvaluation } from '@/types/user-evaluation';
+import { QuestionAnswerDetail } from '@/types/assessment-assignment';
 import { X, CheckCircle, XCircle, AlertCircle, Award } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -46,7 +47,7 @@ export function EvaluationResultView({ assignment, onClose }: EvaluationResultVi
 
     // Group answers by Category (Tags)
     const groupedAnswers: Record<string, QuestionAnswerDetail[]> = {};
-    submission?.answers.forEach(ans => {
+    submission?.answers?.forEach((ans: QuestionAnswerDetail) => {
         const category = ans.tags && ans.tags.length > 0 ? ans.tags[0] : 'عمومی';
         if (!groupedAnswers[category]) groupedAnswers[category] = [];
         groupedAnswers[category].push(ans);

@@ -34,16 +34,16 @@ export default function TimelineTab({ patientId }: { patientId: number }) {
                 ...services.map(s => ({
                     type: 'service' as const,
                     date: new Date(s.performedAt),
-                    title: `خدمت: ${s.serviceType}`,
+                    title: `خدمت: ${s.serviceTitle}`,
                     description: s.description,
                     author: s.performerName
                 })),
                 ...reports.map(r => ({
                     type: 'report' as const,
                     date: new Date(r.createdAt),
-                    title: 'گزارش پرستاری',
+                    title: `گزارش پرستاری (${r.shift})`,
                     description: r.content,
-                    author: r.authorName
+                    author: r.authorName || 'نامشخص'
                 }))
             ].sort((a, b) => b.date.getTime() - a.date.getTime());
 

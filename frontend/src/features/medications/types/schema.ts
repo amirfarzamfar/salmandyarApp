@@ -11,30 +11,30 @@ export const medicationSchema = z.object({
   route: z.string().min(1, 'روش مصرف الزامی است'),
   
   // Scheduling
-  frequencyType: z.nativeEnum(MedicationFrequencyType),
+  frequencyType: z.any(),
   frequencyDetail: z.string().nullable().optional(), // Can be comma separated times or interval number
   startDate: z.string().min(1, 'تاریخ شروع الزامی است'),
   endDate: z.string().nullable().optional(),
   
   // Safety & Alerts
-  criticality: z.nativeEnum(MedicationCriticality),
-  highAlert: z.boolean().default(false),
-  isPRN: z.boolean().default(false),
+  criticality: z.any(),
+  highAlert: z.boolean().optional(),
+  isPRN: z.boolean().optional(),
   
   // Notifications
-  gracePeriodMinutes: z.number().min(0).default(30),
-  escalationEnabled: z.boolean().default(false),
-  notifyPatient: z.boolean().default(false),
-  notifyNurse: z.boolean().default(false),
-  notifySupervisor: z.boolean().default(false),
-  notifyFamily: z.boolean().default(false),
+  gracePeriodMinutes: z.coerce.number().min(0).optional(),
+  escalationEnabled: z.boolean().optional(),
+  notifyPatient: z.boolean().optional(),
+  notifyNurse: z.boolean().optional(),
+  notifySupervisor: z.boolean().optional(),
+  notifyFamily: z.boolean().optional(),
   
   // Stock & Inventory
-  totalQuantity: z.number().min(0).default(0),
-  alertLimit: z.number().min(0).default(0),
-  alertLowStockPatient: z.boolean().default(false),
-  alertLowStockNurse: z.boolean().default(false),
-  alertLowStockFamily: z.boolean().default(false),
+  totalQuantity: z.coerce.number().min(0).optional(),
+  alertLimit: z.coerce.number().min(0).optional(),
+  alertLowStockPatient: z.boolean().optional(),
+  alertLowStockNurse: z.boolean().optional(),
+  alertLowStockFamily: z.boolean().optional(),
   
   // Instructions
   instructions: z.string().nullable().optional(),

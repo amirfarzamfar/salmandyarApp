@@ -31,7 +31,7 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
   const isEditMode = !!initialData;
 
   const methods = useForm<MedicationFormData>({
-    resolver: zodResolver(medicationSchema),
+    resolver: zodResolver(medicationSchema) as any,
     defaultValues: {
       careRecipientId: patientId,
       frequencyType: 0, // Daily

@@ -8,7 +8,7 @@ interface StatusBadgeProps {
 }
 
 export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
-  const statusConfig = {
+  const statusConfig: Record<number, any> = {
     [DoseStatus.Scheduled]: {
       label: 'Scheduled',
       color: 'bg-blue-100 text-blue-700 border-blue-200',
@@ -24,16 +24,11 @@ export const StatusBadge = ({ status, className }: StatusBadgeProps) => {
       color: 'bg-red-100 text-red-700 border-red-200',
       icon: X,
     },
-    [DoseStatus.Refused]: {
+    [DoseStatus.Skipped]: {
       label: 'Refused',
       color: 'bg-orange-100 text-orange-700 border-orange-200',
       icon: AlertCircle,
     },
-    [DoseStatus.Pending]: { // Assuming Pending exists or maps to Scheduled
-        label: 'Pending',
-        color: 'bg-gray-100 text-gray-700 border-gray-200',
-        icon: Clock
-    }
   };
 
   const config = statusConfig[status] || statusConfig[DoseStatus.Scheduled];

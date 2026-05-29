@@ -12,18 +12,7 @@ export const careServiceFormSchema = z.object({
   notes: z.string().optional(),
   reminderEnabled: z.boolean().optional(),
   reminderDayBefore: z.boolean().optional(),
-  reminderHoursBefore: z.preprocess(
-    (value) => {
-      if (value === '' || value === null || value === undefined) return undefined;
-      if (typeof value === 'number' && Number.isNaN(value)) return undefined;
-      if (typeof value === 'string') {
-        const n = Number(value);
-        return Number.isNaN(n) ? undefined : n;
-      }
-      return value;
-    },
-    z.number().int().min(0).max(168).optional()
-  ),
+  reminderHoursBefore: z.any().optional(),
   reminderNote: z.string().optional(),
 
   smsToPatient: z.boolean().optional(),

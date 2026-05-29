@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { CareService, CareServiceStatus } from "@/types/patient";
-import { Search, CalendarRange, Clock, User, ChevronLeft, Filter, ArrowUpDown } from "lucide-react";
+import { Search, CalendarRange, Clock, User, ChevronLeft, Filter, ArrowUpDown, CheckCircle2 } from "lucide-react";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import DateObject from "react-date-object";
@@ -142,7 +142,7 @@ export function ServiceHistoryModal({ services, isOpen, onClose, onSelectService
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center gap-3">
                     <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center font-bold text-xs border shadow-sm", getStatusColor(service.status))}>
-                      {service.status === 'Completed' ? <CheckCircle2 size={20} /> : <Clock size={20} />}
+                      {Number(service.status) === 2 ? <CheckCircle2 size={20} /> : <Clock size={20} />}
                     </div>
                     <div>
                       <h4 className="font-bold text-gray-800 text-sm md:text-base group-hover:text-indigo-600 transition-colors">{service.serviceTitle}</h4>

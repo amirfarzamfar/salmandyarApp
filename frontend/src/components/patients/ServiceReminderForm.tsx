@@ -34,9 +34,11 @@ interface Props {
   onSuccess: () => void;
   onCancel: () => void;
   initialData?: ServiceReminder;
+  isGlobalMode?: boolean;
+  patients?: any[];
 }
 
-export default function ServiceReminderForm({ patientId, definitions, onSuccess, onCancel, initialData }: Props) {
+export default function ServiceReminderForm({ patientId, definitions, onSuccess, onCancel, initialData, isGlobalMode, patients }: Props) {
   const { control, register, handleSubmit, formState: { errors, isSubmitting }, watch, setValue } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {

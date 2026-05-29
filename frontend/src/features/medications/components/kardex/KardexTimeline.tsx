@@ -61,7 +61,7 @@ export const KardexTimeline = ({ patientId }: KardexTimelineProps) => {
     if (selectedDose) {
       logDose({
         doseId: selectedDose.id,
-        status: DoseStatus.Refused,
+        status: DoseStatus.Skipped,
         note: reason,
         takenAt: new Date().toISOString()
       });
@@ -157,7 +157,7 @@ export const KardexTimeline = ({ patientId }: KardexTimelineProps) => {
                                         let statusClass = "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100";
                                         if (dose.status === DoseStatus.Taken) statusClass = "bg-green-50 border-green-200 text-green-600 hover:bg-green-100";
                                         else if (dose.status === DoseStatus.Missed) statusClass = "bg-red-50 border-red-200 text-red-600 hover:bg-red-100";
-                                        else if (dose.status === DoseStatus.Refused) statusClass = "bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100";
+                                        else if (dose.status === DoseStatus.Skipped) statusClass = "bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100";
                                         
                                         return (
                                             <button

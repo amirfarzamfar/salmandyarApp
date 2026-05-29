@@ -46,7 +46,7 @@ export const Step3_Safety = () => {
             )}
           />
           {errors.criticality && (
-             <p className="text-xs text-red-500 mt-1">{errors.criticality.message}</p>
+             <p className="text-xs text-red-500 mt-1">{errors.criticality.message as string}</p>
           )}
         </div>
 

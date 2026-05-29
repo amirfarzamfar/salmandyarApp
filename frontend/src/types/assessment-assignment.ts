@@ -13,6 +13,7 @@ export interface AssessmentAssignment {
     formId: number;
     formTitle: string;
     assignedDate: string;
+    startDate?: string;
     deadline?: string;
     isMandatory: boolean;
     status: AssessmentAssignmentStatus;

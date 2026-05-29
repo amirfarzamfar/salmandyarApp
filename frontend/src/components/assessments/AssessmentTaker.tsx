@@ -71,10 +71,10 @@ export default function AssessmentTaker({ form, onSubmit, loading, careRecipient
         break; // Stop showing more questions until this one is answered
       }
       
-      let nextKey = currentQuestion.nextQuestionKey;
+      let nextKey: string | undefined = currentQuestion.nextQuestionKey;
       
       if (Number(currentQuestion.type) === QuestionType.MultipleChoice && answer.selectedOptionId) {
-        const selectedOpt = currentQuestion.options?.find(o => o.id === answer.selectedOptionId);
+        const selectedOpt: any = currentQuestion.options?.find(o => o.id === answer.selectedOptionId);
         if (selectedOpt?.nextQuestionKey) {
           nextKey = selectedOpt.nextQuestionKey;
         }
@@ -94,7 +94,7 @@ export default function AssessmentTaker({ form, onSubmit, loading, careRecipient
       if (nextQ) {
          currentQuestion = nextQ;
       } else {
-         const currentIndex = sortedQuestions.findIndex(q => q.questionId === currentQuestion.questionId);
+         const currentIndex = sortedQuestions.findIndex(q => q.questionId === currentQuestion?.questionId);
          currentQuestion = sortedQuestions[currentIndex + 1];
       }
     }

@@ -91,6 +91,9 @@ export interface UserEvaluation {
     assignedDate: string;
     completedDate?: string;
     score?: number;
+    deadline?: string;
+    isMandatory?: boolean;
+    submissionDetails?: any;
 }
 
 export interface CreateUserEvaluation {

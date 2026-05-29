@@ -14,7 +14,7 @@ export default function NursingReportsTab({ patientId }: { patientId: number }) 
     } catch {
          // Fallback if API fails or is not ready
          setReports([
-            { id: 1, createdAt: new Date().toISOString(), authorName: 'Nurse 1', shift: 'Morning', content: 'وضعیت بیمار پایدار است و صبحانه کامل میل کردند.' }
+            { id: 1, createdAt: new Date().toISOString(), authorName: 'Nurse 1', shift: 'Morning', content: 'وضعیت بیمار پایدار است و صبحانه کامل میل کردند.', careRecipientId: patientId, patientName: 'بیمار تستی' }
         ]);
     }
   };

@@ -348,7 +348,7 @@ function QuestionItem({
                         <div className="pl-4 border-r-2 border-slate-700 space-y-2 mt-2">
                             <label className="text-xs text-slate-500 block mb-1">گزینه‌ها:</label>
                             {/* We use fields from useFieldArray but need to sync if options are reset externally */}
-                            {(optionFields.length > 0 ? optionFields : watch(`questions.${index}.options`))?.map((opt: { id?: string | number }, optIndex: number) => (
+                            {(optionFields.length > 0 ? optionFields : watch(`questions.${index}.options`))?.map((opt: any, optIndex: number) => (
                                 <div key={opt.id || optIndex} className="flex gap-2 items-center">
                                     <input
                                         {...register(`questions.${index}.options.${optIndex}.text`)}

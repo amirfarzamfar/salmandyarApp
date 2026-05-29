@@ -1,6 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"; // Assuming shadcn dialog exists or I'll use standard if not
-import { Button } from "@/components/ui/button"; // Assuming shadcn button exists
-import { Textarea } from "@/components/ui/textarea"; // Assuming shadcn textarea exists
+import { Button } from "@/components/ui/Button"; // Assuming shadcn button exists
 import { useState } from "react";
 import { Check, X, AlertTriangle } from "lucide-react";
 
@@ -112,7 +111,7 @@ export const AdministrationModal = ({ isOpen, onClose, dose, onAdminister, onSki
               )}
             </div>
             
-            <textarea
+            <textarea 
               className="w-full p-3 border rounded-xl focus:ring-2 focus:ring-teal-200 outline-none resize-none"
               rows={3}
               placeholder={action === 'skip' ? "مثلاً: بیمار خواب بود، امتناع کرد..." : "توضیحات تکمیلی..."}
