@@ -58,7 +58,7 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
     const fetchNotifications = async () => {
         setLoading(true);
         try {
-            const data = await notificationService.getMyNotifications();
+            const data = await notificationService.getMyNotifications(true);
             setNotifications(data);
         } catch (error) {
             console.error('Failed to fetch notifications', error);
@@ -74,19 +74,38 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
         setIsOpen(!isOpen);
     };
 
-    const handleNotificationClick = async (notification: UserNotification) => {
-        if (!notification.isRead) {
-            try {
-                await notificationService.markAsRead(notification.id);
-                setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n));
-                setUnreadCount(prev => Math.max(0, prev - 1));
-            } catch (error) {
-                console.error('Failed to mark as read', error);
-            }
+    const isPortalVitalAlert = (notification: UserNotification) =>
+        appearance === 'portal'
+        && notification.type === NotificationType.Alert
+        && notification.title.includes('علائم حیاتی')
+        && Boolean(notification.referenceId);
+
+    const getNotificationLink = (notification: UserNotification) => {
+        if (isPortalVitalAlert(notification)) {
+            return `/portal?vitalId=${notification.referenceId}`;
         }
 
-        if (notification.link) {
-            router.push(notification.link);
+        return notification.link;
+    };
+
+    const markNotificationAsSeen = async (notificationId: number) => {
+        try {
+            await notificationService.markAsRead(notificationId);
+            setNotifications(prev => prev.filter(n => n.id !== notificationId));
+            setUnreadCount(prev => Math.max(0, prev - 1));
+        } catch (error) {
+            console.error('Failed to mark as read', error);
+        }
+    };
+
+    const handleNotificationClick = async (notification: UserNotification) => {
+        if (!notification.isRead) {
+            await markNotificationAsSeen(notification.id);
+        }
+
+        const destination = getNotificationLink(notification);
+        if (destination) {
+            router.push(destination);
             setIsOpen(false);
         }
     };
@@ -151,8 +170,8 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
                                 {notifications.map(notification => (
                                     <div 
                                         key={notification.id}
-                                        onClick={() => handleNotificationClick(notification)}
-                                        className={`p-4 transition-colors cursor-pointer flex gap-3 ${appearance === 'portal' ? 'hover:bg-gray-50' : 'hover:bg-slate-800/50'} ${!notification.isRead ? (appearance === 'portal' ? 'bg-red-50/30' : 'bg-slate-800/20') : ''}`}
+                                        onClick={() => void handleNotificationClick(notification)}
+                                        className={`p-4 transition-colors flex gap-3 ${getNotificationLink(notification) ? 'cursor-pointer' : 'cursor-default'} ${appearance === 'portal' ? 'hover:bg-gray-50' : 'hover:bg-slate-800/50'} ${!notification.isRead ? (appearance === 'portal' ? 'bg-red-50/30' : 'bg-slate-800/20') : ''}`}
                                     >
                                         <div className="mt-1 flex-shrink-0">
                                             {getIcon(notification.type)}
@@ -172,6 +191,18 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
                                             <p className={`text-[10px] ${appearance === 'portal' ? 'text-gray-400' : 'text-slate-500'}`}>
                                                 {new Date(notification.createdAt).toLocaleString('fa-IR')}
                                             </p>
+                                            <div className="mt-3 flex justify-end">
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        void markNotificationAsSeen(notification.id);
+                                                    }}
+                                                    className={`rounded-full border px-3 py-1 text-[11px] font-medium transition ${appearance === 'portal' ? 'border-gray-200 text-gray-600 hover:bg-gray-100' : 'border-slate-700 text-slate-300 hover:bg-slate-800'}`}
+                                                >
+                                                    رويت شد
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

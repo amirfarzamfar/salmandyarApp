@@ -11,7 +11,7 @@ import { faIR } from "date-fns/locale";
 import { toast } from "react-hot-toast";
 import { evaluateVitalAlerts, getVitalDisplayStatus, getVitalStatusMeta } from "@/utils/vital-alerts";
 import { VitalSign, VitalSignAlert } from "@/types/patient";
-import { normalizePatientAcknowledgementNote } from "@/utils/vital-acknowledgement";
+import { getVitalAcknowledgementErrorMessage, normalizePatientAcknowledgementNote } from "@/utils/vital-acknowledgement";
 
 // Helper to generate chart data from history
 type VitalChartKey = keyof Pick<VitalSign, "systolicBloodPressure" | "pulseRate" | "oxygenSaturation" | "bodyTemperature">;
@@ -90,34 +90,6 @@ interface HealthSnapshotProps {
   patientId: number;
 }
 
-function getAcknowledgeErrorMessage(error: unknown) {
-  const response = (error as {
-    response?: {
-      status?: number;
-      data?: { error?: string; title?: string };
-    };
-  })?.response;
-
-  const serverMessage = response?.data?.error || response?.data?.title;
-  if (serverMessage) {
-    return serverMessage;
-  }
-
-  if (response?.status === 404) {
-    return "مسیر تایید مشاهده در بک‌اند پیدا نشد. احتمالاً سرویس بک‌اند هنوز ری‌استارت نشده است.";
-  }
-
-  if (response?.status === 403) {
-    return "شما دسترسی لازم برای ثبت این تایید را ندارید.";
-  }
-
-  if (response?.status === 500) {
-    return "ذخیره تایید مشاهده در سرور انجام نشد. لطفاً بک‌اند را ری‌استارت کنید و از اعمال مایگریشن مطمئن شوید.";
-  }
-
-  return "ثبت تایید مشاهده انجام نشد.";
-}
-
 export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
   const queryClient = useQueryClient();
   const [ackNote, setAckNote] = useState("");
@@ -143,7 +115,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
     },
     onError: (error) => {
       console.error("Acknowledge vital sign failed", error);
-      toast.error(getAcknowledgeErrorMessage(error), { duration: 7000 });
+      toast.error(getVitalAcknowledgementErrorMessage(error), { duration: 7000 });
     },
   });
 

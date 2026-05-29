@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Eye, Smartphone, ShieldCheck, ClipboardCheck, ArrowLeft, User } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { patientService } from "@/services/patient.service";
 import { Patient } from "@/types/patient";
 import { PatientDetailsModal } from "@/components/portal/patient-details-modal";
@@ -27,6 +28,7 @@ export default function PortalPage() {
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const fetchPatient = async () => {
@@ -60,6 +62,8 @@ export default function PortalPage() {
   }, [user, userLoading]);
 
   const patientId = patient?.id;
+  const highlightedVitalIdParam = searchParams.get("vitalId");
+  const highlightedVitalId = highlightedVitalIdParam ? Number(highlightedVitalIdParam) : null;
 
   if (userLoading || isLoading) {
     return (
@@ -161,8 +165,8 @@ export default function PortalPage() {
                 <div>
                   <VitalSignsChart patientId={patientId} />
                 </div>
-                <div className="max-h-[500px] overflow-y-auto rounded-3xl no-scrollbar">
-                  <VitalSignsHistory patientId={patientId} />
+                <div id="portal-vital-history-section" className="max-h-[500px] overflow-y-auto rounded-3xl no-scrollbar">
+                  <VitalSignsHistory patientId={patientId} highlightedVitalId={Number.isFinite(highlightedVitalId) ? highlightedVitalId : null} />
                 </div>
               </div>
             )}

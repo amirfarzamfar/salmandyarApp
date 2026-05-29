@@ -1,7 +1,7 @@
 "use client";
 
-import { Fragment } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { Fragment, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "@/services/patient.service";
 import { PortalCard } from "./ui/portal-card";
 import DateObject from "react-date-object";
@@ -11,16 +11,55 @@ import { Activity, Thermometer, Droplet, Heart, Clock, User, FileText, Calendar 
 import { cn } from "@/lib/utils";
 import { VitalHistoryNote } from "@/components/vitals/vital-history-note";
 import { getVitalAlertsForHistory, getVitalDisplayStatus, getVitalStatusMeta } from "@/utils/vital-alerts";
+import { getVitalAcknowledgementErrorMessage } from "@/utils/vital-acknowledgement";
+import { toast } from "react-hot-toast";
 
 interface VitalSignsHistoryProps {
   patientId: number;
+  highlightedVitalId?: number | null;
 }
 
-export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
+export function VitalSignsHistory({ patientId, highlightedVitalId = null }: VitalSignsHistoryProps) {
+  const queryClient = useQueryClient();
+  const [ackNote, setAckNote] = useState("");
   const { data: vitals, isLoading } = useQuery({
     queryKey: ["vitals", patientId],
     queryFn: () => patientService.getVitals(patientId),
   });
+
+  const acknowledgeMutation = useMutation({
+    mutationFn: ({ vitalSignId, note }: { vitalSignId: number; note: string }) =>
+      patientService.acknowledgeVitalSign(patientId, vitalSignId, note),
+    onSuccess: () => {
+      toast.success("تایید مشاهده هشدار ثبت شد.");
+      setAckNote("");
+      void queryClient.invalidateQueries({ queryKey: ["vitals", patientId] });
+    },
+    onError: (error) => {
+      console.error("Acknowledge vital sign failed", error);
+      toast.error(getVitalAcknowledgementErrorMessage(error), { duration: 7000 });
+    },
+  });
+
+  const sortedVitals = vitals
+    ? [...vitals].sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
+    : [];
+
+  useEffect(() => {
+    if (!highlightedVitalId || sortedVitals.length === 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const targetId = window.innerWidth >= 768
+        ? `portal-vital-desktop-${highlightedVitalId}`
+        : `portal-vital-mobile-${highlightedVitalId}`;
+      const target = document.getElementById(targetId);
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [highlightedVitalId, sortedVitals.length]);
 
   if (isLoading) {
     return (
@@ -41,11 +80,6 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
     return null;
   }
 
-  // Sort by date descending (newest first)
-  const sortedVitals = [...vitals].sort(
-    (a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime()
-  );
-
   return (
     <PortalCard className="overflow-hidden h-full flex flex-col">
       <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
@@ -63,9 +97,18 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
         {sortedVitals.map((vital, index) => {
           const alerts = getVitalAlertsForHistory(sortedVitals, index);
           const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
+          const isHighlighted = highlightedVitalId === vital.id;
+          const canAcknowledge = isHighlighted && alerts.length > 0 && !vital.patientAcknowledgedAt;
 
           return (
-          <div key={vital.id} className="p-4 space-y-3 hover:bg-gray-50/50 transition-colors">
+          <div
+            key={vital.id}
+            id={`portal-vital-mobile-${vital.id}`}
+            className={cn(
+              "p-4 space-y-3 transition-colors",
+              isHighlighted ? "bg-medical-50/70 ring-1 ring-medical-100" : "hover:bg-gray-50/50"
+            )}
+          >
             <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
               <div className="flex items-center gap-1.5">
                 <Calendar size={14} className="text-medical-500" />
@@ -137,6 +180,26 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
               patientAcknowledgedByName={vital.patientAcknowledgedByName}
               className="mt-0"
             />
+            {canAcknowledge && (
+              <div className="space-y-3 rounded-2xl border border-medical-100 bg-white/90 p-3">
+                <div className="text-xs font-medium text-medical-700">برای همین ثبت می‌توانید اقدام انجام‌شده را ثبت کنید.</div>
+                <textarea
+                  value={ackNote}
+                  onChange={(event) => setAckNote(event.target.value)}
+                  rows={3}
+                  className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-medical-400 focus:ring-2 focus:ring-medical-100"
+                  placeholder="مثلا با پرستار تماس گرفتم، استراحت کردم یا اکسیژن را بررسی کردم."
+                />
+                <button
+                  type="button"
+                  onClick={() => acknowledgeMutation.mutate({ vitalSignId: vital.id, note: ackNote })}
+                  disabled={ackNote.trim().length === 0 || acknowledgeMutation.isPending}
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-medical-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-medical-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {acknowledgeMutation.isPending ? "در حال ثبت..." : "تایید مشاهده و ثبت اقدام"}
+                </button>
+              </div>
+            )}
           </div>
         )})}
       </div>
@@ -159,10 +222,19 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
             {sortedVitals.map((vital, index) => {
               const alerts = getVitalAlertsForHistory(sortedVitals, index);
               const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
+              const isHighlighted = highlightedVitalId === vital.id;
+              const canAcknowledge = isHighlighted && alerts.length > 0 && !vital.patientAcknowledgedAt;
 
               return (
               <Fragment key={vital.id}>
-              <tr key={vital.id} className="hover:bg-gray-50/50 transition-colors group">
+              <tr
+                id={`portal-vital-desktop-${vital.id}`}
+                key={vital.id}
+                className={cn(
+                  "transition-colors group",
+                  isHighlighted ? "bg-medical-50/70" : "hover:bg-gray-50/50"
+                )}
+              >
                 <td className="px-6 py-4 text-gray-600 font-medium whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <Clock size={14} className="text-gray-400" />
@@ -211,7 +283,7 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
                   </span>
                 </td>
               </tr>
-              {(alerts.length > 0 || vital.patientAcknowledgementNote) && (
+              {(alerts.length > 0 || vital.patientAcknowledgementNote || canAcknowledge) && (
               <tr key={`${vital.id}-note`} className="bg-gray-50/50">
                 <td colSpan={7} className="px-6 pb-4 pt-0">
                   <VitalHistoryNote
@@ -221,6 +293,28 @@ export function VitalSignsHistory({ patientId }: VitalSignsHistoryProps) {
                     patientAcknowledgedByName={vital.patientAcknowledgedByName}
                     className="mt-0"
                   />
+                  {canAcknowledge && (
+                    <div className="mt-3 space-y-3 rounded-2xl border border-medical-100 bg-white p-3">
+                      <div className="text-xs font-medium text-medical-700">برای همین ثبت می‌توانید اقدام انجام‌شده را ثبت کنید.</div>
+                      <textarea
+                        value={ackNote}
+                        onChange={(event) => setAckNote(event.target.value)}
+                        rows={3}
+                        className="w-full rounded-2xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-medical-400 focus:ring-2 focus:ring-medical-100"
+                        placeholder="مثلا با پرستار تماس گرفتم، استراحت کردم یا اکسیژن را بررسی کردم."
+                      />
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => acknowledgeMutation.mutate({ vitalSignId: vital.id, note: ackNote })}
+                          disabled={ackNote.trim().length === 0 || acknowledgeMutation.isPending}
+                          className="inline-flex items-center justify-center rounded-xl bg-medical-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-medical-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {acknowledgeMutation.isPending ? "در حال ثبت..." : "تایید مشاهده و ثبت اقدام"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </td>
               </tr>
               )}
