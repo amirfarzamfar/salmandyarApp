@@ -1,5 +1,7 @@
 using Salmandyar.Application.Services.NursingReports;
 using Salmandyar.Application.Services.NursingReports.Dtos;
+using Salmandyar.Application.Services.PatientSelfServiceAccess;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -9,14 +11,21 @@ namespace Salmandyar.Infrastructure.Services;
 public class NursingReportService : INursingReportService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
 
-    public NursingReportService(ApplicationDbContext context)
+    public NursingReportService(ApplicationDbContext context, IPatientSelfServiceAccessService patientSelfServiceAccessService)
     {
         _context = context;
+        _patientSelfServiceAccessService = patientSelfServiceAccessService;
     }
 
     public async Task<NursingReport> CreateReportAsync(string authorId, SubmitNursingReportDto dto)
     {
+        await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
+            authorId,
+            dto.CareRecipientId,
+            PatientSelfServiceFeatures.MedicationKardex);
+
         var report = new NursingReport
         {
             CareRecipientId = dto.CareRecipientId,

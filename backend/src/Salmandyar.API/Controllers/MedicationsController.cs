@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Salmandyar.Application.DTOs.Medications;
 using Salmandyar.Application.Services.Medications;
 using Salmandyar.Application.Services.Patients;
+using Salmandyar.Application.Services.PatientSelfServiceAccess;
 using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Enums;
 using System.Security.Claims;
@@ -105,8 +106,19 @@ public class MedicationsController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
 
-        await _medicationService.RecordDoseAsync(doseId, dto, userId);
-        return Ok();
+        try
+        {
+            await _medicationService.RecordDoseAsync(doseId, dto, userId);
+            return Ok();
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPost("doses/{doseId}/log-with-evidence")]
@@ -142,7 +154,18 @@ public class MedicationsController : ControllerBase
             AttachmentPath = attachmentPath
         };
 
-        await _medicationService.RecordDoseAsync(doseId, dto, userId);
-        return Ok();
+        try
+        {
+            await _medicationService.RecordDoseAsync(doseId, dto, userId);
+            return Ok();
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 }

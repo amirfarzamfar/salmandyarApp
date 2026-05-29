@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X, ShieldCheck } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 
 const navigation = [
@@ -11,6 +11,7 @@ const navigation = [
   { name: 'مدیریت بیماران', href: '/dashboard/patients', icon: Users },
   { name: 'مدیریت خدمات', href: '/dashboard/services', icon: ClipboardList },
   { name: 'مدیریت کاربران', href: '/dashboard/admin/users', icon: Users },
+  { name: 'دسترسی ثبت اطلاعات', href: '/dashboard/admin/users?selfService=1', icon: ShieldCheck },
   { name: 'مدیریت شیفت‌ها', href: '/dashboard/admin/shifts', icon: Clock },
   { name: 'پیکربندی گزارشات', href: '/dashboard/admin/report-config', icon: Settings },
   { 
@@ -99,8 +100,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <nav className="flex-1 space-y-1 px-2 py-4">
           {navigation.map((item) => {
             const hasSubItems = item.subItems && item.subItems.length > 0;
+            const normalizedHref = item.href.split('?')[0];
             const isSubItemActive = hasSubItems && item.subItems?.some(sub => pathname === sub.href);
-            const isActive = !hasSubItems && (pathname === item.href || pathname.startsWith(`${item.href}/`));
+            const isActive = !hasSubItems && (pathname === normalizedHref || pathname.startsWith(`${normalizedHref}/`));
             const isOpen = openSubMenus[item.name] || isSubItemActive;
 
             return (

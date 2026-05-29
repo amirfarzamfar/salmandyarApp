@@ -1,4 +1,9 @@
 import api from '@/lib/axios';
+import {
+  PatientSelfServiceAccessAuditEntry,
+  PatientSelfServiceAccessSummary,
+  UpdatePatientSelfServiceAccessDto
+} from '@/types/patient-self-service';
 
 export interface UserListDto {
   id: string;
@@ -81,6 +86,18 @@ export const userService = {
 
   forceLogout: async (id: string) => {
     await api.post(`/admin/users/${id}/force-logout`);
+  },
+  getSelfServiceAccess: async (id: string) => {
+    const response = await api.get<PatientSelfServiceAccessSummary>(`/admin/users/${id}/self-service-access`);
+    return response.data;
+  },
+  updateSelfServiceAccess: async (id: string, data: UpdatePatientSelfServiceAccessDto) => {
+    const response = await api.put<PatientSelfServiceAccessSummary>(`/admin/users/${id}/self-service-access`, data);
+    return response.data;
+  },
+  getSelfServiceAccessAudit: async (id: string) => {
+    const response = await api.get<PatientSelfServiceAccessAuditEntry[]>(`/admin/users/${id}/self-service-access/audit`);
+    return response.data;
   },
 
   bulkAction: async (userIds: string[], action: string, reason?: string) => {

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Salmandyar.Application.Services.NursingReports;
 using Salmandyar.Application.Services.NursingReports.Dtos;
 using Salmandyar.Application.Services.Patients;
+using Salmandyar.Application.Services.PatientSelfServiceAccess;
 using Salmandyar.Domain.Constants;
 
 namespace Salmandyar.API.Controllers;
@@ -32,6 +33,7 @@ public class NursingReportsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor},{Roles.Nurse},{Roles.AssistantNurse},{Roles.Physiotherapist},{Roles.ElderlyCareAssistant}")]
     public async Task<IActionResult> CreateReport(SubmitNursingReportDto dto)
     {
         var authorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -41,8 +43,15 @@ public class NursingReportsController : ControllerBase
         var patient = await _patientService.GetPatientByIdAsync(dto.CareRecipientId, restrictedCaregiverId);
         if (patient == null) return Forbid();
 
-        var report = await _service.CreateReportAsync(authorId, dto);
-        return Ok(new { id = report.Id });
+        try
+        {
+            var report = await _service.CreateReportAsync(authorId, dto);
+            return Ok(new { id = report.Id });
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
     }
 
     [HttpGet("my-reports")]

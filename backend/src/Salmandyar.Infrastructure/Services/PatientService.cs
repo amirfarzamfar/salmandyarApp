@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Patients.Dtos;
+using Salmandyar.Application.Services.PatientSelfServiceAccess;
 using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Enums;
@@ -11,10 +12,12 @@ namespace Salmandyar.Infrastructure.Services;
 public class PatientService : IPatientService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
 
-    public PatientService(ApplicationDbContext context)
+    public PatientService(ApplicationDbContext context, IPatientSelfServiceAccessService patientSelfServiceAccessService)
     {
         _context = context;
+        _patientSelfServiceAccessService = patientSelfServiceAccessService;
     }
 
     public async Task<List<PatientListDto>> GetAllPatientsAsync(string? caregiverId = null)
@@ -220,6 +223,11 @@ public class PatientService : IPatientService
 
     public async Task<AddVitalSignResultDto> AddVitalSignAsync(string recorderId, CreateVitalSignDto dto)
     {
+        await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
+            recorderId,
+            dto.CareRecipientId,
+            PatientSelfServiceFeatures.VitalSigns);
+
         // Calculate MAP
         var map = (double)(dto.SystolicBloodPressure + 2 * dto.DiastolicBloodPressure) / 3;
 
@@ -709,6 +717,11 @@ public class PatientService : IPatientService
 
     public async Task AddNursingReportAsync(string authorId, CreateNursingReportDto dto)
     {
+        await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
+            authorId,
+            dto.CareRecipientId,
+            PatientSelfServiceFeatures.MedicationKardex);
+
         var entity = new NursingReport
         {
             CareRecipientId = dto.CareRecipientId,

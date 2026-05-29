@@ -7,6 +7,7 @@ import { CardSkeleton } from "./ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
 import { useKardex, useLogDose } from "@/features/medications/hooks/useKardex";
 import { DoseStatus, MedicationDose } from "@/types/medication";
+import { PatientSelfServiceFeatureStatus } from "@/types/patient-self-service";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
 import { useState } from "react";
@@ -15,15 +16,21 @@ import { X } from "lucide-react";
 
 interface MedicationTimelineProps {
   patientId?: number;
+  medicationAccess?: PatientSelfServiceFeatureStatus | null;
 }
 
-export function MedicationTimeline({ patientId }: MedicationTimelineProps) {
+export function MedicationTimeline({ patientId, medicationAccess }: MedicationTimelineProps) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const { data: doses, isLoading } = useKardex(patientId ?? 0, today);
   const { mutate: logDose } = useLogDose();
   const [showList, setShowList] = useState(false);
 
   const handleTakeMed = (doseId: number) => {
+    if (medicationAccess && !medicationAccess.canSubmitNow) {
+      toast.error(medicationAccess.message || "امکان ثبت کاردکس برای شما فعال نیست.");
+      return;
+    }
+
     logDose({
         doseId,
         status: DoseStatus.Taken,
@@ -61,6 +68,12 @@ export function MedicationTimeline({ patientId }: MedicationTimelineProps) {
             </span>
         </div>
       </div>
+
+      {medicationAccess && !medicationAccess.canSubmitNow && medicationAccess.message && (
+        <div className="mb-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {medicationAccess.message}
+        </div>
+      )}
 
       {!doses?.length ? (
         <div className="text-center py-10 text-gray-400 bg-gray-50 rounded-3xl border border-dashed border-gray-200">
@@ -118,7 +131,7 @@ export function MedicationTimeline({ patientId }: MedicationTimelineProps) {
                 <PortalButton 
                     variant={dose.status === DoseStatus.Taken ? 'calm' : 'primary'}
                     onClick={() => handleTakeMed(dose.id)}
-                    disabled={dose.status === DoseStatus.Taken}
+                    disabled={dose.status === DoseStatus.Taken || Boolean(medicationAccess && !medicationAccess.canSubmitNow)}
                     className="w-full shadow-none"
                 >
                     {dose.status === DoseStatus.Taken ? 'مصرف شده' : 'تایید مصرف دارو'}
@@ -155,7 +168,7 @@ export function MedicationTimeline({ patientId }: MedicationTimelineProps) {
                             <X className="w-5 h-5 text-gray-500" />
                         </button>
                     </div>
-                    <PatientMedicationList patientId={patientId} />
+                    <PatientMedicationList patientId={patientId} readOnly />
                 </motion.div>
             </motion.div>
         )}

@@ -32,4 +32,5 @@ public class CareRecipient
     public virtual ICollection<VitalSign> VitalSigns { get; set; } = new List<VitalSign>();
     public virtual ICollection<CareService> CareServices { get; set; } = new List<CareService>();
     public virtual ICollection<NursingReport> NursingReports { get; set; } = new List<NursingReport>();
+    public virtual PatientSelfServiceAccessPolicy? SelfServiceAccessPolicy { get; set; }
 }

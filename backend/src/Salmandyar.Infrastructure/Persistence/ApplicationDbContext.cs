@@ -27,6 +27,8 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
     public DbSet<CareAssignment> CareAssignments { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<PatientSelfServiceAccessPolicy> PatientSelfServiceAccessPolicies { get; set; }
+    public DbSet<PatientSelfServiceFeatureGrant> PatientSelfServiceFeatureGrants { get; set; }
 
     // Assessment Module
     public DbSet<AssessmentForm> AssessmentForms { get; set; }
@@ -94,6 +96,8 @@ public class ApplicationDbContext : IdentityDbContext<User>
         builder.Entity<CareService>().ToTable("CareServices");
         builder.Entity<ServiceDefinition>().ToTable("ServiceDefinitions");
         builder.Entity<VitalSign>().ToTable("VitalSigns");
+        builder.Entity<PatientSelfServiceAccessPolicy>().ToTable("PatientSelfServiceAccessPolicies");
+        builder.Entity<PatientSelfServiceFeatureGrant>().ToTable("PatientSelfServiceFeatureGrants");
 
         // VitalSign DateTime Conversion
         builder.Entity<VitalSign>()
@@ -109,6 +113,36 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasConversion(
                 v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
                 v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .Property(v => v.AccessStartAtUtc)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .Property(v => v.AccessEndAtUtc)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .Property(v => v.CreatedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .Property(v => v.UpdatedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .Property(v => v.RevokedAtUtc)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<PatientSelfServiceFeatureGrant>()
+            .Property(v => v.UpdatedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
         builder.Entity<ServiceReminder>()
             .Property(r => r.ScheduledTime)
@@ -135,6 +169,12 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasForeignKey<CareRecipient>(c => c.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<CareRecipient>()
+            .HasOne(c => c.SelfServiceAccessPolicy)
+            .WithOne(p => p.CareRecipient)
+            .HasForeignKey<PatientSelfServiceAccessPolicy>(p => p.CareRecipientId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         // New Configurations
         builder.Entity<CareRecipient>()
             .HasOne(c => c.ResponsibleNurse)
@@ -152,6 +192,36 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasOne(v => v.PatientAcknowledgedBy)
             .WithMany()
             .HasForeignKey(v => v.PatientAcknowledgedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .HasOne(p => p.CreatedBy)
+            .WithMany()
+            .HasForeignKey(p => p.CreatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .HasOne(p => p.UpdatedBy)
+            .WithMany()
+            .HasForeignKey(p => p.UpdatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .HasOne(p => p.RevokedBy)
+            .WithMany()
+            .HasForeignKey(p => p.RevokedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<PatientSelfServiceFeatureGrant>()
+            .HasOne(p => p.Policy)
+            .WithMany(p => p.FeatureGrants)
+            .HasForeignKey(p => p.PolicyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<PatientSelfServiceFeatureGrant>()
+            .HasOne(p => p.UpdatedBy)
+            .WithMany()
+            .HasForeignKey(p => p.UpdatedById)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Entity<CareService>()
@@ -243,6 +313,14 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
         builder.Entity<CareAssignment>()
             .HasIndex(a => a.StartDate);
+
+        builder.Entity<PatientSelfServiceAccessPolicy>()
+            .HasIndex(x => x.CareRecipientId)
+            .IsUnique();
+
+        builder.Entity<PatientSelfServiceFeatureGrant>()
+            .HasIndex(x => new { x.PolicyId, x.FeatureKey })
+            .IsUnique();
 
         // Assessment Module Configurations
         builder.Entity<AssessmentForm>().ToTable("AssessmentForms");

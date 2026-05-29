@@ -18,13 +18,16 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { patientService } from "@/services/patient.service";
 import { Patient } from "@/types/patient";
+import { PatientSelfServiceAccessSummary } from "@/types/patient-self-service";
 import { PatientDetailsModal } from "@/components/portal/patient-details-modal";
 import { useUser } from "@/components/auth/UserContext";
+import { PatientSelfServicePanel } from "@/components/portal/patient-self-service-panel";
 
 export default function PortalPage() {
   const [isElderMode, setIsElderMode] = useState(false);
   const [isFamilyMode, setIsFamilyMode] = useState(false);
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [accessSummary, setAccessSummary] = useState<PatientSelfServiceAccessSummary | null>(null);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
@@ -43,14 +46,20 @@ export default function PortalPage() {
             const accessiblePatient = await patientService.getAccessiblePatient();
             if (!accessiblePatient) {
                 setPatient(null);
+                setAccessSummary(null);
                 return;
             }
 
-            const data = await patientService.getById(accessiblePatient.id);
+            const [data, selfServiceAccess] = await Promise.all([
+              patientService.getById(accessiblePatient.id),
+              patientService.getSelfServiceAccess(accessiblePatient.id)
+            ]);
             setPatient(data);
+            setAccessSummary(selfServiceAccess);
         } catch (error) {
             console.error("Failed to fetch patient", error);
             setPatient(null);
+            setAccessSummary(null);
         } finally {
             setIsLoading(false);
         }
@@ -64,6 +73,20 @@ export default function PortalPage() {
   const patientId = patient?.id;
   const highlightedVitalIdParam = searchParams.get("vitalId");
   const highlightedVitalId = highlightedVitalIdParam ? Number(highlightedVitalIdParam) : null;
+  const medicationAccess = accessSummary?.features.find((feature) => feature.featureKey === "MedicationKardex") ?? null;
+
+  const refreshAccessSummary = async () => {
+    if (!patientId) {
+      return;
+    }
+
+    try {
+      const summary = await patientService.getSelfServiceAccess(patientId);
+      setAccessSummary(summary);
+    } catch (error) {
+      console.error("Failed to refresh self-service access", error);
+    }
+  };
 
   if (userLoading || isLoading) {
     return (
@@ -159,6 +182,14 @@ export default function PortalPage() {
           {/* Section: Health Status */}
           <motion.section variants={itemVariants} className="space-y-6">
             <HealthSnapshot patientId={patientId} />
+
+            {accessSummary && (
+              <PatientSelfServicePanel
+                patientId={patientId}
+                accessSummary={accessSummary}
+                onRefreshAccess={refreshAccessSummary}
+              />
+            )}
             
             {!isElderMode && (
               <div className="space-y-6">
@@ -174,7 +205,7 @@ export default function PortalPage() {
 
           {/* Section: Medication - High Priority */}
           <motion.section variants={itemVariants}>
-            <MedicationTimeline patientId={patientId} />
+            <MedicationTimeline patientId={patientId} medicationAccess={medicationAccess} />
           </motion.section>
 
           {/* Section: Assessments */}

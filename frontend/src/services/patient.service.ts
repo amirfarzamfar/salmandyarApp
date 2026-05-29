@@ -1,5 +1,6 @@
 import api from '@/lib/axios';
 import { Patient, PatientList, VitalSign, CareService, NursingReport, CreateCareService, AddVitalSignResult, VitalSignAcknowledgementResult } from '@/types/patient';
+import { PatientSelfServiceAccessSummary } from '@/types/patient-self-service';
 
 export const patientService = {
   getAll: async () => {
@@ -48,6 +49,10 @@ export const patientService = {
   },
   getReports: async (id: number) => {
     const response = await api.get<NursingReport[]>(`/patients/${id}/reports`);
+    return response.data;
+  },
+  getSelfServiceAccess: async (id: number) => {
+    const response = await api.get<PatientSelfServiceAccessSummary>(`/patients/${id}/self-service-access`);
     return response.data;
   }
 };

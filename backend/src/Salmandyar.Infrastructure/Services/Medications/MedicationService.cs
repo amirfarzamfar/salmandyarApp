@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.DTOs.Medications;
 using Salmandyar.Application.Services.Medications;
 using Salmandyar.Application.Services.Notifications;
+using Salmandyar.Application.Services.PatientSelfServiceAccess;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities.Medications;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Infrastructure.Persistence;
@@ -13,12 +15,18 @@ public class MedicationService : IMedicationService
     private readonly ApplicationDbContext _context;
     private readonly INotificationService _notificationService;
     private readonly IUserNotificationService _userNotificationService;
+    private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
 
-    public MedicationService(ApplicationDbContext context, INotificationService notificationService, IUserNotificationService userNotificationService)
+    public MedicationService(
+        ApplicationDbContext context,
+        INotificationService notificationService,
+        IUserNotificationService userNotificationService,
+        IPatientSelfServiceAccessService patientSelfServiceAccessService)
     {
         _context = context;
         _notificationService = notificationService;
         _userNotificationService = userNotificationService;
+        _patientSelfServiceAccessService = patientSelfServiceAccessService;
     }
 
     public async Task<MedicationDto> AddMedicationAsync(CreateMedicationDto dto)
@@ -220,6 +228,11 @@ public class MedicationService : IMedicationService
             .FirstOrDefaultAsync(d => d.Id == doseId);
             
         if (dose == null) throw new KeyNotFoundException("Dose not found");
+
+        await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
+            userId,
+            dose.PatientMedication.CareRecipientId,
+            PatientSelfServiceFeatures.MedicationKardex);
 
         dose.Status = dto.Status;
         dose.TakenAt = dto.TakenAt;

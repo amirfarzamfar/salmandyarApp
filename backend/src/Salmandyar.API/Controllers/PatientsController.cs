@@ -5,6 +5,7 @@ using Salmandyar.API.Hubs;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Patients.Dtos;
 using Salmandyar.Application.Services.Notifications;
+using Salmandyar.Application.Services.PatientSelfServiceAccess;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Domain.Constants;
 using System.Security.Claims;
@@ -21,17 +22,20 @@ public class PatientsController : ControllerBase
     private readonly IHubContext<ServiceHub> _hubContext;
     private readonly IHubContext<NotificationHub> _notificationHub;
     private readonly IUserNotificationService _userNotifications;
+    private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
 
     public PatientsController(
         IPatientService patientService,
         IHubContext<ServiceHub> hubContext,
         IHubContext<NotificationHub> notificationHub,
-        IUserNotificationService userNotifications)
+        IUserNotificationService userNotifications,
+        IPatientSelfServiceAccessService patientSelfServiceAccessService)
     {
         _patientService = patientService;
         _hubContext = hubContext;
         _notificationHub = notificationHub;
         _userNotifications = userNotifications;
+        _patientSelfServiceAccessService = patientSelfServiceAccessService;
     }
 
     private string? GetCaregiverIdIfRestricted()
@@ -57,6 +61,20 @@ public class PatientsController : ControllerBase
         var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
         if (patient == null) return NotFound();
         return Ok(patient);
+    }
+
+    [HttpGet("{id}/self-service-access")]
+    public async Task<IActionResult> GetSelfServiceAccess(int id)
+    {
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return Forbid();
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var summary = await _patientSelfServiceAccessService.GetPatientSummaryAsync(id, userId);
+        return Ok(summary);
     }
 
     [HttpPost]
@@ -89,7 +107,15 @@ public class PatientsController : ControllerBase
         var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
         if (patient == null) return Forbid(); // Using Forbid since they don't have active assignment
 
-        var result = await _patientService.AddVitalSignAsync(userId, dto);
+        AddVitalSignResultDto result;
+        try
+        {
+            result = await _patientService.AddVitalSignAsync(userId, dto);
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
 
         await _hubContext.Clients.Group($"Patient_{dto.CareRecipientId}").SendAsync("ReceiveVitalUpdate");
 
@@ -270,7 +296,14 @@ public class PatientsController : ControllerBase
         var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
         if (patient == null) return Forbid();
 
-        await _patientService.AddNursingReportAsync(userId, dto);
-        return Ok();
+        try
+        {
+            await _patientService.AddNursingReportAsync(userId, dto);
+            return Ok();
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
     }
 }

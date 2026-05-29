@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Salmandyar.Application.DTOs.Users;
+using Salmandyar.Application.Services.PatientSelfServiceAccess;
 using Salmandyar.Application.Services.Users;
 using Salmandyar.Domain.Constants;
 using System.Security.Claims;
@@ -12,10 +13,12 @@ namespace Salmandyar.API.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserManagementService _userService;
+    private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
 
-    public UsersController(IUserManagementService userService)
+    public UsersController(IUserManagementService userService, IPatientSelfServiceAccessService patientSelfServiceAccessService)
     {
         _userService = userService;
+        _patientSelfServiceAccessService = patientSelfServiceAccessService;
         Console.WriteLine("UsersController created!");
     }
 
@@ -39,6 +42,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<ActionResult<UserDetailDto>> GetUser(string id)
     {
         var user = await _userService.GetUserByIdAsync(id);
@@ -46,7 +50,51 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
+    [HttpGet("{id}/self-service-access")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
+    public async Task<IActionResult> GetSelfServiceAccess(string id)
+    {
+        var summary = await _patientSelfServiceAccessService.GetAdminSummaryByUserIdAsync(id);
+        if (summary == null)
+        {
+            return NotFound(new { error = "برای این کاربر پرونده بیمار یا سالمند متصل یافت نشد." });
+        }
+
+        return Ok(summary);
+    }
+
+    [HttpPut("{id}/self-service-access")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
+    public async Task<IActionResult> UpdateSelfServiceAccess(string id, [FromBody] UpdatePatientSelfServiceAccessDto dto)
+    {
+        var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
+        try
+        {
+            var summary = await _patientSelfServiceAccessService.UpdateByUserIdAsync(id, dto, adminId);
+            if (summary == null)
+            {
+                return NotFound(new { error = "برای این کاربر پرونده بیمار یا سالمند متصل یافت نشد." });
+            }
+
+            return Ok(summary);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpGet("{id}/self-service-access/audit")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
+    public async Task<IActionResult> GetSelfServiceAccessAudit(string id)
+    {
+        var audit = await _patientSelfServiceAccessService.GetAuditTrailByUserIdAsync(id);
+        return Ok(audit);
+    }
+
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> ChangeStatus(string id, [FromBody] ChangeUserStatusDto dto)
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -86,6 +134,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("{id}/force-logout")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> ForceLogout(string id)
     {
         var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;

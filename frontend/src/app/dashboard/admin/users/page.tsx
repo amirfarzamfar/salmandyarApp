@@ -3,13 +3,17 @@
 import { useState, useEffect } from 'react';
 import { userService, UserListDto, UserFilterDto } from '@/services/user.service';
 import api from '@/lib/axios';
-import { Search, UserCog, Ban, CheckCircle, Shield, Lock } from 'lucide-react';
+import { Search, UserCog, Ban, CheckCircle, Shield, Lock, Clock3, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { translateRole } from '@/utils/role-translation';
+import { PatientSelfServiceAccessModal } from '@/components/admin/users/PatientSelfServiceAccessModal';
+import { useSearchParams } from 'next/navigation';
 
 export default function UsersPage() {
+  const searchParams = useSearchParams();
   const [users, setUsers] = useState<UserListDto[]>([]);
+  const [selectedUserForAccess, setSelectedUserForAccess] = useState<UserListDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
   const [filter, setFilter] = useState<UserFilterDto>({
@@ -19,6 +23,7 @@ export default function UsersPage() {
     role: '',
     isActive: undefined
   });
+  const selfServiceMode = searchParams.get('selfService') === '1';
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -45,6 +50,18 @@ export default function UsersPage() {
         return () => clearTimeout(debounce);
     }
   }, [filter]);
+
+  useEffect(() => {
+    if (!selfServiceMode) {
+      return;
+    }
+
+    setFilter((current) => ({
+      ...current,
+      role: current.role || 'Patient',
+      pageNumber: 1
+    }));
+  }, [selfServiceMode]);
 
   const handleStatusChange = async (user: UserListDto) => {
     const isActivating = !user.isActive;
@@ -167,8 +184,23 @@ export default function UsersPage() {
     }
   };
 
+  const canManageSelfService = (user: UserListDto) =>
+    user.role === 'Patient' || user.role === 'Elderly';
+
+  const eligibleUsers = users.filter(canManageSelfService);
+
   const renderActionButtons = (user: UserListDto) => (
     <div className="flex flex-wrap items-center gap-2">
+      {canManageSelfService(user) && (
+        <button
+          onClick={() => setSelectedUserForAccess(user)}
+          title="دسترسی ثبت اطلاعات"
+          className="inline-flex items-center gap-2 rounded-lg bg-teal-50 px-3 py-2 text-sm font-medium text-teal-700 transition-colors hover:bg-teal-100"
+        >
+          <Clock3 className="h-4 w-4" />
+          <span>دسترسی ثبت اطلاعات</span>
+        </button>
+      )}
       <button
         onClick={() => handleRoleChange(user)}
         title="تغییر نقش"
@@ -214,6 +246,60 @@ export default function UsersPage() {
             >
               تست اتصال
             </button>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-teal-200 bg-teal-50/70 p-4 shadow-sm">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-teal-700 shadow-sm">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-slate-900">مدیریت دسترسی ثبت اطلاعات بیمار و سالمند</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                از همین صفحه می‌توانید برای کاربران بیمار و سالمند، ثبت علائم حیاتی و کاردکس دارویی را فعال یا غیرفعال کنید.
+              </p>
+              <p className="mt-2 text-xs text-slate-500">
+                برای هر ردیف بیمار یا سالمند روی دکمه «دسترسی ثبت اطلاعات» بزنید.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setFilter((current) => ({ ...current, role: 'Patient', pageNumber: 1 }))}
+              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+            >
+              فقط بیماران
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter((current) => ({ ...current, role: 'Elderly', pageNumber: 1 }))}
+              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+            >
+              فقط سالمندان
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter((current) => ({ ...current, role: '', pageNumber: 1 }))}
+              className="rounded-xl border border-white/80 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white/60"
+            >
+              همه کاربران
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2 text-xs">
+          <span className="rounded-full bg-white px-3 py-1 font-medium text-slate-700">
+            کاربران قابل تنظیم در این صفحه: {eligibleUsers.length}
+          </span>
+          {selfServiceMode && (
+            <span className="rounded-full bg-teal-700 px-3 py-1 font-medium text-white">
+              حالت مدیریت دسترسی فعال است
+            </span>
+          )}
         </div>
       </div>
 
@@ -424,6 +510,13 @@ export default function UsersPage() {
           </div>
         </div>
       </div>
+
+      <PatientSelfServiceAccessModal
+        user={selectedUserForAccess}
+        isOpen={Boolean(selectedUserForAccess)}
+        onClose={() => setSelectedUserForAccess(null)}
+        onSaved={fetchUsers}
+      />
     </div>
   );
 }

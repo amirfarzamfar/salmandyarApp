@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IPatientService, PatientService>();
+        services.AddScoped<Salmandyar.Application.Services.PatientSelfServiceAccess.IPatientSelfServiceAccessService, PatientSelfServiceAccessService>();
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<Salmandyar.Application.Services.ReportConfig.IReportConfigurationService, Salmandyar.Infrastructure.Services.ReportConfigurationService>();
         services.AddScoped<Salmandyar.Application.Services.NursingReports.INursingReportService, Salmandyar.Infrastructure.Services.NursingReportService>();
