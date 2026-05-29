@@ -113,7 +113,7 @@ export function PatientSelfServicePanel({
 
           <FeatureCard
             title="ثبت کاردکس دارویی"
-            description="ثبت مصرف داروها و وضعیت دوزهای برنامه‌ریزی‌شده را مشابه سایر پنل‌ها انجام دهید."
+            description="ثبت مصرف داروها و دوز های دارویی را خودتان مدیریت کنید."
             enabled={Boolean(kardexFeature?.canSubmitNow)}
             disabledMessage={kardexFeature?.message}
             icon={<ClipboardPenLine className="h-5 w-5" />}
