@@ -21,6 +21,7 @@ public class PatientProfileService : IPatientProfileService
     public async Task<PatientProfileDto?> GetProfileByUserIdAsync(string userId)
     {
         var profile = await _context.PatientProfiles
+            .Include(p => p.User)
             .Include(p => p.Address)
             .Include(p => p.EmergencyContact)
             .Include(p => p.MedicalHistory)
@@ -29,7 +30,18 @@ public class PatientProfileService : IPatientProfileService
             .Include(p => p.Documents)
             .FirstOrDefaultAsync(p => p.UserId == userId);
 
-        if (profile == null) return null;
+        if (profile == null)
+        {
+            // If profile doesn't exist, we might still want to return basic info from User
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return null;
+            
+            return new PatientProfileDto
+            {
+                UserId = userId,
+                MobileNumber = user.PhoneNumber
+            };
+        }
 
         return MapToDto(profile);
     }
@@ -45,6 +57,7 @@ public class PatientProfileService : IPatientProfileService
     public async Task<PatientProfileDto> UpdateProfileAsync(string userId, UpdatePatientProfileDto dto, string? editorUserId = null, string? editorName = null)
     {
         var profile = await _context.PatientProfiles
+            .Include(p => p.User)
             .Include(p => p.Address)
             .Include(p => p.EmergencyContact)
             .Include(p => p.MedicalHistory)
@@ -55,8 +68,18 @@ public class PatientProfileService : IPatientProfileService
 
         if (profile == null)
         {
-            profile = new PatientProfile { UserId = userId, CreatedAt = DateTime.UtcNow };
+            var user = await _context.Users.FindAsync(userId);
+            profile = new PatientProfile 
+            { 
+                UserId = userId, 
+                CreatedAt = DateTime.UtcNow,
+                MobileNumber = user?.PhoneNumber // Initialize with user's phone number
+            };
             _context.PatientProfiles.Add(profile);
+        }
+        else if (profile.User != null && string.IsNullOrEmpty(profile.MobileNumber))
+        {
+            profile.MobileNumber = profile.User.PhoneNumber;
         }
 
         // Common Fields
@@ -84,7 +107,16 @@ public class PatientProfileService : IPatientProfileService
         if (dto.ProfileImageUrl != null) profile.ProfileImageUrl = dto.ProfileImageUrl;
 
         // Step 2
-        if (dto.MobileNumber != null) profile.MobileNumber = dto.MobileNumber;
+        // Always ensure mobile number matches user's registration number if possible
+        if (profile.User != null && !string.IsNullOrEmpty(profile.User.PhoneNumber))
+        {
+            profile.MobileNumber = profile.User.PhoneNumber;
+        }
+        else if (dto.MobileNumber != null)
+        {
+            // Only allow updating if User.PhoneNumber is not available (fallback)
+            profile.MobileNumber = dto.MobileNumber;
+        }
 
         if (dto.Address != null)
         {
@@ -226,7 +258,7 @@ public class PatientProfileService : IPatientProfileService
             MaritalStatus = profile.MaritalStatus,
             Nationality = profile.Nationality,
             ProfileImageUrl = profile.ProfileImageUrl,
-            MobileNumber = profile.MobileNumber,
+            MobileNumber = string.IsNullOrEmpty(profile.User?.PhoneNumber) ? profile.MobileNumber : profile.User.PhoneNumber,
             Height = profile.Height,
             Weight = profile.Weight,
             BloodGroup = profile.BloodGroup,

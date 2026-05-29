@@ -272,7 +272,16 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
             <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">شماره موبایل</label>
-                <input type="tel" name="mobileNumber" value={localData.mobileNumber || ''} onChange={handleChange} className={inputClassName} dir="ltr" />
+                <input 
+                  type="tel" 
+                  name="mobileNumber" 
+                  value={localData.mobileNumber || ''} 
+                  onChange={handleChange} 
+                  className={`${inputClassName} bg-gray-50 dark:bg-gray-800/50 cursor-not-allowed opacity-80`} 
+                  dir="ltr" 
+                  readOnly 
+                />
+                <p className="mt-1 text-[10px] text-gray-400">شماره موبایل ثبت‌نامی (غیرقابل تغییر)</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">استان</label>
