@@ -292,3 +292,4 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandy
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\staticwebassets\msbuild.buildMultiTargeting.Salmandyar.API.props
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\staticwebassets\msbuild.buildTransitive.Salmandyar.API.props
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\obj\Debug\net8.0\staticwebassets.pack.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\bin\Debug\net8.0\Salmandyar.API.staticwebassets.runtime.json

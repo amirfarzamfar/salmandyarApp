@@ -38,6 +38,7 @@ public class PatientProfileDto
     public int CurrentStep { get; set; }
     public bool IsCompleted { get; set; }
     public DateTime? LastUpdatedAt { get; set; }
+    public string? LastUpdatedByName { get; set; }
     
     public AddressDto? Address { get; set; }
     public EmergencyContactDto? EmergencyContact { get; set; }

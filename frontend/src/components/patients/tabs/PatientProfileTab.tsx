@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { PatientProfileService, PatientProfileDto } from '@/services/patient-profile.service';
-import { Loader2, Activity, AlertCircle, FileText, Upload, Heart, Phone, Edit, User } from 'lucide-react';
+import { Loader2, Activity, AlertCircle, FileText, Upload, Heart, Phone, Edit, User, Stethoscope, BrainCircuit, ShieldAlert } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { resolveApiUrl } from '@/lib/network';
@@ -24,10 +24,58 @@ const maritalStatusLabels: Record<string, string> = {
   Divorced: 'مطلقه',
 };
 
+const genderLabels: Record<string, string> = {
+  Male: 'مرد',
+  Female: 'زن',
+  Other: 'سایر',
+};
+
+const documentTypeLabels: Record<string, string> = {
+  NationalId: 'کارت ملی / شناسنامه',
+  Insurance: 'دفترچه بیمه',
+  LabTest: 'آزمایش',
+  CT_MRI: 'تصویربرداری (CT/MRI)',
+  Prescription: 'نسخه پزشک',
+};
+
+const relationshipLabels: Record<string, string> = {
+  Spouse: 'همسر',
+  Child: 'فرزند',
+  Sibling: 'خواهر/برادر',
+  Parent: 'پدر/مادر',
+  Friend: 'دوست',
+  Other: 'سایر',
+};
+
 const mobilityStatusLabels: Record<string, string> = {
   Independent: 'مستقل',
   NeedsAssistance: 'نیاز به کمک',
   Bedridden: 'بستری (بدون حرکت)',
+};
+
+const consciousnessLabels: Record<string, string> = {
+  Alert: 'کاملاً هوشیار',
+  Lethargic: 'خواب‌آلوده',
+  Stupor: 'استوپور',
+  Coma: 'کما',
+};
+
+const fallRiskLabels: Record<string, string> = {
+  Low: 'پایین',
+  Medium: 'متوسط',
+  High: 'بالا',
+};
+
+const swallowingLabels: Record<string, string> = {
+  None: 'ندارد',
+  Mild: 'خفیف (نیاز به غذای نرم)',
+  Severe: 'شدید (NGT/PEG)',
+};
+
+const nutritionLabels: Record<string, string> = {
+  Good: 'خوب',
+  Fair: 'متوسط',
+  Poor: 'ضعیف',
 };
 const totalProfileSteps = 8;
 
@@ -118,7 +166,8 @@ export default function PatientProfileTab({ userId }: Props) {
             </p>
             {profile.lastUpdatedAt && (
               <p className="text-xs text-gray-400">
-                آخرین بروزرسانی: {formatDate(profile.lastUpdatedAt)}
+                آخرین ویرایش: {formatDate(profile.lastUpdatedAt)}
+                {profile.lastUpdatedByName && ` توسط ${profile.lastUpdatedByName}`}
               </p>
             )}
           </div>
@@ -145,7 +194,7 @@ export default function PatientProfileTab({ userId }: Props) {
             </div>
             <div className="flex justify-between border-b pb-2 border-gray-50">
               <span className="text-gray-500">جنسیت:</span>
-              <span className="font-medium">{profile.gender || '-'}</span>
+              <span className="font-medium">{formatEnumLabel(profile.gender, genderLabels)}</span>
             </div>
             <div className="flex justify-between border-b pb-2 border-gray-50">
               <span className="text-gray-500">تاریخ تولد:</span>
@@ -176,7 +225,7 @@ export default function PatientProfileTab({ userId }: Props) {
               <>
                 <div className="flex justify-between border-b pb-2 border-gray-50">
                   <span className="text-gray-500">فرد اضطراری:</span>
-                  <span className="font-medium">{profile.emergencyContact.name || '-'} ({profile.emergencyContact.relationship})</span>
+                  <span className="font-medium">{profile.emergencyContact.name || '-'} ({formatEnumLabel(profile.emergencyContact.relationship, relationshipLabels)})</span>
                 </div>
                 <div className="flex justify-between border-b pb-2 border-gray-50">
                   <span className="text-gray-500">تماس اضطراری:</span>
@@ -201,7 +250,7 @@ export default function PatientProfileTab({ userId }: Props) {
           <div className="space-y-3 text-sm">
             <div className="flex justify-between border-b pb-2 border-gray-50">
               <span className="text-gray-500">قد / وزن:</span>
-              <span className="font-medium">{profile.height ? `${profile.height} cm` : '-'} / {profile.weight ? `${profile.weight} kg` : '-'}</span>
+              <span className="font-medium">{profile.height ? `${profile.height} سانتی‌متر` : '-'} / {profile.weight ? `${profile.weight} کیلوگرم` : '-'}</span>
             </div>
             <div className="flex justify-between border-b pb-2 border-gray-50">
               <span className="text-gray-500">گروه خونی:</span>
@@ -210,6 +259,10 @@ export default function PatientProfileTab({ userId }: Props) {
             <div className="flex justify-between border-b pb-2 border-gray-50">
               <span className="text-gray-500">وضعیت حرکتی:</span>
               <span className="font-medium">{formatEnumLabel(profile.mobilityStatus, mobilityStatusLabels)}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">توانایی راه رفتن:</span>
+              <span className="font-medium">{profile.walkingAbility || '-'}</span>
             </div>
             <div className="flex gap-2 pt-2">
               {profile.usesWheelchair && <Badge>استفاده از ویلچر</Badge>}
@@ -224,22 +277,109 @@ export default function PatientProfileTab({ userId }: Props) {
             <Heart className="w-5 h-5 text-teal-500" /> سوابق پزشکی
           </h4>
           <div className="flex flex-wrap gap-2 mb-4">
-            {profile.medicalHistory?.hasDiabetes && <Badge variant="secondary">دیابت</Badge>}
-            {profile.medicalHistory?.hasHypertension && <Badge variant="secondary">فشار خون</Badge>}
-            {profile.medicalHistory?.hasHeartDisease && <Badge variant="secondary">بیماری قلبی</Badge>}
+            {profile.medicalHistory?.hasDiabetes && <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">دیابت</Badge>}
+            {profile.medicalHistory?.hasHypertension && <Badge className="bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200">فشار خون</Badge>}
+            {profile.medicalHistory?.hasHeartDisease && <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">بیماری قلبی</Badge>}
             {profile.medicalHistory?.hasCOPD && <Badge variant="secondary">COPD</Badge>}
             {profile.medicalHistory?.hasAsthma && <Badge variant="secondary">آسم</Badge>}
             {profile.medicalHistory?.hasKidneyFailure && <Badge variant="secondary">نارسایی کلیه</Badge>}
-            {profile.medicalHistory?.hasStroke && <Badge variant="secondary">سکته مغزی</Badge>}
-            {profile.medicalHistory?.hasAlzheimers && <Badge variant="secondary">آلزایمر</Badge>}
+            {profile.medicalHistory?.hasStroke && <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-200">سکته مغزی</Badge>}
+            {profile.medicalHistory?.hasAlzheimers && <Badge className="bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200">آلزایمر</Badge>}
             {profile.medicalHistory?.hasParkinsons && <Badge variant="secondary">پارکینسون</Badge>}
-            {profile.medicalHistory?.hasCancer && <Badge variant="secondary">سرطان</Badge>}
+            {profile.medicalHistory?.hasCancer && <Badge className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200">سرطان</Badge>}
+            {profile.medicalHistory?.hasPsychiatricDisorders && <Badge variant="secondary">بیماری‌های روانپزشکی</Badge>}
           </div>
           {profile.medicalHistory?.otherDiseases && (
-            <div className="text-sm">
+            <div className="text-sm border-t pt-2 border-gray-50">
               <span className="text-gray-500 block mb-1">سایر بیماری‌ها:</span>
               <span className="font-medium">{profile.medicalHistory.otherDiseases}</span>
             </div>
+          )}
+        </div>
+
+        {/* Treatment Info */}
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+          <h4 className="text-md font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <Stethoscope className="w-5 h-5 text-teal-500" /> اطلاعات درمانی و تجهیزات
+          </h4>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">پزشک معالج:</span>
+              <span className="font-medium">{profile.attendingPhysician || '-'} {profile.physicianPhone ? `(${profile.physicianPhone})` : ''}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">بیمارستان قبلی:</span>
+              <span className="font-medium">{profile.previousHospital || '-'}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">سابقه بستری:</span>
+              <span className="font-medium">{profile.hospitalizationHistory || '-'}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">سابقه جراحی:</span>
+              <span className="font-medium">{profile.surgeryHistory || '-'}</span>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 pt-2">
+              {profile.hasHomeOxygen && <Badge variant="outline" className="border-teal-500 text-teal-700">اکسیژن خانگی</Badge>}
+              {profile.hasVentilator && <Badge variant="outline" className="border-teal-500 text-teal-700">ونتیلاتور</Badge>}
+              {profile.hasTracheostomy && <Badge variant="outline" className="border-teal-500 text-teal-700">تراکئوستومی</Badge>}
+              {profile.hasPEG && <Badge variant="outline" className="border-teal-500 text-teal-700">PEG (تغذیه)</Badge>}
+              {profile.hasUrinaryCatheter && <Badge variant="outline" className="border-teal-500 text-teal-700">سوند ادراری</Badge>}
+              {profile.hasBedsore && <Badge className="bg-red-100 text-red-800 hover:bg-red-200 border-red-200">زخم بستر</Badge>}
+            </div>
+          </div>
+        </div>
+
+        {/* Elderly Assessment */}
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+          <h4 className="text-md font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <BrainCircuit className="w-5 h-5 text-teal-500" /> ارزیابی سالمند
+          </h4>
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">سطح هوشیاری:</span>
+              <span className="font-medium">{formatEnumLabel(profile.elderlyAssessment?.consciousnessLevel, consciousnessLabels)}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">خطر سقوط:</span>
+              {profile.elderlyAssessment?.fallRisk === 'High' ? (
+                <Badge className="bg-red-100 text-red-800 hover:bg-red-200 border-red-200">بالا (هشدار)</Badge>
+              ) : (
+                <span className="font-medium">{formatEnumLabel(profile.elderlyAssessment?.fallRisk, fallRiskLabels)}</span>
+              )}
+            </div>
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">وضعیت بلع:</span>
+              <span className="font-medium">{formatEnumLabel(profile.elderlyAssessment?.swallowingDisorder, swallowingLabels)}</span>
+            </div>
+            <div className="flex justify-between border-b pb-2 border-gray-50">
+              <span className="text-gray-500">وضعیت تغذیه:</span>
+              <span className="font-medium">{formatEnumLabel(profile.elderlyAssessment?.nutritionStatus, nutritionLabels)}</span>
+            </div>
+            <div className="flex gap-2 pt-2">
+              {profile.elderlyAssessment?.hasUrinaryIncontinence && <Badge variant="outline" className="border-orange-200 text-orange-800 bg-orange-50">بی‌اختیاری ادرار</Badge>}
+              {profile.elderlyAssessment?.hasFecalIncontinence && <Badge variant="outline" className="border-orange-200 text-orange-800 bg-orange-50">بی‌اختیاری مدفوع</Badge>}
+            </div>
+          </div>
+        </div>
+
+        {/* Allergies */}
+        <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm md:col-span-2">
+          <h4 className="text-md font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <ShieldAlert className="w-5 h-5 text-teal-500" /> حساسیت‌ها (آلرژی)
+          </h4>
+          {profile.allergies && profile.allergies.length > 0 ? (
+            <div className="flex flex-wrap gap-3">
+              {profile.allergies.map((allergy, idx) => (
+                <div key={idx} className="bg-red-50 border border-red-100 rounded-lg p-3 min-w-[200px]">
+                  <p className="font-bold text-red-700 text-sm mb-1">{allergy.allergyType}</p>
+                  <p className="text-xs text-red-600">{allergy.description}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">حساسیت ثبت نشده است.</p>
           )}
         </div>
       </div>
@@ -260,7 +400,7 @@ export default function PatientProfileTab({ userId }: Props) {
                 className="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <Upload className="w-4 h-4 text-gray-400" />
-                <span className="text-sm font-medium text-teal-600 truncate">{doc.documentType}</span>
+                <span className="text-sm font-medium text-teal-600 truncate">{formatEnumLabel(doc.documentType, documentTypeLabels)}</span>
               </a>
             ))}
           </div>

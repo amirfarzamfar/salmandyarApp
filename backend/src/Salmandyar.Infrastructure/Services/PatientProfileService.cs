@@ -42,7 +42,7 @@ public class PatientProfileService : IPatientProfileService
         return profile == null || !profile.IsCompleted;
     }
 
-    public async Task<PatientProfileDto> UpdateProfileAsync(string userId, UpdatePatientProfileDto dto)
+    public async Task<PatientProfileDto> UpdateProfileAsync(string userId, UpdatePatientProfileDto dto, string? editorUserId = null, string? editorName = null)
     {
         var profile = await _context.PatientProfiles
             .Include(p => p.Address)
@@ -71,6 +71,8 @@ public class PatientProfileService : IPatientProfileService
         if (profile.CompletionPercentage > 100) profile.CompletionPercentage = 100;
 
         profile.LastUpdatedAt = DateTime.UtcNow;
+        if (editorUserId != null) profile.LastUpdatedByUserId = editorUserId;
+        if (editorName != null) profile.LastUpdatedByName = editorName;
 
         // Step 1
         if (dto.NationalCode != null) profile.NationalCode = dto.NationalCode;
@@ -248,6 +250,7 @@ public class PatientProfileService : IPatientProfileService
             CurrentStep = profile.CurrentStep,
             IsCompleted = profile.IsCompleted,
             LastUpdatedAt = profile.LastUpdatedAt,
+            LastUpdatedByName = profile.LastUpdatedByName,
             Address = profile.Address == null ? null : new AddressDto
             {
                 Id = profile.Address.Id,

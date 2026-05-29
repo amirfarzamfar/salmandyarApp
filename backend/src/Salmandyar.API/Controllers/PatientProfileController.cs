@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Salmandyar.Application.Common.Interfaces;
 using Salmandyar.Application.DTOs.PatientProfile;
 using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using Salmandyar.Domain.Constants;
 
 namespace Salmandyar.API.Controllers;
@@ -76,7 +77,8 @@ public class PatientProfileController : ControllerBase
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
 
-        var updatedProfile = await _profileService.UpdateProfileAsync(userId, dto);
+        var editorName = $"{User.FindFirstValue(JwtRegisteredClaimNames.GivenName)} {User.FindFirstValue(JwtRegisteredClaimNames.FamilyName)}".Trim();
+        var updatedProfile = await _profileService.UpdateProfileAsync(userId, dto, userId, editorName);
         return Ok(updatedProfile);
     }
 
@@ -121,7 +123,14 @@ public class PatientProfileController : ControllerBase
     [HttpPut("user/{userId}")]
     public async Task<ActionResult<PatientProfileDto>> UpdateUserProfile(string userId, [FromBody] UpdatePatientProfileDto dto)
     {
-        var updatedProfile = await _profileService.UpdateProfileAsync(userId, dto);
+        var editorUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var editorName = $"{User.FindFirstValue(JwtRegisteredClaimNames.GivenName)} {User.FindFirstValue(JwtRegisteredClaimNames.FamilyName)}".Trim();
+        if (string.IsNullOrWhiteSpace(editorName))
+        {
+            editorName = "Admin";
+        }
+
+        var updatedProfile = await _profileService.UpdateProfileAsync(userId, dto, editorUserId, editorName);
         return Ok(updatedProfile);
     }
 

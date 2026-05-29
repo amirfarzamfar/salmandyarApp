@@ -34,6 +34,7 @@ export interface PatientProfileDto {
   currentStep?: number;
   isCompleted?: boolean;
   lastUpdatedAt?: string;
+  lastUpdatedByName?: string;
   
   address?: AddressDto;
   emergencyContact?: EmergencyContactDto;

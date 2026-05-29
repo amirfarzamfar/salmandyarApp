@@ -54,6 +54,8 @@ public class PatientProfile
     public bool IsCompleted { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? LastUpdatedAt { get; set; }
+    public string? LastUpdatedByUserId { get; set; }
+    public string? LastUpdatedByName { get; set; }
 
     // Navigation Properties
     public virtual Address? Address { get; set; }

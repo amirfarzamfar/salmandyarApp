@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png",
+      "PackagePath": "staticwebassets\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.Salmandyar.API.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.Salmandyar.API.props",
+      "PackagePath": "build\\Salmandyar.API.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.Salmandyar.API.props",
+      "PackagePath": "buildMultiTargeting\\Salmandyar.API.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.Salmandyar.API.props",
+      "PackagePath": "buildTransitive\\Salmandyar.API.props"
+    }
+  ],
+  "ElementsToRemove": []
+}
