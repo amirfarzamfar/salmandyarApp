@@ -2,7 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { PortalCard } from "./ui/portal-card";
-import { FileText, Loader2, ChevronDown, Clock, CalendarDays } from "lucide-react";
+import DateObject from "react-date-object";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
+import { FileText, Loader2, ChevronDown, Clock, CalendarDays, ArrowLeft } from "lucide-react";
 import { patientService } from "@/services/patient.service";
 import { NursingReport } from "@/types/patient";
 import { NursingReportDetailModal } from "./nursing-report-detail-modal";
@@ -11,6 +14,42 @@ import { cn } from "@/lib/utils";
 
 interface NursingReportFeedProps {
   patientId?: number;
+}
+
+const SHIFT_META: Record<string, { label: string; className: string }> = {
+  Morning: {
+    label: "شیفت صبح",
+    className: "bg-amber-50 text-amber-700 border-amber-100",
+  },
+  Evening: {
+    label: "شیفت عصر",
+    className: "bg-sky-50 text-sky-700 border-sky-100",
+  },
+  Night: {
+    label: "شیفت شب",
+    className: "bg-violet-50 text-violet-700 border-violet-100",
+  },
+};
+
+function getShiftMeta(shift: string) {
+  return SHIFT_META[shift] ?? {
+    label: "گزارش پرستاری",
+    className: "bg-gray-50 text-gray-700 border-gray-200",
+  };
+}
+
+function getAuthorInitial(name?: string) {
+  const value = (name ?? "پرستار").trim();
+  return value.charAt(0) || "پ";
+}
+
+function getReportPreview(content: string, maxLength = 150) {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength).trim()}...`;
 }
 
 export function NursingReportFeed({ patientId }: NursingReportFeedProps) {
@@ -57,17 +96,22 @@ export function NursingReportFeed({ patientId }: NursingReportFeedProps) {
 
   if (loading) {
       return (
-          <div className="flex justify-center items-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-medical-500" />
-          </div>
+          <PortalCard className="mb-8 border border-gray-100 bg-white p-6 shadow-soft-sm">
+            <div className="flex items-center justify-center gap-3 py-6 text-sm text-gray-500">
+              <Loader2 className="h-5 w-5 animate-spin text-medical-500" />
+              در حال بارگذاری گزارش‌های پرستاری...
+            </div>
+          </PortalCard>
       );
   }
 
   if (error) {
       return (
-          <div className="text-center py-4 text-red-500 text-sm bg-red-50 rounded-xl border border-red-100">
-              خطا در دریافت گزارش‌ها
-          </div>
+          <PortalCard className="mb-8 border border-red-100 bg-red-50/80 p-6">
+            <div className="text-center text-sm font-medium text-red-600">
+              دریافت گزارش‌های پرستاری با خطا روبه‌رو شد.
+            </div>
+          </PortalCard>
       );
   }
 
@@ -78,8 +122,8 @@ export function NursingReportFeed({ patientId }: NursingReportFeedProps) {
               <FileText className="w-5 h-5 text-medical-600" />
               گزارش‌های پرستاری
             </h2>
-            <div className="bg-white/50 p-6 rounded-2xl text-center border border-dashed border-gray-300">
-                <p className="text-gray-500 text-sm font-medium">هنوز گزارشی ثبت نشده است.</p>
+            <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-6 text-center shadow-soft-sm">
+                <p className="text-sm font-medium text-gray-500">هنوز گزارشی ثبت نشده است.</p>
             </div>
           </div>
       );
@@ -87,17 +131,22 @@ export function NursingReportFeed({ patientId }: NursingReportFeedProps) {
 
   return (
     <div className="mb-8 relative">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-medical-100 flex items-center justify-center text-medical-600">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div className="min-w-0">
+          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-medical-50 text-medical-600">
             <FileText size={18} />
-          </div>
-          گزارش‌های پرستاری
-        </h2>
+            </div>
+            گزارش‌های پرستاری
+          </h2>
+          <p className="mt-1 text-xs leading-6 text-gray-500">
+            خلاصه آخرین مشاهدات و اقدامات ثبت‌شده توسط تیم پرستاری
+          </p>
+        </div>
         {hasMore && (
-           <button 
+           <button
              onClick={() => setIsListModalOpen(true)}
-             className="text-xs font-bold text-medical-600 hover:text-medical-700 hover:bg-medical-50 px-3 py-1.5 rounded-lg transition-colors"
+             className="inline-flex items-center justify-center rounded-xl border border-medical-100 bg-white px-3 py-2 text-xs font-bold text-medical-700 transition hover:bg-medical-50 sm:w-auto"
            >
              مشاهده همه ({reports.length})
            </button>
@@ -105,58 +154,65 @@ export function NursingReportFeed({ patientId }: NursingReportFeedProps) {
       </div>
 
       <div className="space-y-4 relative">
-        {displayedReports.map((report, index) => (
-          <PortalCard key={report.id} variant="glass" className="group relative overflow-hidden border border-white/40 hover:border-medical-200 transition-all duration-300">
-            
-            {/* Decorative background blob */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-medical-50 to-transparent rounded-bl-full opacity-50 -z-10 group-hover:opacity-100 transition-opacity"></div>
-
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-medical-700 font-bold text-sm border border-medical-50">
-                    {(report.authorName || 'P').charAt(0)}
+        {displayedReports.map((report) => (
+          <PortalCard
+            key={report.id}
+            variant="default"
+            className="group relative overflow-hidden border border-gray-100 bg-white p-4 shadow-soft-sm transition-all duration-300 hover:border-medical-100 hover:shadow-soft-md sm:p-5"
+          >
+            <div className="relative space-y-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                 <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-medical-100 bg-medical-50 text-sm font-bold text-medical-700">
+                    {getAuthorInitial(report.authorName)}
                  </div>
-                 <div>
-                    <span className="text-sm font-bold text-gray-800 block">{report.authorName || 'پرستار'}</span>
-                    <span className="text-[10px] text-gray-400 flex items-center gap-1 mt-0.5" dir="ltr">
-                        <Clock size={10} />
-                        {new Date(report.createdAt).toLocaleTimeString('fa-IR', { 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
+                 <div className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-gray-800">{report.authorName || "پرستار"}</span>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
+                      <span className="inline-flex items-center gap-1">
+                        <CalendarDays size={12} />
+                        {new DateObject({ date: new Date(report.createdAt), calendar: persian, locale: persian_fa }).format("DD MMMM YYYY")}
+                      </span>
+                      <span className="inline-flex items-center gap-1" dir="ltr">
+                        <Clock size={12} />
+                        {new Date(report.createdAt).toLocaleTimeString("fa-IR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
                         })}
-                    </span>
+                      </span>
+                    </div>
                  </div>
-              </div>
+                </div>
               
-              <div className={cn(
-                  "px-2.5 py-1 rounded-lg text-[10px] font-bold border shadow-sm",
-                  report.shift === 'Morning' ? 'bg-orange-50 text-orange-600 border-orange-100' : 
-                  report.shift === 'Evening' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
-                  'bg-indigo-50 text-indigo-600 border-indigo-100'
-              )}>
-                  {report.shift === 'Morning' ? 'شیفت صبح' : report.shift === 'Evening' ? 'شیفت عصر' : 'شیفت شب'}
+                <div className={cn(
+                    "shrink-0 rounded-xl border px-2.5 py-1 text-[10px] font-bold",
+                    getShiftMeta(report.shift).className
+                )}>
+                    {getShiftMeta(report.shift).label}
+                </div>
               </div>
-            </div>
 
-            <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 pr-2 border-r-2 border-gray-100 pl-2">
-              {report.content}
-            </p>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mb-2 text-[11px] font-bold tracking-wide text-gray-500">
+                  خلاصه گزارش
+                </div>
+                <p className="text-sm leading-7 text-gray-800 break-words">
+                  {getReportPreview(report.content)}
+                </p>
+              </div>
 
-            <div className="flex justify-between items-center pt-3 border-t border-gray-50/50">
-                <span className="text-xs text-gray-400 font-medium flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
-                    <CalendarDays size={12} />
-                    {new Date(report.createdAt).toLocaleDateString('fa-IR', { 
-                        month: 'long', 
-                        day: 'numeric'
-                    })}
+              <div className="flex flex-col gap-3 border-t border-gray-100 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs leading-6 text-gray-500">
+                  برای مشاهده متن کامل و جزئیات بیشتر، وارد گزارش شوید.
                 </span>
                 <button 
                     onClick={() => handleOpenDetail(report)}
-                    className="text-white bg-medical-500 hover:bg-medical-600 text-xs font-medium px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-medical-200 hover:shadow-lg hover:shadow-medical-300 transition-all active:scale-95"
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-2xl bg-medical-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:bg-medical-700 active:scale-95 sm:w-auto"
                 >
-                    <FileText className="w-3.5 h-3.5" />
-                    مشاهده کامل
+                    مشاهده کامل گزارش
+                    <ArrowLeft className="h-4 w-4" />
                 </button>
+              </div>
             </div>
           </PortalCard>
         ))}
@@ -167,9 +223,9 @@ export function NursingReportFeed({ patientId }: NursingReportFeedProps) {
                 <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-transparent to-medical-50/30 pointer-events-none -mt-12"></div>
                 <button 
                     onClick={() => setIsListModalOpen(true)}
-                    className="w-full bg-white border border-gray-200 hover:border-medical-300 hover:bg-medical-50 text-gray-500 hover:text-medical-700 font-medium py-3 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow-md group"
+                    className="group flex w-full items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white py-3 text-sm font-medium text-gray-600 shadow-soft-sm transition-all hover:border-medical-200 hover:bg-medical-50 hover:text-medical-700"
                 >
-                    <span className="text-sm">مشاهده گزارش‌های قدیمی‌تر</span>
+                    <span>مشاهده گزارش‌های قدیمی‌تر</span>
                     <ChevronDown className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
                 </button>
             </div>
