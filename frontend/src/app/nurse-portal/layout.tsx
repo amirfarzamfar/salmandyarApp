@@ -14,11 +14,11 @@ export default function NursePortalLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="min-h-screen bg-neutral-warm-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 font-sans selection:bg-medical-200 selection:text-medical-900 pb-24 md:pb-0">
+    <div className="min-h-screen bg-neutral-warm-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 font-sans selection:bg-medical-200 selection:text-medical-900 pb-24 md:pb-0 md:pr-64">
       {/* Desktop Sidebar */}
       <NurseSidebar />
       
-      <main className="max-w-md mx-auto md:max-w-7xl md:mr-64 md:px-8 md:py-8 min-h-screen transition-all duration-300">
+      <main className="w-full max-w-md mx-auto md:max-w-none md:mx-0 md:px-8 md:py-8 min-h-screen transition-all duration-300">
         {children}
       </main>
       
