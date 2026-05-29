@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { PortalCard } from "@/components/portal/ui/portal-card";
 import { Search, User, ChevronLeft, MapPin, Activity, Heart, Calendar, Loader2, AlertCircle, Bell, Filter, Plus, FileText, Phone, Clock, Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { PatientList } from "@/types/patient";
@@ -62,21 +61,6 @@ export default function NursePortalPage() {
     
     return matchesSearch && matchesFilter;
   });
-
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05
-      }
-    }
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0 }
-  };
 
   const getTimeGreeting = () => {
     const hour = new Date().getHours();
@@ -224,17 +208,12 @@ export default function NursePortalPage() {
       <div>
         <div className="flex justify-between items-end mb-4 px-1">
           <h3 className="text-sm font-black text-gray-800 dark:text-gray-100">لیست بیماران</h3>
-          <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg">
+          <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-2 py-0.5 rounded-lg">
             {filteredPatients.length} پرونده
           </span>
         </div>
 
-        <motion.div 
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="space-y-4"
-        >
+        <div className="space-y-4">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400 dark:text-gray-500">
               <Loader2 className="w-10 h-10 animate-spin mb-4 text-medical-500" />
@@ -247,82 +226,89 @@ export default function NursePortalPage() {
             </div>
           ) : (
             filteredPatients.map((patient) => (
-              <motion.div key={patient.id} variants={item}>
-                <Link href={`/nurse-portal/patient/${patient.id}`}>
-                  <PortalCard 
-                    className="group relative overflow-hidden border-none bg-white dark:bg-gray-800 shadow-soft-sm hover:shadow-soft-lg dark:shadow-none dark:border dark:border-gray-700 transition-all duration-300 active:scale-[0.98]"
-                    noPadding
-                  >
-                    {/* Status Strip */}
-                    <div className={cn(
-                      "absolute top-0 right-0 w-1.5 h-full transition-colors",
-                      patient.currentStatus === 'Stable' ? 'bg-emerald-400' : 'bg-rose-400'
-                    )} />
+              <Link key={patient.id} href={`/nurse-portal/patient/${patient.id}`}>
+                <PortalCard
+                  initial={false}
+                  className={cn(
+                    "group relative overflow-hidden bg-white dark:bg-gray-800 shadow-soft-sm hover:shadow-soft-md transition-all duration-300 active:scale-[0.98] ring-1 ring-inset",
+                    patient.currentStatus === 'Stable'
+                      ? "ring-emerald-200/70 dark:ring-emerald-900/40"
+                      : "ring-rose-200/70 dark:ring-rose-900/40"
+                  )}
+                  noPadding
+                >
+                  <div className={cn(
+                    "absolute top-0 right-0 w-1.5 h-full transition-colors",
+                    patient.currentStatus === 'Stable' ? 'bg-emerald-500' : 'bg-rose-500'
+                  )} />
 
-                    <div className="p-5 pl-4">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <div className="w-14 h-14 rounded-[1.2rem] bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500 group-hover:bg-medical-50 dark:group-hover:bg-medical-900/20 group-hover:text-medical-600 dark:group-hover:text-medical-400 transition-colors border border-gray-100 dark:border-gray-600">
-                            <User className="w-6 h-6" />
-                          </div>
-                          {patient.currentStatus !== 'Stable' && (
-                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
-                            </span>
-                          )}
+                  <div className="p-5 pl-4">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className={cn(
+                          "w-14 h-14 rounded-[1.2rem] flex items-center justify-center transition-colors border",
+                          patient.currentStatus === 'Stable'
+                            ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-900/40"
+                            : "bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400 border-rose-100 dark:border-rose-900/40"
+                        )}>
+                          <User className="w-6 h-6" />
                         </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <h3 className="text-lg font-black text-gray-800 dark:text-gray-100 truncate group-hover:text-medical-600 dark:group-hover:text-medical-400 transition-colors">
-                              {patient.firstName} {patient.lastName}
-                            </h3>
-                            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-700/50 px-2 py-1 rounded-lg">
-                              {patient.age} ساله
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className={cn(
-                              "text-[10px] font-black px-2 py-0.5 rounded-md",
-                              patient.currentStatus === 'Stable' 
-                                ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400" 
-                                : "bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400"
-                            )}>
-                              {patient.currentStatus === 'Stable' ? 'پایدار' : 'نیازمند توجه'}
-                            </span>
-                            <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                            <span className="text-xs text-gray-500 dark:text-gray-400 truncate font-medium">
-                              {patient.primaryDiagnosis}
-                            </span>
-                          </div>
+                        {patient.currentStatus !== 'Stable' && (
+                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-lg font-black text-gray-900 dark:text-gray-100 truncate">
+                            {patient.firstName} {patient.lastName}
+                          </h3>
+                          <span className="text-[10px] font-bold text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-900/30 border border-gray-100 dark:border-gray-700/50 px-2 py-1 rounded-lg">
+                            {patient.age} ساله
+                          </span>
                         </div>
-
-                        <ChevronLeft className="w-5 h-5 text-gray-300 dark:text-gray-600 group-hover:text-medical-500 dark:group-hover:text-medical-400 transition-colors" />
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={cn(
+                            "text-[10px] font-black px-2 py-0.5 rounded-md",
+                            patient.currentStatus === 'Stable' 
+                              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-900/40" 
+                              : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300 border border-rose-100 dark:border-rose-900/40"
+                          )}>
+                            {patient.currentStatus === 'Stable' ? 'پایدار' : 'نیازمند توجه'}
+                          </span>
+                          <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+                          <span className="text-xs text-gray-600 dark:text-gray-300 truncate font-medium">
+                            {patient.primaryDiagnosis}
+                          </span>
+                        </div>
                       </div>
 
-                      <div className="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50 flex justify-between items-center">
-                        <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
-                          <Clock size={12} />
-                          <span className="text-[10px] font-bold">آخرین ویزیت: امروز ۰۹:۳۰</span>
+                      <ChevronLeft className="w-5 h-5 text-gray-300 dark:text-gray-600 transition-colors" />
+                    </div>
+
+                    <div className="mt-4 pt-4 border-t border-gray-50 dark:border-gray-700/50 flex justify-between items-center">
+                      <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
+                        <Clock size={12} />
+                        <span className="text-[10px] font-bold">آخرین ویزیت: امروز ۰۹:۳۰</span>
+                      </div>
+                      <div className="flex -space-x-2 space-x-reverse">
+                        <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/20 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[10px] font-bold text-blue-500">
+                          2
                         </div>
-                        <div className="flex -space-x-2 space-x-reverse">
-                          {/* Mock Indicators for medications/tasks */}
-                          <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/20 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[10px] font-bold text-blue-500">
-                            2
-                          </div>
-                          <div className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[10px] font-bold text-emerald-500">
-                            <Check size={10} />
-                          </div>
+                        <div className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/20 border-2 border-white dark:border-gray-800 flex items-center justify-center text-[10px] font-bold text-emerald-500">
+                          <Check size={10} />
                         </div>
                       </div>
                     </div>
-                  </PortalCard>
-                </Link>
-              </motion.div>
+                  </div>
+                </PortalCard>
+              </Link>
             ))
           )}
-        </motion.div>
+        </div>
       </div>
       {user && (
         <UserProfileModal
