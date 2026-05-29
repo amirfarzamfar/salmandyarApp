@@ -1,13 +1,15 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { patientService } from "@/services/patient.service";
 import { PortalCard } from "./ui/portal-card";
+import { PortalButton } from "./ui/portal-button";
+import DatePicker from "react-multi-date-picker";
 import DateObject from "react-date-object";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
-import { Activity, Thermometer, Droplet, Heart, Clock, User, FileText, Calendar } from "lucide-react";
+import { Activity, Thermometer, Droplet, Heart, Clock, User, FileText, Calendar, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VitalHistoryNote } from "@/components/vitals/vital-history-note";
 import { getVitalAlertsForHistory, getVitalDisplayStatus, getVitalStatusMeta } from "@/utils/vital-alerts";
@@ -19,9 +21,22 @@ interface VitalSignsHistoryProps {
   highlightedVitalId?: number | null;
 }
 
+const DEFAULT_VISIBLE_COUNT = 3;
+
+function getLocalDateValue(dateString: string | Date) {
+  const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export function VitalSignsHistory({ patientId, highlightedVitalId = null }: VitalSignsHistoryProps) {
   const queryClient = useQueryClient();
   const [ackNote, setAckNote] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE_COUNT);
   const { data: vitals, isLoading } = useQuery({
     queryKey: ["vitals", patientId],
     queryFn: () => patientService.getVitals(patientId),
@@ -41,12 +56,36 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
     },
   });
 
-  const sortedVitals = vitals
-    ? [...vitals].sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
-    : [];
+  const sortedVitals = useMemo(
+    () => (
+      vitals
+        ? [...vitals].sort((a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime())
+        : []
+    ),
+    [vitals]
+  );
+
+  const filteredVitals = useMemo(() => {
+    return sortedVitals.filter((vital) => {
+      const vitalDate = getLocalDateValue(vital.recordedAt);
+      if (selectedDate && vitalDate !== selectedDate) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [selectedDate, sortedVitals]);
+
+  const highlightedIndex = filteredVitals.findIndex((vital) => vital.id === highlightedVitalId);
+  const effectiveVisibleCount = highlightedIndex >= 0
+    ? Math.max(visibleCount, highlightedIndex + 1)
+    : visibleCount;
+  const visibleVitals = filteredVitals.slice(0, effectiveVisibleCount);
+  const hasMoreVitals = effectiveVisibleCount < filteredVitals.length;
+  const hasDateFilter = Boolean(selectedDate);
 
   useEffect(() => {
-    if (!highlightedVitalId || sortedVitals.length === 0) {
+    if (!highlightedVitalId || filteredVitals.length === 0 || highlightedIndex < 0) {
       return;
     }
 
@@ -59,7 +98,7 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
     }, 150);
 
     return () => window.clearTimeout(timeoutId);
-  }, [highlightedVitalId, sortedVitals.length]);
+  }, [filteredVitals.length, highlightedIndex, highlightedVitalId]);
 
   if (isLoading) {
     return (
@@ -80,22 +119,117 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
     return null;
   }
 
+  const clearDateFilters = () => {
+    setSelectedDate("");
+    setVisibleCount(DEFAULT_VISIBLE_COUNT);
+  };
+
+  const selectedDateLabel = selectedDate
+    ? new DateObject({ date: new Date(selectedDate), calendar: persian, locale: persian_fa }).format("YYYY/MM/DD")
+    : "";
+
   return (
     <PortalCard className="overflow-hidden h-full flex flex-col">
-      <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-        <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
-          <FileText className="text-medical-600" size={20} />
-          تاریخچه علائم حیاتی
-        </h3>
-        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full whitespace-nowrap">
-          {vitals.length} رکورد
-        </span>
+      <div className="sticky top-0 z-10 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
+        <div className="flex flex-col gap-4 p-4 md:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <h3 className="flex items-center gap-2 text-base font-bold text-gray-800 md:text-lg">
+                <FileText className="text-medical-600" size={20} />
+                تاریخچه علائم حیاتی
+              </h3>
+              <p className="mt-1 text-xs text-gray-500">
+                پیش‌فرض فقط ۳ ثبت آخر نمایش داده می‌شود.
+              </p>
+            </div>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="whitespace-nowrap rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-500">
+                {filteredVitals.length} از {vitals.length} رکورد
+              </span>
+              {hasDateFilter && (
+                <span className="rounded-full bg-medical-50 px-2.5 py-1 text-xs text-medical-700">
+                  {selectedDateLabel}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            <PortalButton
+              type="button"
+              variant={isFilterVisible || hasDateFilter ? "secondary" : "outline"}
+              size="md"
+              onClick={() => setIsFilterVisible((current) => !current)}
+              className="w-full justify-between"
+            >
+              <span className="flex items-center gap-2">
+                <Search className="h-4 w-4" />
+                جستجوی علائم حیاتی براساس روز
+              </span>
+              {isFilterVisible ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </PortalButton>
+
+            {isFilterVisible && (
+              <div className="rounded-3xl border border-gray-100 bg-gray-50/80 p-3 sm:p-4">
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_auto]">
+                  <label className="space-y-1">
+                    <span className="flex items-center gap-1 text-xs font-medium text-gray-600">
+                      <Calendar className="h-3.5 w-3.5" />
+                      انتخاب روز
+                    </span>
+                    <DatePicker
+                      value={selectedDate ? new Date(selectedDate) : ""}
+                      onChange={(date: { isValid?: boolean; toDate?: () => Date } | null) => {
+                        if (!date || !date.isValid || !date.toDate) {
+                          setSelectedDate("");
+                          setVisibleCount(DEFAULT_VISIBLE_COUNT);
+                          return;
+                        }
+
+                        setSelectedDate(getLocalDateValue(date.toDate()));
+                        setVisibleCount(DEFAULT_VISIBLE_COUNT);
+                      }}
+                      calendar={persian}
+                      locale={persian_fa}
+                      format="YYYY/MM/DD"
+                      calendarPosition="bottom-right"
+                      inputClass="h-11 w-full rounded-2xl border border-gray-200 bg-white px-3 text-sm text-gray-700 outline-none transition focus:border-medical-400 focus:ring-4 focus:ring-medical-100"
+                      containerClassName="w-full"
+                      placeholder="یک روز را انتخاب کنید"
+                    />
+                  </label>
+
+                  <PortalButton
+                    type="button"
+                    variant="secondary"
+                    size="md"
+                    onClick={clearDateFilters}
+                    disabled={!hasDateFilter}
+                    className="w-full lg:self-end lg:w-auto"
+                  >
+                    پاک کردن فیلتر
+                  </PortalButton>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
+      {filteredVitals.length === 0 && (
+        <div className="p-4 md:p-6">
+          <div className="rounded-3xl border border-dashed border-gray-200 bg-gray-50/80 p-6 text-center">
+            <div className="text-sm font-medium text-gray-700">علائمی برای روز انتخاب‌شده پیدا نشد.</div>
+            <div className="mt-1 text-xs text-gray-500">یک روز دیگر را انتخاب کنید یا فیلتر را پاک کنید.</div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile View (Cards) */}
+      {filteredVitals.length > 0 && (
       <div className="md:hidden divide-y divide-gray-100">
-        {sortedVitals.map((vital, index) => {
-          const alerts = getVitalAlertsForHistory(sortedVitals, index);
+        {visibleVitals.map((vital, index) => {
+          const alerts = getVitalAlertsForHistory(filteredVitals, index);
           const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
           const isHighlighted = highlightedVitalId === vital.id;
           const canAcknowledge = isHighlighted && alerts.length > 0 && !vital.patientAcknowledgedAt;
@@ -203,8 +337,10 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
           </div>
         )})}
       </div>
+      )}
 
       {/* Desktop View (Table) */}
+      {filteredVitals.length > 0 && (
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm text-right">
           <thead className="bg-gray-50 text-gray-500 sticky top-0">
@@ -219,8 +355,8 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {sortedVitals.map((vital, index) => {
-              const alerts = getVitalAlertsForHistory(sortedVitals, index);
+            {visibleVitals.map((vital, index) => {
+              const alerts = getVitalAlertsForHistory(filteredVitals, index);
               const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
               const isHighlighted = highlightedVitalId === vital.id;
               const canAcknowledge = isHighlighted && alerts.length > 0 && !vital.patientAcknowledgedAt;
@@ -323,6 +459,21 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
           </tbody>
         </table>
       </div>
+      )}
+
+      {hasMoreVitals && (
+        <div className="border-t border-gray-100 p-4 md:p-6">
+          <PortalButton
+            type="button"
+            variant="secondary"
+            size="md"
+            onClick={() => setVisibleCount((current) => current + DEFAULT_VISIBLE_COUNT)}
+            className="w-full"
+          >
+            نمایش بیشتر
+          </PortalButton>
+        </div>
+      )}
     </PortalCard>
   );
 }
