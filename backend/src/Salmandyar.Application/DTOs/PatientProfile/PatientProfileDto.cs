@@ -33,6 +33,10 @@ public class PatientProfileDto
     public bool HasPEG { get; set; }
     public bool HasUrinaryCatheter { get; set; }
     public bool HasBedsore { get; set; }
+    public List<string> NeededHomeMedicalEquipment { get; set; } = new();
+    public List<string> AvailableHomeMedicalEquipment { get; set; } = new();
+    public string? OtherNeededHomeMedicalEquipment { get; set; }
+    public string? OtherAvailableHomeMedicalEquipment { get; set; }
     public string? DynamicAnswersJson { get; set; }
     public int CompletionPercentage { get; set; }
     public int CurrentStep { get; set; }

@@ -5,6 +5,7 @@ import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import toast from 'react-hot-toast';
 import { AllergyDto, PatientProfileDto, PatientProfileService, UploadedDocumentDto } from '@/services/patient-profile.service';
+import { useUser } from '@/components/auth/UserContext';
 import { Button } from '@/components/ui/Button';
 import { resolveApiUrl } from '@/lib/network';
 import { ChevronLeft, ChevronRight, Loader2, Save, Upload, X } from 'lucide-react';
@@ -27,6 +28,20 @@ const DOCUMENT_TYPES = [
   { id: 'CT_MRI', label: 'گزارش CT Scan / MRI' },
   { id: 'Prescription', label: 'نسخه پزشک' },
 ] as const;
+const HOME_MEDICAL_EQUIPMENT_OPTIONS = [
+  { id: 'oxygen_concentrator', label: 'اکسیژن‌ساز' },
+  { id: 'oxygen_cylinder', label: 'کپسول اکسیژن' },
+  { id: 'suction_machine', label: 'ساکشن' },
+  { id: 'nebulizer', label: 'نبولایزر' },
+  { id: 'pulse_oximeter', label: 'پالس اکسیمتر' },
+  { id: 'hospital_bed', label: 'تخت بیمارستانی' },
+  { id: 'anti_bedsore_mattress', label: 'تشک مواج' },
+  { id: 'wheelchair', label: 'ویلچر' },
+  { id: 'walker', label: 'واکر' },
+  { id: 'ventilator', label: 'ونتیلاتور' },
+] as const;
+
+type EquipmentFieldName = 'neededHomeMedicalEquipment' | 'availableHomeMedicalEquipment';
 
 const createEmptyAllergy = (): AllergyDto => ({
   allergyType: '',
@@ -54,9 +69,11 @@ const normalizeDateForPicker = (value?: string) => {
 };
 
 export default function ProfileWizardSteps({ currentStep, formData, onNext, onPrev, isSaving, adminUserId }: Props) {
+  const { user } = useUser();
   const [localData, setLocalData] = useState<Partial<PatientProfileDto>>(formData);
   const [hasNoAllergies, setHasNoAllergies] = useState(false);
   const [uploadingDocumentType, setUploadingDocumentType] = useState<string | null>(null);
+  const assessmentSectionTitle = user?.role === 'Patient' ? 'بیمار' : 'سالمند';
 
   useEffect(() => {
     setLocalData(formData);
@@ -95,6 +112,20 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
           ? new Date(selectedDate.valueOf()).toISOString()
           : undefined,
     }));
+  };
+
+  const toggleEquipmentSelection = (fieldName: EquipmentFieldName, itemId: string, checked: boolean) => {
+    setLocalData(prev => {
+      const existingItems = prev[fieldName] ?? [];
+      const nextItems = checked
+        ? Array.from(new Set([...existingItems, itemId]))
+        : existingItems.filter(item => item !== itemId);
+
+      return {
+        ...prev,
+        [fieldName]: nextItems,
+      };
+    });
   };
 
   const visibleAllergies = useMemo(() => {
@@ -540,55 +571,92 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
               </div>
             </div>
 
-            <h3 className="mt-6 border-b border-gray-100 pb-2 text-lg font-semibold text-gray-900 dark:border-gray-700 dark:text-white">تجهیزات پزشکی در منزل / شرایط خاص</h3>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 md:grid-cols-3">
-              {[
-                { name: 'hasHomeOxygen', label: 'اکسیژن در منزل' },
-                { name: 'hasVentilator', label: 'ونتیلاتور' },
-                { name: 'hasTracheostomy', label: 'تراکئوستومی' },
-                { name: 'hasPEG', label: 'لوله تغذیه (PEG)' },
-                { name: 'hasUrinaryCatheter', label: 'سوند ادراری' },
-                { name: 'hasBedsore', label: 'زخم بستر' },
-              ].map((item) => (
-                <label key={item.name} className={checkboxCardClassName}>
-                  <input 
-                    type="checkbox" 
-                    name={item.name} 
-                    checked={(localData as any)[item.name] || false} 
-                    onChange={handleChange} 
-                    className="w-5 h-5 text-blue-600 rounded border-gray-300" 
-                  />
-                  <span className="mr-3 text-gray-700 dark:text-gray-300 font-medium">{item.label}</span>
-                </label>
-              ))}
-            </div>
+            <div className="mt-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
+              <div className="mb-4">
+                <h3 className="border-b border-blue-100 pb-2 text-lg font-semibold text-gray-900 dark:border-blue-900/50 dark:text-white">تجهیزات پزشکی در منزل</h3>
+                <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                  مشخص کنید چه تجهیزاتی در منزل موجود است و چه تجهیزاتی برای ارائه خدمت نیاز دارید.
+                </p>
+              </div>
 
-            {/* Conditional */}
-            {localData.hasHomeOxygen && (
-              <div className="mt-4 animate-in rounded-2xl border border-blue-200 bg-blue-50 p-4 fade-in slide-in-from-top-2 dark:border-blue-800 dark:bg-blue-900/20">
-                <h4 className="text-blue-800 dark:text-blue-300 font-semibold mb-2">جزئیات اکسیژن‌تراپی</h4>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                <div className="space-y-4 rounded-2xl border border-amber-200 bg-white p-4 shadow-sm dark:border-amber-900/60 dark:bg-gray-900/70">
                   <div>
-                    <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">میزان اکسیژن دریافتی (لیتر بر دقیقه)</label>
-                    <input type="number" className={`${inputClassName} border-blue-200`} dir="ltr" />
+                    <h4 className="text-base font-semibold text-amber-700 dark:text-amber-300">تجهیزاتی که لازم دارم</h4>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">موارد مورد نیاز برای خرید، اجاره یا تامین خدمت را انتخاب کنید.</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {HOME_MEDICAL_EQUIPMENT_OPTIONS.map((item) => (
+                      <label key={`needed-${item.id}`} className={checkboxCardClassName}>
+                        <input
+                          type="checkbox"
+                          checked={(localData.neededHomeMedicalEquipment ?? []).includes(item.id)}
+                          onChange={(event) => toggleEquipmentSelection('neededHomeMedicalEquipment', item.id, event.target.checked)}
+                          className="w-5 h-5 text-amber-600 rounded border-gray-300"
+                        />
+                        <span className="mr-3 text-gray-700 dark:text-gray-300 font-medium">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">سایر تجهیزات مورد نیاز</label>
+                    <textarea
+                      name="otherNeededHomeMedicalEquipment"
+                      value={localData.otherNeededHomeMedicalEquipment || ''}
+                      onChange={handleChange}
+                      rows={3}
+                      className={inputClassName}
+                      placeholder="مثلاً دستگاه بای‌پپ، بالابر بیمار، مانیتورینگ خانگی و ..."
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4 rounded-2xl border border-emerald-200 bg-white p-4 shadow-sm dark:border-emerald-900/60 dark:bg-gray-900/70">
+                  <div>
+                    <h4 className="text-base font-semibold text-emerald-700 dark:text-emerald-300">تجهیزاتی که دارم</h4>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">مواردی را انتخاب کنید که اکنون در منزل بیمار موجود است.</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    {HOME_MEDICAL_EQUIPMENT_OPTIONS.map((item) => (
+                      <label key={`available-${item.id}`} className={checkboxCardClassName}>
+                        <input
+                          type="checkbox"
+                          checked={(localData.availableHomeMedicalEquipment ?? []).includes(item.id)}
+                          onChange={(event) => toggleEquipmentSelection('availableHomeMedicalEquipment', item.id, event.target.checked)}
+                          className="w-5 h-5 text-emerald-600 rounded border-gray-300"
+                        />
+                        <span className="mr-3 text-gray-700 dark:text-gray-300 font-medium">{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">سایر تجهیزاتی که در منزل موجود است</label>
+                    <textarea
+                      name="otherAvailableHomeMedicalEquipment"
+                      value={localData.otherAvailableHomeMedicalEquipment || ''}
+                      onChange={handleChange}
+                      rows={3}
+                      className={inputClassName}
+                      placeholder="مثلاً تخت برقی، دستگاه فشارسنج، ساکشن پرتابل و ..."
+                    />
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+
           </div>
         );
       case 7:
         return (
           <div className="animate-in space-y-5 fade-in slide-in-from-right-4 duration-500 sm:space-y-6">
-            <h2 className={sectionTitleClassName}>ارزیابی سالمند (Elderly Assessment)</h2>
+            <h2 className={sectionTitleClassName}>{assessmentSectionTitle}</h2>
             <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">سطح هوشیاری</label>
                 <select name="elderlyAssessment.consciousnessLevel" value={localData.elderlyAssessment?.consciousnessLevel || ''} onChange={handleChange} className={inputClassName}>
                   <option value="">انتخاب کنید</option>
-                  <option value="Alert">کاملاً هوشیار (Alert)</option>
-                  <option value="Lethargic">خواب‌آلوده (Lethargic)</option>
-                  <option value="Stupor">استوپور</option>
+                  <option value="Alert">کاملاً هوشیار</option>
+                  <option value="Lethargic">نیمه هوشیار (خواب‌آلوده)</option>
                   <option value="Coma">کما</option>
                 </select>
               </div>

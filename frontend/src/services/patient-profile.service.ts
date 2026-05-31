@@ -29,6 +29,10 @@ export interface PatientProfileDto {
   hasPEG?: boolean;
   hasUrinaryCatheter?: boolean;
   hasBedsore?: boolean;
+  neededHomeMedicalEquipment?: string[];
+  availableHomeMedicalEquipment?: string[];
+  otherNeededHomeMedicalEquipment?: string;
+  otherAvailableHomeMedicalEquipment?: string;
   dynamicAnswersJson?: string;
   completionPercentage?: number;
   currentStep?: number;

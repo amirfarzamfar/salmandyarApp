@@ -50,6 +50,10 @@ public class UpdatePatientProfileDto
     public bool? HasPEG { get; set; }
     public bool? HasUrinaryCatheter { get; set; }
     public bool? HasBedsore { get; set; }
+    public List<string>? NeededHomeMedicalEquipment { get; set; }
+    public List<string>? AvailableHomeMedicalEquipment { get; set; }
+    public string? OtherNeededHomeMedicalEquipment { get; set; }
+    public string? OtherAvailableHomeMedicalEquipment { get; set; }
 
     // Step 7: Elderly Assessment
     public ElderlyAssessmentDto? ElderlyAssessment { get; set; }

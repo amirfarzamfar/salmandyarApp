@@ -55,8 +55,8 @@ const mobilityStatusLabels: Record<string, string> = {
 
 const consciousnessLabels: Record<string, string> = {
   Alert: 'کاملاً هوشیار',
-  Lethargic: 'خواب‌آلوده',
-  Stupor: 'استوپور',
+  Lethargic: 'نیمه هوشیار (خواب‌آلوده)',
+  Stupor: 'نیمه هوشیار (خواب‌آلوده)',
   Coma: 'کما',
 };
 
@@ -77,12 +77,25 @@ const nutritionLabels: Record<string, string> = {
   Fair: 'متوسط',
   Poor: 'ضعیف',
 };
+const homeMedicalEquipmentLabels: Record<string, string> = {
+  oxygen_concentrator: 'اکسیژن‌ساز',
+  oxygen_cylinder: 'کپسول اکسیژن',
+  suction_machine: 'ساکشن',
+  nebulizer: 'نبولایزر',
+  pulse_oximeter: 'پالس اکسیمتر',
+  hospital_bed: 'تخت بیمارستانی',
+  anti_bedsore_mattress: 'تشک مواج',
+  wheelchair: 'ویلچر',
+  walker: 'واکر',
+  ventilator: 'ونتیلاتور',
+};
 const totalProfileSteps = 8;
 
 export default function PatientProfileTab({ userId }: Props) {
   const { user } = useUser();
   const canEditProfile = ['Admin', 'SuperAdmin', 'Manager', 'Supervisor', 'Nurse'].includes(user?.role || '');
   const isOwnProfile = !!user?.id && userId === user.id;
+  const assessmentSectionTitle = user?.role === 'Patient' ? 'بیمار' : 'سالمند';
 
   const { data: profile, isLoading: loading, error } = useQuery<PatientProfileDto>({
     queryKey: ['patientProfile', isOwnProfile ? 'me' : userId],
@@ -142,6 +155,25 @@ export default function PatientProfileTab({ userId }: Props) {
   const formatEnumLabel = (value: string | undefined, labels: Record<string, string>) => {
     if (!value) return '-';
     return labels[value] ?? value;
+  };
+  const renderEquipmentBadges = (items?: string[], tone: 'amber' | 'emerald' = 'emerald') => {
+    if (!items || items.length === 0) {
+      return <span className="font-medium text-gray-500">-</span>;
+    }
+
+    const badgeClassName = tone === 'amber'
+      ? 'border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100'
+      : 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100';
+
+    return (
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => (
+          <Badge key={`${tone}-${item}`} variant="outline" className={badgeClassName}>
+            {homeMedicalEquipmentLabels[item] ?? item}
+          </Badge>
+        ))}
+      </div>
+    );
   };
   const displayCurrentStep = Math.min(Math.max(profile.currentStep || 1, 1), totalProfileSteps);
 
@@ -319,22 +351,33 @@ export default function PatientProfileTab({ userId }: Props) {
               <span className="text-gray-500">سابقه جراحی:</span>
               <span className="font-medium">{profile.surgeryHistory || '-'}</span>
             </div>
-            
-            <div className="flex flex-wrap gap-2 pt-2">
-              {profile.hasHomeOxygen && <Badge variant="outline" className="border-teal-500 text-teal-700">اکسیژن خانگی</Badge>}
-              {profile.hasVentilator && <Badge variant="outline" className="border-teal-500 text-teal-700">ونتیلاتور</Badge>}
-              {profile.hasTracheostomy && <Badge variant="outline" className="border-teal-500 text-teal-700">تراکئوستومی</Badge>}
-              {profile.hasPEG && <Badge variant="outline" className="border-teal-500 text-teal-700">PEG (تغذیه)</Badge>}
-              {profile.hasUrinaryCatheter && <Badge variant="outline" className="border-teal-500 text-teal-700">سوند ادراری</Badge>}
-              {profile.hasBedsore && <Badge className="bg-red-100 text-red-800 hover:bg-red-200 border-red-200">زخم بستر</Badge>}
+
+            <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/70 p-4 space-y-4">
+              <div>
+                <span className="mb-2 block text-gray-500">تجهیزات مورد نیاز:</span>
+                {renderEquipmentBadges(profile.neededHomeMedicalEquipment, 'amber')}
+              </div>
+              <div className="flex justify-between border-b pb-2 border-gray-100">
+                <span className="text-gray-500">سایر تجهیزات مورد نیاز:</span>
+                <span className="font-medium text-left">{profile.otherNeededHomeMedicalEquipment || '-'}</span>
+              </div>
+              <div>
+                <span className="mb-2 block text-gray-500">تجهیزات موجود در منزل:</span>
+                {renderEquipmentBadges(profile.availableHomeMedicalEquipment, 'emerald')}
+              </div>
+              <div className="flex justify-between border-b pb-2 border-gray-100">
+                <span className="text-gray-500">سایر تجهیزات موجود:</span>
+                <span className="font-medium text-left">{profile.otherAvailableHomeMedicalEquipment || '-'}</span>
+              </div>
             </div>
+
           </div>
         </div>
 
         {/* Elderly Assessment */}
         <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
           <h4 className="text-md font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <BrainCircuit className="w-5 h-5 text-teal-500" /> ارزیابی سالمند
+            <BrainCircuit className="w-5 h-5 text-teal-500" /> {assessmentSectionTitle}
           </h4>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between border-b pb-2 border-gray-50">

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.Common.Interfaces;
@@ -12,10 +14,50 @@ namespace Salmandyar.Infrastructure.Services;
 public class PatientProfileService : IPatientProfileService
 {
     private readonly ApplicationDbContext _context;
+    private static readonly JsonSerializerOptions EquipmentJsonOptions = new(JsonSerializerDefaults.Web);
 
     public PatientProfileService(ApplicationDbContext context)
     {
         _context = context;
+    }
+
+    private static List<string> DeserializeEquipmentList(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new List<string>();
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(json, EquipmentJsonOptions)?
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Select(item => item.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<string>();
+        }
+        catch
+        {
+            return new List<string>();
+        }
+    }
+
+    private static string? SerializeEquipmentList(IEnumerable<string>? values)
+    {
+        var normalizedValues = (values ?? Enumerable.Empty<string>())
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Select(item => item.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return normalizedValues.Count == 0
+            ? null
+            : JsonSerializer.Serialize(normalizedValues, EquipmentJsonOptions);
+    }
+
+    private static string? NormalizeOptionalText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     public async Task<PatientProfileDto?> GetProfileByUserIdAsync(string userId)
@@ -190,6 +232,10 @@ public class PatientProfileService : IPatientProfileService
         if (dto.HasPEG.HasValue) profile.HasPEG = dto.HasPEG.Value;
         if (dto.HasUrinaryCatheter.HasValue) profile.HasUrinaryCatheter = dto.HasUrinaryCatheter.Value;
         if (dto.HasBedsore.HasValue) profile.HasBedsore = dto.HasBedsore.Value;
+        if (dto.NeededHomeMedicalEquipment != null) profile.NeededHomeMedicalEquipmentJson = SerializeEquipmentList(dto.NeededHomeMedicalEquipment);
+        if (dto.AvailableHomeMedicalEquipment != null) profile.AvailableHomeMedicalEquipmentJson = SerializeEquipmentList(dto.AvailableHomeMedicalEquipment);
+        if (dto.OtherNeededHomeMedicalEquipment != null) profile.OtherNeededHomeMedicalEquipment = NormalizeOptionalText(dto.OtherNeededHomeMedicalEquipment);
+        if (dto.OtherAvailableHomeMedicalEquipment != null) profile.OtherAvailableHomeMedicalEquipment = NormalizeOptionalText(dto.OtherAvailableHomeMedicalEquipment);
 
         // Step 7
         if (dto.ElderlyAssessment != null)
@@ -277,6 +323,10 @@ public class PatientProfileService : IPatientProfileService
             HasPEG = profile.HasPEG,
             HasUrinaryCatheter = profile.HasUrinaryCatheter,
             HasBedsore = profile.HasBedsore,
+            NeededHomeMedicalEquipment = DeserializeEquipmentList(profile.NeededHomeMedicalEquipmentJson),
+            AvailableHomeMedicalEquipment = DeserializeEquipmentList(profile.AvailableHomeMedicalEquipmentJson),
+            OtherNeededHomeMedicalEquipment = profile.OtherNeededHomeMedicalEquipment,
+            OtherAvailableHomeMedicalEquipment = profile.OtherAvailableHomeMedicalEquipment,
             DynamicAnswersJson = profile.DynamicAnswersJson,
             CompletionPercentage = profile.CompletionPercentage,
             CurrentStep = profile.CurrentStep,

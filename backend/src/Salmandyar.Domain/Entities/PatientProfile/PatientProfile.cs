@@ -44,6 +44,10 @@ public class PatientProfile
     public bool HasPEG { get; set; }
     public bool HasUrinaryCatheter { get; set; }
     public bool HasBedsore { get; set; }
+    public string? NeededHomeMedicalEquipmentJson { get; set; }
+    public string? AvailableHomeMedicalEquipmentJson { get; set; }
+    public string? OtherNeededHomeMedicalEquipment { get; set; }
+    public string? OtherAvailableHomeMedicalEquipment { get; set; }
 
     // Dynamic Form Answers (JSON) for Conditional Questions
     public string? DynamicAnswersJson { get; set; }
