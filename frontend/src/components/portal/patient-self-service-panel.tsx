@@ -124,7 +124,7 @@ export function PatientSelfServicePanel({
       </section>
 
       {activeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white p-4 md:p-6">
             <button
               type="button"
@@ -135,7 +135,7 @@ export function PatientSelfServicePanel({
             </button>
 
             {activeModal === 'vitals' ? (
-              <VitalSignForm patientId={patientId} onSuccess={handleSuccess} onCancel={closeModal} />
+              <VitalSignForm patientId={patientId} onSuccess={handleSuccess} onCancel={closeModal} showCloseButton={false} />
             ) : (
               <div className="pt-8">
                 <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -162,7 +162,7 @@ export function PatientSelfServicePanel({
       )}
 
       {showMedicationWizard && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <MedicationWizard
             patientId={patientId}
             onSuccess={handleMedicationCreated}

@@ -17,9 +17,10 @@ interface Props {
   expectedTime?: Date;
   onSuccess: () => void;
   onCancel: () => void;
+  showCloseButton?: boolean;
 }
 
-export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCancel }: Props) {
+export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCancel, showCloseButton }: Props) {
   const { register, handleSubmit, watch, setValue, control, formState: { errors, isSubmitting } } = useForm<VitalSignFormData>({
     resolver: zodResolver(vitalSignSchema),
     defaultValues: {
@@ -143,9 +144,11 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
     <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
       <div className="flex justify-between items-center mb-6 border-b pb-4">
         <h3 className="text-lg font-bold text-gray-900">ثبت علائم حیاتی جدید</h3>
-        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
-          <X className="h-6 w-6" />
-        </button>
+        {showCloseButton !== false && (
+          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+            <X className="h-6 w-6" />
+          </button>
+        )}
       </div>
 
       <div className="mb-4 flex justify-end">

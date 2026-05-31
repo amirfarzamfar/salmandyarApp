@@ -20,7 +20,7 @@ export function SmartHeader({ patientName, onAvatarClick }: SmartHeaderProps) {
           : "شب بخیر";
 
   return (
-    <header className="relative z-[60] mb-2 flex items-start justify-between gap-3 py-4 sm:items-center sm:py-6">
+    <header className="relative z-10 mb-2 flex items-start justify-between gap-3 py-4 sm:items-center sm:py-6">
       <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
         <div 
             className="relative group cursor-pointer" 
