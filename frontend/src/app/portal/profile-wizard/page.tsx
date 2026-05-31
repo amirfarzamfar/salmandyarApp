@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PatientProfileService, PatientProfileDto } from '@/services/patient-profile.service';
@@ -15,6 +15,8 @@ function WizardContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const adminUserId = searchParams.get('userId');
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAutoSavedSnapshotRef = useRef<string | null>(null);
   
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<Partial<PatientProfileDto>>({});
@@ -89,6 +91,67 @@ function WizardContent() {
     }
   });
 
+  const draftMutation = useMutation({
+    mutationFn: (data: Partial<PatientProfileDto>) => adminUserId
+      ? PatientProfileService.updateUserProfile(adminUserId, data)
+      : PatientProfileService.updateMyProfile(data),
+  });
+
+  useEffect(() => {
+    if (currentStep !== 6) {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+      lastAutoSavedSnapshotRef.current = null;
+      return;
+    }
+
+    const snapshot = JSON.stringify({
+      needed: formData.neededHomeMedicalEquipment ?? [],
+      available: formData.availableHomeMedicalEquipment ?? [],
+      otherNeeded: formData.otherNeededHomeMedicalEquipment ?? '',
+      otherAvailable: formData.otherAvailableHomeMedicalEquipment ?? '',
+    });
+
+    if (lastAutoSavedSnapshotRef.current === null) {
+      lastAutoSavedSnapshotRef.current = snapshot;
+      return;
+    }
+
+    if (snapshot === lastAutoSavedSnapshotRef.current) return;
+    if (draftMutation.isPending || updateMutation.isPending || completeMutation.isPending) return;
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    autoSaveTimeoutRef.current = setTimeout(async () => {
+      try {
+        await draftMutation.mutateAsync({ ...formData, currentStep });
+        lastAutoSavedSnapshotRef.current = snapshot;
+      } catch {
+        // Silent auto-save failure (explicit saves still show toast via updateMutation)
+      }
+    }, 800);
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+        autoSaveTimeoutRef.current = null;
+      }
+    };
+  }, [
+    currentStep,
+    formData.neededHomeMedicalEquipment,
+    formData.availableHomeMedicalEquipment,
+    formData.otherNeededHomeMedicalEquipment,
+    formData.otherAvailableHomeMedicalEquipment,
+    draftMutation.isPending,
+    updateMutation.isPending,
+    completeMutation.isPending,
+  ]);
+
   const handleNext = async (stepData: Partial<PatientProfileDto>) => {
     const nextStep = clampStep(currentStep + 1);
     const newData = { ...formData, ...stepData, currentStep: nextStep };
@@ -144,6 +207,7 @@ function WizardContent() {
               onPrev={handlePrev}
               isSaving={updateMutation.isPending || completeMutation.isPending}
               adminUserId={adminUserId}
+              onDraftChange={setFormData}
             />
           </div>
         </div>

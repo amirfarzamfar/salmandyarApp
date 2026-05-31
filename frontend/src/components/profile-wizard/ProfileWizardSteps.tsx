@@ -17,6 +17,7 @@ interface Props {
   onPrev: () => void;
   isSaving: boolean;
   adminUserId?: string | null;
+  onDraftChange?: (data: Partial<PatientProfileDto>) => void;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -68,7 +69,7 @@ const normalizeDateForPicker = (value?: string) => {
   ));
 };
 
-export default function ProfileWizardSteps({ currentStep, formData, onNext, onPrev, isSaving, adminUserId }: Props) {
+export default function ProfileWizardSteps({ currentStep, formData, onNext, onPrev, isSaving, adminUserId, onDraftChange }: Props) {
   const { user } = useUser();
   const [localData, setLocalData] = useState<Partial<PatientProfileDto>>(formData);
   const [hasNoAllergies, setHasNoAllergies] = useState(false);
@@ -87,18 +88,32 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
     // Handle nested objects based on name dot notation
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setLocalData(prev => ({
-        ...prev,
-        [parent]: {
-          ...(prev[parent as keyof PatientProfileDto] as any || {}),
-          [child]: type === 'checkbox' ? checked : value
-        }
-      }));
+      setLocalData(prev => {
+        const prevRecord = prev as Record<string, unknown>;
+        const parentValue = prevRecord[parent];
+        const parentObject =
+          typeof parentValue === 'object' && parentValue !== null
+            ? (parentValue as Record<string, unknown>)
+            : {};
+        const next = {
+          ...prev,
+          [parent]: {
+            ...parentObject,
+            [child]: type === 'checkbox' ? checked : value,
+          },
+        };
+        onDraftChange?.(next);
+        return next;
+      });
     } else {
-      setLocalData(prev => ({
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value
-      }));
+      setLocalData(prev => {
+        const next = {
+          ...prev,
+          [name]: type === 'checkbox' ? checked : value,
+        };
+        onDraftChange?.(next);
+        return next;
+      });
     }
   };
 
@@ -121,10 +136,12 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
         ? Array.from(new Set([...existingItems, itemId]))
         : existingItems.filter(item => item !== itemId);
 
-      return {
+      const next = {
         ...prev,
         [fieldName]: nextItems,
       };
+      onDraftChange?.(next);
+      return next;
     });
   };
 
