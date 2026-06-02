@@ -1,5 +1,53 @@
 ﻿<Project>
   <ItemGroup>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_Insurance_48ffa61680ec4067bee83fdd55209384.pdf))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_Insurance_48ffa61680ec4067bee83fdd55209384.pdf</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_Insurance_48ffa61680ec4067bee83fdd55209384.pdf))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_5146dc0fa2704827993517e3576fbc62.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_5146dc0fa2704827993517e3576fbc62.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_5146dc0fa2704827993517e3576fbc62.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_78a9b5a77df84a0c860d1c12e44349fe.png))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_78a9b5a77df84a0c860d1c12e44349fe.png</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_78a9b5a77df84a0c860d1c12e44349fe.png))</OriginalItemSpec>
+    </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png))">
       <SourceType>Package</SourceType>
       <SourceId>Salmandyar.API</SourceId>
@@ -15,6 +63,22 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_fcb8c9b7c79448c2adfa4185778dae69.png))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_fcb8c9b7c79448c2adfa4185778dae69.png</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\patient-profiles\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_fcb8c9b7c79448c2adfa4185778dae69.png))</OriginalItemSpec>
     </StaticWebAsset>
   </ItemGroup>
 </Project>

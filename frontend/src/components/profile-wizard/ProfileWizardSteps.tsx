@@ -20,8 +20,29 @@ interface Props {
   onDraftChange?: (data: Partial<PatientProfileDto>) => void;
 }
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_FILE_TYPES = ['.pdf', '.jpg', '.jpeg', '.png'];
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = [
+  '.pdf',
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.bmp',
+  '.gif',
+  '.webp',
+  '.tif',
+  '.tiff',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+  '.csv',
+  '.txt',
+  '.rtf',
+  '.zip',
+  '.rar',
+  '.7z',
+];
+const ACCEPTED_FILE_TYPES = ALLOWED_FILE_TYPES.join(',');
 const DOCUMENT_TYPES = [
   { id: 'NationalId', label: 'تصویر کارت ملی' },
   { id: 'Insurance', label: 'دفترچه بیمه' },
@@ -204,12 +225,12 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
 
     const fileExtension = `.${file.name.split('.').pop()?.toLowerCase() ?? ''}`;
     if (!ALLOWED_FILE_TYPES.includes(fileExtension)) {
-      toast.error('فقط فایل‌های PDF، JPG و PNG مجاز هستند.');
+      toast.error('این فرمت پشتیبانی نمی‌شود. از فایل‌های رایج تصویری، PDF، آفیس یا آرشیو استفاده کنید.');
       return;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      toast.error('حجم فایل نباید بیشتر از ۵ مگابایت باشد.');
+      toast.error('حجم فایل نباید بیشتر از ۵۰ مگابایت باشد.');
       return;
     }
 
@@ -228,7 +249,7 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
         ],
       }));
 
-      toast.success('فایل با موفقیت بارگذاری شد.');
+      toast.success('فایل با موفقیت بارگذاری و جایگزین مدرک قبلی شد.');
     } catch {
       toast.error('بارگذاری فایل انجام نشد.');
     } finally {
@@ -724,7 +745,7 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
         return (
           <div className="animate-in space-y-5 fade-in slide-in-from-right-4 duration-500 sm:space-y-6">
             <h2 className={sectionTitleClassName}>مدارک و فایل‌ها</h2>
-            <p className="text-gray-600 dark:text-gray-400 mb-4">لطفاً مدارک پزشکی و هویتی خود را جهت بررسی بهتر بارگذاری کنید.</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">لطفاً مدارک پزشکی و هویتی خود را جهت بررسی بهتر بارگذاری کنید. تصاویر به‌صورت هوشمند فشرده می‌شوند و برای هر نوع مدرک فقط یک فایل نگه داشته می‌شود.</p>
             
             <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 md:gap-6">
               {DOCUMENT_TYPES.map(doc => {
@@ -737,11 +758,11 @@ export default function ProfileWizardSteps({ currentStep, formData, onNext, onPr
                     <Upload className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">{doc.label}</h4>
-                  <p className="text-xs text-gray-500 mb-3">PDF, JPG, PNG تا ۵ مگابایت</p>
+                  <p className="text-xs text-gray-500 mb-3">هر مدرک فقط یک فایل. تصاویر با حفظ خوانایی به حدود ۲۰۰KB تا ۱MB و در صورت نیاز تا ۱.۵MB بهینه می‌شوند.</p>
                   <input
                     id={`document-upload-${doc.id}`}
                     type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
+                    accept={ACCEPTED_FILE_TYPES}
                     className="hidden"
                     onChange={(e) => {
                       void handleDocumentSelect(doc.id, e.target.files);

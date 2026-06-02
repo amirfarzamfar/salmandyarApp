@@ -255,7 +255,20 @@ public class PatientProfileService : IPatientProfileService
         {
             foreach (var doc in dto.Documents)
             {
-                if (!profile.Documents.Any(d => d.FileUrl == doc.FileUrl))
+                if (string.IsNullOrWhiteSpace(doc.DocumentType) || string.IsNullOrWhiteSpace(doc.FileUrl))
+                {
+                    continue;
+                }
+
+                var matchingDocuments = profile.Documents
+                    .Where(d => string.Equals(d.DocumentType, doc.DocumentType, StringComparison.OrdinalIgnoreCase))
+                    .OrderByDescending(d => d.UploadDate)
+                    .ThenByDescending(d => d.Id)
+                    .ToList();
+
+                var existingDocument = matchingDocuments.FirstOrDefault();
+
+                if (existingDocument == null)
                 {
                     profile.Documents.Add(new UploadedDocument
                     {
@@ -263,6 +276,17 @@ public class PatientProfileService : IPatientProfileService
                         FileUrl = doc.FileUrl,
                         UploadDate = DateTime.UtcNow
                     });
+                }
+                else if (!string.Equals(existingDocument.FileUrl, doc.FileUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    existingDocument.FileUrl = doc.FileUrl;
+                    existingDocument.UploadDate = DateTime.UtcNow;
+                }
+
+                if (matchingDocuments.Count > 1)
+                {
+                    var duplicates = matchingDocuments.Skip(1).ToList();
+                    _context.UploadedDocuments.RemoveRange(duplicates);
                 }
             }
         }
@@ -383,13 +407,19 @@ public class PatientProfileService : IPatientProfileService
                 AllergyType = a.AllergyType,
                 Description = a.Description
             }).ToList(),
-            Documents = profile.Documents.Select(d => new UploadedDocumentDto
-            {
-                Id = d.Id,
-                DocumentType = d.DocumentType,
-                FileUrl = d.FileUrl,
-                UploadDate = d.UploadDate
-            }).ToList()
+            Documents = profile.Documents
+                .GroupBy(d => d.DocumentType ?? string.Empty, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group
+                    .OrderByDescending(d => d.UploadDate)
+                    .ThenByDescending(d => d.Id)
+                    .First())
+                .Select(d => new UploadedDocumentDto
+                {
+                    Id = d.Id,
+                    DocumentType = d.DocumentType,
+                    FileUrl = d.FileUrl,
+                    UploadDate = d.UploadDate
+                }).ToList()
         };
     }
 }

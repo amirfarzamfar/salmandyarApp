@@ -10,6 +10,7 @@ using Salmandyar.Application.DTOs.PatientProfile;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using Salmandyar.Domain.Constants;
+using Salmandyar.API.Services;
 
 namespace Salmandyar.API.Controllers;
 
@@ -25,14 +26,6 @@ public class PatientProfileController : ControllerBase
         "LabTest",
         "CT_MRI",
         "Prescription"
-    };
-
-    private static readonly HashSet<string> AllowedDocumentExtensions = new(StringComparer.OrdinalIgnoreCase)
-    {
-        ".pdf",
-        ".jpg",
-        ".jpeg",
-        ".png"
     };
 
     private readonly IPatientProfileService _profileService;
@@ -83,6 +76,8 @@ public class PatientProfileController : ControllerBase
     }
 
     [HttpPost("me/documents")]
+    [RequestFormLimits(MultipartBodyLengthLimit = PatientProfileDocumentStorage.MaxUploadBytes)]
+    [RequestSizeLimit(PatientProfileDocumentStorage.MaxUploadBytes)]
     public async Task<ActionResult<UploadedDocumentDto>> UploadMyDocument([FromForm] UploadPatientDocumentFormDto form)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -136,6 +131,8 @@ public class PatientProfileController : ControllerBase
 
     [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     [HttpPost("user/{userId}/documents")]
+    [RequestFormLimits(MultipartBodyLengthLimit = PatientProfileDocumentStorage.MaxUploadBytes)]
+    [RequestSizeLimit(PatientProfileDocumentStorage.MaxUploadBytes)]
     public async Task<ActionResult<UploadedDocumentDto>> UploadUserDocument(string userId, [FromForm] UploadPatientDocumentFormDto form)
     {
         return await UploadDocumentForUserAsync(userId, form);
@@ -149,40 +146,49 @@ public class PatientProfileController : ControllerBase
         if (string.IsNullOrWhiteSpace(form.DocumentType) || !AllowedDocumentTypes.Contains(form.DocumentType))
             return BadRequest("نوع مدرک معتبر نیست.");
 
-        if (form.File.Length > 5 * 1024 * 1024)
-            return BadRequest("حجم فایل نباید بیشتر از ۵ مگابایت باشد.");
+        if (form.File.Length > PatientProfileDocumentStorage.MaxUploadBytes)
+            return BadRequest("حجم فایل نباید بیشتر از ۵۰ مگابایت باشد.");
 
         var extension = Path.GetExtension(form.File.FileName);
-        if (string.IsNullOrWhiteSpace(extension) || !AllowedDocumentExtensions.Contains(extension))
+        if (string.IsNullOrWhiteSpace(extension) || !PatientProfileDocumentStorage.AllowedDocumentExtensions.Contains(extension))
             return BadRequest("فرمت فایل مجاز نیست.");
 
         var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "patient-profiles");
-        if (!Directory.Exists(uploadsFolder))
-        {
-            Directory.CreateDirectory(uploadsFolder);
-        }
+        var safeUserId = PatientProfileDocumentStorage.SanitizeSegment(userId);
+        var safeDocumentType = PatientProfileDocumentStorage.SanitizeSegment(form.DocumentType);
+        var optimizedFile = await PatientProfileDocumentStorage.SaveOptimizedAsync(
+            form.File,
+            uploadsFolder,
+            $"{safeUserId}_{safeDocumentType}_{Guid.NewGuid():N}",
+            HttpContext.RequestAborted);
 
-        var safeDocumentType = form.DocumentType.Replace(" ", "_");
-        var fileName = $"{userId}_{safeDocumentType}_{Guid.NewGuid():N}{extension}";
-        var filePath = Path.Combine(uploadsFolder, fileName);
-
-        await using (var stream = new FileStream(filePath, FileMode.Create))
+        var fileUrl = $"/uploads/patient-profiles/{optimizedFile.FileName}";
+        PatientProfileDto updatedProfile;
+        try
         {
-            await form.File.CopyToAsync(stream);
-        }
-
-        var fileUrl = $"/uploads/patient-profiles/{fileName}";
-        var updatedProfile = await _profileService.UpdateProfileAsync(userId, new UpdatePatientProfileDto
-        {
-            Documents = new List<UploadedDocumentDto>
+            updatedProfile = await _profileService.UpdateProfileAsync(userId, new UpdatePatientProfileDto
             {
-                new UploadedDocumentDto
+                Documents = new List<UploadedDocumentDto>
                 {
-                    DocumentType = form.DocumentType,
-                    FileUrl = fileUrl
+                    new UploadedDocumentDto
+                    {
+                        DocumentType = form.DocumentType,
+                        FileUrl = fileUrl
+                    }
                 }
+            });
+        }
+        catch
+        {
+            if (System.IO.File.Exists(optimizedFile.FilePath))
+            {
+                System.IO.File.Delete(optimizedFile.FilePath);
             }
-        });
+
+            throw;
+        }
+
+        DeletePreviousDocumentFiles(uploadsFolder, $"{safeUserId}_{safeDocumentType}_", optimizedFile.FileName);
 
         var uploadedDocument = updatedProfile.Documents.LastOrDefault(d =>
             string.Equals(d.FileUrl, fileUrl, StringComparison.OrdinalIgnoreCase));
@@ -193,6 +199,24 @@ public class PatientProfileController : ControllerBase
             FileUrl = fileUrl,
             UploadDate = DateTime.UtcNow
         });
+    }
+
+    private static void DeletePreviousDocumentFiles(string uploadsFolder, string fileNamePrefix, string currentFileName)
+    {
+        if (!Directory.Exists(uploadsFolder))
+        {
+            return;
+        }
+
+        foreach (var filePath in Directory.EnumerateFiles(uploadsFolder, $"{fileNamePrefix}*"))
+        {
+            if (string.Equals(Path.GetFileName(filePath), currentFileName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            System.IO.File.Delete(filePath);
+        }
     }
 }
 

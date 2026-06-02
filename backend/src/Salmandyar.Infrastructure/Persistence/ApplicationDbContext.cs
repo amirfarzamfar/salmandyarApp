@@ -515,5 +515,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany(p => p.Documents)
             .HasForeignKey(d => d.PatientProfileId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UploadedDocument>()
+            .HasIndex(d => new { d.PatientProfileId, d.DocumentType })
+            .IsUnique()
+            .HasFilter("[DocumentType] IS NOT NULL");
     }
 }

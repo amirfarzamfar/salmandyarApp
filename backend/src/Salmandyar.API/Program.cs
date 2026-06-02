@@ -6,8 +6,10 @@ using Salmandyar.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using Salmandyar.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +18,10 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = PatientProfileDocumentStorage.MaxUploadBytes;
+});
 builder.Services.AddControllers(options =>
 {
     var provider = options.ModelBindingMessageProvider;

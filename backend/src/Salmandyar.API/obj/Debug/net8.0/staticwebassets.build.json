@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "s5qln3DuJ3aVugoHFGi/54a/JBN1NBxhdyJ03hjmWjY=",
+  "Hash": "jZoiJPRpjRmCkEueQSd1cLI9o5ah8Drj0xETgoHjgLc=",
   "Source": "Salmandyar.API",
   "BasePath": "_content/Salmandyar.API",
   "Mode": "Default",
@@ -16,6 +16,63 @@
     }
   ],
   "Assets": [
+    {
+      "Identity": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_Insurance_48ffa61680ec4067bee83fdd55209384.pdf",
+      "SourceId": "Salmandyar.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\",
+      "BasePath": "_content/Salmandyar.API",
+      "RelativePath": "uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_Insurance_48ffa61680ec4067bee83fdd55209384.pdf",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_Insurance_48ffa61680ec4067bee83fdd55209384.pdf"
+    },
+    {
+      "Identity": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_5146dc0fa2704827993517e3576fbc62.jpg",
+      "SourceId": "Salmandyar.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\",
+      "BasePath": "_content/Salmandyar.API",
+      "RelativePath": "uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_5146dc0fa2704827993517e3576fbc62.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_5146dc0fa2704827993517e3576fbc62.jpg"
+    },
+    {
+      "Identity": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_78a9b5a77df84a0c860d1c12e44349fe.png",
+      "SourceId": "Salmandyar.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\",
+      "BasePath": "_content/Salmandyar.API",
+      "RelativePath": "uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_78a9b5a77df84a0c860d1c12e44349fe.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_78a9b5a77df84a0c860d1c12e44349fe.png"
+    },
     {
       "Identity": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png",
       "SourceId": "Salmandyar.API",
@@ -34,6 +91,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_b2fedde0270a4f5991ea5d41366650ad.png"
+    },
+    {
+      "Identity": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_fcb8c9b7c79448c2adfa4185778dae69.png",
+      "SourceId": "Salmandyar.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\",
+      "BasePath": "_content/Salmandyar.API",
+      "RelativePath": "uploads/patient-profiles/a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_fcb8c9b7c79448c2adfa4185778dae69.png",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_NationalId_fcb8c9b7c79448c2adfa4185778dae69.png"
     }
   ]
 }

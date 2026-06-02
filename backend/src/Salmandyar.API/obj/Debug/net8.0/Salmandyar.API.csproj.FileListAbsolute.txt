@@ -301,3 +301,4 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\ve
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.runtimeconfig.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-api\Salmandyar.API.pdb
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\bin\Debug\net8.0\SixLabors.ImageSharp.dll
