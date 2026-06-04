@@ -161,3 +161,4 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\ve
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-doc-unique\Salmandyar.API.runtimeconfig.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-doc-unique\Salmandyar.API.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-doc-unique\Salmandyar.API.pdb
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\src\Salmandyar.API\bin\Release\net8.0\SixLabors.ImageSharp.dll

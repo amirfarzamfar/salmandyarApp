@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { assessmentService } from '@/services/assessment.service';
 import { userEvaluationService } from '@/services/user-evaluation.service';
@@ -9,7 +9,7 @@ import AssessmentTaker from '@/components/assessments/AssessmentTaker';
 import { ArrowRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 
-export default function NurseAssessmentDetailPage() {
+function NurseAssessmentDetailContent() {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -103,5 +103,13 @@ export default function NurseAssessmentDetailPage() {
         loading={submitting} 
       />
     </div>
+  );
+}
+
+export default function NurseAssessmentDetailPage() {
+  return (
+    <Suspense fallback={null}>
+      <NurseAssessmentDetailContent />
+    </Suspense>
   );
 }

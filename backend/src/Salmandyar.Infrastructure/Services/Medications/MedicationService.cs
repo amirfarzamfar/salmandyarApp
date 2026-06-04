@@ -7,11 +7,13 @@ using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities.Medications;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Infrastructure.Persistence;
+using System.Net.Http.Json;
 
 namespace Salmandyar.Infrastructure.Services.Medications;
 
 public class MedicationService : IMedicationService
 {
+    private static readonly HttpClient DebugHttpClient = new();
     private readonly ApplicationDbContext _context;
     private readonly INotificationService _notificationService;
     private readonly IUserNotificationService _userNotificationService;
@@ -260,7 +262,7 @@ public class MedicationService : IMedicationService
                         await _notificationService.SendSmsAsync(cr.User.PhoneNumber, message);
                     if (!string.IsNullOrEmpty(cr.User.Email))
                         await _notificationService.SendEmailAsync(cr.User.Email, "Low Medication Stock", message);
-                    await _userNotificationService.CreateNotificationAsync(cr.UserId, "هشدار اتمام دارو", message, NotificationType.Alert);
+                    await _userNotificationService.CreateNotificationAsync(cr.UserId, "هشدار اتمام دارو", message, NotificationType.Alert, severity: "Warning");
                 }
 
                 if (med.AlertLowStockNurse && cr.ResponsibleNurse != null && cr.ResponsibleNurseId != null)
@@ -269,7 +271,7 @@ public class MedicationService : IMedicationService
                         await _notificationService.SendSmsAsync(cr.ResponsibleNurse.PhoneNumber, message);
                     if (!string.IsNullOrEmpty(cr.ResponsibleNurse.Email))
                         await _notificationService.SendEmailAsync(cr.ResponsibleNurse.Email, "Low Medication Stock", message);
-                    await _userNotificationService.CreateNotificationAsync(cr.ResponsibleNurseId, "هشدار اتمام دارو", message, NotificationType.Alert);
+                    await _userNotificationService.CreateNotificationAsync(cr.ResponsibleNurseId, "هشدار اتمام دارو", message, NotificationType.Alert, severity: "Warning");
                 }
 
                 if (med.AlertLowStockFamily && cr.FamilyMember != null && cr.FamilyMemberId != null)
@@ -278,7 +280,7 @@ public class MedicationService : IMedicationService
                         await _notificationService.SendSmsAsync(cr.FamilyMember.PhoneNumber, message);
                     if (!string.IsNullOrEmpty(cr.FamilyMember.Email))
                         await _notificationService.SendEmailAsync(cr.FamilyMember.Email, "Low Medication Stock", message);
-                    await _userNotificationService.CreateNotificationAsync(cr.FamilyMemberId, "هشدار اتمام دارو", message, NotificationType.Alert);
+                    await _userNotificationService.CreateNotificationAsync(cr.FamilyMemberId, "هشدار اتمام دارو", message, NotificationType.Alert, severity: "Warning");
                 }
             }
         }
@@ -319,15 +321,22 @@ public class MedicationService : IMedicationService
             var med = dose.PatientMedication;
             var message = $"Reminder: Time to take {med.Name} {med.Dosage} ({med.Route}) at {dose.ScheduledTime:HH:mm}.";
 
-            if (med.NotifyPatient && med.CareRecipient.User != null && !string.IsNullOrEmpty(med.CareRecipient.User.Email))
+            try
             {
-                await _notificationService.SendEmailAsync(med.CareRecipient.User.Email, "Medication Reminder", message);
+                if (med.NotifyPatient && med.CareRecipient.User != null && !string.IsNullOrEmpty(med.CareRecipient.User.Email))
+                {
+                    await _notificationService.SendEmailAsync(med.CareRecipient.User.Email, "Medication Reminder", message);
+                }
+                
+                if (med.NotifyNurse && med.CareRecipient.ResponsibleNurse != null && !string.IsNullOrEmpty(med.CareRecipient.ResponsibleNurse.Email))
+                {
+                    await _notificationService.SendEmailAsync(med.CareRecipient.ResponsibleNurse.Email, "Patient Medication Reminder", 
+                        $"Reminder for patient {med.CareRecipient.FirstName} {med.CareRecipient.LastName}: {message}");
+                }
             }
-            
-            if (med.NotifyNurse && med.CareRecipient.ResponsibleNurse != null && !string.IsNullOrEmpty(med.CareRecipient.ResponsibleNurse.Email))
+            catch
             {
-                await _notificationService.SendEmailAsync(med.CareRecipient.ResponsibleNurse.Email, "Patient Medication Reminder", 
-                    $"Reminder for patient {med.CareRecipient.FirstName} {med.CareRecipient.LastName}: {message}");
+                // Ignore email failure so the background task continues
             }
 
             dose.IsReminderSent = true;
@@ -339,6 +348,14 @@ public class MedicationService : IMedicationService
     public async Task CheckMissedDosesAndEscalateAsync()
     {
         var now = DateTime.UtcNow;
+
+        var staffUserIds = await _context.Users
+            .Join(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u.Id, ur.RoleId })
+            .Join(_context.Roles, x => x.RoleId, r => r.Id, (x, r) => new { x.Id, r.Name })
+            .Where(x => x.Name == Roles.Admin || x.Name == Roles.SuperAdmin || x.Name == Roles.Supervisor || x.Name == Roles.Manager)
+            .Select(x => x.Id)
+            .Distinct()
+            .ToListAsync();
         
         // Find overdue doses that are still 'Scheduled'
         var overdueDoses = await _context.MedicationDoses
@@ -351,21 +368,123 @@ public class MedicationService : IMedicationService
             .Include(d => d.PatientMedication)
                 .ThenInclude(m => m.CareRecipient)
                     .ThenInclude(cr => cr.FamilyMember)
-            .Where(d => d.Status == DoseStatus.Scheduled && d.PatientMedication.EscalationEnabled)
+            .Where(d => d.Status == DoseStatus.Scheduled)
             .ToListAsync();
+
+        // #region debug-point A:overdue-scan
+        await DebugReportAsync("A", "CheckMissedDosesAndEscalateAsync:scan", new
+        {
+            overdueCount = overdueDoses.Count,
+            staffUserCount = staffUserIds.Count,
+            sampleDoseIds = overdueDoses.Take(10).Select(x => x.Id).ToList()
+        });
+        // #endregion
 
         foreach (var dose in overdueDoses)
         {
             var med = dose.PatientMedication;
+            var careRecipient = med.CareRecipient;
             var graceTime = dose.ScheduledTime.AddMinutes(med.GracePeriodMinutes);
+            List<string> recipientIds = [];
+            string title = string.Empty;
+            string message = string.Empty;
+            string link = string.Empty;
+            string severity = string.Empty;
+
+            if (careRecipient != null)
+            {
+                var assignedPrimaryCaregiverIds = await _context.CareAssignments
+                    .Where(a => a.PatientId == careRecipient.Id
+                                && a.Status == AssignmentStatus.Active
+                                && a.IsPrimaryCaregiver
+                                && (!a.EndDate.HasValue || a.EndDate > DateTimeOffset.UtcNow))
+                    .Select(a => a.CaregiverId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var patientName = $"{careRecipient.FirstName} {careRecipient.LastName}".Trim();
+                title = "هشدار عدم ثبت مصرف دارو";
+                message = $"{patientName}: مصرف {med.Name} ساعت {dose.ScheduledTime:HH:mm} ثبت نشده است.";
+                link = $"/dashboard/patients/{careRecipient.Id}?tab=medications&doseId={dose.Id}";
+                severity = med.Criticality >= MedicationCriticality.HighAlert ? "Critical" : "Warning";
+
+                recipientIds = new List<string?>
+                {
+                    careRecipient.UserId,
+                    careRecipient.ResponsibleNurseId
+                }
+                .Concat(assignedPrimaryCaregiverIds)
+                .Concat(staffUserIds)
+                .Concat(med.NotifyFamily ? [careRecipient.FamilyMemberId] : [])
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Select(x => x!)
+                .Distinct()
+                .ToList();
+
+                // #region debug-point E:recipient-resolution
+                await DebugReportAsync("E", "CheckMissedDosesAndEscalateAsync:recipient-resolution", new
+                {
+                    doseId = dose.Id,
+                    medicationId = med.Id,
+                    medicationName = med.Name,
+                    careRecipientId = careRecipient.Id,
+                    careRecipientUserId = careRecipient.UserId,
+                    responsibleNurseId = careRecipient.ResponsibleNurseId,
+                    familyMemberId = careRecipient.FamilyMemberId,
+                    med.NotifyNurse,
+                    med.NotifySupervisor,
+                    med.NotifyFamily,
+                    med.EscalationEnabled,
+                    recipientIds,
+                    severity,
+                    link
+                });
+                // #endregion
+            }
+
+            if (now > graceTime && recipientIds.Count > 0)
+            {
+                var existingRecipientIds = await _context.UserNotifications
+                    .Where(n => n.ReferenceId == dose.Id.ToString() && n.Title == title && recipientIds.Contains(n.UserId))
+                    .Select(n => n.UserId)
+                    .Distinct()
+                    .ToListAsync();
+
+                foreach (var recipientId in recipientIds.Except(existingRecipientIds))
+                {
+                    await _userNotificationService.CreateNotificationAsync(
+                        recipientId,
+                        title,
+                        message,
+                        NotificationType.Alert,
+                        referenceId: dose.Id.ToString(),
+                        link: link,
+                        severity: severity);
+
+                    // #region debug-point A:create-dispatched
+                    await DebugReportAsync("A", "CheckMissedDosesAndEscalateAsync:create-dispatched", new
+                    {
+                        doseId = dose.Id,
+                        recipientId,
+                        title,
+                        severity,
+                        reason = "missing-recipient-backfill"
+                    });
+                    // #endregion
+                }
+            }
 
             // Level 1: Nurse (Immediate after grace period)
             if (now > graceTime && dose.EscalationLevel == DoseEscalationLevel.None)
             {
                 if (med.NotifyNurse && med.CareRecipient.ResponsibleNurse != null && !string.IsNullOrEmpty(med.CareRecipient.ResponsibleNurse.Email))
                 {
-                    var msg = $"MISSED DOSE ALERT: Patient {med.CareRecipient.FirstName} {med.CareRecipient.LastName} missed {med.Name} scheduled at {dose.ScheduledTime:HH:mm}.";
-                    await _notificationService.SendEmailAsync(med.CareRecipient.ResponsibleNurse.Email, "URGENT: Missed Medication", msg);
+                    try
+                    {
+                        var msg = $"MISSED DOSE ALERT: Patient {med.CareRecipient.FirstName} {med.CareRecipient.LastName} missed {med.Name} scheduled at {dose.ScheduledTime:HH:mm}.";
+                        await _notificationService.SendEmailAsync(med.CareRecipient.ResponsibleNurse.Email, "URGENT: Missed Medication", msg);
+                    }
+                    catch { }
                 }
                 
                 dose.EscalationLevel = DoseEscalationLevel.NurseNotified;
@@ -383,13 +502,17 @@ public class MedicationService : IMedicationService
                 });
             }
             // Level 2: Supervisor (30 mins after grace)
-            else if (now > graceTime.AddMinutes(30) && dose.EscalationLevel == DoseEscalationLevel.NurseNotified)
+            else if (med.EscalationEnabled && now > graceTime.AddMinutes(30) && dose.EscalationLevel == DoseEscalationLevel.NurseNotified)
             {
                 if (med.NotifySupervisor)
                 {
-                    // Placeholder for Supervisor Email
-                    await _notificationService.SendEmailAsync("supervisor@hospital.com", "ESCALATION: Missed Medication", 
-                        $"Supervisor Alert: Patient {med.CareRecipient.FirstName} missed {med.Name}. Nurse was notified 30 mins ago.");
+                    try
+                    {
+                        // Placeholder for Supervisor Email
+                        await _notificationService.SendEmailAsync("supervisor@hospital.com", "ESCALATION: Missed Medication", 
+                            $"Supervisor Alert: Patient {med.CareRecipient.FirstName} missed {med.Name}. Nurse was notified 30 mins ago.");
+                    }
+                    catch { }
                 }
 
                 dose.EscalationLevel = DoseEscalationLevel.SupervisorNotified;
@@ -406,12 +529,16 @@ public class MedicationService : IMedicationService
                 });
             }
             // Level 3: Family (60 mins after grace)
-            else if (now > graceTime.AddMinutes(60) && dose.EscalationLevel == DoseEscalationLevel.SupervisorNotified)
+            else if (med.EscalationEnabled && now > graceTime.AddMinutes(60) && dose.EscalationLevel == DoseEscalationLevel.SupervisorNotified)
             {
                 if (med.NotifyFamily && med.CareRecipient.FamilyMember != null && !string.IsNullOrEmpty(med.CareRecipient.FamilyMember.Email))
                 {
-                     await _notificationService.SendEmailAsync(med.CareRecipient.FamilyMember.Email, "Family Alert: Missed Medication", 
-                        $"Alert: {med.CareRecipient.FirstName} has missed their medication {med.Name}. Staff has been alerted.");
+                    try
+                    {
+                        await _notificationService.SendEmailAsync(med.CareRecipient.FamilyMember.Email, "Family Alert: Missed Medication", 
+                            $"Alert: {med.CareRecipient.FirstName} has missed their medication {med.Name}. Staff has been alerted.");
+                    }
+                    catch { }
                 }
 
                 dose.EscalationLevel = DoseEscalationLevel.FamilyNotified;
@@ -432,6 +559,29 @@ public class MedicationService : IMedicationService
         if (overdueDoses.Any()) await _context.SaveChangesAsync();
     }
 
+    // #region debug-point shared:reporter
+    private static async Task DebugReportAsync(string hypothesisId, string msg, object data)
+    {
+        try
+        {
+            await DebugHttpClient.PostAsJsonAsync("http://127.0.0.1:7777/event", new
+            {
+                sessionId = "medication-alert-missing",
+                runId = "pre-fix",
+                hypothesisId,
+                location = "MedicationService",
+                msg = $"[DEBUG] {msg}",
+                data,
+                ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+            });
+        }
+        catch
+        {
+            // Intentionally silent during debugging.
+        }
+    }
+    // #endregion
+
     public async Task GenerateDosesAsync(int medicationId, DateTime from, DateTime to)
     {
         var medication = await _context.PatientMedications.FindAsync(medicationId);
@@ -449,6 +599,7 @@ public class MedicationService : IMedicationService
     private async Task GenerateDosesForMedicationAsync(PatientMedication med, DateTime fromDate, DateTime toDate)
     {
         var times = new List<TimeSpan>();
+        var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tehran");
 
         if (med.FrequencyType == MedicationFrequencyType.Daily)
         {
@@ -485,9 +636,9 @@ public class MedicationService : IMedicationService
 
                  var days = daysPart.Split(',').Select(d => int.TryParse(d, out int day) ? day : -1).ToList();
                  
-                 // Check if current day (fromDate) is in the selected days
-                 // DayOfWeek.Sunday is 0, which matches our frontend convention
-                 int currentDayOfWeek = (int)fromDate.DayOfWeek;
+                 // Get local day of week
+                 var localFromDate = TimeZoneInfo.ConvertTimeFromUtc(fromDate, tz);
+                 int currentDayOfWeek = (int)localFromDate.DayOfWeek;
                  
                  if (days.Contains(currentDayOfWeek))
                  {
@@ -505,7 +656,9 @@ public class MedicationService : IMedicationService
 
         foreach (var time in times)
         {
-            var scheduledTime = fromDate.Date.Add(time);
+            var localDate = TimeZoneInfo.ConvertTimeFromUtc(fromDate, tz).Date;
+            var localScheduledTime = localDate.Add(time);
+            var scheduledTime = TimeZoneInfo.ConvertTimeToUtc(localScheduledTime, tz);
             
             var exists = await _context.MedicationDoses
                 .AnyAsync(d => d.PatientMedicationId == med.Id && d.ScheduledTime == scheduledTime);

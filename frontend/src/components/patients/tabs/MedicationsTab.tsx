@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KardexTimeline } from '@/features/medications/components/kardex/KardexTimeline';
 import { MedicationWizard } from '@/features/medications/components/wizard/MedicationWizard';
 import { PatientMedicationList } from '@/features/medications/components/patient/PatientMedicationList';
@@ -9,12 +9,19 @@ import { cn } from '@/lib/utils';
 
 interface Props {
   patientId: number;
+  highlightedDoseId?: number | null;
 }
 
-export default function MedicationsTab({ patientId }: Props) {
+export default function MedicationsTab({ patientId, highlightedDoseId }: Props) {
   const [activeTab, setActiveTab] = useState<'schedule' | 'list'>('schedule');
   const [showWizard, setShowWizard] = useState(false);
   const { mutateAsync: createMedication } = useCreateMedication();
+
+  useEffect(() => {
+    if (highlightedDoseId) {
+      setActiveTab('schedule');
+    }
+  }, [highlightedDoseId]);
 
   const handleCreate = async (data: MedicationFormData) => {
     await createMedication(data);
@@ -72,7 +79,7 @@ export default function MedicationsTab({ patientId }: Props) {
       {/* Main Content */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1">
         {activeTab === 'schedule' ? (
-            <KardexTimeline patientId={patientId} />
+            <KardexTimeline patientId={patientId} highlightedDoseId={highlightedDoseId ?? null} />
         ) : (
             <div className="p-4">
                 <PatientMedicationList patientId={patientId} />

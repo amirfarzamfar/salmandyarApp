@@ -10,20 +10,29 @@ import { DoseStatus, MedicationDose } from "@/types/medication";
 import { PatientSelfServiceFeatureStatus } from "@/types/patient-self-service";
 import { format } from "date-fns";
 import { toast } from "react-hot-toast";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PatientMedicationList } from "@/features/medications/components/patient/PatientMedicationList";
 import { X } from "lucide-react";
 
 interface MedicationTimelineProps {
   patientId?: number;
   medicationAccess?: PatientSelfServiceFeatureStatus | null;
+  highlightedDoseId?: number | null;
 }
 
-export function MedicationTimeline({ patientId, medicationAccess }: MedicationTimelineProps) {
+export function MedicationTimeline({ patientId, medicationAccess, highlightedDoseId }: MedicationTimelineProps) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const { data: doses, isLoading } = useKardex(patientId ?? 0, today);
   const { mutate: logDose } = useLogDose();
   const [showList, setShowList] = useState(false);
+  const doseRefs = useRef<Record<number, HTMLDivElement | null>>({});
+
+  useEffect(() => {
+    if (!highlightedDoseId) return;
+    const el = doseRefs.current[highlightedDoseId];
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, [highlightedDoseId, doses?.length]);
 
   const handleTakeMed = (doseId: number) => {
     if (medicationAccess && !medicationAccess.canSubmitNow) {
@@ -82,13 +91,19 @@ export function MedicationTimeline({ patientId, medicationAccess }: MedicationTi
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x mandatory scrollbar-hide">
             {doses.map((dose: MedicationDose) => (
-            <PortalCard 
-                key={dose.id} 
-                variant={dose.status === DoseStatus.Taken ? 'calm' : 'default'}
-                className="min-w-[300px] snap-center transition-all duration-500 border-none relative overflow-visible"
-                noPadding
+            <div
+              key={dose.id}
+              ref={(el) => {
+                doseRefs.current[dose.id] = el;
+              }}
+              className={dose.id === highlightedDoseId ? 'rounded-[36px] ring-2 ring-red-400 ring-offset-4 ring-offset-white' : ''}
             >
-                <div className="p-6 h-full flex flex-col">
+              <PortalCard 
+                  variant={dose.status === DoseStatus.Taken ? 'calm' : 'default'}
+                  className="min-w-[300px] snap-center transition-all duration-500 border-none relative overflow-visible"
+                  noPadding
+              >
+                  <div className="p-6 h-full flex flex-col">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
                     <div className={`p-3 rounded-2xl ${dose.status === DoseStatus.Taken ? 'bg-green-100 text-green-600' : 'bg-orange-50 text-orange-500'} transition-colors duration-500`}>
@@ -136,8 +151,9 @@ export function MedicationTimeline({ patientId, medicationAccess }: MedicationTi
                 >
                     {dose.status === DoseStatus.Taken ? 'مصرف شده' : 'تایید مصرف دارو'}
                 </PortalButton>
-                </div>
-            </PortalCard>
+                  </div>
+              </PortalCard>
+            </div>
             ))}
             
             {/* Spacer for scroll */}

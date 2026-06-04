@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import Header from '@/components/dashboard/Header';
 import { DashboardAlert } from '@/components/dashboard/DashboardAlert';
+import { MedicationAlertBanner } from '@/components/portal/medication-alert-banner';
 
 export default function DashboardLayout({
   children,
@@ -19,6 +20,9 @@ export default function DashboardLayout({
         <Header onMenuClick={() => setIsSidebarOpen(true)} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
           <DashboardAlert />
+          <div className="mb-6">
+            <MedicationAlertBanner />
+          </div>
           {children}
         </main>
       </div>

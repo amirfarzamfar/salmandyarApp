@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useKardex, useLogDose } from '../../hooks/useKardex';
 import { AdministrationModal } from './AdministrationModal';
 import { DoseStatus } from '@/types/medication';
@@ -10,9 +10,10 @@ import persian_fa from 'react-date-object/locales/persian_fa';
 
 interface KardexTimelineProps {
   patientId: number;
+  highlightedDoseId?: number | null;
 }
 
-export const KardexTimeline = ({ patientId }: KardexTimelineProps) => {
+export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineProps) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const dateString = format(selectedDate, 'yyyy-MM-dd');
   
@@ -21,6 +22,16 @@ export const KardexTimeline = ({ patientId }: KardexTimelineProps) => {
   
   const [selectedDose, setSelectedDose] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [highlightHandled, setHighlightHandled] = useState(false);
+
+  useEffect(() => {
+    if (!highlightedDoseId || highlightHandled) return;
+    const target = doses?.find((d: any) => d.id === highlightedDoseId);
+    if (!target) return;
+    setSelectedDose(target);
+    setIsModalOpen(true);
+    setHighlightHandled(true);
+  }, [doses, highlightHandled, highlightedDoseId]);
 
   // Group doses by medication
   const groupedDoses = doses?.reduce((acc: any, dose: any) => {
@@ -51,7 +62,7 @@ export const KardexTimeline = ({ patientId }: KardexTimelineProps) => {
       logDose({
         doseId: selectedDose.id,
         status: DoseStatus.Taken,
-        note,
+        notes: note,
         takenAt: new Date().toISOString()
       });
     }
@@ -62,7 +73,7 @@ export const KardexTimeline = ({ patientId }: KardexTimelineProps) => {
       logDose({
         doseId: selectedDose.id,
         status: DoseStatus.Skipped,
-        note: reason,
+        missedReason: reason,
         takenAt: new Date().toISOString()
       });
     }

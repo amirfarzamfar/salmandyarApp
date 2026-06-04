@@ -75,6 +75,7 @@ public static class DependencyInjection
 
         // Notifications
         services.AddScoped<INotificationService, LoggerNotificationService>();
+        services.AddScoped<IRealtimeNotificationDispatcher, NoopRealtimeNotificationDispatcher>();
         services.AddScoped<IUserNotificationService, UserNotificationService>();
 
         // Medications

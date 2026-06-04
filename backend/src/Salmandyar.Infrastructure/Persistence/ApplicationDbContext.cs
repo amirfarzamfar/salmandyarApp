@@ -447,6 +447,16 @@ public class ApplicationDbContext : IdentityDbContext<User>
         builder.Entity<PatientMedication>().ToTable("PatientMedications");
         builder.Entity<MedicationDose>().ToTable("MedicationDoses");
 
+        builder.Entity<MedicationDose>()
+            .Property(d => d.ScheduledTime)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<MedicationDose>()
+            .Property(d => d.TakenAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
         builder.Entity<PatientMedication>()
             .HasOne(m => m.CareRecipient)
             .WithMany()

@@ -18,10 +18,11 @@ export const useLogDose = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ doseId, status, note, takenAt }: { doseId: number, status: number, note?: string, takenAt: string }) => {
+    mutationFn: async ({ doseId, status, notes, missedReason, takenAt }: { doseId: number, status: number, notes?: string, missedReason?: string, takenAt: string }) => {
       const { data } = await api.post(`/medications/doses/${doseId}/log`, {
         status,
-        note,
+        notes,
+        missedReason,
         takenAt
       });
       return data;

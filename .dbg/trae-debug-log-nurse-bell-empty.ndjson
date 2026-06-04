@@ -1,0 +1,20 @@
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576468273}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 26}, "ts": 1780576468309}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576501265}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 4}, "ts": 1780576501279}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576528270}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 26}, "ts": 1780576528283}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576561265}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 4}, "ts": 1780576561281}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576621260}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576621260}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 4}, "ts": 1780576621292}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 26}, "ts": 1780576621305}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576686966}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576686800}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 26}, "ts": 1780576703504}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 4}, "ts": 1780576703706}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576861232}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 4}, "ts": 1780576861332}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1780576906605}
+{"sessionId": "nurse-bell-empty", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:portal", "msg": "[DEBUG] fetchUnreadCount:fail", "data": {"url": "/notifications/unread-count", "error": "Network Error"}, "ts": 1780576909603}

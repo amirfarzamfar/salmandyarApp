@@ -17,7 +17,33 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
+    // #region debug-point A:client-reporter
+    const dbg = (hypothesisId: string, msg: string, data?: Record<string, unknown>) => {
+        fetch('http://127.0.0.1:7777/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sessionId: 'medication-alert-missing',
+                runId: 'pre-fix',
+                hypothesisId,
+                location: `NotificationCenter:${appearance}`,
+                msg: `[DEBUG] ${msg}`,
+                data,
+                ts: Date.now(),
+            }),
+        }).catch(() => undefined);
+    };
+    // #endregion
+
     useEffect(() => {
+        // #region debug-point A:mount
+        dbg('A', 'mount', {
+            path: window.location.pathname,
+            apiBaseUrl: (process.env.NEXT_PUBLIC_API_BASE_URL ?? null),
+            realtimeEnabled: (process.env.NEXT_PUBLIC_ENABLE_REALTIME ?? null),
+            hasToken: Boolean(localStorage.getItem('token') || sessionStorage.getItem('token')),
+        });
+        // #endregion
         fetchUnreadCount();
         const interval = setInterval(fetchUnreadCount, 60000); // Poll every minute
         return () => clearInterval(interval);
@@ -25,6 +51,9 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
 
     useEffect(() => {
         const handleRefresh = () => {
+            // #region debug-point B:refresh-event
+            dbg('B', 'notifications:refresh', { isOpen, path: window.location.pathname });
+            // #endregion
             fetchUnreadCount();
             if (isOpen) fetchNotifications();
         };
@@ -48,9 +77,22 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
 
     const fetchUnreadCount = async () => {
         try {
+            // #region debug-point B:unread-start
+            dbg('B', 'fetchUnreadCount:start', {
+                hasToken: Boolean(localStorage.getItem('token') || sessionStorage.getItem('token')),
+            });
+            // #endregion
             const count = await notificationService.getUnreadCount();
             setUnreadCount(count);
+            // #region debug-point B:unread-success
+            dbg('B', 'fetchUnreadCount:success', { count });
+            // #endregion
         } catch (error) {
+            // #region debug-point B:unread-fail
+            const status = (error as any)?.response?.status;
+            const url = (error as any)?.config?.url;
+            dbg('B', 'fetchUnreadCount:fail', { status, url, error: String((error as any)?.message ?? error) });
+            // #endregion
             console.error('Failed to fetch notification count', error);
         }
     };
@@ -58,9 +100,32 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
     const fetchNotifications = async () => {
         setLoading(true);
         try {
+            // #region debug-point C:list-start
+            dbg('C', 'fetchNotifications:start', {
+                unreadOnly: true,
+                hasToken: Boolean(localStorage.getItem('token') || sessionStorage.getItem('token')),
+            });
+            // #endregion
             const data = await notificationService.getMyNotifications(true);
             setNotifications(data);
+            // #region debug-point C:list-success
+            dbg('C', 'fetchNotifications:success', {
+                count: data.length,
+                items: data.slice(0, 10).map((x) => ({
+                    id: x.id,
+                    title: x.title,
+                    type: x.type,
+                    referenceId: x.referenceId ?? null,
+                    link: x.link ?? null,
+                }))
+            });
+            // #endregion
         } catch (error) {
+            // #region debug-point C:list-fail
+            const status = (error as any)?.response?.status;
+            const url = (error as any)?.config?.url;
+            dbg('C', 'fetchNotifications:fail', { status, url, error: String((error as any)?.message ?? error) });
+            // #endregion
             console.error('Failed to fetch notifications', error);
         } finally {
             setLoading(false);
@@ -68,6 +133,9 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
     };
 
     const toggleDropdown = () => {
+        // #region debug-point A:toggle
+        dbg('A', 'toggleDropdown', { nextIsOpen: !isOpen, unreadCount });
+        // #endregion
         if (!isOpen) {
             fetchNotifications();
         }
@@ -80,9 +148,19 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
         && notification.title.includes('علائم حیاتی')
         && Boolean(notification.referenceId);
 
+    const isPortalMedicationAlert = (notification: UserNotification) =>
+        appearance === 'portal'
+        && notification.type === NotificationType.Alert
+        && (notification.title.includes('دارو') || notification.title.includes('کاردکس'))
+        && Boolean(notification.referenceId);
+
     const getNotificationLink = (notification: UserNotification) => {
         if (isPortalVitalAlert(notification)) {
             return `/portal?vitalId=${notification.referenceId}`;
+        }
+
+        if (isPortalMedicationAlert(notification)) {
+            return `/portal?doseId=${notification.referenceId}`;
         }
 
         return notification.link;

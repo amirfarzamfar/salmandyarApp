@@ -20,20 +20,17 @@ public class PatientsController : ControllerBase
 {
     private readonly IPatientService _patientService;
     private readonly IHubContext<ServiceHub> _hubContext;
-    private readonly IHubContext<NotificationHub> _notificationHub;
     private readonly IUserNotificationService _userNotifications;
     private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
 
     public PatientsController(
         IPatientService patientService,
         IHubContext<ServiceHub> hubContext,
-        IHubContext<NotificationHub> notificationHub,
         IUserNotificationService userNotifications,
         IPatientSelfServiceAccessService patientSelfServiceAccessService)
     {
         _patientService = patientService;
         _hubContext = hubContext;
-        _notificationHub = notificationHub;
         _userNotifications = userNotifications;
         _patientSelfServiceAccessService = patientSelfServiceAccessService;
     }
@@ -135,18 +132,9 @@ public class PatientsController : ControllerBase
                     message,
                     NotificationType.Alert,
                     referenceId: result.VitalSignId.ToString(),
-                    link: link
+                    link: link,
+                    severity: severity.ToString()
                 );
-
-                await _notificationHub.Clients.Group($"User_{recipientId}").SendAsync("ReceiveNotification", new
-                {
-                    title,
-                    message,
-                    link,
-                    severity = severity.ToString(),
-                    patientId = result.CareRecipientId,
-                    vitalSignId = result.VitalSignId
-                });
             }
         }
         return Ok(result);
