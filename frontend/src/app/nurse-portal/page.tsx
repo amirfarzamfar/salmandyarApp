@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { PortalCard } from "@/components/portal/ui/portal-card";
-import { Search, User, ChevronLeft, MapPin, Activity, Heart, Calendar, Loader2, AlertCircle, Bell, Filter, Plus, FileText, Phone, Clock, Check } from "lucide-react";
+import { Search, User, ChevronLeft, MapPin, Activity, Heart, Calendar, Loader2, AlertCircle, Filter, Plus, FileText, Phone, Clock, Check } from "lucide-react";
 import Link from "next/link";
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { PatientList } from "@/types/patient";
@@ -92,10 +92,6 @@ export default function NursePortalPage() {
         </div>
         <div className="flex gap-3 items-center">
           <ThemeToggle />
-          <button className="relative w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-soft-sm flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-medical-600 dark:hover:text-medical-400 transition-colors">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-3 right-3 w-2 h-2 rounded-full bg-rose-500 border-2 border-white dark:border-gray-800" />
-          </button>
           <div 
             onClick={() => user && setIsProfileModalOpen(true)}
             className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-medical-500 to-medical-600 flex items-center justify-center text-white font-black shadow-glow-medical cursor-pointer hover:scale-105 transition-transform"

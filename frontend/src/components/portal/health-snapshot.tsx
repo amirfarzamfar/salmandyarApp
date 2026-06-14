@@ -163,7 +163,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 mb-8">
+      <div className="space-y-4 mb-8 relative z-1">
         <div className="flex items-center justify-between px-2">
           <div className="h-6 w-32 bg-gray-200 rounded animate-pulse"></div>
           <div className="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
@@ -178,7 +178,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
   }
 
   return (
-    <div className="space-y-4 mb-8">
+    <div className="space-y-4 mb-8 relative z-1">
       <div className="flex items-center justify-between px-2">
         <h2 className="text-base md:text-lg font-bold text-gray-800">وضعیت سلامت شما</h2>
         <div className="flex items-center gap-1 text-[10px] md:text-xs text-gray-400">

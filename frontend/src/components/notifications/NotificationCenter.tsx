@@ -202,15 +202,15 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
         : 'relative p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-full transition-colors';
 
     const dropdownClassName = appearance === 'portal'
-        ? 'fixed inset-x-4 top-24 z-[80] max-h-[70vh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-h-96 sm:inset-x-auto'
-        : 'absolute left-0 mt-2 w-[min(92vw,24rem)] sm:w-96 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-50 overflow-hidden';
+        ? 'fixed inset-x-4 top-24 z-[95] max-h-[70vh] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 sm:max-h-96 sm:inset-x-auto'
+        : 'absolute left-0 mt-2 w-[min(92vw,24rem)] sm:w-96 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl z-[95] overflow-hidden';
 
     const headerClassName = appearance === 'portal'
-        ? 'p-3 border-b border-gray-100 bg-gray-50/80 flex justify-between items-center'
+        ? 'p-3 border-b border-gray-100 bg-white flex justify-between items-center'
         : 'p-3 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center';
 
     return (
-        <div className={`relative ${appearance === 'portal' ? 'z-[80]' : ''}`} ref={dropdownRef}>
+        <div className={`relative ${appearance === 'portal' ? 'z-[95]' : ''}`} ref={dropdownRef}>
             <button
                 onClick={toggleDropdown}
                 className={triggerClassName}
