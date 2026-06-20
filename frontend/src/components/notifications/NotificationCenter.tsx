@@ -107,7 +107,7 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
             });
             // #endregion
             const data = await notificationService.getMyNotifications(true);
-            setNotifications(data);
+            setNotifications(dedupeNotifications(data));
             // #region debug-point C:list-success
             dbg('C', 'fetchNotifications:success', {
                 count: data.length,
@@ -171,7 +171,7 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
         try {
             await notificationService.markAsRead(notificationId);
             setNotifications(prev => prev.filter(n => n.id !== notificationId));
-            setUnreadCount(prev => Math.max(0, prev - 1));
+            void fetchUnreadCount();
         } catch (error) {
             console.error('Failed to mark as read', error);
         }
@@ -292,4 +292,20 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
             )}
         </div>
     );
+}
+
+function dedupeNotifications(items: UserNotification[]) {
+    const grouped = new Map<string, UserNotification>();
+
+    for (const item of items) {
+        const isLowStock = item.title.includes('موجودی دارو');
+        const key = isLowStock ? `${item.referenceId ?? item.id}|${item.title}` : `${item.id}`;
+        const existing = grouped.get(key);
+
+        if (!existing || new Date(item.createdAt).getTime() > new Date(existing.createdAt).getTime()) {
+            grouped.set(key, item);
+        }
+    }
+
+    return Array.from(grouped.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }

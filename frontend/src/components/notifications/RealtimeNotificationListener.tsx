@@ -126,6 +126,7 @@ export function RealtimeNotificationListener() {
         && payload?.title?.includes('علائم حیاتی');
       const isMedicationAlert = payload?.type === NotificationType.Alert
         && Boolean(payload?.referenceId)
+        && !payload?.title?.includes('موجودی')
         && (payload?.title?.includes('دارو') || payload?.title?.includes('کاردکس') || payload?.title?.includes('هشدار عدم ثبت مصرف دارو'));
       
       const resolvedLink = isPortalRoute && isVitalAlert

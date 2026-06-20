@@ -835,6 +835,7 @@ public class MedicationService : IMedicationService
             {
                 medication.IsLowStockAlertActive = false;
                 medication.LowStockAlertActivatedAt = null;
+                await ClearLowStockNotificationsAsync(medication);
             }
 
             return;
@@ -898,6 +899,17 @@ public class MedicationService : IMedicationService
     {
         try
         {
+            var hasUnreadDuplicate = await _context.UserNotifications.AnyAsync(n =>
+                n.UserId == recipient.UserId &&
+                !n.IsRead &&
+                n.ReferenceId == medication.Id.ToString() &&
+                n.Title == title);
+
+            if (hasUnreadDuplicate)
+            {
+                return;
+            }
+
             await _userNotificationService.CreateNotificationAsync(
                 recipient.UserId!,
                 title,
@@ -912,6 +924,21 @@ public class MedicationService : IMedicationService
         catch (Exception ex)
         {
             AddAlertHistory(medication, recipient, MedicationAlertChannel.InApp, message, MedicationAlertHistoryStatus.Failed, ex.Message);
+        }
+    }
+
+    private async Task ClearLowStockNotificationsAsync(PatientMedication medication)
+    {
+        var notifications = await _context.UserNotifications
+            .Where(n =>
+                n.ReferenceId == medication.Id.ToString() &&
+                !n.IsRead &&
+                (n.Title == "هشدار کمبود موجودی دارو" || n.Title == "هشدار اتمام موجودی دارو"))
+            .ToListAsync();
+
+        foreach (var notification in notifications)
+        {
+            notification.IsRead = true;
         }
     }
 

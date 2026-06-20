@@ -334,3 +334,11 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\ve
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-fix-2\Salmandyar.API.runtimeconfig.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-fix-2\Salmandyar.API.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-fix-2\Salmandyar.API.pdb
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\appsettings.Development.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\appsettings.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.API.staticwebassets.runtime.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.API.exe
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.API.deps.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.API.runtimeconfig.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.API.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.API.pdb

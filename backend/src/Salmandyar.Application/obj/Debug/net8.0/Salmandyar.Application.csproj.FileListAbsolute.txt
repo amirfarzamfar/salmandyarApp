@@ -45,3 +45,6 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\ve
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-fix-2\Salmandyar.Application.deps.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-fix-2\Salmandyar.Application.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-fix-2\Salmandyar.Application.pdb
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.Application.deps.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.Application.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.Application.pdb

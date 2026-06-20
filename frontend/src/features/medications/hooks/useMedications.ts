@@ -87,6 +87,9 @@ export const useUpdateMedicationInventory = () => {
       queryClient.invalidateQueries({ queryKey: ['kardex'] });
       queryClient.invalidateQueries({ queryKey: ['medication-inventory-transactions', updatedMedication.id] });
       queryClient.invalidateQueries({ queryKey: ['medication-alert-history', updatedMedication.id] });
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('notifications:refresh'));
+      }
     },
   });
 };

@@ -126,15 +126,44 @@ public class UserNotificationService : IUserNotificationService
 
         if (notification != null && !notification.IsRead)
         {
-            notification.IsRead = true;
+            if (IsLowStockNotification(notification))
+            {
+                var duplicates = await _context.UserNotifications
+                    .Where(n =>
+                        n.UserId == userId &&
+                        !n.IsRead &&
+                        n.ReferenceId == notification.ReferenceId &&
+                        n.Title == notification.Title)
+                    .ToListAsync();
+
+                foreach (var item in duplicates)
+                {
+                    item.IsRead = true;
+                }
+            }
+            else
+            {
+                notification.IsRead = true;
+            }
+
             await _context.SaveChangesAsync();
         }
     }
 
     public async Task<int> GetUnreadCountAsync(string userId)
     {
-        var count = await _context.UserNotifications
-            .CountAsync(n => n.UserId == userId && !n.IsRead);
+        var notifications = await _context.UserNotifications
+            .Where(n => n.UserId == userId && !n.IsRead)
+            .Select(n => new { n.Id, n.Title, n.ReferenceId })
+            .ToListAsync();
+
+        var lowStockCount = notifications
+            .Where(n => IsLowStockTitle(n.Title))
+            .GroupBy(n => $"{n.ReferenceId}|{n.Title}")
+            .Count();
+
+        var regularCount = notifications.Count(n => !IsLowStockTitle(n.Title));
+        var count = regularCount + lowStockCount;
 
         // #region debug-point B:count-result
         await DebugReportAsync("B", "GetUnreadCountAsync:result", new
@@ -145,6 +174,16 @@ public class UserNotificationService : IUserNotificationService
         // #endregion
 
         return count;
+    }
+
+    private static bool IsLowStockNotification(UserNotification notification)
+    {
+        return IsLowStockTitle(notification.Title);
+    }
+
+    private static bool IsLowStockTitle(string? title)
+    {
+        return !string.IsNullOrWhiteSpace(title) && title.Contains("موجودی دارو", StringComparison.Ordinal);
     }
 
     // #region debug-point shared:reporter
