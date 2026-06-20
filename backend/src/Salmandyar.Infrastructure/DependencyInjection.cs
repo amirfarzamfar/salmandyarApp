@@ -58,6 +58,7 @@ public static class DependencyInjection
 
         // Settings
         services.AddScoped<INotificationSettingsService, NotificationSettingsService>();
+        services.AddScoped<IMedicationAlertSettingsService, MedicationAlertSettingsService>();
 
         // Assignments
         services.AddScoped<ICareAssignmentService, CareAssignmentService>();

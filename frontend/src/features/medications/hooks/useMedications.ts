@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
 import { MedicationFormData } from '../types';
+import { medicationService } from '@/services/medication.service';
+import { UpdateMedicationInventoryDto } from '@/types/medication';
 
 export const useMedications = (patientId: number) => {
   return useQuery({
@@ -53,6 +55,38 @@ export const useDeleteMedication = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['medications'] });
       queryClient.invalidateQueries({ queryKey: ['kardex'] });
+    },
+  });
+};
+
+export const useMedicationInventoryTransactions = (medicationId?: number) => {
+  return useQuery({
+    queryKey: ['medication-inventory-transactions', medicationId],
+    queryFn: async () => medicationService.getInventoryTransactions(medicationId!),
+    enabled: !!medicationId,
+  });
+};
+
+export const useMedicationAlertHistory = (medicationId?: number) => {
+  return useQuery({
+    queryKey: ['medication-alert-history', medicationId],
+    queryFn: async () => medicationService.getAlertHistory(medicationId!),
+    enabled: !!medicationId,
+  });
+};
+
+export const useUpdateMedicationInventory = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: UpdateMedicationInventoryDto }) => {
+      return medicationService.updateInventory(id, data);
+    },
+    onSuccess: (updatedMedication) => {
+      queryClient.invalidateQueries({ queryKey: ['medications'] });
+      queryClient.invalidateQueries({ queryKey: ['kardex'] });
+      queryClient.invalidateQueries({ queryKey: ['medication-inventory-transactions', updatedMedication.id] });
+      queryClient.invalidateQueries({ queryKey: ['medication-alert-history', updatedMedication.id] });
     },
   });
 };

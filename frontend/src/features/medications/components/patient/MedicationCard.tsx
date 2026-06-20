@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, Pill, Clock, AlertTriangle, Info, Edit2, Trash2 } from 'lucide-react';
+import { ChevronDown, ChevronUp, Pill, Clock, AlertTriangle, Info, Edit2, Trash2, Boxes } from 'lucide-react';
 import { format } from 'date-fns';
+import { Medication } from '@/types/medication';
+import { StockStatusBadge } from '../shared/StockStatusBadge';
 
 interface MedicationCardProps {
-  medication: any;
-  onEdit?: (medication: any) => void;
+  medication: Medication;
+  onEdit?: (medication: Medication) => void;
   onDelete?: (id: number) => void;
+  onManageInventory?: (medication: Medication) => void;
 }
 
-export const MedicationCard = ({ medication, onEdit, onDelete }: MedicationCardProps) => {
+export const MedicationCard = ({ medication, onEdit, onDelete, onManageInventory }: MedicationCardProps) => {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -24,6 +27,9 @@ export const MedicationCard = ({ medication, onEdit, onDelete }: MedicationCardP
           <div>
             <h3 className="font-bold text-gray-800 text-lg">{medication.name}</h3>
             <p className="text-sm text-gray-500 font-medium">{medication.dosage} - {medication.route}</p>
+            <div className="mt-2">
+              <StockStatusBadge medication={medication} compact />
+            </div>
           </div>
         </div>
         
@@ -46,6 +52,15 @@ export const MedicationCard = ({ medication, onEdit, onDelete }: MedicationCardP
                     <Trash2 className="w-5 h-5" />
                 </button>
             )}
+            {onManageInventory && (
+                <button
+                    onClick={(e) => { e.stopPropagation(); onManageInventory(medication); }}
+                    className="p-2 text-teal-600 hover:bg-teal-50 rounded-full transition-colors active:scale-95"
+                    title="مدیریت موجودی"
+                >
+                    <Boxes className="w-5 h-5" />
+                </button>
+            )}
             <button className="text-gray-400 p-2">
                 {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
             </button>
@@ -60,6 +75,19 @@ export const MedicationCard = ({ medication, onEdit, onDelete }: MedicationCardP
               <div>
                 <span className="text-sm font-semibold text-gray-700 block">زمان‌بندی:</span>
                 <p className="text-sm text-gray-600">{medication.frequencyType === 0 ? 'روزانه' : '...'} - {medication.frequencyDetail}</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Boxes className="w-4 h-4 text-teal-600 mt-1" />
+              <div>
+                <span className="text-sm font-semibold text-gray-700 block">وضعیت موجودی:</span>
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <StockStatusBadge medication={medication} />
+                  <span className="text-xs text-gray-500">
+                    کسر هر دوز: {medication.doseQuantity}
+                  </span>
+                </div>
               </div>
             </div>
 

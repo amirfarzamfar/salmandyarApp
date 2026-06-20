@@ -154,6 +154,64 @@ public class MedicationsController : ControllerBase
         }
     }
 
+    [HttpDelete("doses/{doseId}/log")]
+    public async Task<IActionResult> ResetDose(int doseId)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        try
+        {
+            await _medicationService.ResetDoseAsync(doseId, userId);
+            return NoContent();
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
+
+    [HttpGet("{id}/inventory-transactions")]
+    public async Task<ActionResult<List<MedicationInventoryTransactionDto>>> GetInventoryTransactions(int id)
+    {
+        return Ok(await _medicationService.GetInventoryTransactionsAsync(id));
+    }
+
+    [HttpGet("{id}/alert-history")]
+    public async Task<ActionResult<List<MedicationAlertHistoryDto>>> GetAlertHistory(int id)
+    {
+        return Ok(await _medicationService.GetAlertHistoriesAsync(id));
+    }
+
+    [HttpPost("{id}/inventory")]
+    public async Task<ActionResult<MedicationDto>> UpdateInventory(int id, [FromBody] UpdateMedicationInventoryDto dto)
+    {
+        if (User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily))
+        {
+            return Forbid();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        try
+        {
+            return Ok(await _medicationService.UpdateInventoryAsync(id, dto, userId));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPost("doses/{doseId}/log-with-evidence")]
     public async Task<IActionResult> LogDoseWithEvidence(int doseId, [FromForm] RecordDoseFormDto form)
     {

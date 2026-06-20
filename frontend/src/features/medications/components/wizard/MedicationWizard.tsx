@@ -46,9 +46,16 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
       notifyFamily: false,
       totalQuantity: 0,
       alertLimit: 0,
+      doseQuantity: 1,
+      alertLowStockInAppEnabled: true,
+      alertLowStockSmsEnabled: false,
+      alertLowStockEmailEnabled: false,
       alertLowStockPatient: false,
       alertLowStockNurse: false,
       alertLowStockFamily: false,
+      alertLowStockAdmin: false,
+      alertLowStockCustomPhone: '',
+      alertLowStockCustomEmail: '',
       ...initialData // Override defaults with initialData if present
     },
     mode: 'onChange' // Validate on change for better UX
@@ -98,7 +105,7 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
   const isLastStep = currentStep === STEPS.length;
 
   return (
-    <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col h-[85vh] md:h-auto">
+    <div className="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
       {/* Header */}
       <div className="bg-gradient-to-l from-teal-600 to-teal-700 p-6 text-white flex justify-between items-center">
         <div>
@@ -121,7 +128,7 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto p-6 md:p-8">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
         <FormProvider {...methods}>
           {/* Prevent default form submission on enter key, except on last step if needed */}
           <form 
@@ -141,12 +148,12 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t bg-gray-50 flex justify-between items-center">
+      <div className="flex flex-col-reverse gap-3 border-t bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <button
           type="button"
           onClick={handleBack}
           disabled={currentStep === 1}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-gray-600 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="flex w-full items-center justify-center gap-2 rounded-xl px-6 py-2.5 font-medium text-gray-600 transition-all hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           <ChevronRight className="w-5 h-5" /> {/* RTL: Right is Back */}
           بازگشت
@@ -157,7 +164,7 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
             type="button"
             onClick={methods.handleSubmit(onFormSubmit)}
             disabled={isSubmitting || !methods.formState.isValid}
-            className="flex items-center gap-2 px-8 py-2.5 bg-teal-600 text-white rounded-xl font-bold shadow-lg shadow-teal-200 hover:bg-teal-700 hover:shadow-xl hover:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 font-bold text-white shadow-lg shadow-teal-200 transition-all hover:-translate-y-0.5 hover:bg-teal-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
           >
             {isSubmitting ? (
               <span className="flex items-center gap-2">
@@ -175,7 +182,7 @@ export const MedicationWizard = ({ patientId, initialData, onSuccess, onCancel, 
           <button
             type="button"
             onClick={handleNext}
-            className="flex items-center gap-2 px-8 py-2.5 bg-teal-600 text-white rounded-xl font-bold shadow-lg shadow-teal-200 hover:bg-teal-700 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-600 px-8 py-2.5 font-bold text-white shadow-lg shadow-teal-200 transition-all hover:-translate-y-0.5 hover:bg-teal-700 hover:shadow-xl sm:w-auto"
           >
             مرحله بعد
             <ChevronLeft className="w-5 h-5" /> {/* RTL: Left is Next */}

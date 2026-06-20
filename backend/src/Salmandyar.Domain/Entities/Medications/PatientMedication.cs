@@ -36,13 +36,24 @@ public class PatientMedication
 
     public int TotalQuantity { get; set; }
     public int AlertLimit { get; set; }
+    public int DoseQuantity { get; set; } = 1;
+    public bool AlertLowStockInAppEnabled { get; set; } = true;
+    public bool AlertLowStockSmsEnabled { get; set; }
+    public bool AlertLowStockEmailEnabled { get; set; }
     public bool AlertLowStockPatient { get; set; }
     public bool AlertLowStockNurse { get; set; }
     public bool AlertLowStockFamily { get; set; }
+    public bool AlertLowStockAdmin { get; set; }
+    public string? AlertLowStockCustomPhone { get; set; }
+    public string? AlertLowStockCustomEmail { get; set; }
+    public bool IsLowStockAlertActive { get; set; }
+    public DateTime? LowStockAlertActivatedAt { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public string? CreatedByUserId { get; set; }
 
     public virtual ICollection<MedicationDose> Doses { get; set; } = new List<MedicationDose>();
+    public virtual ICollection<MedicationInventoryTransaction> InventoryTransactions { get; set; } = new List<MedicationInventoryTransaction>();
+    public virtual ICollection<MedicationAlertHistory> AlertHistories { get; set; } = new List<MedicationAlertHistory>();
 }

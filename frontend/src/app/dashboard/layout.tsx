@@ -5,6 +5,7 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import Header from '@/components/dashboard/Header';
 import { DashboardAlert } from '@/components/dashboard/DashboardAlert';
 import { MedicationAlertBanner } from '@/components/portal/medication-alert-banner';
+import { LowStockNotificationBanner } from '@/components/notifications/LowStockNotificationBanner';
 
 export default function DashboardLayout({
   children,
@@ -22,6 +23,9 @@ export default function DashboardLayout({
           <DashboardAlert />
           <div className="mb-6">
             <MedicationAlertBanner />
+          </div>
+          <div className="mb-6">
+            <LowStockNotificationBanner />
           </div>
           {children}
         </main>

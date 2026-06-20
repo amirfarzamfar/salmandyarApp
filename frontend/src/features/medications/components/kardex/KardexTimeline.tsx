@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useKardex, useLogDose } from '../../hooks/useKardex';
+import { useKardex, useLogDose, useResetDoseLog } from '../../hooks/useKardex';
 import { AdministrationModal } from './AdministrationModal';
 import { DoseStatus } from '@/types/medication';
 import { format, parseISO } from 'date-fns';
@@ -7,6 +7,7 @@ import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from 'lu
 import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
+import { StockStatusBadge } from '../shared/StockStatusBadge';
 
 interface KardexTimelineProps {
   patientId: number;
@@ -19,6 +20,7 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
   
   const { data: doses, isLoading } = useKardex(patientId, dateString);
   const { mutate: logDose } = useLogDose();
+  const { mutate: resetDoseLog } = useResetDoseLog();
   
   const [selectedDose, setSelectedDose] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,6 +44,11 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
         name: dose.medicationName,
         dosage: dose.dosage,
         route: dose.route,
+        totalQuantity: dose.currentQuantity,
+        alertLimit: dose.alertLimit,
+        stockStatus: dose.stockStatus,
+        stockStatusLabel: dose.stockStatusLabel,
+        doseQuantity: dose.doseQuantity,
         doses: []
       };
     }
@@ -76,6 +83,12 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
         missedReason: reason,
         takenAt: new Date().toISOString()
       });
+    }
+  };
+
+  const handleReset = () => {
+    if (selectedDose) {
+      resetDoseLog(selectedDose.id);
     }
   };
 
@@ -154,6 +167,9 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
                           <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{med.route}</span>
                           <span>{med.dosage}</span>
                         </div>
+                        <div className="mt-2">
+                          <StockStatusBadge medication={med} compact />
+                        </div>
                      </div>
                      <div className="flex-1 flex relative">
                         {hours.map(h => {
@@ -200,6 +216,7 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
         dose={selectedDose}
         onAdminister={handleAdminister}
         onSkip={handleSkip}
+        onReset={handleReset}
       />
     </div>
   );

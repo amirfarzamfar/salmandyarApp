@@ -85,7 +85,7 @@ export const Step1_DrugInfo = () => {
 
       <div className="space-y-4">
         <h4 className="font-semibold text-gray-800">موجودی و هشدار اتمام دارو</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">تعداد کل دارو (موجود)</label>
             <input
@@ -120,7 +120,26 @@ export const Step1_DrugInfo = () => {
               placeholder="مثلا: 5"
               min="0"
             />
-            <p className="text-xs text-gray-500">وقتی موجودی به این عدد برسد هشدار ارسال می‌شود (گیرندگان در مرحله تنظیمات نهایی).</p>
+            <p className="text-xs text-gray-500">وقتی موجودی به این عدد یا کمتر برسد هشدار فعال می‌شود و تا زمان افزایش موجودی باقی می‌ماند.</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">مقدار کسر موجودی در هر دوز</label>
+            <input
+              type="number"
+              {...register('doseQuantity', {
+                valueAsNumber: true,
+                setValueAs: (v) => {
+                  if (v === '' || v === null || v === undefined) return 1;
+                  const n = typeof v === 'number' ? v : Number(v);
+                  return Number.isFinite(n) && n > 0 ? n : 1;
+                }
+              })}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all outline-none"
+              placeholder="مثلا: 1"
+              min="1"
+            />
+            <p className="text-xs text-gray-500">با ثبت هر نوبت مصرف به‌عنوان «انجام شد»، این مقدار از موجودی دارو کم می‌شود.</p>
           </div>
         </div>
       </div>

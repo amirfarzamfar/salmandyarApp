@@ -10,6 +10,10 @@ public interface IMedicationService
     Task<List<MedicationDto>> GetPatientMedicationsAsync(int patientId);
     Task<List<MedicationDoseDto>> GetDailyScheduleAsync(int patientId, DateTime date);
     Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId);
+    Task ResetDoseAsync(int doseId, string userId);
+    Task<List<MedicationInventoryTransactionDto>> GetInventoryTransactionsAsync(int medicationId);
+    Task<List<MedicationAlertHistoryDto>> GetAlertHistoriesAsync(int medicationId);
+    Task<MedicationDto> UpdateInventoryAsync(int medicationId, UpdateMedicationInventoryDto dto, string userId);
     Task GenerateDosesAsync(int medicationId, DateTime from, DateTime to);
     Task CheckMissedDosesAndEscalateAsync();
     Task SendRemindersAsync();

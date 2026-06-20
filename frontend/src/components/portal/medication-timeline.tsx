@@ -13,6 +13,7 @@ import { toast } from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
 import { PatientMedicationList } from "@/features/medications/components/patient/PatientMedicationList";
 import { X } from "lucide-react";
+import { StockStatusBadge } from "@/features/medications/components/shared/StockStatusBadge";
 
 interface MedicationTimelineProps {
   patientId?: number;
@@ -141,6 +142,17 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
                         {dose.instructions}
                         </div>
                     )}
+                    <div className="mt-3">
+                      <StockStatusBadge
+                        medication={{
+                          totalQuantity: dose.currentQuantity,
+                          alertLimit: dose.alertLimit,
+                          stockStatus: dose.stockStatus,
+                          stockStatusLabel: dose.stockStatusLabel,
+                        }}
+                        compact
+                      />
+                    </div>
                 </div>
 
                 <PortalButton 
@@ -184,7 +196,12 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
                             <X className="w-5 h-5 text-gray-500" />
                         </button>
                     </div>
-                    <PatientMedicationList patientId={patientId} readOnly />
+                    <PatientMedicationList
+                      patientId={patientId}
+                      allowEdit={Boolean(medicationAccess?.canSubmitNow)}
+                      allowDelete={false}
+                      allowInventoryManagement={false}
+                    />
                 </motion.div>
             </motion.div>
         )}

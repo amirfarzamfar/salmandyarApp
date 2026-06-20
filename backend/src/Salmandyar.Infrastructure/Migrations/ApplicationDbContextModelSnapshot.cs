@@ -645,6 +645,9 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<string>("AttachmentPath")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("AppliedInventoryQuantity")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -707,13 +710,31 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<int>("AlertLimit")
                         .HasColumnType("int");
 
+                    b.Property<bool>("AlertLowStockAdmin")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AlertLowStockCustomEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AlertLowStockCustomPhone")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("AlertLowStockEmailEnabled")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("AlertLowStockFamily")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AlertLowStockInAppEnabled")
                         .HasColumnType("bit");
 
                     b.Property<bool>("AlertLowStockNurse")
                         .HasColumnType("bit");
 
                     b.Property<bool>("AlertLowStockPatient")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("AlertLowStockSmsEnabled")
                         .HasColumnType("bit");
 
                     b.Property<int>("CareRecipientId")
@@ -731,6 +752,9 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<string>("Dosage")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DoseQuantity")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
@@ -759,6 +783,12 @@ namespace Salmandyar.Infrastructure.Migrations
 
                     b.Property<bool>("IsPRN")
                         .HasColumnType("bit");
+
+                    b.Property<bool>("IsLowStockAlertActive")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LowStockAlertActivatedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -794,6 +824,136 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.HasIndex("CareRecipientId");
 
                     b.ToTable("PatientMedications", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.MedicationAlertSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("EmailBodyTemplate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmailSubjectTemplate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InAppTemplate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SmsTemplate")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("MedicationAlertSettings", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationAlertHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlertType")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CareRecipientId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Channel")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("DeliveryStatus")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientMedicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RecipientDisplay")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RecipientType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("RecipientUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CareRecipientId");
+
+                    b.HasIndex("PatientMedicationId");
+
+                    b.HasIndex("RecipientUserId");
+
+                    b.ToTable("MedicationAlertHistories", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationInventoryTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PatientMedicationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PerformedByUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("QuantityAfter")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuantityBefore")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuantityChanged")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TransactionType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PatientMedicationId");
+
+                    b.HasIndex("PerformedByUserId");
+
+                    b.ToTable("MedicationInventoryTransactions", (string)null);
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.NotificationSettings", b =>
@@ -2188,6 +2348,50 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("TakenByUser");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationAlertHistory", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
+                        .WithMany()
+                        .HasForeignKey("CareRecipientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.Medications.PatientMedication", "PatientMedication")
+                        .WithMany("AlertHistories")
+                        .HasForeignKey("PatientMedicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CareRecipient");
+
+                    b.Navigation("PatientMedication");
+
+                    b.Navigation("RecipientUser");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationInventoryTransaction", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Medications.PatientMedication", "PatientMedication")
+                        .WithMany("InventoryTransactions")
+                        .HasForeignKey("PatientMedicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "PerformedByUser")
+                        .WithMany()
+                        .HasForeignKey("PerformedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("PatientMedication");
+
+                    b.Navigation("PerformedByUser");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.PatientMedication", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
@@ -2574,7 +2778,11 @@ namespace Salmandyar.Infrastructure.Migrations
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.PatientMedication", b =>
                 {
+                    b.Navigation("AlertHistories");
+
                     b.Navigation("Doses");
+
+                    b.Navigation("InventoryTransactions");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.NursingReport", b =>

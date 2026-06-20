@@ -32,9 +32,10 @@ interface AdministrationModalProps {
   dose: any; // Type this properly later
   onAdminister: (note?: string) => void;
   onSkip: (reason: string) => void;
+  onReset?: () => void;
 }
 
-export const AdministrationModal = ({ isOpen, onClose, dose, onAdminister, onSkip }: AdministrationModalProps) => {
+export const AdministrationModal = ({ isOpen, onClose, dose, onAdminister, onSkip, onReset }: AdministrationModalProps) => {
   const [note, setNote] = useState("");
   const [action, setAction] = useState<'administer' | 'skip' | null>(null);
 
@@ -71,6 +72,26 @@ export const AdministrationModal = ({ isOpen, onClose, dose, onAdminister, onSki
             <p className="text-teal-700 font-mono">{dose.dosage} - {dose.route}</p>
           </div>
         </div>
+
+        {dose.status !== 0 && onReset && (
+          <div className="mb-4 rounded-xl border border-amber-100 bg-amber-50 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm text-amber-800">
+                این دوز قبلاً ثبت شده است. در صورت لغو یا حذف ثبت، موجودی دارو به حالت قبل بازمی‌گردد.
+              </div>
+              <FallbackButton
+                variant="outline"
+                onClick={() => {
+                  onReset();
+                  onClose();
+                }}
+                className="shrink-0"
+              >
+                بازگردانی ثبت
+              </FallbackButton>
+            </div>
+          </div>
+        )}
 
         {/* Action Selection */}
         {!action ? (

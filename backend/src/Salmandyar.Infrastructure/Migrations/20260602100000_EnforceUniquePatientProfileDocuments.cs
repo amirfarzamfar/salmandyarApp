@@ -12,6 +12,16 @@ public partial class EnforceUniquePatientProfileDocuments : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+        migrationBuilder.AlterColumn<string>(
+            name: "DocumentType",
+            table: "UploadedDocuments",
+            type: "nvarchar(100)",
+            maxLength: 100,
+            nullable: true,
+            oldClrType: typeof(string),
+            oldType: "nvarchar(max)",
+            oldNullable: true);
+
         migrationBuilder.Sql("""
             WITH Dedup AS
             (
@@ -41,6 +51,15 @@ public partial class EnforceUniquePatientProfileDocuments : Migration
         migrationBuilder.DropIndex(
             name: "IX_UploadedDocuments_PatientProfileId_DocumentType_Unique",
             table: "UploadedDocuments");
+
+        migrationBuilder.AlterColumn<string>(
+            name: "DocumentType",
+            table: "UploadedDocuments",
+            type: "nvarchar(max)",
+            nullable: true,
+            oldClrType: typeof(string),
+            oldType: "nvarchar(100)",
+            oldMaxLength: 100,
+            oldNullable: true);
     }
 }
-

@@ -32,9 +32,16 @@ export const medicationSchema = z.object({
   // Stock & Inventory
   totalQuantity: z.coerce.number().min(0).optional(),
   alertLimit: z.coerce.number().min(0).optional(),
+  doseQuantity: z.coerce.number().min(1).optional(),
+  alertLowStockInAppEnabled: z.boolean().optional(),
+  alertLowStockSmsEnabled: z.boolean().optional(),
+  alertLowStockEmailEnabled: z.boolean().optional(),
   alertLowStockPatient: z.boolean().optional(),
   alertLowStockNurse: z.boolean().optional(),
   alertLowStockFamily: z.boolean().optional(),
+  alertLowStockAdmin: z.boolean().optional(),
+  alertLowStockCustomPhone: z.string().nullable().optional(),
+  alertLowStockCustomEmail: z.string().nullable().optional(),
   
   // Instructions
   instructions: z.string().nullable().optional(),

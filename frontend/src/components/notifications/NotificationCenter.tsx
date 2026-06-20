@@ -151,6 +151,7 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
     const isPortalMedicationAlert = (notification: UserNotification) =>
         appearance === 'portal'
         && notification.type === NotificationType.Alert
+        && !notification.title.includes('موجودی')
         && (notification.title.includes('دارو') || notification.title.includes('کاردکس'))
         && Boolean(notification.referenceId);
 

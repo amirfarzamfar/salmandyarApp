@@ -9,6 +9,7 @@ import { useCreateMedication } from '@/features/medications/hooks/useMedications
 import { MedicationFormData } from '@/features/medications/types';
 import { PatientSelfServiceAccessSummary } from '@/types/patient-self-service';
 import { toast } from 'react-hot-toast';
+import { LowStockNotificationBanner } from '@/components/notifications/LowStockNotificationBanner';
 
 interface PatientSelfServicePanelProps {
   patientId: number;
@@ -123,6 +124,8 @@ export function PatientSelfServicePanel({
         </div>
       </section>
 
+      <LowStockNotificationBanner appearance="portal" />
+
       {activeModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
           <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white p-4 md:p-6">
@@ -162,7 +165,7 @@ export function PatientSelfServicePanel({
       )}
 
       {showMedicationWizard && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/60 p-4 py-6 backdrop-blur-sm">
           <MedicationWizard
             patientId={patientId}
             onSuccess={handleMedicationCreated}

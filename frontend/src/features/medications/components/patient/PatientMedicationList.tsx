@@ -5,18 +5,32 @@ import { Loader2 } from 'lucide-react';
 import { MedicationWizard } from '../wizard/MedicationWizard';
 import Swal from 'sweetalert2';
 import { MedicationFormData } from '../../types';
+import { InventoryManagementModal } from './InventoryManagementModal';
 
 interface PatientMedicationListProps {
   patientId: number;
   readOnly?: boolean;
+  allowEdit?: boolean;
+  allowDelete?: boolean;
+  allowInventoryManagement?: boolean;
 }
 
-export const PatientMedicationList = ({ patientId, readOnly }: PatientMedicationListProps) => {
+export const PatientMedicationList = ({
+  patientId,
+  readOnly,
+  allowEdit,
+  allowDelete,
+  allowInventoryManagement
+}: PatientMedicationListProps) => {
   const { data: medications, isLoading } = useMedications(patientId);
   const { mutateAsync: deleteMedication } = useDeleteMedication();
   const { mutateAsync: updateMedication } = useUpdateMedication();
   
   const [editingMedication, setEditingMedication] = useState<any>(null);
+  const [inventoryMedication, setInventoryMedication] = useState<any>(null);
+  const canEdit = readOnly ? false : (allowEdit ?? true);
+  const canDelete = readOnly ? false : (allowDelete ?? true);
+  const canManageInventory = readOnly ? false : (allowInventoryManagement ?? true);
 
   const handleDelete = (id: number) => {
     Swal.fire({
@@ -70,15 +84,16 @@ export const PatientMedicationList = ({ patientId, readOnly }: PatientMedication
           <MedicationCard 
             key={med.id} 
             medication={med} 
-            onEdit={readOnly ? undefined : setEditingMedication}
-            onDelete={readOnly ? undefined : handleDelete}
+            onEdit={canEdit ? setEditingMedication : undefined}
+            onDelete={canDelete ? handleDelete : undefined}
+            onManageInventory={canManageInventory ? setInventoryMedication : undefined}
           />
         ))}
       </div>
 
       {/* Edit Modal */}
-      {!readOnly && editingMedication && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      {canEdit && editingMedication && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 p-4 py-6 backdrop-blur-sm animate-in fade-in duration-200">
            <MedicationWizard 
              patientId={patientId}
              initialData={editingMedication}
@@ -87,6 +102,14 @@ export const PatientMedicationList = ({ patientId, readOnly }: PatientMedication
              onSubmit={handleUpdate}
            />
         </div>
+      )}
+
+      {canManageInventory && inventoryMedication && (
+        <InventoryManagementModal
+          medication={inventoryMedication}
+          isOpen={Boolean(inventoryMedication)}
+          onClose={() => setInventoryMedication(null)}
+        />
       )}
     </div>
   );

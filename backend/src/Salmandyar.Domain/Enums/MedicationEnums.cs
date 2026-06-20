@@ -43,3 +43,48 @@ public enum DoseEscalationLevel
     SupervisorNotified = 2,
     FamilyNotified = 3
 }
+
+public enum MedicationStockStatus
+{
+    InStock = 0,
+    LowStock = 1,
+    OutOfStock = 2
+}
+
+public enum MedicationInventoryTransactionType
+{
+    InitialStock = 0,
+    DoseConsumption = 1,
+    ManualIncrease = 2,
+    ManualDecrease = 3,
+    Adjustment = 4,
+    StockReturn = 5
+}
+
+public enum MedicationAlertChannel
+{
+    InApp = 0,
+    Sms = 1,
+    Email = 2
+}
+
+public enum MedicationAlertHistoryStatus
+{
+    Success = 0,
+    Failed = 1
+}
+
+public enum MedicationAlertRecipientType
+{
+    Patient = 0,
+    Nurse = 1,
+    Admin = 2,
+    CustomPhone = 3,
+    CustomEmail = 4,
+    Family = 5
+}
+
+public enum MedicationAlertType
+{
+    LowStock = 0
+}

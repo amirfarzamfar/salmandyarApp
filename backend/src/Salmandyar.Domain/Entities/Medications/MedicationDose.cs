@@ -29,6 +29,7 @@ public class MedicationDose
     public bool IsReminderSent { get; set; }
     public DoseEscalationLevel EscalationLevel { get; set; } = DoseEscalationLevel.None;
     public DateTime? LastEscalationTime { get; set; }
+    public int AppliedInventoryQuantity { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }

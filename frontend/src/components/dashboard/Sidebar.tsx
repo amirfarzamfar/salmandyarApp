@@ -43,7 +43,8 @@ const navigation = [
     href: '#', 
     icon: Settings,
     subItems: [
-        { name: 'تنظیمات پیام', href: '/dashboard/admin/settings/notifications', icon: Bell }
+        { name: 'تنظیمات پیام', href: '/dashboard/admin/settings/notifications', icon: Bell },
+        { name: 'تنظیم پیام هشدار دارو', href: '/dashboard/admin/settings/medication-alerts', icon: Bell }
     ]
   },
 ];

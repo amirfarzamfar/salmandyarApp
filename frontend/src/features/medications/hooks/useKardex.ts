@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/axios';
+import { medicationService } from '@/services/medication.service';
 
 export const useKardex = (patientId: number, date: string) => {
   return useQuery({
@@ -30,6 +31,18 @@ export const useLogDose = () => {
     onSuccess: (_, variables) => {
       // Invalidate relevant queries to refresh the UI
       queryClient.invalidateQueries({ queryKey: ['kardex'] });
+    }
+  });
+};
+
+export const useResetDoseLog = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (doseId: number) => medicationService.resetDoseLog(doseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kardex'] });
+      queryClient.invalidateQueries({ queryKey: ['medications'] });
     }
   });
 };

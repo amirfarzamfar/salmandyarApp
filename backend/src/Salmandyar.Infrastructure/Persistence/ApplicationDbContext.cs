@@ -25,6 +25,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<NursingReportDetail> NursingReportDetails { get; set; }
     public DbSet<ServiceReminder> ServiceReminders { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
+    public DbSet<MedicationAlertSettings> MedicationAlertSettings { get; set; }
     public DbSet<CareAssignment> CareAssignments { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<PatientSelfServiceAccessPolicy> PatientSelfServiceAccessPolicies { get; set; }
@@ -50,6 +51,8 @@ public class ApplicationDbContext : IdentityDbContext<User>
     // Medication Module
     public DbSet<PatientMedication> PatientMedications { get; set; }
     public DbSet<MedicationDose> MedicationDoses { get; set; }
+    public DbSet<MedicationInventoryTransaction> MedicationInventoryTransactions { get; set; }
+    public DbSet<MedicationAlertHistory> MedicationAlertHistories { get; set; }
 
     // Patient Profile Module
     public DbSet<PatientProfile> PatientProfiles { get; set; }
@@ -150,6 +153,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
         builder.Entity<ServiceReminder>().ToTable("ServiceReminders");
         builder.Entity<NotificationSettings>().ToTable("NotificationSettings");
+        builder.Entity<MedicationAlertSettings>().ToTable("MedicationAlertSettings");
         
         // Configurations
         builder.Entity<CaregiverProfile>()
@@ -475,6 +479,42 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasForeignKey(d => d.TakenByUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.Entity<MedicationInventoryTransaction>().ToTable("MedicationInventoryTransactions");
+        builder.Entity<MedicationInventoryTransaction>()
+            .HasOne(t => t.PatientMedication)
+            .WithMany(m => m.InventoryTransactions)
+            .HasForeignKey(t => t.PatientMedicationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<MedicationInventoryTransaction>()
+            .HasOne(t => t.PerformedByUser)
+            .WithMany()
+            .HasForeignKey(t => t.PerformedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<MedicationAlertHistory>().ToTable("MedicationAlertHistories");
+        builder.Entity<MedicationAlertHistory>()
+            .Property(h => h.CreatedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<MedicationAlertHistory>()
+            .HasOne(h => h.PatientMedication)
+            .WithMany(m => m.AlertHistories)
+            .HasForeignKey(h => h.PatientMedicationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<MedicationAlertHistory>()
+            .HasOne(h => h.CareRecipient)
+            .WithMany()
+            .HasForeignKey(h => h.CareRecipientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<MedicationAlertHistory>()
+            .HasOne(h => h.RecipientUser)
+            .WithMany()
+            .HasForeignKey(h => h.RecipientUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Patient Profile Configurations
         builder.Entity<PatientProfile>().ToTable("PatientProfiles");
         builder.Entity<Address>().ToTable("Addresses");
@@ -525,6 +565,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany(p => p.Documents)
             .HasForeignKey(d => d.PatientProfileId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<UploadedDocument>()
+            .Property(d => d.DocumentType)
+            .HasMaxLength(100);
 
         builder.Entity<UploadedDocument>()
             .HasIndex(d => new { d.PatientProfileId, d.DocumentType })

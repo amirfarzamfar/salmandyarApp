@@ -78,11 +78,30 @@ export const Step4_Notifications = () => {
           <Bell className="w-5 h-5 text-teal-600" />
           موجودی و هشدار اتمام دارو
         </h4>
-        <p className="text-xs text-gray-500">گیرندگان هشدار اتمام دارو را انتخاب کنید (تعداد و آستانه در مرحله مشخصات دارو ثبت می‌شود).</p>
+        <p className="text-xs text-gray-500">کانال‌ها و گیرندگان هشدار اتمام دارو را به‌صورت مستقل تنظیم کنید.</p>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { id: 'alertLowStockInAppEnabled', label: 'نوتیفیکیشن داخل سیستم' },
+            { id: 'alertLowStockSmsEnabled', label: 'ارسال پیامک' },
+            { id: 'alertLowStockEmailEnabled', label: 'ارسال ایمیل' },
+          ].map((item) => (
+            <label key={item.id} className="flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
+              <input
+                type="checkbox"
+                {...register(item.id as any)}
+                className="w-4 h-4 text-teal-600 rounded focus:ring-teal-500 border-gray-300"
+              />
+              <span className="text-sm font-medium text-gray-700">{item.label}</span>
+            </label>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             { id: 'alertLowStockPatient', label: 'ارسال هشدار اتمام به بیمار' },
             { id: 'alertLowStockNurse', label: 'ارسال هشدار اتمام به پرستار' },
+            { id: 'alertLowStockAdmin', label: 'ارسال هشدار اتمام به ادمین' },
             { id: 'alertLowStockFamily', label: 'ارسال هشدار اتمام به خانواده' },
           ].map((item) => (
             <label key={item.id} className="flex items-center gap-3 p-3 border rounded-xl hover:bg-gray-50 cursor-pointer transition-colors">
@@ -94,6 +113,26 @@ export const Step4_Notifications = () => {
               <span className="text-sm font-medium text-gray-700">{item.label}</span>
             </label>
           ))}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">شماره موبایل دلخواه</label>
+            <input
+              {...register('alertLowStockCustomPhone')}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all outline-none ltr text-left"
+              placeholder="09xxxxxxxxx"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">ایمیل دلخواه</label>
+            <input
+              {...register('alertLowStockCustomEmail')}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-300 focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all outline-none ltr text-left"
+              placeholder="mail@example.com"
+            />
+          </div>
         </div>
       </div>
 
