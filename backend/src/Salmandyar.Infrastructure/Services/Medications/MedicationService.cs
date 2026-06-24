@@ -276,6 +276,14 @@ public class MedicationService : IMedicationService
         return dose == null ? null : MapToDoseDto(dose);
     }
 
+    public async Task<int?> GetDoseCareRecipientIdAsync(int doseId)
+    {
+        return await _context.MedicationDoses
+            .Where(d => d.Id == doseId)
+            .Select(d => (int?)d.PatientMedication.CareRecipientId)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId, bool preventBeforeScheduledTime)
     {
         var dose = await GetDoseForRecordingAsync(doseId);

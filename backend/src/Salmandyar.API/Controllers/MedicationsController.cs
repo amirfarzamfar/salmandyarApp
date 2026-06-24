@@ -42,11 +42,26 @@ public class MedicationsController : ControllerBase
 
     private string? GetCaregiverIdIfRestricted()
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return null;
+
+        var isShiftRestrictedStaff =
+            User.IsInRole(Roles.Nurse) ||
+            User.IsInRole(Roles.AssistantNurse) ||
+            User.IsInRole(Roles.Physiotherapist) ||
+            User.IsInRole(Roles.ElderlyCareAssistant);
+
+        if (isShiftRestrictedStaff)
+        {
+            return userId;
+        }
+
         if (User.IsInRole(Roles.SuperAdmin) || User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Supervisor))
         {
             return null;
         }
-        return User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        return userId;
     }
 
     [HttpGet("patient/{patientId}")]
@@ -193,6 +208,17 @@ public class MedicationsController : ControllerBase
 
         try
         {
+            var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+            if (!string.IsNullOrEmpty(restrictedCaregiverId)
+                && !(User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily)))
+            {
+                var careRecipientId = await _medicationService.GetDoseCareRecipientIdAsync(doseId);
+                if (!careRecipientId.HasValue) return NotFound(new { error = "Dose not found" });
+
+                var patient = await _patientService.GetPatientByIdAsync(careRecipientId.Value, restrictedCaregiverId);
+                if (patient == null) return Forbid();
+            }
+
             var preventBeforeScheduledTime =
                 User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily);
             await _medicationService.RecordDoseAsync(doseId, dto, userId, preventBeforeScheduledTime);
@@ -220,6 +246,17 @@ public class MedicationsController : ControllerBase
 
         try
         {
+            var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+            if (!string.IsNullOrEmpty(restrictedCaregiverId)
+                && !(User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily)))
+            {
+                var careRecipientId = await _medicationService.GetDoseCareRecipientIdAsync(doseId);
+                if (!careRecipientId.HasValue) return NotFound(new { error = "Dose not found" });
+
+                var patient = await _patientService.GetPatientByIdAsync(careRecipientId.Value, restrictedCaregiverId);
+                if (patient == null) return Forbid();
+            }
+
             await _medicationService.ResetDoseAsync(doseId, userId);
             return NoContent();
         }
@@ -236,12 +273,32 @@ public class MedicationsController : ControllerBase
     [HttpGet("{id}/inventory-transactions")]
     public async Task<ActionResult<List<MedicationInventoryTransactionDto>>> GetInventoryTransactions(int id)
     {
+        var medication = await _medicationService.GetMedicationByIdAsync(id);
+        if (medication == null) return NotFound(new { error = "Medication not found" });
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        if (!string.IsNullOrEmpty(restrictedCaregiverId))
+        {
+            var patient = await _patientService.GetPatientByIdAsync(medication.CareRecipientId, restrictedCaregiverId);
+            if (patient == null) return Forbid();
+        }
+
         return Ok(await _medicationService.GetInventoryTransactionsAsync(id));
     }
 
     [HttpGet("{id}/alert-history")]
     public async Task<ActionResult<List<MedicationAlertHistoryDto>>> GetAlertHistory(int id)
     {
+        var medication = await _medicationService.GetMedicationByIdAsync(id);
+        if (medication == null) return NotFound(new { error = "Medication not found" });
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        if (!string.IsNullOrEmpty(restrictedCaregiverId))
+        {
+            var patient = await _patientService.GetPatientByIdAsync(medication.CareRecipientId, restrictedCaregiverId);
+            if (patient == null) return Forbid();
+        }
+
         return Ok(await _medicationService.GetAlertHistoriesAsync(id));
     }
 
@@ -251,6 +308,16 @@ public class MedicationsController : ControllerBase
         if (User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily))
         {
             return Forbid();
+        }
+
+        var medication = await _medicationService.GetMedicationByIdAsync(id);
+        if (medication == null) return NotFound(new { error = "Medication not found" });
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        if (!string.IsNullOrEmpty(restrictedCaregiverId))
+        {
+            var patient = await _patientService.GetPatientByIdAsync(medication.CareRecipientId, restrictedCaregiverId);
+            if (patient == null) return Forbid();
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -275,6 +342,17 @@ public class MedicationsController : ControllerBase
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (userId == null) return Unauthorized();
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        if (!string.IsNullOrEmpty(restrictedCaregiverId)
+            && !(User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily)))
+        {
+            var careRecipientId = await _medicationService.GetDoseCareRecipientIdAsync(doseId);
+            if (!careRecipientId.HasValue) return NotFound(new { error = "Dose not found" });
+
+            var patient = await _patientService.GetPatientByIdAsync(careRecipientId.Value, restrictedCaregiverId);
+            if (patient == null) return Forbid();
+        }
 
         string? attachmentPath = null;
         if (form.Attachment != null)

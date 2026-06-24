@@ -740,89 +740,17 @@ public class PatientService : IPatientService
     private async Task<List<int>> GetValidPatientIdsForCaregiverAsync(string caregiverId)
     {
         var nowUtc = DateTimeOffset.UtcNow;
-        TimeZoneInfo iranTz;
-        try
-        {
-            iranTz = TimeZoneInfo.FindSystemTimeZoneById("Iran Standard Time");
-        }
-        catch
-        {
-            iranTz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tehran");
-        }
+        var iranTz = ResolveIranTimeZone();
 
-        var nowIran = TimeZoneInfo.ConvertTime(nowUtc, iranTz);
-        
         var assignments = await _context.CareAssignments
             .Where(a => a.CaregiverId == caregiverId && a.Status == AssignmentStatus.Active)
             .ToListAsync();
 
-        var validPatientIds = new HashSet<int>();
-
-        foreach (var a in assignments)
-        {
-            var startIran = TimeZoneInfo.ConvertTime(a.StartDate, iranTz);
-            var endIran = a.EndDate.HasValue ? TimeZoneInfo.ConvertTime(a.EndDate.Value, iranTz) : (DateTimeOffset?)null;
-
-            bool isValid = false;
-
-            if (a.AssignmentType == AssignmentType.ShiftBased && a.ShiftSlot.HasValue)
-            {
-                var datesToCheck = new[] { nowIran.Date, nowIran.Date.AddDays(-1) };
-
-                foreach (var date in datesToCheck)
-                {
-                    if (date >= startIran.Date && (!endIran.HasValue || date <= endIran.Value.Date))
-                    {
-                        var shiftStart = new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, iranTz.GetUtcOffset(nowIran));
-                        var shiftEnd = shiftStart;
-
-                        switch (a.ShiftSlot.Value)
-                        {
-                            case ShiftSlot.Morning:
-                                shiftStart = shiftStart.AddHours(7);
-                                shiftEnd = shiftStart.AddHours(6); 
-                                break;
-                            case ShiftSlot.Evening:
-                                shiftStart = shiftStart.AddHours(13);
-                                shiftEnd = shiftStart.AddHours(6); 
-                                break;
-                            case ShiftSlot.Night:
-                                shiftStart = shiftStart.AddHours(19);
-                                shiftEnd = shiftStart.AddHours(12); 
-                                break;
-                            case ShiftSlot.Long:
-                                shiftStart = shiftStart.AddHours(7);
-                                shiftEnd = shiftStart.AddHours(12); 
-                                break;
-                            case ShiftSlot.TwentyFourHour:
-                                shiftStart = shiftStart.AddHours(7);
-                                shiftEnd = shiftStart.AddHours(24); 
-                                break;
-                        }
-
-                        if (nowIran >= shiftStart && nowIran <= shiftEnd.AddHours(2))
-                        {
-                            isValid = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (nowIran >= startIran && (!endIran.HasValue || nowIran <= endIran.Value.AddHours(2)))
-                {
-                    isValid = true;
-                }
-            }
-
-            if (isValid)
-            {
-                validPatientIds.Add(a.PatientId);
-            }
-        }
-
-        return validPatientIds.ToList();
+        return assignments
+            .Where(a => IsAssignmentActiveNow(a, nowUtc, iranTz))
+            .Select(a => a.PatientId)
+            .Distinct()
+            .ToList();
     }
 
     private async Task<Dictionary<int, (string CaregiverId, string CaregiverName)>> GetActiveCaregiversByPatientIdsAsync(List<int> patientIds)
@@ -887,6 +815,13 @@ public class PatientService : IPatientService
 
         if (assignment.AssignmentType == AssignmentType.ShiftBased && assignment.ShiftSlot.HasValue)
         {
+            if (assignment.ShiftSlot.Value == ShiftSlot.None)
+            {
+                if (nowIran < startIran) return false;
+                if (endIran.HasValue && nowIran > endIran.Value.AddHours(1)) return false;
+                return true;
+            }
+
             var datesToCheck = new[] { nowIran.Date, nowIran.Date.AddDays(-1) };
 
             foreach (var date in datesToCheck)
@@ -922,7 +857,7 @@ public class PatientService : IPatientService
                         break;
                 }
 
-                if (nowIran >= shiftStart && nowIran <= shiftEnd.AddHours(2))
+                if (nowIran >= shiftStart && nowIran <= shiftEnd.AddHours(1))
                 {
                     return true;
                 }
@@ -932,7 +867,7 @@ public class PatientService : IPatientService
         }
 
         if (nowIran < startIran) return false;
-        if (endIran.HasValue && nowIran > endIran.Value.AddHours(2)) return false;
+        if (endIran.HasValue && nowIran > endIran.Value.AddHours(1)) return false;
         return true;
     }
 

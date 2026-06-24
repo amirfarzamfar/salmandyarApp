@@ -25,11 +25,26 @@ public class NursingReportsController : ControllerBase
 
     private string? GetCaregiverIdIfRestricted()
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return null;
+
+        var isShiftRestrictedStaff =
+            User.IsInRole(Roles.Nurse) ||
+            User.IsInRole(Roles.AssistantNurse) ||
+            User.IsInRole(Roles.Physiotherapist) ||
+            User.IsInRole(Roles.ElderlyCareAssistant);
+
+        if (isShiftRestrictedStaff)
+        {
+            return userId;
+        }
+
         if (User.IsInRole(Roles.SuperAdmin) || User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Supervisor))
         {
             return null;
         }
-        return User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        return userId;
     }
 
     [HttpPost]
