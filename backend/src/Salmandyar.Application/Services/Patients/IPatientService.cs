@@ -8,6 +8,7 @@ public interface IPatientService
     Task<PatientDto?> GetPatientByIdAsync(int id, string? caregiverId = null);
     Task<PatientDto> CreatePatientAsync(CreatePatientDto dto);
     Task CreatePatientForUserAsync(string userId, string firstName, string lastName);
+    Task<PatientDto> UpdatePatientAdminInfoAsync(int id, UpdatePatientAdminInfoDto dto);
     
     // Vitals
     Task<List<VitalSignDto>> GetVitalSignsAsync(int patientId);

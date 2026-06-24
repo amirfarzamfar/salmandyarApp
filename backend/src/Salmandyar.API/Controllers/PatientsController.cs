@@ -97,6 +97,33 @@ public class PatientsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = patient.Id }, patient);
     }
 
+    [HttpPut("{id}/admin-info")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
+    public async Task<ActionResult<PatientDto>> UpdateAdminInfo(int id, [FromBody] UpdatePatientAdminInfoDto dto)
+    {
+        try
+        {
+            var updated = await _patientService.UpdatePatientAdminInfoAsync(id, dto);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(new { error = ex.Message });
+        }
+        catch (DbUpdateException)
+        {
+            return BadRequest(new { error = "اطلاعات ارسال‌شده معتبر نیست" });
+        }
+    }
+
     // Vital Signs
     [HttpGet("{id}/vitals")]
     public async Task<ActionResult<List<VitalSignDto>>> GetVitals(int id)

@@ -23,11 +23,13 @@ import { PatientDetailsModal } from "@/components/portal/patient-details-modal";
 import { useUser } from "@/components/auth/UserContext";
 import { PatientSelfServicePanel } from "@/components/portal/patient-self-service-panel";
 import { MedicationAlertBanner } from "@/components/portal/medication-alert-banner";
+import { PatientProfileDto, PatientProfileService } from "@/services/patient-profile.service";
 
 export default function PortalPageClient() {
   const [isElderMode, setIsElderMode] = useState(false);
   const [isFamilyMode, setIsFamilyMode] = useState(false);
   const [patient, setPatient] = useState<Patient | null>(null);
+  const [patientProfile, setPatientProfile] = useState<PatientProfileDto | null>(null);
   const [accessSummary, setAccessSummary] = useState<PatientSelfServiceAccessSummary | null>(null);
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,19 +49,23 @@ export default function PortalPageClient() {
             const accessiblePatient = await patientService.getAccessiblePatient();
             if (!accessiblePatient) {
                 setPatient(null);
+                setPatientProfile(null);
                 setAccessSummary(null);
                 return;
             }
 
-            const [data, selfServiceAccess] = await Promise.all([
+            const [data, selfServiceAccess, myProfile] = await Promise.all([
               patientService.getById(accessiblePatient.id),
-              patientService.getSelfServiceAccess(accessiblePatient.id)
+              patientService.getSelfServiceAccess(accessiblePatient.id),
+              PatientProfileService.getMyProfile().catch(() => null)
             ]);
             setPatient(data);
             setAccessSummary(selfServiceAccess);
+            setPatientProfile(myProfile);
         } catch (error) {
             console.error("Failed to fetch patient", error);
             setPatient(null);
+            setPatientProfile(null);
             setAccessSummary(null);
         } finally {
             setIsLoading(false);
@@ -140,6 +146,7 @@ export default function PortalPageClient() {
         isOpen={isPatientModalOpen} 
         onClose={() => setIsPatientModalOpen(false)} 
         patient={patient} 
+        profile={patientProfile}
       />
 
       {/* Premium UI Control Toggles - Refined Look */}
@@ -173,6 +180,7 @@ export default function PortalPageClient() {
       <div className="max-w-7xl mx-auto px-4 md:px-8">
         <SmartHeader 
             patientName={patient ? `${patient.firstName} ${patient.lastName}` : "کاربر گرامی"} 
+            patientStatus={patient?.currentStatus}
             onAvatarClick={() => setIsPatientModalOpen(true)}
         />
         

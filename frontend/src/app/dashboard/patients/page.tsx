@@ -3,13 +3,19 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { patientService } from '@/services/patient.service';
-import { PatientList } from '@/types/patient';
-import { Search, Filter } from 'lucide-react';
+import { CareLevel, PatientList } from '@/types/patient';
+import { Search, Filter, Pencil } from 'lucide-react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<PatientList[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingPatient, setEditingPatient] = useState<PatientList | null>(null);
+  const [editPrimaryDiagnosis, setEditPrimaryDiagnosis] = useState('');
+  const [editCareLevel, setEditCareLevel] = useState<number>(CareLevel.Level3);
+  const [editSpecialNeeds, setEditSpecialNeeds] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchPatients();
@@ -23,6 +29,67 @@ export default function PatientsPage() {
       console.error('Error fetching patients:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const openEdit = async (patient: PatientList) => {
+    setEditingPatient(patient);
+    setEditPrimaryDiagnosis(patient.primaryDiagnosis || '');
+    setEditCareLevel(patient.careLevel);
+    setEditSpecialNeeds('');
+
+    try {
+      const full = await patientService.getById(patient.id);
+      setEditSpecialNeeds(full.needs || '');
+    } catch (error) {
+      console.error('Error fetching patient details for edit:', error);
+    }
+  };
+
+  const closeEdit = () => {
+    setEditingPatient(null);
+    setEditPrimaryDiagnosis('');
+    setEditCareLevel(CareLevel.Level3);
+    setEditSpecialNeeds('');
+    setIsSaving(false);
+  };
+
+  const careLevelLabel = (value: number) => {
+    switch (value) {
+      case CareLevel.Level1: return 'سطح ۱ (مراقبت ویژه)';
+      case CareLevel.Level2: return 'سطح ۲ (مراقبت گسترده)';
+      case CareLevel.Level3: return 'سطح ۳ (مراقبت متوسط)';
+      case CareLevel.Level4: return 'سطح ۴ (مراقبت پایه)';
+      case CareLevel.Level5: return 'سطح ۵ (مراقبت حداقل)';
+      default: return 'نامشخص';
+    }
+  };
+
+  const handleSaveAdminInfo = async () => {
+    if (!editingPatient) return;
+    setIsSaving(true);
+    try {
+      const updated = await patientService.updateAdminInfo(editingPatient.id, {
+        primaryDiagnosis: editPrimaryDiagnosis.trim() || 'نامشخص',
+        careLevel: editCareLevel,
+        specialNeeds: editSpecialNeeds.trim() || null
+      });
+
+      setPatients((prev) =>
+        prev.map((p) =>
+          p.id === updated.id
+            ? {
+                ...p,
+                primaryDiagnosis: updated.primaryDiagnosis,
+                careLevel: updated.careLevel,
+              }
+            : p
+        )
+      );
+      closeEdit();
+    } catch (error) {
+      console.error('Error updating patient admin info:', error);
+      setIsSaving(false);
     }
   };
 
@@ -128,9 +195,20 @@ export default function PatientsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <Link href={`/dashboard/patients/${patient.id}`} className="text-teal-600 hover:text-teal-900">
-                        مشاهده پرونده
-                      </Link>
+                      <div className="flex items-center gap-3">
+                        <Link href={`/dashboard/patients/${patient.id}`} className="text-teal-600 hover:text-teal-900">
+                          مشاهده پرونده
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => openEdit(patient)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                          title="ویرایش تشخیص، سطح مراقبت و نیازهای ویژه"
+                        >
+                          <Pencil className="h-4 w-4" />
+                          ویرایش
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -139,6 +217,74 @@ export default function PatientsPage() {
           </table>
         </div>
       </div>
+
+      <Dialog open={!!editingPatient} onOpenChange={(open) => { if (!open) closeEdit(); }}>
+        <DialogContent className="w-[95vw] max-w-xl rounded-2xl bg-white p-0 overflow-hidden">
+          <div className="p-6 border-b border-gray-100">
+            <div className="text-lg font-black text-gray-900">تنظیمات ادمین بیمار</div>
+            <div className="mt-1 text-sm text-gray-500">
+              تشخیص، سطح مراقبت و نیازهای ویژه را مشخص کنید.
+            </div>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <div className="space-y-1">
+              <label className="text-sm font-bold text-gray-700">تشخیص</label>
+              <input
+                type="text"
+                value={editPrimaryDiagnosis}
+                onChange={(e) => setEditPrimaryDiagnosis(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                placeholder="مثلاً: سکته مغزی"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-bold text-gray-700">سطح مراقبت</label>
+              <select
+                value={editCareLevel}
+                onChange={(e) => setEditCareLevel(Number(e.target.value))}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                <option value={CareLevel.Level1}>{careLevelLabel(CareLevel.Level1)}</option>
+                <option value={CareLevel.Level2}>{careLevelLabel(CareLevel.Level2)}</option>
+                <option value={CareLevel.Level3}>{careLevelLabel(CareLevel.Level3)}</option>
+                <option value={CareLevel.Level4}>{careLevelLabel(CareLevel.Level4)}</option>
+                <option value={CareLevel.Level5}>{careLevelLabel(CareLevel.Level5)}</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-sm font-bold text-gray-700">نیازهای ویژه</label>
+              <textarea
+                value={editSpecialNeeds}
+                onChange={(e) => setEditSpecialNeeds(e.target.value)}
+                className="w-full min-h-24 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                placeholder="نکات مهم مراقبتی که توسط ادمین تعیین می‌شود..."
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={closeEdit}
+              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50"
+              disabled={isSaving}
+            >
+              انصراف
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAdminInfo}
+              className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-60"
+              disabled={isSaving}
+            >
+              {isSaving ? 'در حال ذخیره...' : 'ذخیره'}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

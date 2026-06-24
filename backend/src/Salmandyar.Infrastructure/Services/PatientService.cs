@@ -191,6 +191,41 @@ public class PatientService : IPatientService
         );
     }
 
+    public async Task<PatientDto> UpdatePatientAdminInfoAsync(int id, UpdatePatientAdminInfoDto dto)
+    {
+        var entity = await _context.CareRecipients
+            .Include(p => p.ResponsibleNurse)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (entity == null)
+        {
+            throw new KeyNotFoundException("Patient not found");
+        }
+
+        entity.PrimaryDiagnosis = dto.PrimaryDiagnosis;
+        entity.CareLevel = (CareLevel)dto.CareLevel;
+        entity.Needs = dto.SpecialNeeds ?? string.Empty;
+
+        await _context.SaveChangesAsync();
+
+        return new PatientDto(
+            entity.Id,
+            entity.UserId,
+            entity.FirstName,
+            entity.LastName,
+            entity.DateOfBirth,
+            CalculateAge(entity.DateOfBirth),
+            entity.PrimaryDiagnosis,
+            entity.CurrentStatus,
+            (int)entity.CareLevel,
+            entity.ResponsibleNurseId,
+            entity.ResponsibleNurse != null ? $"{entity.ResponsibleNurse.FirstName} {entity.ResponsibleNurse.LastName}" : null,
+            entity.MedicalHistory,
+            entity.Needs,
+            entity.Address
+        );
+    }
+
     public async Task<List<VitalSignDto>> GetVitalSignsAsync(int patientId)
     {
         return await _context.VitalSigns

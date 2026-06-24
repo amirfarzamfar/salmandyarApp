@@ -5,10 +5,11 @@ import { NotificationCenter } from "@/components/notifications/NotificationCente
 
 interface SmartHeaderProps {
   patientName: string;
+  patientStatus?: string | null;
   onAvatarClick?: () => void;
 }
 
-export function SmartHeader({ patientName, onAvatarClick }: SmartHeaderProps) {
+export function SmartHeader({ patientName, patientStatus, onAvatarClick }: SmartHeaderProps) {
   const hour = new Date().getHours();
   const greeting =
     hour >= 5 && hour < 12
@@ -18,6 +19,19 @@ export function SmartHeader({ patientName, onAvatarClick }: SmartHeaderProps) {
         : hour >= 17 && hour < 21
           ? "عصر بخیر"
           : "شب بخیر";
+
+  const statusMeta = (() => {
+    switch ((patientStatus ?? "").toLowerCase()) {
+      case "stable":
+        return { label: "پایدار", className: "border-calm-green-100 bg-calm-green-50 text-calm-green-700" };
+      case "critical":
+        return { label: "بحرانی", className: "border-rose-100 bg-rose-50 text-rose-700" };
+      case "recovering":
+        return { label: "در حال بهبود", className: "border-amber-100 bg-amber-50 text-amber-800" };
+      default:
+        return { label: "نامشخص", className: "border-gray-100 bg-gray-50 text-gray-700" };
+    }
+  })();
 
   return (
     <header className="relative z-10 mb-2 flex items-start justify-between gap-3 py-4 sm:items-center sm:py-6">
@@ -44,9 +58,9 @@ export function SmartHeader({ patientName, onAvatarClick }: SmartHeaderProps) {
           <h1 className="truncate text-xl font-bold tracking-tight text-gray-800 sm:text-2xl">
             {greeting}، {patientName}
           </h1>
-          <div className="mt-1 flex w-fit items-center gap-2 rounded-full border border-calm-green-100 bg-calm-green-50 px-3 py-1">
-             <HeartPulse className="w-4 h-4 text-calm-green-600" />
-             <p className="text-xs font-medium text-calm-green-700 sm:text-sm">وضعیت: پایدار و عالی</p>
+          <div className={`mt-1 flex w-fit items-center gap-2 rounded-full border px-3 py-1 ${statusMeta.className}`}>
+             <HeartPulse className="w-4 h-4" />
+             <p className="text-xs font-medium sm:text-sm">وضعیت: {statusMeta.label}</p>
           </div>
         </div>
       </div>

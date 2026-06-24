@@ -54,5 +54,9 @@ export const patientService = {
   getSelfServiceAccess: async (id: number) => {
     const response = await api.get<PatientSelfServiceAccessSummary>(`/patients/${id}/self-service-access`);
     return response.data;
+  },
+  updateAdminInfo: async (id: number, data: { primaryDiagnosis: string; careLevel: number; specialNeeds?: string | null }) => {
+    const response = await api.put<Patient>(`/patients/${id}/admin-info`, data);
+    return response.data;
   }
 };

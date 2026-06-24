@@ -41,3 +41,9 @@ public record CreatePatientDto(
     string? Needs,
     string? Address
 );
+
+public record UpdatePatientAdminInfoDto(
+    string PrimaryDiagnosis,
+    int CareLevel,
+    string? SpecialNeeds
+);
