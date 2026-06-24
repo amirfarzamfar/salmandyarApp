@@ -73,6 +73,22 @@ export const AdministrationModal = ({ isOpen, onClose, dose, onAdminister, onSki
           </div>
         </div>
 
+        {(dose.missedReason || dose.notes) && (
+          <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <div className="text-sm font-bold text-slate-800">ثبت قبلی</div>
+            {dose.missedReason && (
+              <div className="mt-2 text-sm text-slate-700">
+                علت عدم مصرف: {dose.missedReason}
+              </div>
+            )}
+            {dose.notes && (
+              <div className="mt-2 text-sm text-slate-700">
+                یادداشت: {dose.notes}
+              </div>
+            )}
+          </div>
+        )}
+
         {dose.status !== 0 && onReset && (
           <div className="mb-4 rounded-xl border border-amber-100 bg-amber-50 p-3">
             <div className="flex items-center justify-between gap-3">

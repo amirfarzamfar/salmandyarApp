@@ -183,7 +183,10 @@ export default function PortalPageClient() {
           className="space-y-10 pb-32 pt-2"
         >
           <motion.section variants={itemVariants}>
-            <MedicationAlertBanner initialDoseId={Number.isFinite(highlightedDoseId) ? highlightedDoseId : null} />
+            <MedicationAlertBanner
+              patientId={patientId}
+              initialDoseId={Number.isFinite(highlightedDoseId) ? highlightedDoseId : null}
+            />
           </motion.section>
 
           {/* Section: Health Status */}

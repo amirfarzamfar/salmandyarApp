@@ -16,6 +16,11 @@ export const medicationService = {
     return response.data;
   },
 
+  getDose: async (patientId: number, doseId: number) => {
+    const response = await api.get<MedicationDose>(`/medications/patient/${patientId}/doses/${doseId}`);
+    return response.data;
+  },
+
   addMedication: async (data: CreateMedicationDto) => {
     const response = await api.post<Medication>('/medications', data);
     return response.data;

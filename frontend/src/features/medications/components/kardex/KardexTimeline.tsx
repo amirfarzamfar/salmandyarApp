@@ -191,7 +191,7 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
                                                 key={dose.id}
                                                 onClick={() => handleDoseClick(dose)}
                                                 className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-transform hover:scale-110 shadow-sm ${statusClass}`}
-                                                title={`${format(parseISO(dose.scheduledTime), 'HH:mm')} - ${dose.status}`}
+                                                title={`${format(parseISO(dose.scheduledTime), 'HH:mm')} - ${dose.status}${dose.missedReason ? ` - ${dose.missedReason}` : ''}`}
                                             >
                                                 {format(parseISO(dose.scheduledTime), 'mm') === '00' ? '' : format(parseISO(dose.scheduledTime), 'mm')}
                                                 {/* Indicator dot */}

@@ -10,6 +10,7 @@ public interface IMedicationService
     Task DeleteMedicationAsync(int id);
     Task<List<MedicationDto>> GetPatientMedicationsAsync(int patientId);
     Task<List<MedicationDoseDto>> GetDailyScheduleAsync(int patientId, DateTime date);
+    Task<MedicationDoseDto?> GetDoseForPatientAsync(int patientId, int doseId);
     Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId, bool preventBeforeScheduledTime);
     Task ResetDoseAsync(int doseId, string userId);
     Task<List<MedicationInventoryTransactionDto>> GetInventoryTransactionsAsync(int medicationId);

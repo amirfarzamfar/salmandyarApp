@@ -172,6 +172,19 @@ public class MedicationsController : ControllerBase
         return Ok(await _medicationService.GetDailyScheduleAsync(patientId, date));
     }
 
+    [HttpGet("patient/{patientId}/doses/{doseId}")]
+    public async Task<ActionResult<MedicationDoseDto>> GetDose(int patientId, int doseId)
+    {
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(patientId, restrictedCaregiverId);
+        if (patient == null) return Forbid();
+
+        var dose = await _medicationService.GetDoseForPatientAsync(patientId, doseId);
+        if (dose == null) return NotFound(new { error = "Dose not found" });
+
+        return Ok(dose);
+    }
+
     [HttpPost("doses/{doseId}/log")]
     public async Task<IActionResult> LogDose(int doseId, [FromBody] RecordDoseDto dto)
     {

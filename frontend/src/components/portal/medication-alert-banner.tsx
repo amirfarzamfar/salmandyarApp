@@ -6,6 +6,8 @@ import { useLogDose } from "@/features/medications/hooks/useKardex";
 import { DoseStatus } from "@/types/medication";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { medicationService } from "@/services/medication.service";
+import { format, parseISO } from "date-fns";
 
 type MedicationAlertBannerDetail = {
   title: string;
@@ -15,12 +17,14 @@ type MedicationAlertBannerDetail = {
 };
 
 interface MedicationAlertBannerProps {
+  patientId?: number;
   initialDoseId?: number | null;
 }
 
-export function MedicationAlertBanner({ initialDoseId }: MedicationAlertBannerProps) {
+export function MedicationAlertBanner({ patientId, initialDoseId }: MedicationAlertBannerProps) {
   const { mutateAsync: logDose, isPending } = useLogDose();
   const [alert, setAlert] = useState<MedicationAlertBannerDetail | null>(null);
+  const [doseInfo, setDoseInfo] = useState<{ medicationName: string; scheduledTime: string } | null>(null);
   const [reason, setReason] = useState("");
   const [showReasonInput, setShowReasonInput] = useState(false);
 
@@ -38,6 +42,7 @@ export function MedicationAlertBanner({ initialDoseId }: MedicationAlertBannerPr
     const handleMedicationAlert = (event: Event) => {
       const customEvent = event as CustomEvent<MedicationAlertBannerDetail>;
       setAlert(customEvent.detail);
+      setDoseInfo(null);
       setShowReasonInput(false);
       setReason("");
     };
@@ -47,6 +52,29 @@ export function MedicationAlertBanner({ initialDoseId }: MedicationAlertBannerPr
       window.removeEventListener("portal:medication-alert", handleMedicationAlert as EventListener);
     };
   }, []);
+
+  useEffect(() => {
+    if (!alert?.doseId || !patientId) return;
+    let isActive = true;
+
+    void (async () => {
+      try {
+        const dose = await medicationService.getDose(patientId, alert.doseId);
+        if (!isActive) return;
+        setDoseInfo({
+          medicationName: dose.medicationName,
+          scheduledTime: dose.scheduledTime,
+        });
+      } catch {
+        if (!isActive) return;
+        setDoseInfo(null);
+      }
+    })();
+
+    return () => {
+      isActive = false;
+    };
+  }, [alert?.doseId, patientId]);
 
   const accentClassName = useMemo(() => {
     return alert?.severity === "Critical"
@@ -97,6 +125,13 @@ export function MedicationAlertBanner({ initialDoseId }: MedicationAlertBannerPr
     }
   };
 
+  const scheduledTimeLabel = useMemo(() => {
+    if (!doseInfo?.scheduledTime) return null;
+    const dt = parseISO(doseInfo.scheduledTime);
+    if (Number.isNaN(dt.getTime())) return null;
+    return dt.toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
+  }, [doseInfo?.scheduledTime]);
+
   return (
     <AnimatePresence>
       {alert && (
@@ -119,8 +154,19 @@ export function MedicationAlertBanner({ initialDoseId }: MedicationAlertBannerPr
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="text-base font-extrabold">{alert.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed opacity-90 font-medium">{alert.message}</p>
+                  <h3 className="text-base font-extrabold">
+                    {doseInfo?.medicationName ? `هشدار مصرف دارو - ${doseInfo.medicationName}` : alert.title}
+                  </h3>
+                  <p className="mt-1.5 text-sm leading-relaxed opacity-90 font-medium">
+                    {doseInfo?.medicationName && scheduledTimeLabel
+                      ? `زمان مصرف ${doseInfo.medicationName} (ساعت ${scheduledTimeLabel}) گذشته و هنوز ثبت نشده است. لطفاً وضعیت مصرف را مشخص کنید.`
+                      : alert.message}
+                  </p>
+                  {doseInfo?.medicationName && (
+                    <div className="mt-2 text-xs font-medium text-slate-700/80">
+                      {scheduledTimeLabel ? `زمان برنامه‌ریزی‌شده: ${format(parseISO(doseInfo.scheduledTime), "yyyy/MM/dd")} - ${scheduledTimeLabel}` : null}
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
