@@ -42,6 +42,7 @@ export interface VitalSign {
   respiratoryRate: number;
   bodyTemperature: number;
   oxygenSaturation: number;
+  bloodSugar?: number | null;
   glasgowComaScale?: number;
   patientAcknowledgedAt?: string | null;
   patientAcknowledgedByName?: string | null;

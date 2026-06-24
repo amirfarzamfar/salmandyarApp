@@ -300,6 +300,16 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
                   <span className="text-[10px] text-gray-500">اکسیژن</span>
                 </div>
               </div>
+
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-amber-50/50">
+                <Droplet size={18} className="text-amber-500" />
+                <div>
+                  <span className="block text-sm font-bold text-gray-800 leading-none mb-1">
+                    {vital.bloodSugar == null ? "ثبت نشده" : `${vital.bloodSugar} mg/dL`}
+                  </span>
+                  <span className="text-[10px] text-gray-500">قند خون</span>
+                </div>
+              </div>
             </div>
 
             <div className="flex items-center gap-2 text-xs text-gray-400 pt-1 border-t border-gray-50 mt-2">
@@ -350,6 +360,7 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
               <th className="px-6 py-4 font-medium whitespace-nowrap">ضربان قلب</th>
               <th className="px-6 py-4 font-medium whitespace-nowrap">دما</th>
               <th className="px-6 py-4 font-medium whitespace-nowrap">اکسیژن</th>
+              <th className="px-6 py-4 font-medium whitespace-nowrap">قند خون</th>
               <th className="px-6 py-4 font-medium whitespace-nowrap">ثبت کننده</th>
               <th className="px-6 py-4 font-medium whitespace-nowrap">وضعیت</th>
             </tr>
@@ -408,6 +419,13 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <Droplet size={16} className="text-amber-500" />
+                    <span className="font-bold text-gray-800">{vital.bloodSugar == null ? "ثبت نشده" : vital.bloodSugar}</span>
+                    <span className="text-xs text-gray-400">mg/dL</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2 text-gray-500">
                     <User size={14} />
                     <span>{vital.recorderName}</span>
@@ -421,7 +439,7 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
               </tr>
               {(alerts.length > 0 || vital.patientAcknowledgementNote || canAcknowledge) && (
               <tr key={`${vital.id}-note`} className="bg-gray-50/50">
-                <td colSpan={7} className="px-6 pb-4 pt-0">
+                <td colSpan={8} className="px-6 pb-4 pt-0">
                   <VitalHistoryNote
                     alerts={alerts}
                     patientAcknowledgementNote={vital.patientAcknowledgementNote}

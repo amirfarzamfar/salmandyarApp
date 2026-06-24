@@ -28,7 +28,7 @@ export default function TimelineTab({ patientId }: { patientId: number }) {
                     type: 'vital' as const,
                     date: new Date(v.recordedAt),
                     title: 'ثبت علائم حیاتی',
-                    description: `BP: ${v.systolicBloodPressure}/${v.diastolicBloodPressure}, Pulse: ${v.pulseRate}`,
+                    description: `BP: ${v.systolicBloodPressure}/${v.diastolicBloodPressure}, Pulse: ${v.pulseRate}, BS: ${v.bloodSugar == null ? 'ثبت نشده' : `${v.bloodSugar} mg/dL`}`,
                     author: v.recorderName
                 })),
                 ...services.map(s => ({

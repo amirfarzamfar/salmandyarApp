@@ -57,6 +57,14 @@ const metrics = [
     color: "#f97316", // orange-500
     gradient: "from-orange-500/20 to-orange-500/0"
   },
+  { 
+    id: "bs", 
+    label: "قند خون", 
+    unit: "mg/dL", 
+    icon: Droplet, 
+    color: "#f59e0b", // amber-500
+    gradient: "from-amber-500/20 to-amber-500/0"
+  },
   {
     id: "gcs",
     label: "هوشیاری",
@@ -104,6 +112,7 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
     hr: v.pulseRate,
     o2: v.oxygenSaturation,
     temp: v.bodyTemperature,
+    bs: v.bloodSugar ?? null,
     gcs: v.glasgowComaScale || 15,
   }));
 
@@ -198,6 +207,32 @@ export function VitalSignsChart({ patientId }: VitalSignsChartProps) {
             <Area type="monotone" dataKey="temp" name="دما" stroke="#f97316" fill="url(#colorTemp)" />
           </AreaChart>
         );
+
+      case "bs": {
+        const hasData = chartData.some((x) => x.bs != null);
+        if (!hasData) {
+          return (
+            <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+              داده‌ای برای نمایش وجود ندارد
+            </div>
+          );
+        }
+        return (
+          <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorBs" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <XAxis dataKey="date" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={60} />
+            <YAxis domain={['auto', 'auto']} tick={{ fontSize: 12 }} width={30} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+            <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }} />
+            <Area type="monotone" dataKey="bs" name="قند خون" stroke="#f59e0b" fill="url(#colorBs)" />
+          </AreaChart>
+        );
+      }
 
       case "gcs":
         return (

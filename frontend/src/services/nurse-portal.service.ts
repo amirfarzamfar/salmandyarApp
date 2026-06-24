@@ -10,6 +10,10 @@ export interface CreateVitalSignRequest {
   respiratoryRate: number;
   bodyTemperature: number;
   oxygenSaturation: number;
+  bloodSugar?: number | null;
+  glasgowComaScale?: number;
+  note?: string;
+  delayReason?: string;
   measuredAt: string;
 }
 

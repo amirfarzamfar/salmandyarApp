@@ -94,7 +94,7 @@ export function NurseVitalSignsList({ vitals, careLevel }: Props) {
             </div>
 
             {/* Vitals Grid */}
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pr-3">
+            <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 pr-3">
               <VitalItem label="فشار خون" value={`${vital.systolicBloodPressure}/${vital.diastolicBloodPressure}`} unit="mmHg" />
               <VitalItem label="MAP" value={vital.meanArterialPressure?.toString() || '-'} unit="mmHg" />
               <VitalItem label="ضربان قلب" value={vital.pulseRate.toString()} unit="bpm" />
@@ -110,6 +110,7 @@ export function NurseVitalSignsList({ vitals, careLevel }: Props) {
                 unit="%" 
                 alert={vital.oxygenSaturation < 95}
               />
+              <VitalItem label="قند خون" value={vital.bloodSugar == null ? 'ثبت نشده' : vital.bloodSugar.toString()} unit="mg/dL" />
               <VitalItem label="هوشیاری" value={vital.glasgowComaScale?.toString() || '-'} unit="GCS" />
             </div>
 

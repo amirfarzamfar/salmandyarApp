@@ -128,7 +128,8 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
     sbp: v.systolicBloodPressure,
     dbp: v.diastolicBloodPressure,
     hr: v.pulseRate,
-    temp: v.bodyTemperature
+    temp: v.bodyTemperature,
+    bs: v.bloodSugar ?? null
   }));
 
   const getTimeStatus = () => {
@@ -274,6 +275,7 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
               <Line type="monotone" dataKey="dbp" name="فشار دیاستول" stroke="#f87171" strokeWidth={2} dot={{ r: 4 }} />
               <Line type="monotone" dataKey="hr" name="ضربان قلب" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
               <Line type="monotone" dataKey="temp" name="دما" stroke="#f59e0b" strokeWidth={2} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="bs" name="قند خون" stroke="#eab308" strokeWidth={2} dot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -295,6 +297,7 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
                 <th className="px-4 py-3 text-right font-medium text-gray-500">HR (bpm)</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">Temp (°C)</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">SpO2 (%)</th>
+                <th className="px-4 py-3 text-right font-medium text-gray-500">قند خون (mg/dL)</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">GCS</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">پرستار</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">فاصله زمانی</th>
@@ -327,6 +330,7 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
                   <td className="px-4 py-3">
                      <span className={`${v.oxygenSaturation < 95 ? 'text-red-600 font-bold' : ''}`}>{v.oxygenSaturation}%</span>
                   </td>
+                  <td className="px-4 py-3">{v.bloodSugar == null ? 'ثبت نشده' : v.bloodSugar}</td>
                   <td className="px-4 py-3">{v.glasgowComaScale || '-'}</td>
                   <td className="px-4 py-3 text-gray-600">{v.recorderName}</td>
                   <td className="px-4 py-3">
@@ -355,7 +359,7 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
                 </tr>
                 {(alertsForRow.length > 0 || v.patientAcknowledgementNote) && (
                 <tr key={`${v.id}-note`} className="bg-gray-50/40">
-                  <td colSpan={11} className="px-4 pb-4 pt-0">
+                  <td colSpan={12} className="px-4 pb-4 pt-0">
                     <VitalHistoryNote
                       alerts={alertsForRow}
                       patientAcknowledgementNote={v.patientAcknowledgementNote}

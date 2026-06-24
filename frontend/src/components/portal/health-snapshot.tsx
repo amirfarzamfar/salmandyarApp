@@ -14,7 +14,7 @@ import { VitalSign, VitalSignAlert } from "@/types/patient";
 import { getVitalAcknowledgementErrorMessage, normalizePatientAcknowledgementNote } from "@/utils/vital-acknowledgement";
 
 // Helper to generate chart data from history
-type VitalChartKey = keyof Pick<VitalSign, "systolicBloodPressure" | "pulseRate" | "oxygenSaturation" | "bodyTemperature">;
+type VitalChartKey = keyof Pick<VitalSign, "systolicBloodPressure" | "pulseRate" | "oxygenSaturation" | "bodyTemperature" | "bloodSugar">;
 
 const getChartData = (vitals: VitalSign[], key: VitalChartKey, limit = 10) => {
   if (!vitals || vitals.length === 0) return Array(10).fill({ value: 0 });
@@ -24,7 +24,10 @@ const getChartData = (vitals: VitalSign[], key: VitalChartKey, limit = 10) => {
   // Take last N
   const slice = sorted.slice(-limit);
   
-  return slice.map(v => ({ value: v[key] }));
+  return slice.map(v => {
+    const raw = v[key];
+    return { value: typeof raw === "number" ? raw : null };
+  });
 };
 
 interface VitalCardProps {
@@ -34,7 +37,7 @@ interface VitalCardProps {
   icon: ComponentType<{ className?: string; strokeWidth?: number | string }>;
   color: string;
   trend: string;
-  data: Array<{ value: number }>;
+  data: Array<{ value: number | null }>;
   statusClassName: string;
 }
 
@@ -253,7 +256,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
         </PortalCard>
       )}
       
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
         <VitalCard 
           title="فشار خون" 
           value={latestVital ? `${latestVital.systolicBloodPressure}/${latestVital.diastolicBloodPressure}` : "--/--"} 
@@ -293,6 +296,16 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
           statusClassName={getVitalStatusMeta(getVitalDisplayStatus(temperatureAlerts)).badgeClassName}
           trend={getTrendLabel(temperatureAlerts, "نرمال")}
           data={getChartData(sortedVitals, "bodyTemperature")}
+        />
+        <VitalCard 
+          title="قند خون" 
+          value={latestVital?.bloodSugar == null ? "ثبت نشده" : latestVital.bloodSugar} 
+          unit="mg/dL" 
+          icon={Droplet} 
+          color="bg-amber-500" 
+          statusClassName={getVitalStatusMeta(getVitalDisplayStatus([])).badgeClassName}
+          trend={latestVital?.bloodSugar == null ? "ثبت نشده" : "ثبت شده"}
+          data={getChartData(sortedVitals, "bloodSugar")}
         />
       </div>
     </div>

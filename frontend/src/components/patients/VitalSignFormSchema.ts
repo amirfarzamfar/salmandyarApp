@@ -42,6 +42,7 @@ export const vitalSignSchema = z.object({
   respiratoryRate: requiredNumber('تعداد تنفس الزامی است', 8, 'حداقل ۸', 60, 'حداکثر ۶۰'),
   bodyTemperature: requiredNumber('دمای بدن الزامی است', 34, 'حداقل ۳۴', 43, 'حداکثر ۴۳'),
   oxygenSaturation: requiredNumber('اشباع اکسیژن الزامی است', 50, 'حداقل ۵۰', 100, 'حداکثر ۱۰۰'),
+  bloodSugar: optionalNumber(0, 'حداقل ۰', 1000, 'حداکثر ۱۰۰۰'),
   glasgowComaScale: optionalNumber(3, 'حداقل ۳', 15, 'حداکثر ۱۵'),
   note: z.string().max(200, 'حداکثر ۲۰۰ کاراکتر').optional(),
   delayReason: z.string().optional(),

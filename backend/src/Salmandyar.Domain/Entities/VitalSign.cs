@@ -31,5 +31,6 @@ public class VitalSign
     public int RespiratoryRate { get; set; }
     public double BodyTemperature { get; set; }
     public int OxygenSaturation { get; set; } // SpO2
+    public int? BloodSugar { get; set; } // mg/dL
     public int? GlasgowComaScale { get; set; } // GCS
 }

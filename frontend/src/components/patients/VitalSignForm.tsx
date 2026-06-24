@@ -251,6 +251,12 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
              <input type="number" {...register('oxygenSaturation', { valueAsNumber: true })} className="mt-1 w-full rounded-lg border-gray-300" />
              {errors.oxygenSaturation && <p className="text-red-500 text-xs">{errors.oxygenSaturation.message}</p>}
           </div>
+
+          <div>
+             <label className="block text-sm font-medium text-gray-700">قند خون (mg/dL)</label>
+             <input type="number" {...register('bloodSugar', { valueAsNumber: true })} className="mt-1 w-full rounded-lg border-gray-300" />
+             {errors.bloodSugar && <p className="text-red-500 text-xs">{errors.bloodSugar.message}</p>}
+          </div>
           
           <div>
              <label className="block text-sm font-medium text-gray-700">GCS (هوشیاری)</label>

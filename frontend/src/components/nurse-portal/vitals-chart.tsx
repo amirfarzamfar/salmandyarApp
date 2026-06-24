@@ -6,7 +6,7 @@ import { Activity, TrendingUp, Calendar } from 'lucide-react';
 
 interface VitalsChartProps {
   data: any[];
-  type: 'bp' | 'pulse' | 'spo2' | 'temp';
+  type: 'bp' | 'pulse' | 'spo2' | 'temp' | 'bs';
 }
 
 export function VitalsChart({ data, type }: VitalsChartProps) {
@@ -15,11 +15,21 @@ export function VitalsChart({ data, type }: VitalsChartProps) {
       case 'bp': return { color: '#ef4444', gradient: ['#fee2e2', '#ffffff'], label: 'فشار خون' };
       case 'pulse': return { color: '#10b981', gradient: ['#d1fae5', '#ffffff'], label: 'ضربان قلب' };
       case 'spo2': return { color: '#3b82f6', gradient: ['#dbeafe', '#ffffff'], label: 'اکسیژن خون' };
+      case 'bs': return { color: '#f59e0b', gradient: ['#fef3c7', '#ffffff'], label: 'قند خون' };
       default: return { color: '#8b5cf6', gradient: ['#ede9fe', '#ffffff'], label: 'دما' };
     }
   };
 
   const config = getConfig();
+  const dataKey = type === 'pulse'
+    ? 'pulse'
+    : type === 'spo2'
+      ? 'o2'
+      : type === 'temp'
+        ? 'temp'
+        : type === 'bs'
+          ? 'bloodSugar'
+          : 'value';
 
   // Custom Tooltip
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -47,7 +57,7 @@ export function VitalsChart({ data, type }: VitalsChartProps) {
     >
       <div className="flex items-center justify-between mb-4 px-2">
         <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg bg-${config.color === '#ef4444' ? 'rose' : config.color === '#10b981' ? 'emerald' : 'blue'}-50 text-${config.color === '#ef4444' ? 'rose' : config.color === '#10b981' ? 'emerald' : 'blue'}-500`}>
+          <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${config.color}1A`, color: config.color }}>
             <TrendingUp size={16} />
           </div>
           <span className="text-xs font-black text-gray-700 dark:text-gray-200">{config.label} (۷ روز گذشته)</span>
@@ -61,6 +71,10 @@ export function VitalsChart({ data, type }: VitalsChartProps) {
               <linearGradient id={`color${type}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={config.color} stopOpacity={0.2}/>
                 <stop offset="95%" stopColor={config.color} stopOpacity={0}/>
+              </linearGradient>
+              <linearGradient id="colorbp2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#fbbf24" stopOpacity={0.2}/>
+                <stop offset="95%" stopColor="#fbbf24" stopOpacity={0}/>
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -99,7 +113,7 @@ export function VitalsChart({ data, type }: VitalsChartProps) {
             ) : (
               <Area 
                 type="monotone" 
-                dataKey="value" 
+                dataKey={dataKey} 
                 stroke={config.color} 
                 strokeWidth={3}
                 fillOpacity={1} 

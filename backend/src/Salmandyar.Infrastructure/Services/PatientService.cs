@@ -213,6 +213,7 @@ public class PatientService : IPatientService
                 v.RespiratoryRate,
                 v.BodyTemperature,
                 v.OxygenSaturation,
+                v.BloodSugar,
                 v.GlasgowComaScale,
                 v.PatientAcknowledgedAt,
                 v.PatientAcknowledgedBy != null ? $"{v.PatientAcknowledgedBy.FirstName} {v.PatientAcknowledgedBy.LastName}" : null,
@@ -258,6 +259,7 @@ public class PatientService : IPatientService
             RespiratoryRate = dto.RespiratoryRate,
             BodyTemperature = dto.BodyTemperature,
             OxygenSaturation = dto.OxygenSaturation,
+            BloodSugar = dto.BloodSugar,
             GlasgowComaScale = dto.GlasgowComaScale
         };
 

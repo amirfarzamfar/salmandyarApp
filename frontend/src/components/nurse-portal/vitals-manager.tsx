@@ -128,7 +128,9 @@ export function VitalsManager({ patientId, careLevel = CareLevel.Level2 }: Props
     systolic: v.systolicBloodPressure,
     diastolic: v.diastolicBloodPressure,
     pulse: v.pulseRate,
-    value: v.pulseRate // fallback for simple charts
+    o2: v.oxygenSaturation,
+    temp: v.bodyTemperature,
+    bloodSugar: v.bloodSugar ?? null
   }));
 
   const getStatusColor = () => {
@@ -213,10 +215,11 @@ export function VitalsManager({ patientId, careLevel = CareLevel.Level2 }: Props
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-hidden"
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 overflow-hidden"
           >
             <VitalsChart data={chartData} type="bp" />
             <VitalsChart data={chartData} type="pulse" />
+            <VitalsChart data={chartData} type="bs" />
           </motion.div>
         )}
       </AnimatePresence>

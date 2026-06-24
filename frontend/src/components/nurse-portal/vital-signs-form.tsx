@@ -219,6 +219,14 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
                 error={errors.oxygenSaturation?.message}
             />
             <VitalInput
+                label="قند خون"
+                icon={Droplet}
+                unit="mg/dL"
+                color="text-amber-500"
+                {...register("bloodSugar", { valueAsNumber: true })}
+                error={errors.bloodSugar?.message}
+            />
+            <VitalInput
                 label="سطح هوشیاری"
                 icon={Activity}
                 unit="GCS"
