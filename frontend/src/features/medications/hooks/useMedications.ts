@@ -49,10 +49,11 @@ export const useDeleteMedication = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async ({ id }: { id: number; patientId: number }) => {
       await api.delete(`/medications/${id}`);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['medications', variables.patientId] });
       queryClient.invalidateQueries({ queryKey: ['medications'] });
       queryClient.invalidateQueries({ queryKey: ['kardex'] });
     },

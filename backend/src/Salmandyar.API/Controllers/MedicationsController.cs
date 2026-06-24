@@ -91,19 +91,58 @@ public class MedicationsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<MedicationDto>> UpdateMedication(int id, [FromBody] UpdateMedicationDto dto)
     {
-        if (User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily))
+        var medication = await _medicationService.GetMedicationByIdAsync(id);
+        if (medication == null)
+        {
+            return NotFound(new { error = "Medication not found" });
+        }
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(medication.CareRecipientId, restrictedCaregiverId);
+        if (patient == null && !(User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily)))
         {
             return Forbid();
         }
 
-        var result = await _medicationService.UpdateMedicationAsync(id, dto);
-        return Ok(result);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        try
+        {
+            if (User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily))
+            {
+                await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
+                    userId,
+                    medication.CareRecipientId,
+                    PatientSelfServiceFeatures.MedicationKardex);
+            }
+
+            var result = await _medicationService.UpdateMedicationAsync(id, dto);
+            return Ok(result);
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMedication(int id)
     {
+        var medication = await _medicationService.GetMedicationByIdAsync(id);
+        if (medication == null)
+        {
+            return NotFound(new { error = "Medication not found" });
+        }
+
         if (User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily))
+        {
+            return Forbid();
+        }
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(medication.CareRecipientId, restrictedCaregiverId);
+        if (patient == null)
         {
             return Forbid();
         }
@@ -141,12 +180,18 @@ public class MedicationsController : ControllerBase
 
         try
         {
-            await _medicationService.RecordDoseAsync(doseId, dto, userId);
+            var preventBeforeScheduledTime =
+                User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily);
+            await _medicationService.RecordDoseAsync(doseId, dto, userId, preventBeforeScheduledTime);
             return Ok();
         }
         catch (PatientSelfServiceAccessDeniedException ex)
         {
             return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
         }
         catch (KeyNotFoundException ex)
         {
@@ -247,12 +292,18 @@ public class MedicationsController : ControllerBase
 
         try
         {
-            await _medicationService.RecordDoseAsync(doseId, dto, userId);
+            var preventBeforeScheduledTime =
+                User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily);
+            await _medicationService.RecordDoseAsync(doseId, dto, userId, preventBeforeScheduledTime);
             return Ok();
         }
         catch (PatientSelfServiceAccessDeniedException ex)
         {
             return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
         }
         catch (KeyNotFoundException ex)
         {

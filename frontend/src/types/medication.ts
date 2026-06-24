@@ -58,6 +58,7 @@ export enum MedicationAlertHistoryStatus {
 
 export interface Medication {
     id: number;
+    careRecipientId: number;
     name: string;
     form: string;
     dosage: string;

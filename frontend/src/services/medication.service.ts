@@ -1,4 +1,5 @@
 import api from '@/lib/axios';
+import { format } from 'date-fns';
 import {
   Medication,
   CreateMedicationDto,
@@ -22,7 +23,7 @@ export const medicationService = {
 
   getDailySchedule: async (patientId: number, date: Date) => {
     const response = await api.get<MedicationDose[]>(`/medications/patient/${patientId}/schedule`, {
-      params: { date: date.toISOString() }
+      params: { date: format(date, 'yyyy-MM-dd') }
     });
     return response.data;
   },

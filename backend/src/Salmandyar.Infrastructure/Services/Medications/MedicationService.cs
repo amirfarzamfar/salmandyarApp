@@ -93,6 +93,14 @@ public class MedicationService : IMedicationService
         return MapToDto(medication);
     }
 
+    public async Task<MedicationDto?> GetMedicationByIdAsync(int id)
+    {
+        var medication = await _context.PatientMedications
+            .FirstOrDefaultAsync(m => m.Id == id);
+
+        return medication == null ? null : MapToDto(medication);
+    }
+
     public async Task<MedicationDto> UpdateMedicationAsync(int id, UpdateMedicationDto dto)
     {
         var medication = await _context.PatientMedications
@@ -204,8 +212,11 @@ public class MedicationService : IMedicationService
 
     public async Task<List<MedicationDto>> GetPatientMedicationsAsync(int patientId)
     {
+        var tz = GetIranTimeZone();
+        var todayLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date;
+
         var medications = await _context.PatientMedications
-            .Where(m => m.CareRecipientId == patientId && (m.EndDate == null || m.EndDate > DateTime.UtcNow))
+            .Where(m => m.CareRecipientId == patientId && (m.EndDate == null || m.EndDate.Value.Date >= todayLocal))
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync();
 
@@ -214,24 +225,29 @@ public class MedicationService : IMedicationService
 
     public async Task<List<MedicationDoseDto>> GetDailyScheduleAsync(int patientId, DateTime date)
     {
-        var startOfDay = date.Date;
-        var endOfDay = date.Date.AddDays(1).AddTicks(-1);
+        var tz = GetIranTimeZone();
+        var iranDate = GetIranLocalDate(date, tz);
+
+        var startOfDayLocal = new DateTime(iranDate.Year, iranDate.Month, iranDate.Day, 0, 0, 0, DateTimeKind.Unspecified);
+        var endOfDayLocal = new DateTime(iranDate.Year, iranDate.Month, iranDate.Day, 23, 59, 59, 999, DateTimeKind.Unspecified);
+        var startOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(startOfDayLocal, tz);
+        var endOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(endOfDayLocal, tz);
 
         var activeMedications = await _context.PatientMedications
             .Where(m => m.CareRecipientId == patientId &&
-                        m.StartDate <= endOfDay &&
-                        (m.EndDate == null || m.EndDate >= startOfDay) &&
+                        m.StartDate.Date <= endOfDayLocal.Date &&
+                        (m.EndDate == null || m.EndDate.Value.Date >= startOfDayLocal.Date) &&
                         !m.IsPRN)
             .ToListAsync();
 
         foreach (var med in activeMedications)
         {
             var hasDoses = await _context.MedicationDoses
-                .AnyAsync(d => d.PatientMedicationId == med.Id && d.ScheduledTime >= startOfDay && d.ScheduledTime <= endOfDay);
+                .AnyAsync(d => d.PatientMedicationId == med.Id && d.ScheduledTime >= startOfDayUtc && d.ScheduledTime <= endOfDayUtc);
 
             if (!hasDoses)
             {
-                await GenerateDosesForMedicationAsync(med, startOfDay, startOfDay);
+                await GenerateDosesForMedicationAsync(med, startOfDayUtc, startOfDayUtc);
             }
         }
 
@@ -241,15 +257,15 @@ public class MedicationService : IMedicationService
             .Include(d => d.PatientMedication)
             .Include(d => d.TakenByUser)
             .Where(d => d.PatientMedication.CareRecipientId == patientId &&
-                        d.ScheduledTime >= startOfDay &&
-                        d.ScheduledTime <= endOfDay)
+                        d.ScheduledTime >= startOfDayUtc &&
+                        d.ScheduledTime <= endOfDayUtc)
             .OrderBy(d => d.ScheduledTime)
             .ToListAsync();
 
         return doses.Select(MapToDoseDto).ToList();
     }
 
-    public async Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId)
+    public async Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId, bool preventBeforeScheduledTime)
     {
         var dose = await GetDoseForRecordingAsync(doseId);
         if (dose == null) throw new KeyNotFoundException("Dose not found");
@@ -258,6 +274,18 @@ public class MedicationService : IMedicationService
             userId,
             dose.PatientMedication.CareRecipientId,
             PatientSelfServiceFeatures.MedicationKardex);
+
+        if (preventBeforeScheduledTime)
+        {
+            var scheduledUtc = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc);
+            var nowUtc = DateTime.UtcNow;
+            if (nowUtc < scheduledUtc)
+            {
+                var tz = GetIranTimeZone();
+                var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
+                throw new InvalidOperationException($"زمان مصرف این دارو هنوز نرسیده است. زمان برنامه‌ریزی‌شده: {scheduledLocal:HH:mm}");
+            }
+        }
 
         var previousStatus = dose.Status;
         var medication = dose.PatientMedication;
@@ -445,6 +473,7 @@ public class MedicationService : IMedicationService
     public async Task SendRemindersAsync()
     {
         var now = DateTime.UtcNow;
+        var tz = GetIranTimeZone();
         var upcomingDoses = await _context.MedicationDoses
             .Include(d => d.PatientMedication)
                 .ThenInclude(m => m.CareRecipient)
@@ -461,7 +490,9 @@ public class MedicationService : IMedicationService
         foreach (var dose in upcomingDoses)
         {
             var med = dose.PatientMedication;
-            var message = $"Reminder: Time to take {med.Name} {med.Dosage} ({med.Route}) at {dose.ScheduledTime:HH:mm}.";
+            var scheduledUtc = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc);
+            var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
+            var message = $"Reminder: Time to take {med.Name} {med.Dosage} ({med.Route}) at {scheduledLocal:HH:mm}.";
 
             try
             {
@@ -494,6 +525,7 @@ public class MedicationService : IMedicationService
     public async Task CheckMissedDosesAndEscalateAsync()
     {
         var now = DateTime.UtcNow;
+        var tz = GetIranTimeZone();
         var staffUserIds = await GetAdminUserIdsAsync();
 
         var overdueDoses = await _context.MedicationDoses
@@ -513,7 +545,8 @@ public class MedicationService : IMedicationService
         {
             var med = dose.PatientMedication;
             var careRecipient = med.CareRecipient;
-            var graceTime = dose.ScheduledTime.AddMinutes(med.GracePeriodMinutes);
+            var scheduledUtc = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc);
+            var graceTime = scheduledUtc.AddMinutes(med.GracePeriodMinutes);
             var recipientIds = new List<string>();
 
             var assignedPrimaryCaregiverIds = await _context.CareAssignments
@@ -527,7 +560,8 @@ public class MedicationService : IMedicationService
 
             var patientName = $"{careRecipient.FirstName} {careRecipient.LastName}".Trim();
             var title = "هشدار عدم ثبت مصرف دارو";
-            var message = $"{patientName}: مصرف {med.Name} ساعت {dose.ScheduledTime:HH:mm} ثبت نشده است.";
+            var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
+            var message = $"{patientName}: مصرف {med.Name} ساعت {scheduledLocal:HH:mm} ثبت نشده است.";
             var link = $"/dashboard/patients/{careRecipient.Id}?tab=medications&doseId={dose.Id}";
             var severity = med.Criticality >= MedicationCriticality.HighAlert ? "Critical" : "Warning";
 
@@ -571,7 +605,7 @@ public class MedicationService : IMedicationService
                 {
                     try
                     {
-                        var escalationMessage = $"MISSED DOSE ALERT: Patient {med.CareRecipient.FirstName} {med.CareRecipient.LastName} missed {med.Name} scheduled at {dose.ScheduledTime:HH:mm}.";
+                        var escalationMessage = $"MISSED DOSE ALERT: Patient {med.CareRecipient.FirstName} {med.CareRecipient.LastName} missed {med.Name} scheduled at {scheduledLocal:HH:mm}.";
                         await _notificationService.SendEmailAsync(med.CareRecipient.ResponsibleNurse.Email, "URGENT: Missed Medication", escalationMessage);
                     }
                     catch
@@ -660,9 +694,17 @@ public class MedicationService : IMedicationService
         var medication = await _context.PatientMedications.FindAsync(medicationId);
         if (medication == null) return;
 
-        for (var day = from.Date; day <= to.Date; day = day.AddDays(1))
+        var tz = GetIranTimeZone();
+        var fromUtc = DateTime.SpecifyKind(from, DateTimeKind.Utc);
+        var toUtc = DateTime.SpecifyKind(to, DateTimeKind.Utc);
+        var fromLocalDate = TimeZoneInfo.ConvertTimeFromUtc(fromUtc, tz).Date;
+        var toLocalDate = TimeZoneInfo.ConvertTimeFromUtc(toUtc, tz).Date;
+
+        for (var day = fromLocalDate; day <= toLocalDate; day = day.AddDays(1))
         {
-            await GenerateDosesForMedicationAsync(medication, day, day);
+            var startLocal = new DateTime(day.Year, day.Month, day.Day, 0, 0, 0, DateTimeKind.Unspecified);
+            var startUtc = TimeZoneInfo.ConvertTimeToUtc(startLocal, tz);
+            await GenerateDosesForMedicationAsync(medication, startUtc, startUtc);
         }
 
         await _context.SaveChangesAsync();
@@ -671,7 +713,7 @@ public class MedicationService : IMedicationService
     private async Task GenerateDosesForMedicationAsync(PatientMedication med, DateTime fromDate, DateTime toDate)
     {
         var times = new List<TimeSpan>();
-        var tz = TimeZoneInfo.FindSystemTimeZoneById("Asia/Tehran");
+        var tz = GetIranTimeZone();
 
         if (med.FrequencyType == MedicationFrequencyType.Daily)
         {
@@ -726,7 +768,19 @@ public class MedicationService : IMedicationService
 
         foreach (var time in times)
         {
-            var localDate = TimeZoneInfo.ConvertTimeFromUtc(fromDate, tz).Date;
+            var fromUtc = DateTime.SpecifyKind(fromDate, DateTimeKind.Utc);
+            var localDate = TimeZoneInfo.ConvertTimeFromUtc(fromUtc, tz).Date;
+            var startLocalDate = med.StartDate.Date;
+            var endLocalDate = med.EndDate?.Date;
+            if (localDate < startLocalDate)
+            {
+                continue;
+            }
+            if (endLocalDate.HasValue && localDate > endLocalDate.Value)
+            {
+                continue;
+            }
+
             var localScheduledTime = localDate.Add(time);
             var scheduledTime = TimeZoneInfo.ConvertTimeToUtc(localScheduledTime, tz);
 
@@ -774,6 +828,9 @@ public class MedicationService : IMedicationService
             var before = medication.TotalQuantity;
             medication.TotalQuantity = Math.Max(0, medication.TotalQuantity - quantityToDeduct);
             dose.AppliedInventoryQuantity = quantityToDeduct;
+            var tz = GetIranTimeZone();
+            var scheduledUtc = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc);
+            var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
 
             await CreateInventoryTransactionAsync(
                 medication,
@@ -781,13 +838,16 @@ public class MedicationService : IMedicationService
                 -quantityToDeduct,
                 before,
                 medication.TotalQuantity,
-                $"مصرف دوز ساعت {dose.ScheduledTime:yyyy-MM-dd HH:mm}",
+                $"مصرف دوز ساعت {scheduledLocal:yyyy-MM-dd HH:mm}",
                 userId);
         }
         else if (previousStatus == DoseStatus.Taken && newStatus != DoseStatus.Taken && dose.AppliedInventoryQuantity > 0)
         {
             var before = medication.TotalQuantity;
             medication.TotalQuantity += dose.AppliedInventoryQuantity;
+            var tz = GetIranTimeZone();
+            var scheduledUtc = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc);
+            var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
 
             await CreateInventoryTransactionAsync(
                 medication,
@@ -795,7 +855,7 @@ public class MedicationService : IMedicationService
                 dose.AppliedInventoryQuantity,
                 before,
                 medication.TotalQuantity,
-                $"برگشت موجودی دوز ساعت {dose.ScheduledTime:yyyy-MM-dd HH:mm}",
+                $"برگشت موجودی دوز ساعت {scheduledLocal:yyyy-MM-dd HH:mm}",
                 userId);
 
             dose.AppliedInventoryQuantity = 0;
@@ -1115,9 +1175,9 @@ public class MedicationService : IMedicationService
             Dosage = dose.PatientMedication.Dosage,
             Route = dose.PatientMedication.Route,
             Instructions = dose.PatientMedication.Instructions ?? string.Empty,
-            ScheduledTime = dose.ScheduledTime,
+            ScheduledTime = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc),
             Status = dose.Status,
-            TakenAt = dose.TakenAt,
+            TakenAt = dose.TakenAt.HasValue ? DateTime.SpecifyKind(dose.TakenAt.Value, DateTimeKind.Utc) : null,
             TakenByName = dose.TakenByUser != null ? $"{dose.TakenByUser.FirstName} {dose.TakenByUser.LastName}".Trim() : null,
             Notes = dose.Notes,
             MissedReason = dose.MissedReason,
@@ -1135,12 +1195,35 @@ public class MedicationService : IMedicationService
         };
     }
 
+    private static TimeZoneInfo GetIranTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Iran Standard Time");
+        }
+        catch
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Asia/Tehran");
+        }
+    }
+
+    private static DateTime GetIranLocalDate(DateTime input, TimeZoneInfo tz)
+    {
+        return input.Kind switch
+        {
+            DateTimeKind.Utc => TimeZoneInfo.ConvertTimeFromUtc(input, tz).Date,
+            DateTimeKind.Local => TimeZoneInfo.ConvertTime(input, tz).Date,
+            _ => input.Date
+        };
+    }
+
     private static MedicationDto MapToDto(PatientMedication medication)
     {
         var stockStatus = GetStockStatus(medication.TotalQuantity, medication.AlertLimit);
         return new MedicationDto
         {
             Id = medication.Id,
+            CareRecipientId = medication.CareRecipientId,
             Name = medication.Name,
             Form = medication.Form,
             Dosage = medication.Dosage,

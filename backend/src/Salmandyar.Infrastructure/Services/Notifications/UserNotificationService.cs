@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Enums;
+using Salmandyar.Domain.Entities.Medications;
 using Salmandyar.Infrastructure.Persistence;
 using System.Net.Http.Json;
 
@@ -98,6 +99,8 @@ public class UserNotificationService : IUserNotificationService
             .Take(50) // Limit to last 50
             .ToListAsync();
 
+        await NormalizeMedicationMissedMessagesAsync(items);
+
         // #region debug-point B:list-result
         await DebugReportAsync("B", "GetUserNotificationsAsync:result", new
         {
@@ -184,6 +187,85 @@ public class UserNotificationService : IUserNotificationService
     private static bool IsLowStockTitle(string? title)
     {
         return !string.IsNullOrWhiteSpace(title) && title.Contains("موجودی دارو", StringComparison.Ordinal);
+    }
+
+    private async Task NormalizeMedicationMissedMessagesAsync(List<UserNotification> items)
+    {
+        const string title = "هشدار عدم ثبت مصرف دارو";
+        var doseIds = items
+            .Where(n => n.Title == title && !string.IsNullOrWhiteSpace(n.ReferenceId))
+            .Select(n => int.TryParse(n.ReferenceId, out var id) ? id : (int?)null)
+            .Where(x => x.HasValue)
+            .Select(x => x!.Value)
+            .Distinct()
+            .ToList();
+
+        if (doseIds.Count == 0)
+        {
+            return;
+        }
+
+        var doses = await _context.MedicationDoses
+            .Include(d => d.PatientMedication)
+                .ThenInclude(m => m.CareRecipient)
+            .Where(d => doseIds.Contains(d.Id))
+            .ToListAsync();
+
+        if (doses.Count == 0)
+        {
+            return;
+        }
+
+        var tz = GetIranTimeZone();
+        var doseById = doses.ToDictionary(d => d.Id);
+        var changed = false;
+
+        foreach (var item in items)
+        {
+            if (item.Title != title || string.IsNullOrWhiteSpace(item.ReferenceId))
+            {
+                continue;
+            }
+
+            if (!int.TryParse(item.ReferenceId, out var doseId))
+            {
+                continue;
+            }
+
+            if (!doseById.TryGetValue(doseId, out var dose))
+            {
+                continue;
+            }
+
+            var careRecipient = dose.PatientMedication.CareRecipient;
+            var patientName = $"{careRecipient.FirstName} {careRecipient.LastName}".Trim();
+            var scheduledUtc = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc);
+            var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
+            var message = $"{patientName}: مصرف {dose.PatientMedication.Name} ساعت {scheduledLocal:HH:mm} ثبت نشده است.";
+
+            if (item.Message != message)
+            {
+                item.Message = message;
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            await _context.SaveChangesAsync();
+        }
+    }
+
+    private static TimeZoneInfo GetIranTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Iran Standard Time");
+        }
+        catch
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Asia/Tehran");
+        }
     }
 
     // #region debug-point shared:reporter

@@ -5,6 +5,7 @@ namespace Salmandyar.Application.DTOs.Medications;
 public class MedicationDto
 {
     public int Id { get; set; }
+    public int CareRecipientId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Form { get; set; } = string.Empty;
     public string Dosage { get; set; } = string.Empty;

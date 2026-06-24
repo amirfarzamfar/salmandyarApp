@@ -5,11 +5,12 @@ namespace Salmandyar.Application.Services.Medications;
 public interface IMedicationService
 {
     Task<MedicationDto> AddMedicationAsync(CreateMedicationDto dto);
+    Task<MedicationDto?> GetMedicationByIdAsync(int id);
     Task<MedicationDto> UpdateMedicationAsync(int id, UpdateMedicationDto dto);
     Task DeleteMedicationAsync(int id);
     Task<List<MedicationDto>> GetPatientMedicationsAsync(int patientId);
     Task<List<MedicationDoseDto>> GetDailyScheduleAsync(int patientId, DateTime date);
-    Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId);
+    Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId, bool preventBeforeScheduledTime);
     Task ResetDoseAsync(int doseId, string userId);
     Task<List<MedicationInventoryTransactionDto>> GetInventoryTransactionsAsync(int medicationId);
     Task<List<MedicationAlertHistoryDto>> GetAlertHistoriesAsync(int medicationId);

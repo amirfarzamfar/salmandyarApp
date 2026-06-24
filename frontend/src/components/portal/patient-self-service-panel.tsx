@@ -5,6 +5,7 @@ import { X, Stethoscope, ClipboardPenLine, ShieldAlert, Clock3 } from 'lucide-re
 import VitalSignForm from '@/components/patients/VitalSignForm';
 import { KardexTimeline } from '@/features/medications/components/kardex/KardexTimeline';
 import { MedicationWizard } from '@/features/medications/components/wizard/MedicationWizard';
+import { PatientMedicationList } from '@/features/medications/components/patient/PatientMedicationList';
 import { useCreateMedication } from '@/features/medications/hooks/useMedications';
 import { MedicationFormData } from '@/features/medications/types';
 import { PatientSelfServiceAccessSummary } from '@/types/patient-self-service';
@@ -158,6 +159,14 @@ export function PatientSelfServicePanel({
                   </button>
                 </div>
                 <KardexTimeline patientId={patientId} />
+                <div className="mt-8 border-t border-slate-200 pt-6">
+                  <PatientMedicationList
+                    patientId={patientId}
+                    allowEdit={Boolean(kardexFeature?.canSubmitNow)}
+                    allowDelete={false}
+                    allowInventoryManagement={false}
+                  />
+                </div>
               </div>
             )}
           </div>

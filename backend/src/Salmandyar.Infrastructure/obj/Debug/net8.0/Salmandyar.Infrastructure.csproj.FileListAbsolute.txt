@@ -52,3 +52,6 @@ C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\ve
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.Infrastructure.deps.json
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.Infrastructure.dll
 C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-lowstock-fix\Salmandyar.Infrastructure.pdb
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-patient-edit-delete\Salmandyar.Infrastructure.deps.json
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-patient-edit-delete\Salmandyar.Infrastructure.dll
+C:\Users\amirFarzam\Desktop\salmandyar-main\salmandyar-main\backend\artifacts\verify-patient-edit-delete\Salmandyar.Infrastructure.pdb

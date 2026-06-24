@@ -45,10 +45,10 @@ export const PatientMedicationList = ({
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-            await deleteMedication(id);
+            await deleteMedication({ id, patientId });
             Swal.fire('حذف شد!', 'داروی مورد نظر با موفقیت حذف شد.', 'success');
         } catch (e: any) {
-            Swal.fire('خطا', e.response?.data?.message || 'خطا در حذف دارو', 'error');
+            Swal.fire('خطا', e.response?.data?.message || e.response?.data?.error || 'خطا در حذف دارو', 'error');
         }
       }
     })

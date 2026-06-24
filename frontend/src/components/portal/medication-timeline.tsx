@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useKardex, useLogDose } from "@/features/medications/hooks/useKardex";
 import { DoseStatus, MedicationDose } from "@/types/medication";
 import { PatientSelfServiceFeatureStatus } from "@/types/patient-self-service";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { toast } from "react-hot-toast";
 import { useEffect, useRef, useState } from "react";
 import { PatientMedicationList } from "@/features/medications/components/patient/PatientMedicationList";
@@ -35,7 +35,16 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
   }, [highlightedDoseId, doses?.length]);
 
-  const handleTakeMed = (doseId: number) => {
+  const handleTakeMed = (doseId: number, scheduledTime?: string) => {
+    if (scheduledTime) {
+      const scheduled = parseISO(scheduledTime);
+      if (!Number.isNaN(scheduled.getTime()) && new Date() < scheduled) {
+        const timeLabel = scheduled.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+        toast.error(`زمان مصرف این دارو هنوز نرسیده است. زمان برنامه‌ریزی‌شده: ${timeLabel}`);
+        return;
+      }
+    }
+
     if (medicationAccess && !medicationAccess.canSubmitNow) {
       toast.error(medicationAccess.message || "امکان ثبت کاردکس برای شما فعال نیست.");
       return;
@@ -91,7 +100,11 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
         </div>
       ) : (
         <div className="flex gap-4 overflow-x-auto pb-8 -mx-4 px-4 snap-x mandatory scrollbar-hide">
-            {doses.map((dose: MedicationDose) => (
+            {doses.map((dose: MedicationDose) => {
+              const scheduled = parseISO(dose.scheduledTime);
+              const isEarly = !Number.isNaN(scheduled.getTime()) && new Date() < scheduled;
+
+              return (
             <div
               key={dose.id}
               ref={(el) => {
@@ -134,7 +147,9 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
                         <Clock className="w-4 h-4" /> زمان:
                     </span>
                     <span className="font-bold text-gray-800 dir-ltr font-mono text-base">
-                        {new Date(dose.scheduledTime).toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
+                        {Number.isNaN(scheduled.getTime())
+                          ? ''
+                          : scheduled.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                     </div>
                     {dose.instructions && (
@@ -157,16 +172,22 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
 
                 <PortalButton 
                     variant={dose.status === DoseStatus.Taken ? 'calm' : 'primary'}
-                    onClick={() => handleTakeMed(dose.id)}
-                    disabled={dose.status === DoseStatus.Taken || Boolean(medicationAccess && !medicationAccess.canSubmitNow)}
+                    onClick={() => handleTakeMed(dose.id, dose.scheduledTime)}
+                    disabled={dose.status === DoseStatus.Taken || isEarly || Boolean(medicationAccess && !medicationAccess.canSubmitNow)}
                     className="w-full shadow-none"
                 >
-                    {dose.status === DoseStatus.Taken ? 'مصرف شده' : 'تایید مصرف دارو'}
+                    {dose.status === DoseStatus.Taken ? 'مصرف شده' : isEarly ? 'زمانش نرسیده' : 'تایید مصرف دارو'}
                 </PortalButton>
+                {isEarly && (
+                  <div className="mt-3 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    هنوز زمان مصرف این دارو نرسیده است.
+                  </div>
+                )}
                   </div>
               </PortalCard>
             </div>
-            ))}
+              );
+            })}
             
             {/* Spacer for scroll */}
             <div className="w-2 shrink-0"></div>
