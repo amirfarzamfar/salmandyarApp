@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { patientService } from '@/services/patient.service';
 import { CareLevel, PatientList } from '@/types/patient';
 import { Search, Filter, Pencil } from 'lucide-react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 
 export default function PatientsPage() {
   const [patients, setPatients] = useState<PatientList[]>([]);
@@ -221,10 +221,10 @@ export default function PatientsPage() {
       <Dialog open={!!editingPatient} onOpenChange={(open) => { if (!open) closeEdit(); }}>
         <DialogContent className="w-[95vw] max-w-xl rounded-2xl bg-white p-0 overflow-hidden">
           <div className="p-6 border-b border-gray-100">
-            <div className="text-lg font-black text-gray-900">تنظیمات ادمین بیمار</div>
-            <div className="mt-1 text-sm text-gray-500">
+            <DialogTitle className="text-lg font-black text-gray-900">تنظیمات ادمین بیمار</DialogTitle>
+            <DialogDescription className="mt-1 text-sm text-gray-500">
               تشخیص، سطح مراقبت و نیازهای ویژه را مشخص کنید.
-            </div>
+            </DialogDescription>
           </div>
 
           <div className="p-6 space-y-4">

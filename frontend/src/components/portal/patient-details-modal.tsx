@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Patient, CareLevel } from "@/types/patient";
 import { User, Calendar, Activity, MapPin, FileText, Stethoscope, HeartPulse, ShieldCheck } from "lucide-react";
 import { PatientProfileDto } from "@/services/patient-profile.service";
@@ -173,7 +173,12 @@ export function PatientDetailsModal({ isOpen, onClose, patient, profile }: Patie
 
         <div className="pt-12 pb-6 px-4 md:pt-14 md:pb-8 md:px-8">
             <div className="text-center mb-6 md:mb-8">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-1">{patient.firstName} {patient.lastName}</h2>
+                <DialogTitle className="text-xl md:text-2xl font-bold text-gray-800 mb-1">
+                  {patient.firstName} {patient.lastName}
+                </DialogTitle>
+                <DialogDescription className="sr-only">
+                  جزئیات کامل پرونده بیمار شامل تشخیص، پرستار مسئول، تاریخ تولد، آدرس و نیازهای پزشکی.
+                </DialogDescription>
                 <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
                     <span className="px-3 py-1 bg-teal-50 text-teal-700 text-xs font-medium rounded-full border border-teal-100">
                         {getCareLevelLabel(patient.careLevel)}
