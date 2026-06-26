@@ -46,6 +46,7 @@ public static class DependencyInjection
 
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IOtpLoginChallengeStore, OtpLoginChallengeStore>();
         services.AddScoped<IPatientService, PatientService>();
         services.AddScoped<Salmandyar.Application.Services.PatientSelfServiceAccess.IPatientSelfServiceAccessService, PatientSelfServiceAccessService>();
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
@@ -58,6 +59,7 @@ public static class DependencyInjection
 
         // Settings
         services.AddScoped<INotificationSettingsService, NotificationSettingsService>();
+        services.AddScoped<IOtpLoginSettingsService, OtpLoginSettingsService>();
         services.AddScoped<IMedicationAlertSettingsService, MedicationAlertSettingsService>();
 
         // Assignments

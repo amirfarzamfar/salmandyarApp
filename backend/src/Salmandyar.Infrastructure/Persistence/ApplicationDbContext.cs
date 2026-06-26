@@ -25,6 +25,8 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<NursingReportDetail> NursingReportDetails { get; set; }
     public DbSet<ServiceReminder> ServiceReminders { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
+    public DbSet<OtpLoginSettings> OtpLoginSettings { get; set; }
+    public DbSet<OtpLoginChallenge> OtpLoginChallenges { get; set; }
     public DbSet<MedicationAlertSettings> MedicationAlertSettings { get; set; }
     public DbSet<CareAssignment> CareAssignments { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
@@ -153,7 +155,12 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
         builder.Entity<ServiceReminder>().ToTable("ServiceReminders");
         builder.Entity<NotificationSettings>().ToTable("NotificationSettings");
+        builder.Entity<OtpLoginSettings>().ToTable("OtpLoginSettings");
+        builder.Entity<OtpLoginChallenge>().ToTable("OtpLoginChallenges");
         builder.Entity<MedicationAlertSettings>().ToTable("MedicationAlertSettings");
+
+        builder.Entity<OtpLoginChallenge>()
+            .HasIndex(challenge => new { challenge.UserId, challenge.DeliveryChannel, challenge.CreatedAtUtc });
         
         // Configurations
         builder.Entity<CaregiverProfile>()

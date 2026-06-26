@@ -1,9 +1,17 @@
 import api from '@/lib/axios';
-import { LoginRequest, RegisterRequest, AuthResponse, ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest } from '@/types/auth';
+import { LoginRequest, RegisterRequest, AuthResponse, ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest, OtpLoginRequest, OtpLoginVerifyRequest } from '@/types/auth';
 
 export const authService = {
   login: async (data: LoginRequest) => {
     const response = await api.post<AuthResponse>('/auth/login', data);
+    return response.data;
+  },
+  requestOtpLogin: async (data: OtpLoginRequest) => {
+    const response = await api.post<{ message: string }>('/auth/login-otp/request', data);
+    return response.data;
+  },
+  verifyOtpLogin: async (data: OtpLoginVerifyRequest) => {
+    const response = await api.post<AuthResponse>('/auth/login-otp/verify', data);
     return response.data;
   },
   register: async (data: RegisterRequest) => {

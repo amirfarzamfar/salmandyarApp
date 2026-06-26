@@ -44,6 +44,7 @@ const navigation = [
     icon: Settings,
     subItems: [
         { name: 'تنظیمات پیام', href: '/dashboard/admin/settings/notifications', icon: Bell },
+        { name: 'ورود با رمز یکبار مصرف', href: '/dashboard/admin/settings/auth-otp', icon: ShieldCheck },
         { name: 'تنظیم پیام هشدار دارو', href: '/dashboard/admin/settings/medication-alerts', icon: Bell }
     ]
   },

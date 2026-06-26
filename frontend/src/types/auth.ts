@@ -3,6 +3,17 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface OtpLoginRequest {
+  identifier: string;
+  channel: 'sms' | 'email';
+}
+
+export interface OtpLoginVerifyRequest {
+  identifier: string;
+  channel: 'sms' | 'email';
+  code: string;
+}
+
 export interface RegisterRequest {
   firstName: string;
   lastName: string;

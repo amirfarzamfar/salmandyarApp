@@ -69,6 +69,34 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("login-otp/request")]
+    public async Task<IActionResult> RequestOtpLogin(RequestOtpLoginRequest request)
+    {
+        try
+        {
+            await _authService.RequestOtpLoginAsync(request);
+            return Ok(new { message = "اگر حسابی با این شناسه و کانال انتخابی وجود داشته باشد، کد ورود ارسال شد." });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("login-otp/verify")]
+    public async Task<IActionResult> VerifyOtpLogin(VerifyOtpLoginRequest request)
+    {
+        try
+        {
+            var response = await _authService.VerifyOtpLoginAsync(request);
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPost("change-password")]
     [Authorize]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)

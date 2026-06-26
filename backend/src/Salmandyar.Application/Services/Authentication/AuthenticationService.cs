@@ -1,7 +1,11 @@
+using System.Security.Cryptography;
+using System.Text;
 using Salmandyar.Application.Common.Interfaces.Authentication;
 using Salmandyar.Application.Common.Interfaces.Identity;
 using Salmandyar.Application.Services.Authentication.Dtos;
+using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Application.Services.Patients;
+using Salmandyar.Application.Services.Settings;
 using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 
@@ -9,15 +13,33 @@ namespace Salmandyar.Application.Services.Authentication;
 
 public class AuthenticationService : IAuthenticationService
 {
+    private const string SmsChannel = "sms";
+    private const string EmailChannel = "email";
+
     private readonly IIdentityService _identityService;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IPatientService _patientService;
+    private readonly IOtpLoginChallengeStore _otpLoginChallengeStore;
+    private readonly IOtpLoginSettingsService _otpLoginSettingsService;
+    private readonly INotificationSettingsService _notificationSettingsService;
+    private readonly INotificationService _notificationService;
 
-    public AuthenticationService(IIdentityService identityService, IJwtTokenGenerator jwtTokenGenerator, IPatientService patientService)
+    public AuthenticationService(
+        IIdentityService identityService,
+        IJwtTokenGenerator jwtTokenGenerator,
+        IPatientService patientService,
+        IOtpLoginChallengeStore otpLoginChallengeStore,
+        IOtpLoginSettingsService otpLoginSettingsService,
+        INotificationSettingsService notificationSettingsService,
+        INotificationService notificationService)
     {
         _identityService = identityService;
         _jwtTokenGenerator = jwtTokenGenerator;
         _patientService = patientService;
+        _otpLoginChallengeStore = otpLoginChallengeStore;
+        _otpLoginSettingsService = otpLoginSettingsService;
+        _notificationSettingsService = notificationSettingsService;
+        _notificationService = notificationService;
     }
 
     public async Task<AuthenticationResponse> RegisterAsync(RegisterRequest request)
@@ -84,18 +106,93 @@ public class AuthenticationService : IAuthenticationService
             throw new Exception("نام کاربری یا رمز عبور اشتباه است.");
         }
 
-        var roles = await _identityService.GetUserRolesAsync(user);
-        var token = _jwtTokenGenerator.GenerateToken(user, roles);
+        return await BuildAuthenticationResponseAsync(user);
+    }
 
-        return new AuthenticationResponse(
+    public async Task RequestOtpLoginAsync(RequestOtpLoginRequest request)
+    {
+        var otpSettings = await _otpLoginSettingsService.GetSettingsEntityAsync();
+        EnsureOtpLoginEnabled(otpSettings);
+
+        var channel = NormalizeChannel(request.Channel);
+        EnsureSupportedChannel(channel, otpSettings);
+
+        var identifier = NormalizeIdentifier(request.Identifier);
+        var user = await _identityService.GetUserByIdentifierAsync(identifier);
+        if (user == null || !user.IsActive)
+        {
+            return;
+        }
+
+        var notificationSettings = await _notificationSettingsService.GetSettingsEntityAsync();
+        if (!IsDeliveryConfigured(channel, notificationSettings))
+        {
+            return;
+        }
+
+        var destination = GetDestination(user, channel);
+        if (string.IsNullOrWhiteSpace(destination))
+        {
+            return;
+        }
+
+        var nowUtc = DateTime.UtcNow;
+        var cooldownThresholdUtc = nowUtc.AddSeconds(-otpSettings.ResendCooldownSeconds);
+        var hasRecentChallenge = await _otpLoginChallengeStore.HasRecentActiveChallengeAsync(user.Id, channel, cooldownThresholdUtc);
+        if (hasRecentChallenge)
+        {
+            return;
+        }
+
+        var code = GenerateNumericCode(otpSettings.CodeLength);
+        var codeHash = HashCode(code);
+
+        await _otpLoginChallengeStore.UpsertChallengeAsync(
             user.Id,
-            user.FirstName,
-            user.LastName,
-            user.Email,
-            user.PhoneNumber,
-            roles.FirstOrDefault() ?? string.Empty,
-            token
-        );
+            identifier,
+            channel,
+            codeHash,
+            otpSettings.MaxVerifyAttempts,
+            nowUtc,
+            nowUtc.AddMinutes(otpSettings.CodeExpiryMinutes));
+
+        await SendOtpAsync(channel, destination, code, otpSettings.CodeExpiryMinutes);
+    }
+
+    public async Task<AuthenticationResponse> VerifyOtpLoginAsync(VerifyOtpLoginRequest request)
+    {
+        var otpSettings = await _otpLoginSettingsService.GetSettingsEntityAsync();
+        EnsureOtpLoginEnabled(otpSettings);
+
+        var channel = NormalizeChannel(request.Channel);
+        EnsureSupportedChannel(channel, otpSettings);
+
+        var identifier = NormalizeIdentifier(request.Identifier);
+        var user = await _identityService.GetUserByIdentifierAsync(identifier);
+        if (user == null || !user.IsActive)
+        {
+            throw new Exception("کد ورود نامعتبر یا منقضی است.");
+        }
+
+        var destination = GetDestination(user, channel);
+        if (string.IsNullOrWhiteSpace(destination))
+        {
+            throw new Exception("کد ورود نامعتبر یا منقضی است.");
+        }
+
+        var isValid = await _otpLoginChallengeStore.VerifyChallengeAsync(
+            user.Id,
+            identifier,
+            channel,
+            HashCode(request.Code.Trim()),
+            DateTime.UtcNow);
+
+        if (!isValid)
+        {
+            throw new Exception("کد ورود نامعتبر یا منقضی است.");
+        }
+
+        return await BuildAuthenticationResponseAsync(user);
     }
 
     public async Task ChangePasswordAsync(ChangePasswordRequest request)
@@ -141,5 +238,103 @@ public class AuthenticationService : IAuthenticationService
         {
             throw new Exception($"بازیابی رمز عبور با خطا مواجه شد: {string.Join(", ", errors)}");
         }
+    }
+
+    private async Task<AuthenticationResponse> BuildAuthenticationResponseAsync(User user)
+    {
+        var roles = await _identityService.GetUserRolesAsync(user);
+        var token = _jwtTokenGenerator.GenerateToken(user, roles);
+
+        return new AuthenticationResponse(
+            user.Id,
+            user.FirstName,
+            user.LastName,
+            user.Email ?? string.Empty,
+            user.PhoneNumber ?? string.Empty,
+            roles.FirstOrDefault() ?? string.Empty,
+            token
+        );
+    }
+
+    private static void EnsureOtpLoginEnabled(OtpLoginSettings settings)
+    {
+        if (!settings.IsEnabled)
+        {
+            throw new Exception("ورود با رمز یکبار مصرف در حال حاضر غیرفعال است.");
+        }
+    }
+
+    private static void EnsureSupportedChannel(string channel, OtpLoginSettings settings)
+    {
+        var isSupportedChannel = channel is SmsChannel or EmailChannel;
+        var isAllowed = channel == SmsChannel ? settings.AllowSms : settings.AllowEmail;
+
+        if (!isSupportedChannel || !isAllowed)
+        {
+            throw new Exception("کانال انتخابی برای ورود با رمز یکبار مصرف فعال نیست.");
+        }
+    }
+
+    private static string NormalizeIdentifier(string identifier)
+    {
+        return identifier.Trim();
+    }
+
+    private static string NormalizeChannel(string channel)
+    {
+        return channel.Trim().ToLowerInvariant();
+    }
+
+    private static string? GetDestination(User user, string channel)
+    {
+        return channel switch
+        {
+            SmsChannel => user.PhoneNumber,
+            EmailChannel => user.Email,
+            _ => null
+        };
+    }
+
+    private static string GenerateNumericCode(int length)
+    {
+        var digits = new char[length];
+        Span<byte> buffer = stackalloc byte[length];
+        RandomNumberGenerator.Fill(buffer);
+
+        for (var i = 0; i < length; i++)
+        {
+            digits[i] = (char)('0' + (buffer[i] % 10));
+        }
+
+        return new string(digits);
+    }
+
+    private static string HashCode(string code)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(code));
+        return Convert.ToHexString(bytes);
+    }
+
+    private static bool IsDeliveryConfigured(string channel, NotificationSettings settings)
+    {
+        return channel switch
+        {
+            SmsChannel => settings.SmsEnabled,
+            EmailChannel => settings.EmailEnabled,
+            _ => false
+        };
+    }
+
+    private Task SendOtpAsync(string channel, string destination, string code, int expiryMinutes)
+    {
+        if (channel == SmsChannel)
+        {
+            return _notificationService.SendSmsAsync(destination, $"کد ورود سالمندیار: {code} - این کد تا {expiryMinutes} دقیقه معتبر است.");
+        }
+
+        return _notificationService.SendEmailAsync(
+            destination,
+            "کد ورود سالمندیار",
+            $"کد ورود شما: {code}\nاین کد تا {expiryMinutes} دقیقه معتبر است.");
     }
 }
