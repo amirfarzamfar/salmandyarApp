@@ -10,44 +10,59 @@ public static class DbInitializer
     private static DateTime UtcDate(int year, int month, int day) =>
         DateTime.SpecifyKind(new DateTime(year, month, day), DateTimeKind.Utc);
 
-    public static async Task SeedAsync(ApplicationDbContext context, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
+    public static async Task SeedAsync(
+        ApplicationDbContext context,
+        UserManager<User> userManager,
+        RoleManager<IdentityRole> roleManager,
+        bool seedRoles,
+        bool seedAdminUser,
+        bool seedSampleData,
+        SeedAdminUserOptions adminOptions)
     {
-        // Seed Roles
-        var roles = new[] { "Admin", "SuperAdmin", "Manager", "Supervisor", "Nurse", "AssistantNurse", "Physiotherapist", "ElderlyCareAssistant", "Elderly", "Patient", "PatientFamily" };
-        foreach (var role in roles)
+        if (seedRoles)
         {
-            if (!await roleManager.RoleExistsAsync(role))
+            var roles = new[] { "Admin", "SuperAdmin", "Manager", "Supervisor", "Nurse", "AssistantNurse", "Physiotherapist", "ElderlyCareAssistant", "Elderly", "Patient", "PatientFamily" };
+            foreach (var role in roles)
             {
-                await roleManager.CreateAsync(new IdentityRole(role));
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
             }
         }
 
-        // Seed Admin User
-        var adminEmail = "admin@salmandyar.com";
-        var adminPhone = "09120000000";
-        var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == adminEmail);
-        if (adminUser == null)
+        if (seedAdminUser &&
+            !string.IsNullOrWhiteSpace(adminOptions.Email) &&
+            !string.IsNullOrWhiteSpace(adminOptions.PhoneNumber) &&
+            !string.IsNullOrWhiteSpace(adminOptions.Password))
         {
-            adminUser = new User
+            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == adminOptions.Email);
+            if (adminUser == null)
             {
-                UserName = adminPhone,
-                Email = adminEmail,
-                FirstName = "مدیر",
-                LastName = "سیستم",
-                PhoneNumber = adminPhone,
-                EmailConfirmed = true,
-                IsActive = true
-            };
-            await userManager.CreateAsync(adminUser, "Admin123!");
+                adminUser = new User
+                {
+                    UserName = adminOptions.PhoneNumber,
+                    Email = adminOptions.Email,
+                    FirstName = string.IsNullOrWhiteSpace(adminOptions.FirstName) ? "مدیر" : adminOptions.FirstName,
+                    LastName = string.IsNullOrWhiteSpace(adminOptions.LastName) ? "سیستم" : adminOptions.LastName,
+                    PhoneNumber = adminOptions.PhoneNumber,
+                    EmailConfirmed = true,
+                    IsActive = true
+                };
+                await userManager.CreateAsync(adminUser, adminOptions.Password);
+            }
+
+            if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
+                await userManager.AddToRoleAsync(adminUser, "Admin");
+            if (!await userManager.IsInRoleAsync(adminUser, "SuperAdmin"))
+                await userManager.AddToRoleAsync(adminUser, "SuperAdmin");
         }
 
-        // Ensure roles are assigned
-        if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
-            await userManager.AddToRoleAsync(adminUser, "Admin");
-        if (!await userManager.IsInRoleAsync(adminUser, "SuperAdmin"))
-            await userManager.AddToRoleAsync(adminUser, "SuperAdmin");
+        if (!seedSampleData)
+        {
+            return;
+        }
 
-        // Seed Nurse
         var nursePhone = "09123456789";
         var nurseUser = await userManager.FindByNameAsync(nursePhone);
         if (nurseUser == null)
@@ -232,3 +247,10 @@ public static class DbInitializer
         }
     }
 }
+
+public sealed record SeedAdminUserOptions(
+    string? Email,
+    string? PhoneNumber,
+    string? Password,
+    string? FirstName,
+    string? LastName);

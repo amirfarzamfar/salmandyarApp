@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Salmandyar.Application.Common.Interfaces;
 using Salmandyar.Application.Common.Interfaces.Authentication;
@@ -34,12 +35,50 @@ namespace Salmandyar.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
     {
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
+        }
 
-        services.AddIdentity<User, IdentityRole>()
+        if (!environment.IsDevelopment() && connectionString.Contains("REPLACE_ME", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Production connection string must be provided via secure configuration.");
+        }
+
+        var jwtSecret = configuration["JwtSettings:Secret"];
+        if (string.IsNullOrWhiteSpace(jwtSecret))
+        {
+            throw new InvalidOperationException("JwtSettings:Secret is not configured.");
+        }
+
+        if (jwtSecret.Length < 32)
+        {
+            throw new InvalidOperationException("JwtSettings:Secret must be at least 32 characters long.");
+        }
+
+        if (!environment.IsDevelopment() && jwtSecret.Contains("REPLACE_WITH_ENV_SECRET", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Production JWT secret must be provided via secure configuration.");
+        }
+
+        services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(connectionString));
+
+        services.AddIdentity<User, IdentityRole>(options =>
+        {
+            options.Password.RequiredLength = 8;
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireUppercase = false;
+            options.Password.RequireNonAlphanumeric = false;
+            options.User.RequireUniqueEmail = false;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.AllowedForNewUsers = true;
+        })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders()
             .AddErrorDescriber<PersianIdentityErrorDescriber>();
@@ -103,8 +142,9 @@ public static class DependencyInjection
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = configuration["JwtSettings:Issuer"],
                 ValidAudience = configuration["JwtSettings:Audience"],
+                ClockSkew = TimeSpan.FromMinutes(2),
                 IssuerSigningKey = new SymmetricSecurityKey(
-                    Encoding.UTF8.GetBytes(configuration["JwtSettings:Secret"]!))
+                    Encoding.UTF8.GetBytes(jwtSecret))
             };
 
             options.Events = new JwtBearerEvents

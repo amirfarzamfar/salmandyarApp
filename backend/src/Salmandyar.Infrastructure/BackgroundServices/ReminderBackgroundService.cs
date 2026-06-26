@@ -3,8 +3,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
-using System.Text;
-using System.Text.Json;
 using Salmandyar.Infrastructure.Persistence;
 using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Domain.Enums;
@@ -15,47 +13,6 @@ namespace Salmandyar.Infrastructure.BackgroundServices
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly ILogger<ReminderBackgroundService> _logger;
-
-        // #region debug-point C:reminder-service
-        private static async Task ReportDebugAsync(string hypothesisId, string msg, object? data = null, string location = "ReminderBackgroundService.cs")
-        {
-            try
-            {
-                var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".dbg", "backend-postgres-startup.env");
-                var url = "http://127.0.0.1:7777/event";
-                var sessionId = "backend-postgres-startup";
-                if (File.Exists(envPath))
-                {
-                    foreach (var line in await File.ReadAllLinesAsync(envPath))
-                    {
-                        if (line.StartsWith("DEBUG_SERVER_URL=", StringComparison.Ordinal))
-                            url = line["DEBUG_SERVER_URL=".Length..].Trim();
-                        else if (line.StartsWith("DEBUG_SESSION_ID=", StringComparison.Ordinal))
-                            sessionId = line["DEBUG_SESSION_ID=".Length..].Trim();
-                    }
-                }
-
-                using var client = new HttpClient();
-                using var content = new StringContent(
-                    JsonSerializer.Serialize(new
-                    {
-                        sessionId,
-                        runId = "pre-fix",
-                        hypothesisId,
-                        location,
-                        msg = $"[DEBUG] {msg}",
-                        data,
-                        ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-                    }),
-                    Encoding.UTF8,
-                    "application/json");
-                await client.PostAsync(url, content);
-            }
-            catch
-            {
-            }
-        }
-        // #endregion
 
         public ReminderBackgroundService(IServiceProvider serviceProvider, ILogger<ReminderBackgroundService> logger)
         {
@@ -71,26 +28,25 @@ namespace Salmandyar.Infrastructure.BackgroundServices
             {
                 try
                 {
-                    // #region debug-point C:reminder-loop
-                    await ReportDebugAsync("C", "reminder background loop started");
-                    // #endregion
                     await ProcessRemindersAsync();
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    // #region debug-point C:reminder-error
-                    await ReportDebugAsync("C", "reminder background loop failed", new
-                    {
-                        exceptionType = ex.GetType().FullName,
-                        ex.Message,
-                        inner = ex.InnerException?.Message
-                    });
-                    // #endregion
                     _logger.LogError(ex, "Error occurred while processing reminders.");
                 }
 
-                // Check every minute
-                await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                try
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break;
+                }
             }
         }
 
@@ -104,9 +60,6 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Salmandyar.Domain.Entities.User>>();
 
                 var now = DateTime.UtcNow;
-                // #region debug-point C:reminder-query
-                await ReportDebugAsync("C", "querying due reminders", new { now });
-                // #endregion
 
                 // Find pending reminders due now or in the past
                 var dueReminders = await dbContext.ServiceReminders
@@ -119,9 +72,6 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                     .Include(r => r.CareService)
                     .Where(r => !r.IsSent && r.ScheduledTime <= now)
                     .ToListAsync();
-                // #region debug-point C:reminder-query-done
-                await ReportDebugAsync("C", "queried due reminders", new { count = dueReminders.Count });
-                // #endregion
 
                 foreach (var reminder in dueReminders)
                 {

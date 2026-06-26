@@ -212,17 +212,28 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<string> ForgotPasswordAsync(ForgotPasswordRequest request)
     {
-        var user = await _identityService.GetUserByIdentifierAsync(request.Identifier);
+        var identifier = NormalizeIdentifier(request.Identifier);
+        var user = await _identityService.GetUserByIdentifierAsync(identifier);
         if (user == null)
         {
-            // Do not reveal that the user does not exist
             return string.Empty;
         }
 
         var token = await _identityService.GeneratePasswordResetTokenAsync(user);
-        // In a real application, you would send this token via email or SMS.
-        // For demonstration purposes, we are returning it.
-        return token;
+        if (!string.IsNullOrWhiteSpace(user.Email) &&
+            (identifier.Contains('@') || string.Equals(identifier, user.Email, StringComparison.OrdinalIgnoreCase)))
+        {
+            await _notificationService.SendEmailAsync(
+                user.Email,
+                "کد بازیابی رمز عبور سالمندیار",
+                $"کد بازیابی شما: {token}");
+        }
+        else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
+        {
+            await _notificationService.SendSmsAsync(user.PhoneNumber, $"کد بازیابی سالمندیار: {token}");
+        }
+
+        return string.Empty;
     }
 
     public async Task ResetPasswordAsync(ResetPasswordRequest request)

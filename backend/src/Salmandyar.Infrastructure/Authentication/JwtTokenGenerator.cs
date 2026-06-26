@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,14 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
     public string GenerateToken(User user, IList<string> roles)
     {
+        var jwtSecret = _configuration["JwtSettings:Secret"]
+            ?? throw new InvalidOperationException("JwtSettings:Secret is missing.");
+        var expiryMinutesRaw = _configuration["JwtSettings:ExpiryMinutes"] ?? "60";
+        if (!double.TryParse(expiryMinutesRaw, NumberStyles.Number, CultureInfo.InvariantCulture, out var expiryMinutes))
+        {
+            expiryMinutes = 60;
+        }
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id), // Use standard NameIdentifier
@@ -33,9 +42,9 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:Secret"]!));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var expiry = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["JwtSettings:ExpiryMinutes"]!));
+        var expiry = DateTime.UtcNow.AddMinutes(expiryMinutes);
 
         var token = new JwtSecurityToken(
             issuer: _configuration["JwtSettings:Issuer"],

@@ -7,8 +7,6 @@ using Salmandyar.Application.Services.PatientSelfServiceAccess;
 using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Enums;
 using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
 
 namespace Salmandyar.API.Controllers;
 
@@ -42,33 +40,6 @@ public class MedicationsController : ControllerBase
         _patientSelfServiceAccessService = patientSelfServiceAccessService;
     }
 
-    // #region debug-point A:medication-controller
-    private static async Task ReportDebugAsync(string hypothesisId, string msg, object? data = null, string location = "MedicationsController.cs")
-    {
-        try
-        {
-            using var client = new HttpClient();
-            using var content = new StringContent(
-                JsonSerializer.Serialize(new
-                {
-                    sessionId = "medication-kardex-list",
-                    runId = "pre-fix",
-                    hypothesisId,
-                    location,
-                    msg = $"[DEBUG] {msg}",
-                    data,
-                    ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-                }),
-                Encoding.UTF8,
-                "application/json");
-            await client.PostAsync("http://127.0.0.1:7777/event", content);
-        }
-        catch
-        {
-        }
-    }
-    // #endregion
-
     private string? GetCaregiverIdIfRestricted()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -97,12 +68,6 @@ public class MedicationsController : ControllerBase
     public async Task<ActionResult<List<MedicationDto>>> GetPatientMedications(int patientId)
     {
         var restrictedCaregiverId = GetCaregiverIdIfRestricted();
-        await ReportDebugAsync("D", "GetPatientMedications called", new
-        {
-            patientId,
-            restrictedCaregiverId,
-            roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToArray()
-        });
         var patient = await _patientService.GetPatientByIdAsync(patientId, restrictedCaregiverId);
         if (patient == null) return Forbid();
 
@@ -113,14 +78,6 @@ public class MedicationsController : ControllerBase
     public async Task<ActionResult<MedicationDto>> AddMedication([FromBody] CreateMedicationDto dto)
     {
         var restrictedCaregiverId = GetCaregiverIdIfRestricted();
-        await ReportDebugAsync("A", "AddMedication called", new
-        {
-            dto.CareRecipientId,
-            dto.Name,
-            dto.StartDate,
-            dto.EndDate,
-            restrictedCaregiverId
-        });
         var patient = await _patientService.GetPatientByIdAsync(dto.CareRecipientId, restrictedCaregiverId);
         if (patient == null) return Forbid();
 
@@ -137,20 +94,10 @@ public class MedicationsController : ControllerBase
                     PatientSelfServiceFeatures.MedicationKardex);
             }
 
-            var result = await _medicationService.AddMedicationAsync(dto);
-            await ReportDebugAsync("A", "AddMedication succeeded", new
-            {
-                result.Id,
-                result.CareRecipientId,
-                result.Name,
-                result.StartDate,
-                result.EndDate
-            });
-            return Ok(result);
+            return Ok(await _medicationService.AddMedicationAsync(dto));
         }
         catch (PatientSelfServiceAccessDeniedException ex)
         {
-            await ReportDebugAsync("A", "AddMedication denied", new { ex.Message });
             return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
         }
     }
@@ -233,13 +180,6 @@ public class MedicationsController : ControllerBase
     public async Task<ActionResult<List<MedicationDoseDto>>> GetDailySchedule(int patientId, [FromQuery] DateTime date)
     {
         var restrictedCaregiverId = GetCaregiverIdIfRestricted();
-        await ReportDebugAsync("C", "GetDailySchedule called", new
-        {
-            patientId,
-            date,
-            restrictedCaregiverId,
-            roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToArray()
-        });
         var patient = await _patientService.GetPatientByIdAsync(patientId, restrictedCaregiverId);
         if (patient == null) return Forbid();
 

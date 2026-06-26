@@ -14,11 +14,16 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthenticationService _authService;
     private readonly IUserManagementService _userService;
+    private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthenticationService authService, IUserManagementService userService)
+    public AuthController(
+        IAuthenticationService authService,
+        IUserManagementService userService,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
         _userService = userService;
+        _logger = logger;
     }
 
     [HttpGet("me")]
@@ -115,8 +120,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Log the error (optional)
-            Console.WriteLine($"ChangePassword Error: {ex.Message}");
+            _logger.LogWarning(ex, "Change password failed for current user.");
             return BadRequest(new { error = ex.Message });
         }
     }
@@ -126,10 +130,8 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var token = await _authService.ForgotPasswordAsync(request);
-            // In a real application, you would send this token via email or SMS.
-            // Since this is a demo, we return it to the client for the next step.
-            return Ok(new { message = "در صورت وجود حساب کاربری، کد بازیابی ارسال شد.", token = token });
+            await _authService.ForgotPasswordAsync(request);
+            return Ok(new { message = "در صورت وجود حساب کاربری، کد بازیابی ارسال شد." });
         }
         catch (Exception ex)
         {
