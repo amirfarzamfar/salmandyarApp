@@ -10,6 +10,23 @@ import { Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { toast } from 'react-hot-toast';
 
+// #region debug-point A:wizard-state
+const reportProfileWizardDebug = (hypothesisId: string, msg: string, data?: unknown) =>
+  fetch('http://127.0.0.1:7778/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'profile-edit-403',
+      runId: 'pre-fix',
+      hypothesisId,
+      location: 'page.tsx',
+      msg: `[DEBUG] ${msg}`,
+      data,
+      ts: Date.now(),
+    }),
+  }).catch(() => {});
+// #endregion
+
 function WizardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -45,16 +62,26 @@ function WizardContent() {
 
   useEffect(() => {
     if (profileData) {
+      void reportProfileWizardDebug('A', 'profile data loaded into wizard', {
+        adminUserId,
+        profileUserId: profileData.userId ?? null,
+        currentStep: profileData.currentStep ?? null,
+        isCompleted: profileData.isCompleted ?? null,
+      });
       setFormData(profileData);
       if (profileData.currentStep && profileData.currentStep > 0 && !profileData.isCompleted) {
         setCurrentStep(clampStep(profileData.currentStep));
       }
     }
-  }, [profileData]);
+  }, [adminUserId, profileData]);
 
   const updateMutation = useMutation({
     mutationFn: (data: Partial<PatientProfileDto>) => adminUserId ? PatientProfileService.updateUserProfile(adminUserId, data) : PatientProfileService.updateMyProfile(data),
     onSuccess: async () => {
+      void reportProfileWizardDebug('C', 'explicit profile update succeeded', {
+        adminUserId,
+        currentStep,
+      });
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['myProfile', adminUserId] }),
         queryClient.invalidateQueries({ queryKey: ['profileStatus', adminUserId] }),
@@ -62,7 +89,12 @@ function WizardContent() {
       ]);
       toast.success('اطلاعات با موفقیت ذخیره شد');
     },
-    onError: () => {
+    onError: (error) => {
+      void reportProfileWizardDebug('C', 'explicit profile update failed', {
+        adminUserId,
+        currentStep,
+        error: error instanceof Error ? error.message : String(error),
+      });
       toast.error('خطا در ذخیره اطلاعات');
     }
   });
@@ -96,6 +128,15 @@ function WizardContent() {
       ? PatientProfileService.updateUserProfile(adminUserId, data)
       : PatientProfileService.updateMyProfile(data),
   });
+
+  useEffect(() => {
+    void reportProfileWizardDebug('A', 'wizard render state snapshot', {
+      adminUserId,
+      currentStep,
+      formUserId: formData.userId ?? null,
+      hasDateOfBirth: Boolean(formData.dateOfBirth),
+    });
+  }, [adminUserId, currentStep, formData.userId, formData.dateOfBirth]);
 
   useEffect(() => {
     if (currentStep !== 6) {
@@ -207,7 +248,15 @@ function WizardContent() {
               onPrev={handlePrev}
               isSaving={updateMutation.isPending || completeMutation.isPending}
               adminUserId={adminUserId}
-              onDraftChange={setFormData}
+              onDraftChange={(draft) => {
+                void reportProfileWizardDebug('A', 'onDraftChange invoked from ProfileWizardSteps', {
+                  adminUserId,
+                  currentStep,
+                  draftUserId: draft.userId ?? null,
+                  hasDateOfBirth: Boolean(draft.dateOfBirth),
+                });
+                setFormData(draft);
+              }}
             />
           </div>
         </div>

@@ -9,6 +9,8 @@ using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.Medications;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Infrastructure.Persistence;
+using System.Text;
+using System.Text.Json;
 
 namespace Salmandyar.Infrastructure.Services.Medications;
 
@@ -33,6 +35,33 @@ public class MedicationService : IMedicationService
         _patientSelfServiceAccessService = patientSelfServiceAccessService;
         _medicationAlertSettingsService = medicationAlertSettingsService;
     }
+
+    // #region debug-point B:medication-service
+    private static async Task ReportDebugAsync(string hypothesisId, string msg, object? data = null, string location = "MedicationService.cs")
+    {
+        try
+        {
+            using var client = new HttpClient();
+            using var content = new StringContent(
+                JsonSerializer.Serialize(new
+                {
+                    sessionId = "medication-kardex-list",
+                    runId = "pre-fix",
+                    hypothesisId,
+                    location,
+                    msg = $"[DEBUG] {msg}",
+                    data,
+                    ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                }),
+                Encoding.UTF8,
+                "application/json");
+            await client.PostAsync("http://127.0.0.1:7777/event", content);
+        }
+        catch
+        {
+        }
+    }
+    // #endregion
 
     public async Task<MedicationDto> AddMedicationAsync(CreateMedicationDto dto)
     {
@@ -74,6 +103,14 @@ public class MedicationService : IMedicationService
 
         _context.PatientMedications.Add(medication);
         await _context.SaveChangesAsync();
+        await ReportDebugAsync("B", "medication persisted", new
+        {
+            medication.Id,
+            medication.CareRecipientId,
+            medication.StartDate,
+            medication.EndDate,
+            medication.CreatedAt
+        });
 
         await CreateInventoryTransactionAsync(
             medication,
@@ -214,11 +251,24 @@ public class MedicationService : IMedicationService
     {
         var tz = GetIranTimeZone();
         var todayLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date;
+        var startOfTodayLocal = new DateTime(todayLocal.Year, todayLocal.Month, todayLocal.Day, 0, 0, 0, DateTimeKind.Unspecified);
+        var startOfTodayUtc = TimeZoneInfo.ConvertTimeToUtc(startOfTodayLocal, tz);
 
         var medications = await _context.PatientMedications
-            .Where(m => m.CareRecipientId == patientId && (m.EndDate == null || m.EndDate.Value.Date >= todayLocal))
+            .Where(m => m.CareRecipientId == patientId && (m.EndDate == null || m.EndDate >= startOfTodayUtc))
             .OrderByDescending(m => m.CreatedAt)
             .ToListAsync();
+
+        await ReportDebugAsync("B", "patient medication list queried", new
+        {
+            patientId,
+            todayLocal,
+            startOfTodayUtc,
+            count = medications.Count,
+            ids = medications.Select(m => m.Id).ToArray(),
+            startDates = medications.Select(m => m.StartDate).ToArray(),
+            endDates = medications.Select(m => m.EndDate).ToArray()
+        });
 
         return medications.Select(MapToDto).ToList();
     }
@@ -232,13 +282,33 @@ public class MedicationService : IMedicationService
         var endOfDayLocal = new DateTime(iranDate.Year, iranDate.Month, iranDate.Day, 23, 59, 59, 999, DateTimeKind.Unspecified);
         var startOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(startOfDayLocal, tz);
         var endOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(endOfDayLocal, tz);
+        await ReportDebugAsync("C", "daily schedule boundaries computed", new
+        {
+            patientId,
+            inputDate = date,
+            inputDateKind = date.Kind.ToString(),
+            iranDate,
+            startOfDayLocal,
+            endOfDayLocal,
+            startOfDayUtc,
+            endOfDayUtc
+        });
 
         var activeMedications = await _context.PatientMedications
             .Where(m => m.CareRecipientId == patientId &&
-                        m.StartDate.Date <= endOfDayLocal.Date &&
-                        (m.EndDate == null || m.EndDate.Value.Date >= startOfDayLocal.Date) &&
+                        m.StartDate <= endOfDayUtc &&
+                        (m.EndDate == null || m.EndDate >= startOfDayUtc) &&
                         !m.IsPRN)
             .ToListAsync();
+        await ReportDebugAsync("C", "active medications for schedule queried", new
+        {
+            patientId,
+            count = activeMedications.Count,
+            ids = activeMedications.Select(m => m.Id).ToArray(),
+            startDates = activeMedications.Select(m => m.StartDate).ToArray(),
+            endDates = activeMedications.Select(m => m.EndDate).ToArray(),
+            isPrn = activeMedications.Select(m => m.IsPRN).ToArray()
+        });
 
         foreach (var med in activeMedications)
         {
@@ -261,6 +331,14 @@ public class MedicationService : IMedicationService
                         d.ScheduledTime <= endOfDayUtc)
             .OrderBy(d => d.ScheduledTime)
             .ToListAsync();
+        await ReportDebugAsync("C", "daily schedule doses queried", new
+        {
+            patientId,
+            count = doses.Count,
+            doseIds = doses.Select(d => d.Id).ToArray(),
+            medicationIds = doses.Select(d => d.PatientMedicationId).Distinct().ToArray(),
+            scheduledTimes = doses.Select(d => d.ScheduledTime).ToArray()
+        });
 
         return doses.Select(MapToDoseDto).ToList();
     }

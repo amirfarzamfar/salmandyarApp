@@ -573,6 +573,6 @@ public class ApplicationDbContext : IdentityDbContext<User>
         builder.Entity<UploadedDocument>()
             .HasIndex(d => new { d.PatientProfileId, d.DocumentType })
             .IsUnique()
-            .HasFilter("[DocumentType] IS NOT NULL");
+            .HasFilter("\"DocumentType\" IS NOT NULL");
     }
 }

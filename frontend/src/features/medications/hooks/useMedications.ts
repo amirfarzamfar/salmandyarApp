@@ -4,11 +4,34 @@ import { MedicationFormData } from '../types';
 import { medicationService } from '@/services/medication.service';
 import { UpdateMedicationInventoryDto } from '@/types/medication';
 
+// #region debug-point A:medication-query
+const reportMedicationDebug = (hypothesisId: string, msg: string, data?: unknown) =>
+  fetch('http://127.0.0.1:7777/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'medication-kardex-list',
+      runId: 'pre-fix',
+      hypothesisId,
+      location: 'useMedications.ts',
+      msg: `[DEBUG] ${msg}`,
+      data,
+      ts: Date.now(),
+    }),
+  }).catch(() => {});
+// #endregion
+
 export const useMedications = (patientId: number) => {
   return useQuery({
     queryKey: ['medications', patientId],
     queryFn: async () => {
+      void reportMedicationDebug('D', 'medication list query started', { patientId });
       const { data } = await api.get(`/medications/patient/${patientId}`);
+      void reportMedicationDebug('D', 'medication list query succeeded', {
+        patientId,
+        count: Array.isArray(data) ? data.length : null,
+        ids: Array.isArray(data) ? data.map((item: { id: number }) => item.id) : null,
+      });
       return data;
     },
     enabled: !!patientId,
@@ -20,10 +43,24 @@ export const useCreateMedication = () => {
 
   return useMutation({
     mutationFn: async (data: MedicationFormData) => {
+      void reportMedicationDebug('A', 'create medication request started', {
+        careRecipientId: data.careRecipientId,
+        startDate: data.startDate,
+        endDate: data.endDate ?? null,
+        name: data.name,
+      });
       const { data: res } = await api.post('/medications', data);
+      void reportMedicationDebug('A', 'create medication request succeeded', {
+        careRecipientId: data.careRecipientId,
+        createdMedicationId: res?.id ?? null,
+        responseCareRecipientId: res?.careRecipientId ?? null,
+      });
       return res;
     },
     onSuccess: (_, variables) => {
+      void reportMedicationDebug('A', 'invalidating medication queries after create', {
+        careRecipientId: variables.careRecipientId,
+      });
       queryClient.invalidateQueries({ queryKey: ['medications', variables.careRecipientId] });
       queryClient.invalidateQueries({ queryKey: ['kardex'] });
     },

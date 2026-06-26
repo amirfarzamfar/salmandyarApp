@@ -1,5 +1,22 @@
 import api from '@/lib/axios';
 
+// #region debug-point C:profile-service
+const reportPatientProfileDebug = (hypothesisId: string, msg: string, data?: unknown) =>
+  fetch('http://127.0.0.1:7778/event', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'profile-edit-403',
+      runId: 'pre-fix',
+      hypothesisId,
+      location: 'patient-profile.service.ts',
+      msg: `[DEBUG] ${msg}`,
+      data,
+      ts: Date.now(),
+    }),
+  }).catch(() => {});
+// #endregion
+
 export interface PatientProfileDto {
   id?: number;
   userId?: string;
@@ -118,8 +135,25 @@ export const PatientProfileService = {
   },
 
   updateMyProfile: async (data: Partial<PatientProfileDto>): Promise<PatientProfileDto> => {
-    const response = await api.put('/PatientProfile/me', data);
-    return response.data;
+    void reportPatientProfileDebug('C', 'updateMyProfile request started', {
+      hasUserId: Boolean(data.userId),
+      currentStep: data.currentStep ?? null,
+    });
+    try {
+      const response = await api.put('/PatientProfile/me', data);
+      void reportPatientProfileDebug('C', 'updateMyProfile request succeeded', {
+        status: response.status,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      void reportPatientProfileDebug('C', 'updateMyProfile request failed', {
+        status: typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { status?: number } }).response?.status ?? null
+          : null,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   },
 
   uploadMyDocument: async (documentType: string, file: File): Promise<UploadedDocumentDto> => {
@@ -147,8 +181,32 @@ export const PatientProfileService = {
   },
   
   updateUserProfile: async (userId: string, data: Partial<PatientProfileDto>): Promise<PatientProfileDto> => {
-    const response = await api.put(`/PatientProfile/user/${userId}`, data);
-    return response.data;
+    void reportPatientProfileDebug('C', 'updateUserProfile request started', {
+      userId,
+      payloadUserId: data.userId ?? null,
+      currentStep: data.currentStep ?? null,
+    });
+    try {
+      const response = await api.put(`/PatientProfile/user/${userId}`, data);
+      void reportPatientProfileDebug('C', 'updateUserProfile request succeeded', {
+        userId,
+        status: response.status,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      void reportPatientProfileDebug('C', 'updateUserProfile request failed', {
+        userId,
+        payloadUserId: data.userId ?? null,
+        status: typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { status?: number; data?: unknown } }).response?.status ?? null
+          : null,
+        responseData: typeof error === 'object' && error !== null && 'response' in error
+          ? (error as { response?: { data?: unknown } }).response?.data ?? null
+          : null,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   },
 
   uploadUserDocument: async (userId: string, documentType: string, file: File): Promise<UploadedDocumentDto> => {

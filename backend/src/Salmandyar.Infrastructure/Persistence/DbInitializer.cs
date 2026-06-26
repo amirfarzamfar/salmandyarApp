@@ -7,6 +7,9 @@ namespace Salmandyar.Infrastructure.Persistence;
 
 public static class DbInitializer
 {
+    private static DateTime UtcDate(int year, int month, int day) =>
+        DateTime.SpecifyKind(new DateTime(year, month, day), DateTimeKind.Utc);
+
     public static async Task SeedAsync(ApplicationDbContext context, UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
     {
         // Seed Roles
@@ -72,7 +75,7 @@ public static class DbInitializer
             {
                 FirstName = "احمد",
                 LastName = "رضایی",
-                DateOfBirth = new DateTime(1951, 3, 21),
+                DateOfBirth = UtcDate(1951, 3, 21),
                 PrimaryDiagnosis = "دیابت نوع ۲",
                 CurrentStatus = "Stable",
                 CareLevel = CareLevel.Level2, // 6h
@@ -127,7 +130,7 @@ public static class DbInitializer
             {
                 FirstName = "فاطمه",
                 LastName = "اکبری",
-                DateOfBirth = new DateTime(1945, 6, 15),
+                DateOfBirth = UtcDate(1945, 6, 15),
                 PrimaryDiagnosis = "آلزایمر",
                 CurrentStatus = "Stable",
                 CareLevel = CareLevel.Level3,
