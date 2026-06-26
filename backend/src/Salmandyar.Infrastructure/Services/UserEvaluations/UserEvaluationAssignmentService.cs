@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Salmandyar.Application.DTOs.UserEvaluations;
 using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Application.Services.UserEvaluations;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.UserEvaluations;
 using Salmandyar.Domain.Enums;
@@ -81,7 +82,15 @@ public class UserEvaluationAssignmentService : IUserEvaluationAssignmentService
             message,
             NotificationType.Assessment, // Assuming we reuse this type or should add Evaluation type
             referenceId: assignment.Id.ToString(),
-            link: link
+            link: link,
+            context: new NotificationSendContext
+            {
+                EventKey = NotificationEventKeys.EvaluationAssigned,
+                EventDisplayName = "تخصیص ارزیابی",
+                RecipientUserId = dto.UserId,
+                ReferenceId = assignment.Id.ToString(),
+                Link = link
+            }
         );
 
         return MapToDto(created);

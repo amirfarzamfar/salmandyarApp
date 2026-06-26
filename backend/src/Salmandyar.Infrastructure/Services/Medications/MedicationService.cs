@@ -19,19 +19,22 @@ public class MedicationService : IMedicationService
     private readonly IUserNotificationService _userNotificationService;
     private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
     private readonly IMedicationAlertSettingsService _medicationAlertSettingsService;
+    private readonly INotificationSettingsService _notificationSettingsService;
 
     public MedicationService(
         ApplicationDbContext context,
         INotificationService notificationService,
         IUserNotificationService userNotificationService,
         IPatientSelfServiceAccessService patientSelfServiceAccessService,
-        IMedicationAlertSettingsService medicationAlertSettingsService)
+        IMedicationAlertSettingsService medicationAlertSettingsService,
+        INotificationSettingsService notificationSettingsService)
     {
         _context = context;
         _notificationService = notificationService;
         _userNotificationService = userNotificationService;
         _patientSelfServiceAccessService = patientSelfServiceAccessService;
         _medicationAlertSettingsService = medicationAlertSettingsService;
+        _notificationSettingsService = notificationSettingsService;
     }
 
     public async Task<MedicationDto> AddMedicationAsync(CreateMedicationDto dto)
@@ -555,6 +558,8 @@ public class MedicationService : IMedicationService
         var now = DateTime.UtcNow;
         var tz = GetIranTimeZone();
         var staffUserIds = await GetAdminUserIdsAsync();
+        var missedDoseConfig = await _notificationSettingsService.GetEventConfigurationAsync(NotificationEventKeys.MedicationMissedDose);
+        var missedDoseRoleRecipients = await _notificationSettingsService.GetRoleRecipientsAsync(NotificationEventKeys.MedicationMissedDose);
 
         var overdueDoses = await _context.MedicationDoses
             .Include(d => d.PatientMedication)
@@ -600,6 +605,7 @@ public class MedicationService : IMedicationService
             }
             .Concat(assignedPrimaryCaregiverIds)
             .Concat(staffUserIds)
+            .Concat(missedDoseRoleRecipients.Select(x => x.UserId))
             .Concat(med.NotifyFamily ? [careRecipient.FamilyMemberId] : [])
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x!)
@@ -623,7 +629,17 @@ public class MedicationService : IMedicationService
                         NotificationType.Alert,
                         referenceId: dose.Id.ToString(),
                         link: link,
-                        severity: severity);
+                        severity: severity,
+                        context: new NotificationSendContext
+                        {
+                            EventKey = NotificationEventKeys.MedicationMissedDose,
+                            EventDisplayName = missedDoseConfig.DisplayName,
+                            RecipientUserId = recipientId,
+                            PatientId = careRecipient.Id,
+                            ReferenceId = dose.Id.ToString(),
+                            Severity = severity,
+                            Link = link
+                        });
                 }
             }
 
@@ -634,7 +650,16 @@ public class MedicationService : IMedicationService
                     try
                     {
                         var escalationMessage = $"MISSED DOSE ALERT: Patient {med.CareRecipient.FirstName} {med.CareRecipient.LastName} missed {med.Name} scheduled at {scheduledLocal:HH:mm}.";
-                        await _notificationService.SendEmailAsync(med.CareRecipient.ResponsibleNurse.Email, "URGENT: Missed Medication", escalationMessage);
+                        await _notificationService.SendEmailAsync(med.CareRecipient.ResponsibleNurse.Email, "URGENT: Missed Medication", escalationMessage, new NotificationSendContext
+                        {
+                            EventKey = NotificationEventKeys.MedicationMissedDose,
+                            EventDisplayName = missedDoseConfig.DisplayName,
+                            RecipientUserId = med.CareRecipient.ResponsibleNurseId,
+                            PatientId = careRecipient.Id,
+                            ReferenceId = dose.Id.ToString(),
+                            Severity = severity,
+                            Link = link
+                        });
                     }
                     catch
                     {
@@ -662,7 +687,16 @@ public class MedicationService : IMedicationService
                         await _notificationService.SendEmailAsync(
                             "supervisor@hospital.com",
                             "ESCALATION: Missed Medication",
-                            $"Supervisor Alert: Patient {med.CareRecipient.FirstName} missed {med.Name}. Nurse was notified 30 mins ago.");
+                            $"Supervisor Alert: Patient {med.CareRecipient.FirstName} missed {med.Name}. Nurse was notified 30 mins ago.",
+                            new NotificationSendContext
+                            {
+                                EventKey = NotificationEventKeys.MedicationMissedDose,
+                                EventDisplayName = missedDoseConfig.DisplayName,
+                                PatientId = careRecipient.Id,
+                                ReferenceId = dose.Id.ToString(),
+                                Severity = severity,
+                                Link = link
+                            });
                     }
                     catch
                     {
@@ -690,7 +724,17 @@ public class MedicationService : IMedicationService
                         await _notificationService.SendEmailAsync(
                             med.CareRecipient.FamilyMember.Email,
                             "Family Alert: Missed Medication",
-                            $"Alert: {med.CareRecipient.FirstName} has missed their medication {med.Name}. Staff has been alerted.");
+                            $"Alert: {med.CareRecipient.FirstName} has missed their medication {med.Name}. Staff has been alerted.",
+                            new NotificationSendContext
+                            {
+                                EventKey = NotificationEventKeys.MedicationMissedDose,
+                                EventDisplayName = missedDoseConfig.DisplayName,
+                                RecipientUserId = careRecipient.FamilyMemberId,
+                                PatientId = careRecipient.Id,
+                                ReferenceId = dose.Id.ToString(),
+                                Severity = severity,
+                                Link = link
+                            });
                     }
                     catch
                     {
@@ -1005,7 +1049,17 @@ public class MedicationService : IMedicationService
                 NotificationType.Alert,
                 referenceId: medication.Id.ToString(),
                 link: link,
-                severity: "Warning");
+                severity: "Warning",
+                context: new NotificationSendContext
+                {
+                    EventKey = NotificationEventKeys.MedicationLowStock,
+                    EventDisplayName = "هشدار موجودی دارو",
+                    RecipientUserId = recipient.UserId,
+                    PatientId = medication.CareRecipientId,
+                    ReferenceId = medication.Id.ToString(),
+                    Severity = "Warning",
+                    Link = link
+                });
 
             AddAlertHistory(medication, recipient, MedicationAlertChannel.InApp, message, MedicationAlertHistoryStatus.Success, null);
         }
@@ -1034,7 +1088,15 @@ public class MedicationService : IMedicationService
     {
         try
         {
-            await _notificationService.SendSmsAsync(recipient.PhoneNumber!, message);
+            await _notificationService.SendSmsAsync(recipient.PhoneNumber!, message, new NotificationSendContext
+            {
+                EventKey = NotificationEventKeys.MedicationLowStock,
+                EventDisplayName = "هشدار موجودی دارو",
+                RecipientUserId = recipient.UserId,
+                PatientId = medication.CareRecipientId,
+                ReferenceId = medication.Id.ToString(),
+                Severity = "Warning"
+            });
             AddAlertHistory(medication, recipient, MedicationAlertChannel.Sms, message, MedicationAlertHistoryStatus.Success, null);
         }
         catch (Exception ex)
@@ -1047,7 +1109,15 @@ public class MedicationService : IMedicationService
     {
         try
         {
-            await _notificationService.SendEmailAsync(recipient.Email!, subject, body);
+            await _notificationService.SendEmailAsync(recipient.Email!, subject, body, new NotificationSendContext
+            {
+                EventKey = NotificationEventKeys.MedicationLowStock,
+                EventDisplayName = "هشدار موجودی دارو",
+                RecipientUserId = recipient.UserId,
+                PatientId = medication.CareRecipientId,
+                ReferenceId = medication.Id.ToString(),
+                Severity = "Warning"
+            });
             AddAlertHistory(medication, recipient, MedicationAlertChannel.Email, body, MedicationAlertHistoryStatus.Success, null);
         }
         catch (Exception ex)
@@ -1084,6 +1154,8 @@ public class MedicationService : IMedicationService
     {
         var recipients = new List<AlertRecipient>();
         var careRecipient = medication.CareRecipient;
+        var eventConfig = await _notificationSettingsService.GetEventConfigurationAsync(NotificationEventKeys.MedicationLowStock);
+        var roleRecipients = await _notificationSettingsService.GetRoleRecipientsAsync(NotificationEventKeys.MedicationLowStock);
 
         if (medication.AlertLowStockPatient && careRecipient.User != null)
         {
@@ -1152,6 +1224,31 @@ public class MedicationService : IMedicationService
                 null,
                 medication.AlertLowStockCustomEmail));
         }
+
+        recipients.AddRange(roleRecipients.Select(extra => new AlertRecipient(
+            MedicationAlertRecipientType.Admin,
+            string.IsNullOrWhiteSpace(extra.DisplayName) ? extra.UserId : extra.DisplayName,
+            extra.UserId,
+            extra.PhoneNumber,
+            extra.Email)));
+
+        recipients.AddRange(eventConfig.AdditionalPhones
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => new AlertRecipient(
+                MedicationAlertRecipientType.CustomPhone,
+                x,
+                null,
+                x,
+                null)));
+
+        recipients.AddRange(eventConfig.AdditionalEmails
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => new AlertRecipient(
+                MedicationAlertRecipientType.CustomEmail,
+                x,
+                null,
+                null,
+                x)));
 
         return recipients
             .GroupBy(r => $"{r.RecipientType}|{r.UserId}|{r.PhoneNumber}|{r.Email}")

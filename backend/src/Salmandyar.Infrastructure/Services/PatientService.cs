@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Patients.Dtos;
 using Salmandyar.Application.Services.PatientSelfServiceAccess;
+using Salmandyar.Application.Services.Settings;
 using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Enums;
@@ -13,11 +15,22 @@ public class PatientService : IPatientService
 {
     private readonly ApplicationDbContext _context;
     private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
+    private readonly IUserNotificationService _userNotificationService;
+    private readonly INotificationService _notificationService;
+    private readonly INotificationSettingsService _notificationSettingsService;
 
-    public PatientService(ApplicationDbContext context, IPatientSelfServiceAccessService patientSelfServiceAccessService)
+    public PatientService(
+        ApplicationDbContext context,
+        IPatientSelfServiceAccessService patientSelfServiceAccessService,
+        IUserNotificationService userNotificationService,
+        INotificationService notificationService,
+        INotificationSettingsService notificationSettingsService)
     {
         _context = context;
         _patientSelfServiceAccessService = patientSelfServiceAccessService;
+        _userNotificationService = userNotificationService;
+        _notificationService = notificationService;
+        _notificationSettingsService = notificationSettingsService;
     }
 
     public async Task<List<PatientListDto>> GetAllPatientsAsync(string? caregiverId = null)
@@ -366,6 +379,117 @@ public class PatientService : IPatientService
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Distinct()
             .ToList();
+
+        var severity = alerts.Max(a => a.Severity);
+        var alertTitles = string.Join("، ", alerts.Select(a => a.Title).Take(3));
+        var defaultTitle = severity == VitalAlertSeverity.Critical ? "هشدار فوری علائم حیاتی" : "هشدار علائم حیاتی";
+        var link = $"/dashboard/patients/{dto.CareRecipientId}?tab=vitals";
+        var eventConfig = await _notificationSettingsService.GetEventConfigurationAsync(NotificationEventKeys.VitalSignDanger);
+        var configuredRoleRecipients = await _notificationSettingsService.GetRoleRecipientsAsync(NotificationEventKeys.VitalSignDanger);
+
+        recipients.AddRange(configuredRoleRecipients.Select(x => x.UserId));
+        recipients = recipients
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToList();
+
+        var templateValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["PatientName"] = patientName,
+            ["AlertTitles"] = alertTitles,
+            ["AlertCount"] = alerts.Count.ToString(),
+            ["MeasuredAt"] = entity.MeasuredAt.ToString("yyyy/MM/dd HH:mm")
+        };
+
+        var inAppTitle = RenderTemplate(eventConfig.InAppTitleTemplate, templateValues, defaultTitle);
+        var inAppBody = RenderTemplate(eventConfig.InAppBodyTemplate, templateValues, $"{patientName}: {alertTitles}");
+        var smsMessage = RenderTemplate(eventConfig.SmsTemplate, templateValues, $"{patientName}: {alertTitles}");
+        var emailSubject = RenderTemplate(eventConfig.EmailSubjectTemplate, templateValues, defaultTitle);
+        var emailBody = RenderTemplate(eventConfig.EmailBodyTemplate, templateValues, $"{patientName}: {alertTitles}");
+
+        var users = await _context.Users
+            .Where(u => recipients.Contains(u.Id))
+            .Select(u => new { u.Id, u.Email, u.PhoneNumber })
+            .ToListAsync();
+
+        if (eventConfig.IsEnabled)
+        {
+            if (eventConfig.SendInApp)
+            {
+                foreach (var recipientId in recipients)
+                {
+                    await _userNotificationService.CreateNotificationAsync(
+                        recipientId,
+                        inAppTitle,
+                        inAppBody,
+                        NotificationType.Alert,
+                        referenceId: entity.Id.ToString(),
+                        link: link,
+                        severity: severity.ToString(),
+                        context: new NotificationSendContext
+                        {
+                            EventKey = NotificationEventKeys.VitalSignDanger,
+                            EventDisplayName = eventConfig.DisplayName,
+                            RecipientUserId = recipientId,
+                            PatientId = dto.CareRecipientId,
+                            ReferenceId = entity.Id.ToString(),
+                            Severity = severity.ToString(),
+                            Link = link
+                        });
+                }
+            }
+
+            if (eventConfig.SendSms)
+            {
+                var phones = users.Select(x => x.PhoneNumber)
+                    .Concat(eventConfig.AdditionalPhones)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct()
+                    .ToList();
+
+                foreach (var phone in phones)
+                {
+                    await _notificationService.SendSmsAsync(
+                        phone!,
+                        smsMessage,
+                        new NotificationSendContext
+                        {
+                            EventKey = NotificationEventKeys.VitalSignDanger,
+                            EventDisplayName = eventConfig.DisplayName,
+                            PatientId = dto.CareRecipientId,
+                            ReferenceId = entity.Id.ToString(),
+                            Severity = severity.ToString(),
+                            Link = link
+                        });
+                }
+            }
+
+            if (eventConfig.SendEmail)
+            {
+                var emails = users.Select(x => x.Email)
+                    .Concat(eventConfig.AdditionalEmails)
+                    .Where(x => !string.IsNullOrWhiteSpace(x))
+                    .Distinct()
+                    .ToList();
+
+                foreach (var email in emails)
+                {
+                    await _notificationService.SendEmailAsync(
+                        email!,
+                        emailSubject,
+                        emailBody,
+                        new NotificationSendContext
+                        {
+                            EventKey = NotificationEventKeys.VitalSignDanger,
+                            EventDisplayName = eventConfig.DisplayName,
+                            PatientId = dto.CareRecipientId,
+                            ReferenceId = entity.Id.ToString(),
+                            Severity = severity.ToString(),
+                            Link = link
+                        });
+                }
+            }
+        }
 
         return new AddVitalSignResultDto(
             entity.Id,
@@ -912,5 +1036,21 @@ public class PatientService : IPatientService
         var age = today.Year - dateOfBirth.Year;
         if (dateOfBirth.Date > today.AddYears(-age)) age--;
         return age;
+    }
+
+    private static string RenderTemplate(string template, IReadOnlyDictionary<string, string> values, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            return fallback;
+        }
+
+        var output = template;
+        foreach (var item in values)
+        {
+            output = output.Replace($"{{{item.Key}}}", item.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return output;
     }
 }

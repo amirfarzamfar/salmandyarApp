@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Salmandyar.Infrastructure.Persistence;
 using Salmandyar.Application.Services.Notifications;
+using Salmandyar.Application.Services.Settings;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Enums;
 
 namespace Salmandyar.Infrastructure.BackgroundServices
@@ -57,6 +59,7 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                 var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
                 var userNotificationService = scope.ServiceProvider.GetRequiredService<IUserNotificationService>();
+                var notificationSettingsService = scope.ServiceProvider.GetRequiredService<INotificationSettingsService>();
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<Salmandyar.Domain.Entities.User>>();
 
                 var now = DateTime.UtcNow;
@@ -82,30 +85,68 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                             ? $"زمان خدمت: {serviceTime.Value:yyyy-MM-dd HH:mm}"
                             : "";
 
-                        var note = string.IsNullOrWhiteSpace(reminder.Note) ? "" : $" - {reminder.Note}";
-                        var message = $"یادآوری خدمت: {reminder.ServiceDefinition.Title} برای {reminder.CareRecipient.FirstName} {reminder.CareRecipient.LastName}{note}. {whenText}".Trim();
+                        var note = string.IsNullOrWhiteSpace(reminder.Note) ? string.Empty : reminder.Note.Trim();
+                        var eventConfig = await notificationSettingsService.GetEventConfigurationAsync(NotificationEventKeys.ServiceReminder);
+                        var templateValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                        {
+                            ["PatientName"] = $"{reminder.CareRecipient.FirstName} {reminder.CareRecipient.LastName}".Trim(),
+                            ["ServiceTitle"] = reminder.ServiceDefinition.Title,
+                            ["ScheduledTime"] = reminder.ScheduledTime.ToString("yyyy/MM/dd HH:mm"),
+                            ["Note"] = note
+                        };
+
+                        var inAppTitle = RenderTemplate(eventConfig.InAppTitleTemplate, templateValues, "یادآوری خدمت");
+                        var smsMessage = RenderTemplate(eventConfig.SmsTemplate, templateValues, $"یادآوری خدمت {reminder.ServiceDefinition.Title}");
+                        var emailSubject = RenderTemplate(eventConfig.EmailSubjectTemplate, templateValues, "Service Reminder");
+                        var emailBody = RenderTemplate(eventConfig.EmailBodyTemplate, templateValues, smsMessage);
+                        var link = reminder.CareRecipientId > 0 ? $"/dashboard/patients/{reminder.CareRecipientId}?tab=services" : null;
 
                         if (reminder.TargetUserId != null)
                         {
-                            if (reminder.SendInApp)
+                            if (reminder.SendInApp && eventConfig.SendInApp)
                             {
                                 await userNotificationService.CreateNotificationAsync(
                                     reminder.TargetUserId,
-                                    "یادآوری خدمت",
-                                    message,
+                                    inAppTitle,
+                                    smsMessage,
                                     NotificationType.Reminder,
                                     referenceId: reminder.CareServiceId?.ToString(),
-                                    link: null
+                                    link: link,
+                                    context: new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = reminder.TargetUserId,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    }
                                 );
                             }
 
                             if (reminder.TargetUser != null)
                             {
-                                if (reminder.SendSms && !string.IsNullOrEmpty(reminder.TargetUser.PhoneNumber))
-                                    await notificationService.SendSmsAsync(reminder.TargetUser.PhoneNumber, message);
+                                if (reminder.SendSms && eventConfig.SendSms && !string.IsNullOrEmpty(reminder.TargetUser.PhoneNumber))
+                                    await notificationService.SendSmsAsync(reminder.TargetUser.PhoneNumber, smsMessage, new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = reminder.TargetUserId,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
 
-                                if (reminder.SendEmail && !string.IsNullOrEmpty(reminder.TargetUser.Email))
-                                    await notificationService.SendEmailAsync(reminder.TargetUser.Email, "Service Reminder", message);
+                                if (reminder.SendEmail && eventConfig.SendEmail && !string.IsNullOrEmpty(reminder.TargetUser.Email))
+                                    await notificationService.SendEmailAsync(reminder.TargetUser.Email, emailSubject, emailBody, new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = reminder.TargetUserId,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
                             }
                         }
 
@@ -114,23 +155,48 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                             var patientUser = reminder.CareRecipient.User ?? reminder.CareRecipient.FamilyMember;
                             if (patientUser != null)
                             {
-                                if (reminder.SendInApp)
+                                if (reminder.SendInApp && eventConfig.SendInApp)
                                 {
                                     await userNotificationService.CreateNotificationAsync(
                                         patientUser.Id,
-                                        "یادآوری خدمت",
-                                        message,
+                                        inAppTitle,
+                                        smsMessage,
                                         NotificationType.Reminder,
                                         referenceId: reminder.CareServiceId?.ToString(),
-                                        link: null
+                                        link: link,
+                                        context: new NotificationSendContext
+                                        {
+                                            EventKey = NotificationEventKeys.ServiceReminder,
+                                            EventDisplayName = eventConfig.DisplayName,
+                                            RecipientUserId = patientUser.Id,
+                                            PatientId = reminder.CareRecipientId,
+                                            ReferenceId = reminder.CareServiceId?.ToString(),
+                                            Link = link
+                                        }
                                     );
                                 }
 
-                                if (reminder.SendSms && !string.IsNullOrEmpty(patientUser.PhoneNumber))
-                                    await notificationService.SendSmsAsync(patientUser.PhoneNumber, message);
+                                if (reminder.SendSms && eventConfig.SendSms && !string.IsNullOrEmpty(patientUser.PhoneNumber))
+                                    await notificationService.SendSmsAsync(patientUser.PhoneNumber, smsMessage, new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = patientUser.Id,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
 
-                                if (reminder.SendEmail && !string.IsNullOrEmpty(patientUser.Email))
-                                    await notificationService.SendEmailAsync(patientUser.Email, "Service Reminder", message);
+                                if (reminder.SendEmail && eventConfig.SendEmail && !string.IsNullOrEmpty(patientUser.Email))
+                                    await notificationService.SendEmailAsync(patientUser.Email, emailSubject, emailBody, new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = patientUser.Id,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
                             }
                         }
 
@@ -139,27 +205,101 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                             var supervisor = await userManager.FindByIdAsync(reminder.CareRecipient.ResponsibleNurseId);
                             if (supervisor != null)
                             {
-                                if (reminder.SendInApp)
+                                if (reminder.SendInApp && eventConfig.SendInApp)
                                 {
                                     await userNotificationService.CreateNotificationAsync(
                                         supervisor.Id,
-                                        "یادآوری خدمت",
-                                        message,
+                                        inAppTitle,
+                                        smsMessage,
                                         NotificationType.Reminder,
                                         referenceId: reminder.CareServiceId?.ToString(),
-                                        link: null
+                                        link: link,
+                                        context: new NotificationSendContext
+                                        {
+                                            EventKey = NotificationEventKeys.ServiceReminder,
+                                            EventDisplayName = eventConfig.DisplayName,
+                                            RecipientUserId = supervisor.Id,
+                                            PatientId = reminder.CareRecipientId,
+                                            ReferenceId = reminder.CareServiceId?.ToString(),
+                                            Link = link
+                                        }
                                     );
                                 }
 
-                                if (reminder.SendSms && !string.IsNullOrEmpty(supervisor.PhoneNumber))
-                                    await notificationService.SendSmsAsync(supervisor.PhoneNumber, message);
+                                if (reminder.SendSms && eventConfig.SendSms && !string.IsNullOrEmpty(supervisor.PhoneNumber))
+                                    await notificationService.SendSmsAsync(supervisor.PhoneNumber, smsMessage, new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = supervisor.Id,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
 
-                                if (reminder.SendEmail && !string.IsNullOrEmpty(supervisor.Email))
-                                    await notificationService.SendEmailAsync(supervisor.Email, "Service Reminder", message);
+                                if (reminder.SendEmail && eventConfig.SendEmail && !string.IsNullOrEmpty(supervisor.Email))
+                                    await notificationService.SendEmailAsync(supervisor.Email, emailSubject, emailBody, new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = supervisor.Id,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
                             }
                         }
 
-                        // Notify Admin/Supervisor (Simulated via hardcoded admin email for now or fetched from roles)
+                        var configuredRoleRecipients = await notificationSettingsService.GetRoleRecipientsAsync(NotificationEventKeys.ServiceReminder);
+                        foreach (var extra in configuredRoleRecipients.Where(x => x.UserId != reminder.TargetUserId))
+                        {
+                            if (eventConfig.SendInApp)
+                            {
+                                await userNotificationService.CreateNotificationAsync(
+                                    extra.UserId,
+                                    inAppTitle,
+                                    smsMessage,
+                                    NotificationType.Reminder,
+                                    referenceId: reminder.CareServiceId?.ToString(),
+                                    link: link,
+                                    context: new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = extra.UserId,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
+                            }
+
+                            if (eventConfig.SendSms && !string.IsNullOrWhiteSpace(extra.PhoneNumber))
+                            {
+                                await notificationService.SendSmsAsync(extra.PhoneNumber, smsMessage, new NotificationSendContext
+                                {
+                                    EventKey = NotificationEventKeys.ServiceReminder,
+                                    EventDisplayName = eventConfig.DisplayName,
+                                    RecipientUserId = extra.UserId,
+                                    PatientId = reminder.CareRecipientId,
+                                    ReferenceId = reminder.CareServiceId?.ToString(),
+                                    Link = link
+                                });
+                            }
+
+                            if (eventConfig.SendEmail && !string.IsNullOrWhiteSpace(extra.Email))
+                            {
+                                await notificationService.SendEmailAsync(extra.Email, emailSubject, emailBody, new NotificationSendContext
+                                {
+                                    EventKey = NotificationEventKeys.ServiceReminder,
+                                    EventDisplayName = eventConfig.DisplayName,
+                                    RecipientUserId = extra.UserId,
+                                    PatientId = reminder.CareRecipientId,
+                                    ReferenceId = reminder.CareServiceId?.ToString(),
+                                    Link = link
+                                });
+                            }
+                        }
+
                         if (reminder.NotifyAdmin)
                         {
                             var admins = new List<Salmandyar.Domain.Entities.User>();
@@ -169,23 +309,78 @@ namespace Salmandyar.Infrastructure.BackgroundServices
 
                             foreach (var admin in admins)
                             {
-                                if (reminder.SendInApp)
+                                if (reminder.SendInApp && eventConfig.SendInApp)
                                 {
                                     await userNotificationService.CreateNotificationAsync(
                                         admin.Id,
                                         "هشدار ادمین: خدمت سررسید",
-                                        message,
+                                        smsMessage,
                                         NotificationType.Alert,
                                         referenceId: reminder.CareServiceId?.ToString(),
-                                        link: null
+                                        link: link,
+                                        context: new NotificationSendContext
+                                        {
+                                            EventKey = NotificationEventKeys.ServiceReminder,
+                                            EventDisplayName = eventConfig.DisplayName,
+                                            RecipientUserId = admin.Id,
+                                            PatientId = reminder.CareRecipientId,
+                                            ReferenceId = reminder.CareServiceId?.ToString(),
+                                            Link = link
+                                        }
                                     );
                                 }
 
-                                if (reminder.SendSms && !string.IsNullOrEmpty(admin.PhoneNumber))
-                                    await notificationService.SendSmsAsync(admin.PhoneNumber, message);
+                                if (reminder.SendSms && eventConfig.SendSms && !string.IsNullOrEmpty(admin.PhoneNumber))
+                                    await notificationService.SendSmsAsync(admin.PhoneNumber, smsMessage, new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = admin.Id,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
 
-                                if (reminder.SendEmail && !string.IsNullOrEmpty(admin.Email))
-                                    await notificationService.SendEmailAsync(admin.Email, "Admin Alert: Service Due", message);
+                                if (reminder.SendEmail && eventConfig.SendEmail && !string.IsNullOrEmpty(admin.Email))
+                                    await notificationService.SendEmailAsync(admin.Email, emailSubject, emailBody, new NotificationSendContext
+                                    {
+                                        EventKey = NotificationEventKeys.ServiceReminder,
+                                        EventDisplayName = eventConfig.DisplayName,
+                                        RecipientUserId = admin.Id,
+                                        PatientId = reminder.CareRecipientId,
+                                        ReferenceId = reminder.CareServiceId?.ToString(),
+                                        Link = link
+                                    });
+                            }
+                        }
+
+                        if (eventConfig.SendSms)
+                        {
+                            foreach (var phone in eventConfig.AdditionalPhones.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
+                            {
+                                await notificationService.SendSmsAsync(phone, smsMessage, new NotificationSendContext
+                                {
+                                    EventKey = NotificationEventKeys.ServiceReminder,
+                                    EventDisplayName = eventConfig.DisplayName,
+                                    PatientId = reminder.CareRecipientId,
+                                    ReferenceId = reminder.CareServiceId?.ToString(),
+                                    Link = link
+                                });
+                            }
+                        }
+
+                        if (eventConfig.SendEmail)
+                        {
+                            foreach (var email in eventConfig.AdditionalEmails.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
+                            {
+                                await notificationService.SendEmailAsync(email, emailSubject, emailBody, new NotificationSendContext
+                                {
+                                    EventKey = NotificationEventKeys.ServiceReminder,
+                                    EventDisplayName = eventConfig.DisplayName,
+                                    PatientId = reminder.CareRecipientId,
+                                    ReferenceId = reminder.CareServiceId?.ToString(),
+                                    Link = link
+                                });
                             }
                         }
 
@@ -207,5 +402,21 @@ namespace Salmandyar.Infrastructure.BackgroundServices
                 }
             }
         }
+
+        private static string RenderTemplate(string template, IReadOnlyDictionary<string, string> values, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(template))
+        {
+            return fallback;
+        }
+
+        var output = template;
+        foreach (var item in values)
+        {
+            output = output.Replace($"{{{item.Key}}}", item.Value, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return output;
     }
+}
 }

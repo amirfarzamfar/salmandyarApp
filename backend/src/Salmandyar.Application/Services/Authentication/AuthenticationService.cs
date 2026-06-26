@@ -226,11 +226,20 @@ public class AuthenticationService : IAuthenticationService
             await _notificationService.SendEmailAsync(
                 user.Email,
                 "کد بازیابی رمز عبور سالمندیار",
-                $"کد بازیابی شما: {token}");
+                $"کد بازیابی شما: {token}",
+                new NotificationSendContext
+                {
+                    EventKey = NotificationEventKeys.PasswordReset,
+                    EventDisplayName = "بازیابی رمز عبور"
+                });
         }
         else if (!string.IsNullOrWhiteSpace(user.PhoneNumber))
         {
-            await _notificationService.SendSmsAsync(user.PhoneNumber, $"کد بازیابی سالمندیار: {token}");
+            await _notificationService.SendSmsAsync(user.PhoneNumber, $"کد بازیابی سالمندیار: {token}", new NotificationSendContext
+            {
+                EventKey = NotificationEventKeys.PasswordReset,
+                EventDisplayName = "بازیابی رمز عبور"
+            });
         }
 
         return string.Empty;
@@ -340,12 +349,21 @@ public class AuthenticationService : IAuthenticationService
     {
         if (channel == SmsChannel)
         {
-            return _notificationService.SendSmsAsync(destination, $"کد ورود سالمندیار: {code} - این کد تا {expiryMinutes} دقیقه معتبر است.");
+            return _notificationService.SendSmsAsync(destination, $"کد ورود سالمندیار: {code} - این کد تا {expiryMinutes} دقیقه معتبر است.", new NotificationSendContext
+            {
+                EventKey = NotificationEventKeys.OtpLogin,
+                EventDisplayName = "ورود با رمز یکبار مصرف"
+            });
         }
 
         return _notificationService.SendEmailAsync(
             destination,
             "کد ورود سالمندیار",
-            $"کد ورود شما: {code}\nاین کد تا {expiryMinutes} دقیقه معتبر است.");
+            $"کد ورود شما: {code}\nاین کد تا {expiryMinutes} دقیقه معتبر است.",
+            new NotificationSendContext
+            {
+                EventKey = NotificationEventKeys.OtpLogin,
+                EventDisplayName = "ورود با رمز یکبار مصرف"
+            });
     }
 }

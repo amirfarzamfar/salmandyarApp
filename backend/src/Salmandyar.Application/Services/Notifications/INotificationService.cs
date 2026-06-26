@@ -1,10 +1,9 @@
 using System.Threading.Tasks;
 
-namespace Salmandyar.Application.Services.Notifications
+namespace Salmandyar.Application.Services.Notifications;
+
+public interface INotificationService
 {
-    public interface INotificationService
-    {
-        Task SendSmsAsync(string phoneNumber, string message);
-        Task SendEmailAsync(string email, string subject, string body);
-    }
+    Task SendSmsAsync(string phoneNumber, string message, NotificationSendContext? context = null);
+    Task SendEmailAsync(string email, string subject, string body, NotificationSendContext? context = null);
 }

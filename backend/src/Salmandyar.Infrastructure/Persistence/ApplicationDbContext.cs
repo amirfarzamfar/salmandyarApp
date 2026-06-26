@@ -25,6 +25,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<NursingReportDetail> NursingReportDetails { get; set; }
     public DbSet<ServiceReminder> ServiceReminders { get; set; }
     public DbSet<NotificationSettings> NotificationSettings { get; set; }
+    public DbSet<NotificationDeliveryLog> NotificationDeliveryLogs { get; set; }
     public DbSet<OtpLoginSettings> OtpLoginSettings { get; set; }
     public DbSet<OtpLoginChallenge> OtpLoginChallenges { get; set; }
     public DbSet<MedicationAlertSettings> MedicationAlertSettings { get; set; }
@@ -155,6 +156,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
         builder.Entity<ServiceReminder>().ToTable("ServiceReminders");
         builder.Entity<NotificationSettings>().ToTable("NotificationSettings");
+        builder.Entity<NotificationDeliveryLog>().ToTable("NotificationDeliveryLogs");
         builder.Entity<OtpLoginSettings>().ToTable("OtpLoginSettings");
         builder.Entity<OtpLoginChallenge>().ToTable("OtpLoginChallenges");
         builder.Entity<MedicationAlertSettings>().ToTable("MedicationAlertSettings");
@@ -347,6 +349,16 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(n => n.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<NotificationDeliveryLog>()
+            .Property(x => x.CreatedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<NotificationDeliveryLog>()
+            .HasIndex(x => new { x.EventKey, x.CreatedAtUtc });
+
+        builder.Entity<NotificationDeliveryLog>()
+            .HasIndex(x => new { x.Channel, x.Status, x.CreatedAtUtc });
 
         builder.Entity<AssessmentAssignment>()
             .HasOne(a => a.User)

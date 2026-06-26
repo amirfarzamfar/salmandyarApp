@@ -1,87 +1,92 @@
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.Services.Notifications;
+using Salmandyar.Application.Services.Settings;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Domain.Entities.Medications;
 using Salmandyar.Infrastructure.Persistence;
-using System.Net.Http.Json;
 
 namespace Salmandyar.Infrastructure.Services.Notifications;
 
 public class UserNotificationService : IUserNotificationService
 {
-    private static readonly HttpClient DebugHttpClient = new();
     private readonly ApplicationDbContext _context;
     private readonly IRealtimeNotificationDispatcher _realtimeNotificationDispatcher;
+    private readonly INotificationSettingsService _notificationSettingsService;
 
     public UserNotificationService(
         ApplicationDbContext context,
-        IRealtimeNotificationDispatcher realtimeNotificationDispatcher)
+        IRealtimeNotificationDispatcher realtimeNotificationDispatcher,
+        INotificationSettingsService notificationSettingsService)
     {
         _context = context;
         _realtimeNotificationDispatcher = realtimeNotificationDispatcher;
+        _notificationSettingsService = notificationSettingsService;
     }
 
-    public async Task CreateNotificationAsync(string userId, string title, string message, NotificationType type, string? referenceId = null, string? link = null, string? severity = null)
+    public async Task CreateNotificationAsync(string userId, string title, string message, NotificationType type, string? referenceId = null, string? link = null, string? severity = null, NotificationSendContext? context = null)
     {
-        // #region debug-point A:create-entry
-        await DebugReportAsync("A", "CreateNotificationAsync:entry", new
+        var effectiveContext = context ?? new NotificationSendContext
         {
-            userId,
-            title,
-            type = type.ToString(),
-            referenceId,
-            link,
-            severity
-        });
-        // #endregion
-
-        var notification = new UserNotification
-        {
-            UserId = userId,
-            Title = title,
-            Message = message,
-            Type = type,
+            EventKey = NotificationEventKeys.Generic,
+            EventDisplayName = GetDefaultEventDisplayName(type),
+            RecipientUserId = userId,
             ReferenceId = referenceId,
-            Link = link,
-            IsRead = false,
-            CreatedAt = DateTime.UtcNow
+            Severity = severity,
+            Link = link
         };
 
-        _context.UserNotifications.Add(notification);
-        await _context.SaveChangesAsync();
+        effectiveContext.RecipientUserId ??= userId;
+        effectiveContext.ReferenceId ??= referenceId;
+        effectiveContext.Severity ??= severity;
+        effectiveContext.Link ??= link;
+        effectiveContext.EventKey = string.IsNullOrWhiteSpace(effectiveContext.EventKey) ? NotificationEventKeys.Generic : effectiveContext.EventKey;
+        effectiveContext.EventDisplayName = string.IsNullOrWhiteSpace(effectiveContext.EventDisplayName) ? GetDefaultEventDisplayName(type) : effectiveContext.EventDisplayName;
 
-        // #region debug-point A:create-saved
-        await DebugReportAsync("A", "CreateNotificationAsync:saved", new
+        if (!effectiveContext.EventKey.Equals(NotificationEventKeys.Generic, StringComparison.OrdinalIgnoreCase))
         {
-            notificationId = notification.Id,
-            userId,
-            title,
-            type = type.ToString(),
-            referenceId,
-            link,
-            severity
-        });
-        // #endregion
+            var eventConfig = await _notificationSettingsService.GetEventConfigurationAsync(effectiveContext.EventKey);
+            if (!eventConfig.IsEnabled || !eventConfig.SendInApp)
+            {
+                await LogInAppDeliveryAsync(effectiveContext, NotificationDeliveryStatus.Skipped, userId, title, message, "ارسال داخل‌برنامه‌ای برای این رویداد غیرفعال است.");
+                return;
+            }
+        }
 
-        await _realtimeNotificationDispatcher.DispatchAsync(
-            userId,
-            title,
-            message,
-            type,
-            referenceId,
-            link,
-            severity);
-
-        // #region debug-point C:dispatch-done
-        await DebugReportAsync("C", "CreateNotificationAsync:dispatch-done", new
+        try
         {
-            notificationId = notification.Id,
-            userId,
-            title,
-            type = type.ToString()
-        });
-        // #endregion
+            var notification = new UserNotification
+            {
+                UserId = userId,
+                Title = title,
+                Message = message,
+                Type = type,
+                ReferenceId = referenceId,
+                Link = link,
+                IsRead = false,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.UserNotifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            await _realtimeNotificationDispatcher.DispatchAsync(
+                userId,
+                title,
+                message,
+                type,
+                referenceId,
+                link,
+                severity);
+
+            await LogInAppDeliveryAsync(effectiveContext, NotificationDeliveryStatus.Succeeded, userId, title, message, null);
+        }
+        catch (Exception ex)
+        {
+            await LogInAppDeliveryAsync(effectiveContext, NotificationDeliveryStatus.Failed, userId, title, message, ex.Message);
+            throw;
+        }
     }
 
     public async Task<List<UserNotification>> GetUserNotificationsAsync(string userId, bool unreadOnly = false)
@@ -100,24 +105,6 @@ public class UserNotificationService : IUserNotificationService
             .ToListAsync();
 
         await NormalizeMedicationMissedMessagesAsync(items);
-
-        // #region debug-point B:list-result
-        await DebugReportAsync("B", "GetUserNotificationsAsync:result", new
-        {
-            userId,
-            unreadOnly,
-            count = items.Count,
-            items = items.Take(10).Select(x => new
-            {
-                x.Id,
-                x.Title,
-                Type = x.Type.ToString(),
-                x.ReferenceId,
-                x.Link,
-                x.IsRead
-            }).ToList()
-        });
-        // #endregion
 
         return items;
     }
@@ -166,17 +153,7 @@ public class UserNotificationService : IUserNotificationService
             .Count();
 
         var regularCount = notifications.Count(n => !IsLowStockTitle(n.Title));
-        var count = regularCount + lowStockCount;
-
-        // #region debug-point B:count-result
-        await DebugReportAsync("B", "GetUnreadCountAsync:result", new
-        {
-            userId,
-            count
-        });
-        // #endregion
-
-        return count;
+        return regularCount + lowStockCount;
     }
 
     private static bool IsLowStockNotification(UserNotification notification)
@@ -268,26 +245,38 @@ public class UserNotificationService : IUserNotificationService
         }
     }
 
-    // #region debug-point shared:reporter
-    private static async Task DebugReportAsync(string hypothesisId, string msg, object data)
+    private async Task LogInAppDeliveryAsync(NotificationSendContext context, NotificationDeliveryStatus status, string userId, string title, string message, string? error)
     {
-        try
+        _context.NotificationDeliveryLogs.Add(new NotificationDeliveryLog
         {
-            await DebugHttpClient.PostAsJsonAsync("http://127.0.0.1:7777/event", new
-            {
-                sessionId = "medication-alert-missing",
-                runId = "pre-fix",
-                hypothesisId,
-                location = "UserNotificationService",
-                msg = $"[DEBUG] {msg}",
-                data,
-                ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-            });
-        }
-        catch
-        {
-            // Intentionally silent during debugging.
-        }
+            CreatedAtUtc = DateTime.UtcNow,
+            EventKey = string.IsNullOrWhiteSpace(context.EventKey) ? NotificationEventKeys.Generic : context.EventKey,
+            EventDisplayName = string.IsNullOrWhiteSpace(context.EventDisplayName) ? "اعلان داخل برنامه" : context.EventDisplayName,
+            Channel = NotificationDeliveryChannel.InApp,
+            Status = status,
+            Provider = "InApp",
+            Recipient = userId,
+            RecipientUserId = userId,
+            Subject = title,
+            Message = message,
+            ErrorMessage = error,
+            PatientId = context.PatientId,
+            ReferenceId = context.ReferenceId,
+            Severity = context.Severity,
+            Link = context.Link
+        });
+
+        await _context.SaveChangesAsync();
     }
-    // #endregion
+
+    private static string GetDefaultEventDisplayName(NotificationType type)
+    {
+        return type switch
+        {
+            NotificationType.Assessment => "اعلان ارزیابی",
+            NotificationType.Reminder => "یادآوری",
+            NotificationType.Alert => "هشدار",
+            _ => "اعلان سیستمی"
+        };
+    }
 }

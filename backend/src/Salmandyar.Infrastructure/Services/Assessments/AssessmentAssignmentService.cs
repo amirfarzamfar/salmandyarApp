@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Salmandyar.Application.DTOs.Assessments;
 using Salmandyar.Application.Services.Assessments;
 using Salmandyar.Application.Services.Notifications;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.Assessments;
 using Salmandyar.Domain.Enums;
@@ -87,7 +88,15 @@ public class AssessmentAssignmentService : IAssessmentAssignmentService
             message,
             NotificationType.Assessment,
             referenceId: assignment.Id.ToString(),
-            link: link
+            link: link,
+            context: new NotificationSendContext
+            {
+                EventKey = NotificationEventKeys.AssessmentAssigned,
+                EventDisplayName = "تخصیص ارزیابی",
+                RecipientUserId = dto.UserId,
+                ReferenceId = assignment.Id.ToString(),
+                Link = link
+            }
         );
 
         return MapToDto(created);

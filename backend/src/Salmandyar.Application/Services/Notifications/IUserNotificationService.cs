@@ -5,7 +5,7 @@ namespace Salmandyar.Application.Services.Notifications;
 
 public interface IUserNotificationService
 {
-    Task CreateNotificationAsync(string userId, string title, string message, NotificationType type, string? referenceId = null, string? link = null, string? severity = null);
+    Task CreateNotificationAsync(string userId, string title, string message, NotificationType type, string? referenceId = null, string? link = null, string? severity = null, NotificationSendContext? context = null);
     Task<List<UserNotification>> GetUserNotificationsAsync(string userId, bool unreadOnly = false);
     Task MarkAsReadAsync(int notificationId, string userId);
     Task<int> GetUnreadCountAsync(string userId);

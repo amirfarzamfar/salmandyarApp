@@ -4,9 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Salmandyar.API.Hubs;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Patients.Dtos;
-using Salmandyar.Application.Services.Notifications;
 using Salmandyar.Application.Services.PatientSelfServiceAccess;
-using Salmandyar.Domain.Enums;
 using Salmandyar.Domain.Constants;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
@@ -20,18 +18,15 @@ public class PatientsController : ControllerBase
 {
     private readonly IPatientService _patientService;
     private readonly IHubContext<ServiceHub> _hubContext;
-    private readonly IUserNotificationService _userNotifications;
     private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
 
     public PatientsController(
         IPatientService patientService,
         IHubContext<ServiceHub> hubContext,
-        IUserNotificationService userNotifications,
         IPatientSelfServiceAccessService patientSelfServiceAccessService)
     {
         _patientService = patientService;
         _hubContext = hubContext;
-        _userNotifications = userNotifications;
         _patientSelfServiceAccessService = patientSelfServiceAccessService;
     }
 
@@ -158,27 +153,6 @@ public class PatientsController : ControllerBase
 
         await _hubContext.Clients.Group($"Patient_{dto.CareRecipientId}").SendAsync("ReceiveVitalUpdate");
 
-        if (result.Alerts.Count > 0)
-        {
-            var severity = result.Alerts.Max(a => a.Severity);
-            var title = severity == VitalAlertSeverity.Critical ? "هشدار فوری علائم حیاتی" : "هشدار علائم حیاتی";
-            var alertTitles = string.Join("، ", result.Alerts.Select(a => a.Title).Take(3));
-            var message = $"{result.PatientName}: {alertTitles}";
-            var link = $"/dashboard/patients/{dto.CareRecipientId}?tab=vitals";
-
-            foreach (var recipientId in result.RecipientUserIds)
-            {
-                await _userNotifications.CreateNotificationAsync(
-                    recipientId,
-                    title,
-                    message,
-                    NotificationType.Alert,
-                    referenceId: result.VitalSignId.ToString(),
-                    link: link,
-                    severity: severity.ToString()
-                );
-            }
-        }
         return Ok(result);
     }
 
