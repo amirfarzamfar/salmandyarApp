@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, FileText, Calendar, UserCircle, ClipboardCheck, GraduationCap } from "lucide-react";
+import { LayoutDashboard, FileText, Calendar, UserCircle, ClipboardCheck, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,7 +10,7 @@ export function NurseBottomNav() {
   return (
     <nav className="fixed bottom-4 left-4 right-4 bg-white/80 backdrop-blur-2xl border border-white/40 py-4 px-4 md:hidden z-40 shadow-soft-lg rounded-3xl">
       <div className="flex justify-between items-center max-w-md mx-auto overflow-x-auto scrollbar-hide gap-2">
-        <NavItem icon={Users} label="بیماران" href="/nurse-portal" active={pathname === '/nurse-portal'} />
+        <NavItem icon={LayoutDashboard} label="داشبورد" href="/nurse-portal" active={pathname === '/nurse-portal'} />
         <NavItem icon={ClipboardCheck} label="ارزیابی‌ها" href="/nurse-portal/assessments" active={pathname === '/nurse-portal/assessments'} />
         <NavItem icon={GraduationCap} label="آزمون‌ها" href="/nurse-portal/exams" active={pathname === '/nurse-portal/exams'} />
         <NavItem icon={FileText} label="گزارش‌ها" href="/nurse-portal/reports" active={pathname === '/nurse-portal/reports'} />

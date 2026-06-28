@@ -1,9 +1,9 @@
 'use client';
 
 import type { AxiosError } from 'axios';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Swal from 'sweetalert2';
+import Swal, { type SweetAlertOptions } from 'sweetalert2';
 import { toast } from 'react-hot-toast';
 import {
   Activity,
@@ -181,6 +181,9 @@ const canReceiveAssignments = (user: Pick<UserListDto, 'roles'>) =>
 export default function UsersPageClient() {
   const searchParams = useSearchParams();
   const selfServiceMode = searchParams.get('selfService') === '1';
+  const userFormDialogRef = useRef<HTMLDivElement | null>(null);
+  const roleDialogRef = useRef<HTMLDivElement | null>(null);
+  const detailDialogRef = useRef<HTMLDivElement | null>(null);
 
   const [users, setUsers] = useState<UserListDto[]>([]);
   const [selectedUserForAccess, setSelectedUserForAccess] = useState<UserListDto | null>(null);
@@ -213,6 +216,20 @@ export default function UsersPageClient() {
 
   const roleOptions = useMemo(() => roleCatalog.roles.map((role) => role.name), [roleCatalog.roles]);
   const eligibleUsers = useMemo(() => users.filter(canManageSelfService), [users]);
+
+  const fireContextualAlert = (options: SweetAlertOptions) => {
+    const target =
+      detailDialogRef.current ||
+      roleDialogRef.current ||
+      userFormDialogRef.current ||
+      document.body;
+
+    return Swal.fire({
+      target,
+      heightAuto: false,
+      ...options
+    });
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -382,7 +399,7 @@ export default function UsersPageClient() {
     let reason: string | undefined;
 
     if (!nextIsActive) {
-      const result = await Swal.fire({
+      const result = await fireContextualAlert({
         title: 'غیرفعال‌کردن کاربر',
         input: 'text',
         inputLabel: 'دلیل غیرفعال‌سازی',
@@ -412,7 +429,7 @@ export default function UsersPageClient() {
     let payload: SetUserLockDto = { isLocked: nextLocked };
 
     if (nextLocked) {
-      const result = await Swal.fire({
+      const result = await fireContextualAlert({
         title: 'قفل‌کردن حساب کاربری',
         input: 'text',
         inputLabel: 'دلیل قفل شدن حساب',
@@ -438,7 +455,7 @@ export default function UsersPageClient() {
   };
 
   const handleResetPassword = async (user: UserListDto) => {
-    const result = await Swal.fire({
+    const result = await fireContextualAlert({
       title: `ریست رمز عبور ${user.firstName} ${user.lastName}`,
       input: 'password',
       inputLabel: 'رمز عبور جدید',
@@ -460,7 +477,7 @@ export default function UsersPageClient() {
   };
 
   const handleForceLogout = async (user: UserListDto) => {
-    const result = await Swal.fire({
+    const result = await fireContextualAlert({
       title: 'خروج اجباری',
       text: `آیا از خروج اجباری ${user.firstName} ${user.lastName} اطمینان دارید؟`,
       icon: 'warning',
@@ -480,7 +497,7 @@ export default function UsersPageClient() {
   };
 
   const handleDeleteUser = async (user: UserListDto) => {
-    const result = await Swal.fire({
+    const result = await fireContextualAlert({
       title: 'حذف کاربر',
       text: `حساب ${user.firstName} ${user.lastName} حذف شود؟`,
       icon: 'warning',
@@ -554,7 +571,7 @@ export default function UsersPageClient() {
   };
 
   const handleDeleteRole = async (role: RoleManagementDto) => {
-    const result = await Swal.fire({
+    const result = await fireContextualAlert({
       title: 'حذف نقش',
       text: `نقش ${role.name} حذف شود؟`,
       icon: 'warning',
@@ -947,7 +964,7 @@ export default function UsersPageClient() {
       </div>
 
       <Dialog open={userFormOpen} onOpenChange={setUserFormOpen}>
-        <DialogContent className="max-w-4xl">
+        <DialogContent ref={userFormDialogRef} className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>{editingUserId ? 'ویرایش کاربر' : 'ایجاد کاربر جدید'}</DialogTitle>
             <DialogDescription>
@@ -1047,7 +1064,7 @@ export default function UsersPageClient() {
       </Dialog>
 
       <Dialog open={roleDialogOpen} onOpenChange={setRoleDialogOpen}>
-        <DialogContent className="max-w-5xl">
+        <DialogContent ref={roleDialogRef} className="max-w-5xl">
           <DialogHeader>
             <DialogTitle>مدیریت نقش‌ها و سطوح دسترسی</DialogTitle>
             <DialogDescription>
@@ -1175,7 +1192,7 @@ export default function UsersPageClient() {
       </Dialog>
 
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-6xl">
+        <DialogContent ref={detailDialogRef} className="max-w-6xl">
           <DialogHeader>
             <DialogTitle>جزئیات کاربر</DialogTitle>
             <DialogDescription>نمای کامل وضعیت حساب، تایید تماس، لاگ‌ها و تخصیص‌های کاربر.</DialogDescription>
