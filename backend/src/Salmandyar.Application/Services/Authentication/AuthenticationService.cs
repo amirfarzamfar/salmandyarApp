@@ -79,7 +79,7 @@ public class AuthenticationService : IAuthenticationService
             await _patientService.CreatePatientForUserAsync(user.Id, request.FirstName, request.LastName);
         }
 
-        var token = _jwtTokenGenerator.GenerateToken(user, new[] { request.Role });
+        var token = await _jwtTokenGenerator.GenerateTokenAsync(user, new[] { request.Role });
 
         return new AuthenticationResponse(
             user.Id,
@@ -263,7 +263,7 @@ public class AuthenticationService : IAuthenticationService
     private async Task<AuthenticationResponse> BuildAuthenticationResponseAsync(User user)
     {
         var roles = await _identityService.GetUserRolesAsync(user);
-        var token = _jwtTokenGenerator.GenerateToken(user, roles);
+        var token = await _jwtTokenGenerator.GenerateTokenAsync(user, roles);
 
         return new AuthenticationResponse(
             user.Id,

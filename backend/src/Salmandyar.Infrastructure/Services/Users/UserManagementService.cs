@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 using Salmandyar.Application.DTOs.Users;
 using Salmandyar.Application.Services.Patients;
 using Salmandyar.Application.Services.Users;
@@ -159,13 +160,15 @@ public class UserManagementService : IUserManagementService
         var userIds = items.Select(x => x.Id).ToList();
         var rolesByUserId = await GetRolesByUserIdsAsync(userIds);
         var permissionsByRole = await GetPermissionsByRoleAsync(rolesByUserId.Values.SelectMany(x => x).Distinct(StringComparer.OrdinalIgnoreCase));
+        var directPermissionsByUserId = await GetDirectPermissionsByUserIdsAsync(userIds);
 
         return new PaginatedResult<UserListDto>
         {
             Items = items.Select(user => MapListDto(
                 user,
                 rolesByUserId.TryGetValue(user.Id, out var roles) ? roles : new List<string>(),
-                permissionsByRole)).ToList(),
+                permissionsByRole,
+                directPermissionsByUserId.TryGetValue(user.Id, out var directPermissions) ? directPermissions : new List<string>())).ToList(),
             TotalCount = totalCount,
             PageNumber = pageNumber,
             PageSize = pageSize
@@ -182,10 +185,11 @@ public class UserManagementService : IUserManagementService
 
         var roles = (await _userManager.GetRolesAsync(user)).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x).ToList();
         var permissionsByRole = await GetPermissionsByRoleAsync(roles);
+        var directPermissions = await GetDirectPermissionsAsync(user);
         var auditLogs = await _auditLogService.GetLogsForUserAsync(userId);
         var assignedPatients = await GetAssignedPatientsAsync(userId);
 
-        return MapDetailDto(user, roles, permissionsByRole, auditLogs, assignedPatients);
+        return MapDetailDto(user, roles, permissionsByRole, directPermissions, auditLogs, assignedPatients);
     }
 
     public async Task<UserDetailDto> CreateUserAsync(CreateAdminUserDto dto, string adminId)
@@ -436,6 +440,35 @@ public class UserManagementService : IUserManagementService
         return true;
     }
 
+    public async Task<bool> UpdateUserPermissionsAsync(string userId, UpdateUserPermissionsDto dto, string adminId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return false;
+        }
+
+        var normalizedPermissions = NormalizePermissions(dto.Permissions);
+        var invalidPermissions = normalizedPermissions.Except(Permissions.All, StringComparer.OrdinalIgnoreCase).ToList();
+        if (invalidPermissions.Count > 0)
+        {
+            throw new InvalidOperationException($"سطوح دسترسی نامعتبر هستند: {string.Join(", ", invalidPermissions)}");
+        }
+
+        var previousPermissions = await GetDirectPermissionsAsync(user);
+        await SyncUserPermissionsAsync(user, normalizedPermissions);
+
+        await _auditLogService.LogAsync(
+            adminId,
+            "UpdateUserPermissions",
+            "User",
+            userId,
+            $"دسترسی‌های مستقیم کاربر از {string.Join(", ", previousPermissions)} به {string.Join(", ", normalizedPermissions)} تغییر یافت.",
+            null);
+
+        return true;
+    }
+
     public async Task<RoleCatalogDto> GetRoleCatalogAsync()
     {
         var roles = await _roleManager.Roles.AsNoTracking().OrderBy(x => x.Name).ToListAsync();
@@ -460,7 +493,18 @@ public class UserManagementService : IUserManagementService
 
         return new RoleCatalogDto
         {
-            AvailablePermissions = Permissions.All.OrderBy(x => x).ToList(),
+            AvailablePermissions = Permissions.Definitions
+                .OrderBy(x => x.GroupDisplayName)
+                .ThenBy(x => x.DisplayName)
+                .Select(x => new PermissionDefinitionDto
+                {
+                    Key = x.Key,
+                    Group = x.Group,
+                    GroupDisplayName = x.GroupDisplayName,
+                    DisplayName = x.DisplayName,
+                    Description = x.Description
+                })
+                .ToList(),
             Roles = roles.Select(role => new RoleManagementDto
             {
                 Name = role.Name ?? string.Empty,
@@ -611,10 +655,15 @@ public class UserManagementService : IUserManagementService
         await _userManager.UpdateAsync(user);
     }
 
-    private UserListDto MapListDto(User user, List<string> roles, Dictionary<string, List<string>> permissionsByRole)
+    private UserListDto MapListDto(
+        User user,
+        List<string> roles,
+        Dictionary<string, List<string>> permissionsByRole,
+        List<string> directPermissions)
     {
         var effectivePermissions = roles
             .SelectMany(role => permissionsByRole.TryGetValue(role, out var permissions) ? permissions : [])
+            .Concat(directPermissions)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(x => x)
             .ToList();
@@ -647,10 +696,11 @@ public class UserManagementService : IUserManagementService
         User user,
         List<string> roles,
         Dictionary<string, List<string>> permissionsByRole,
+        List<string> directPermissions,
         List<AuditLogDto> auditLogs,
         List<UserPatientAssignmentDto> assignedPatients)
     {
-        var baseDto = MapListDto(user, roles, permissionsByRole);
+        var baseDto = MapListDto(user, roles, permissionsByRole, directPermissions);
         return new UserDetailDto
         {
             Id = baseDto.Id,
@@ -674,6 +724,7 @@ public class UserManagementService : IUserManagementService
             BanReason = user.BanReason,
             LastLoginIp = user.LastLoginIp,
             LockoutEnabled = user.LockoutEnabled,
+            DirectPermissions = directPermissions,
             AuditLogs = auditLogs,
             AssignedPatients = assignedPatients
         };
@@ -821,9 +872,74 @@ public class UserManagementService : IUserManagementService
                 StringComparer.OrdinalIgnoreCase);
     }
 
+    private async Task<List<string>> GetDirectPermissionsAsync(User user)
+    {
+        var claims = await _userManager.GetClaimsAsync(user);
+        return claims
+            .Where(x => x.Type == Permissions.ClaimType && !string.IsNullOrWhiteSpace(x.Value))
+            .Select(x => x.Value)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+    }
+
+    private async Task<Dictionary<string, List<string>>> GetDirectPermissionsByUserIdsAsync(IReadOnlyCollection<string> userIds)
+    {
+        if (userIds.Count == 0)
+        {
+            return new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        }
+
+        var rows = await _context.UserClaims
+            .Where(x => userIds.Contains(x.UserId) && x.ClaimType == Permissions.ClaimType)
+            .Select(x => new
+            {
+                x.UserId,
+                Permission = x.ClaimValue ?? string.Empty
+            })
+            .ToListAsync();
+
+        return rows
+            .GroupBy(x => x.UserId, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(
+                x => x.Key,
+                x => x.Select(v => v.Permission)
+                    .Where(v => !string.IsNullOrWhiteSpace(v))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(v => v)
+                    .ToList(),
+                StringComparer.OrdinalIgnoreCase);
+    }
+
+    private async Task SyncUserPermissionsAsync(User user, IReadOnlyCollection<string> permissions)
+    {
+        var existingClaims = await _userManager.GetClaimsAsync(user);
+        foreach (var claim in existingClaims.Where(x => x.Type == Permissions.ClaimType))
+        {
+            EnsureIdentitySucceeded(await _userManager.RemoveClaimAsync(user, claim), "حذف دسترسی‌های مستقیم قبلی کاربر");
+        }
+
+        foreach (var permission in permissions)
+        {
+            EnsureIdentitySucceeded(await _userManager.AddClaimAsync(user, new Claim(Permissions.ClaimType, permission)), "افزودن دسترسی مستقیم به کاربر");
+        }
+
+        await _userManager.UpdateSecurityStampAsync(user);
+    }
+
     private static List<string> NormalizeRoles(IEnumerable<string> roles)
     {
         return roles
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+    }
+
+    private static List<string> NormalizePermissions(IEnumerable<string> permissions)
+    {
+        return permissions
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)

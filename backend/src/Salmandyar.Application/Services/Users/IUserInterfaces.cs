@@ -12,6 +12,7 @@ public interface IUserManagementService
     Task<bool> ChangeUserStatusAsync(string userId, ChangeUserStatusDto dto, string adminId);
     Task<bool> ChangeUserRoleAsync(string userId, UpdateUserRoleDto dto, string adminId);
     Task<bool> ChangeUserRolesAsync(string userId, UpdateUserRolesDto dto, string adminId);
+    Task<bool> UpdateUserPermissionsAsync(string userId, UpdateUserPermissionsDto dto, string adminId);
     Task<bool> ResetPasswordAsync(string userId, string newPassword, string adminId);
     Task<bool> ForceLogoutAsync(string userId, string adminId);
     Task<bool> SetUserLockAsync(string userId, SetUserLockDto dto, string adminId);

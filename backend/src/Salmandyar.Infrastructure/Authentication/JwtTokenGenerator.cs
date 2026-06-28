@@ -2,9 +2,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Globalization;
 using System.Security.Claims;
 using System.Text;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Salmandyar.Application.Common.Interfaces.Authentication;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 
 namespace Salmandyar.Infrastructure.Authentication;
@@ -12,13 +14,20 @@ namespace Salmandyar.Infrastructure.Authentication;
 public class JwtTokenGenerator : IJwtTokenGenerator
 {
     private readonly IConfiguration _configuration;
+    private readonly UserManager<User> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public JwtTokenGenerator(IConfiguration configuration)
+    public JwtTokenGenerator(
+        IConfiguration configuration,
+        UserManager<User> userManager,
+        RoleManager<IdentityRole> roleManager)
     {
         _configuration = configuration;
+        _userManager = userManager;
+        _roleManager = roleManager;
     }
 
-    public string GenerateToken(User user, IList<string> roles)
+    public async Task<string> GenerateTokenAsync(User user, IList<string> roles)
     {
         var jwtSecret = _configuration["JwtSettings:Secret"]
             ?? throw new InvalidOperationException("JwtSettings:Secret is missing.");
@@ -42,6 +51,11 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
+        foreach (var permission in await GetEffectivePermissionsAsync(user, roles))
+        {
+            claims.Add(new Claim(Permissions.ClaimType, permission));
+        }
+
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var expiry = DateTime.UtcNow.AddMinutes(expiryMinutes);
@@ -55,5 +69,33 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private async Task<List<string>> GetEffectivePermissionsAsync(User user, IEnumerable<string> roles)
+    {
+        var permissionSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var roleName in roles.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var role = await _roleManager.FindByNameAsync(roleName);
+            if (role == null)
+            {
+                continue;
+            }
+
+            var claims = await _roleManager.GetClaimsAsync(role);
+            foreach (var claim in claims.Where(x => x.Type == Permissions.ClaimType && !string.IsNullOrWhiteSpace(x.Value)))
+            {
+                permissionSet.Add(claim.Value);
+            }
+        }
+
+        var userClaims = await _userManager.GetClaimsAsync(user);
+        foreach (var claim in userClaims.Where(x => x.Type == Permissions.ClaimType && !string.IsNullOrWhiteSpace(x.Value)))
+        {
+            permissionSet.Add(claim.Value);
+        }
+
+        return permissionSet.OrderBy(x => x).ToList();
     }
 }

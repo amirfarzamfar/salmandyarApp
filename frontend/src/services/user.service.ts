@@ -30,6 +30,7 @@ export interface UserDetailDto extends UserListDto {
   banReason?: string;
   lastLoginIp?: string;
   lockoutEnabled: boolean;
+  directPermissions: string[];
   auditLogs: AuditLogDto[];
   assignedPatients: UserPatientAssignmentDto[];
 }
@@ -105,6 +106,10 @@ export interface UpdateUserContactVerificationDto {
   phoneNumberConfirmed: boolean;
 }
 
+export interface UpdateUserPermissionsDto {
+  permissions: string[];
+}
+
 export interface UserPatientAssignmentDto {
   id: string;
   patientId: number;
@@ -125,9 +130,17 @@ export interface RoleManagementDto {
   permissions: string[];
 }
 
+export interface PermissionDefinitionDto {
+  key: string;
+  group: string;
+  groupDisplayName: string;
+  displayName: string;
+  description: string;
+}
+
 export interface RoleCatalogDto {
   roles: RoleManagementDto[];
-  availablePermissions: string[];
+  availablePermissions: PermissionDefinitionDto[];
 }
 
 export interface UpsertRoleDto {
@@ -186,6 +199,10 @@ export const userService = {
 
   updateContactVerification: async (id: string, data: UpdateUserContactVerificationDto) => {
     await api.patch(`/admin/users/${id}/contact-verification`, data);
+  },
+
+  updatePermissions: async (id: string, data: UpdateUserPermissionsDto) => {
+    await api.patch(`/admin/users/${id}/permissions`, data);
   },
 
   resetPassword: async (id: string, data: AdminResetPasswordDto) => {

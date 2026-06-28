@@ -13,9 +13,7 @@ import {
   Eye,
   KeyRound,
   Lock,
-  Mail,
   Pencil,
-  Plus,
   Search,
   Settings2,
   Shield,
@@ -28,11 +26,13 @@ import {
   userService,
   type AdminResetPasswordDto,
   type CreateAdminUserDto,
+  type PermissionDefinitionDto,
   type RoleCatalogDto,
   type RoleManagementDto,
   type SetUserLockDto,
   type UpdateAdminUserDto,
   type UpdateUserContactVerificationDto,
+  type UpdateUserPermissionsDto,
   type UserDetailDto,
   type UserFilterDto,
   type UserListDto
@@ -54,21 +54,9 @@ import {
 
 const caregiverRoles = ['Nurse', 'AssistantNurse', 'Physiotherapist', 'ElderlyCareAssistant'];
 
-const permissionLabels: Record<string, string> = {
-  'users.view': 'مشاهده کاربران',
-  'users.create': 'ایجاد کاربر',
-  'users.edit': 'ویرایش کاربر',
-  'users.delete': 'حذف کاربر',
-  'users.manage_roles': 'مدیریت نقش کاربران',
-  'users.manage_permissions': 'مدیریت سطوح دسترسی',
-  'users.reset_password': 'ریست رمز عبور',
-  'users.lock': 'قفل و بازکردن حساب',
-  'users.audit_view': 'مشاهده لاگ کاربران',
-  'users.manage_assignments': 'مدیریت تخصیص بیماران'
-};
-
 type UserFormState = CreateAdminUserDto;
 type RoleFormState = { name: string; permissions: string[] };
+type PermissionGroup = { key: string; title: string; permissions: PermissionDefinitionDto[] };
 type AssignmentFormState = {
   patientId: string;
   assignmentType: AssignmentType;
@@ -170,8 +158,6 @@ const formatAssignmentStatus = (value: number) => {
   }
 };
 
-const translatePermission = (permission: string) => permissionLabels[permission] || permission;
-
 const canManageSelfService = (user: Pick<UserListDto, 'roles'>) =>
   user.roles.includes('Patient') || user.roles.includes('Elderly');
 
@@ -209,13 +195,36 @@ export default function UsersPageClient() {
   const [editingRoleName, setEditingRoleName] = useState<string | null>(null);
   const [roleForm, setRoleForm] = useState<RoleFormState>(emptyRoleForm);
   const [savingRole, setSavingRole] = useState(false);
+  const [rolePermissionSearch, setRolePermissionSearch] = useState('');
   const [patients, setPatients] = useState<PatientList[]>([]);
   const [patientsLoaded, setPatientsLoaded] = useState(false);
   const [assignmentForm, setAssignmentForm] = useState<AssignmentFormState>(emptyAssignmentForm);
   const [savingAssignment, setSavingAssignment] = useState(false);
+  const [userPermissionDraft, setUserPermissionDraft] = useState<string[]>([]);
+  const [userPermissionSearch, setUserPermissionSearch] = useState('');
+  const [savingUserPermissions, setSavingUserPermissions] = useState(false);
 
   const roleOptions = useMemo(() => roleCatalog.roles.map((role) => role.name), [roleCatalog.roles]);
   const eligibleUsers = useMemo(() => users.filter(canManageSelfService), [users]);
+  const permissionDefinitionMap = useMemo(
+    () => new Map(roleCatalog.availablePermissions.map((permission) => [permission.key, permission])),
+    [roleCatalog.availablePermissions]
+  );
+  const permissionGroups = useMemo(
+    () => buildPermissionGroups(roleCatalog.availablePermissions),
+    [roleCatalog.availablePermissions]
+  );
+  const rolePermissionGroups = useMemo(
+    () => filterPermissionGroups(permissionGroups, rolePermissionSearch),
+    [permissionGroups, rolePermissionSearch]
+  );
+  const userPermissionGroups = useMemo(
+    () => filterPermissionGroups(permissionGroups, userPermissionSearch),
+    [permissionGroups, userPermissionSearch]
+  );
+
+  const getPermissionLabel = (permission: string) =>
+    permissionDefinitionMap.get(permission)?.displayName || permission;
 
   const fireContextualAlert = (options: SweetAlertOptions) => {
     const target =
@@ -258,6 +267,8 @@ export default function UsersPageClient() {
     try {
       const detail = await userService.getUserById(userId);
       setSelectedUser(detail);
+      setUserPermissionDraft(detail.directPermissions);
+      setUserPermissionSearch('');
       if (openDialog) {
         setDetailOpen(true);
       }
@@ -531,15 +542,53 @@ export default function UsersPageClient() {
     }
   };
 
+  const toggleRolePermission = (permission: string) => {
+    setRoleForm((current) => ({
+      ...current,
+      permissions: current.permissions.includes(permission)
+        ? current.permissions.filter((item) => item !== permission)
+        : [...current.permissions, permission]
+    }));
+  };
+
+  const toggleUserPermission = (permission: string) => {
+    setUserPermissionDraft((current) =>
+      current.includes(permission)
+        ? current.filter((item) => item !== permission)
+        : [...current, permission]
+    );
+  };
+
+  const handleSaveUserPermissions = async () => {
+    if (!selectedUser) return;
+
+    const payload: UpdateUserPermissionsDto = {
+      permissions: [...userPermissionDraft].sort((left, right) => left.localeCompare(right))
+    };
+
+    setSavingUserPermissions(true);
+    try {
+      await userService.updatePermissions(selectedUser.id, payload);
+      toast.success('دسترسی‌های مستقیم کاربر به‌روزرسانی شد.');
+      await Promise.all([fetchUsers(), fetchUserDetail(selectedUser.id, false)]);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'ذخیره دسترسی‌های مستقیم کاربر انجام نشد.'));
+    } finally {
+      setSavingUserPermissions(false);
+    }
+  };
+
   const openRoleDialogForCreate = () => {
     setEditingRoleName(null);
     setRoleForm(emptyRoleForm);
+    setRolePermissionSearch('');
     setRoleDialogOpen(true);
   };
 
   const openRoleDialogForEdit = (role: RoleManagementDto) => {
     setEditingRoleName(role.name);
     setRoleForm({ name: role.name, permissions: role.permissions });
+    setRolePermissionSearch('');
     setRoleDialogOpen(true);
   };
 
@@ -1112,7 +1161,7 @@ export default function UsersPageClient() {
                     ) : (
                       role.permissions.map((permission) => (
                         <span key={permission} className="rounded-full bg-teal-50 px-2 py-1 text-xs font-medium text-teal-700">
-                          {translatePermission(permission)}
+                          {getPermissionLabel(permission)}
                         </span>
                       ))
                     )}
@@ -1141,28 +1190,71 @@ export default function UsersPageClient() {
               <Field label="نام نقش" value={roleForm.name} onChange={(value) => setRoleForm((current) => ({ ...current, name: value }))} />
 
               <div className="mt-4">
-                <div className="mb-2 text-sm font-medium text-slate-700">سطوح دسترسی</div>
-                <div className="space-y-2">
-                  {roleCatalog.availablePermissions.map((permission) => {
-                    const checked = roleForm.permissions.includes(permission);
-                    return (
-                      <label key={permission} className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-700">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() =>
-                            setRoleForm((current) => ({
-                              ...current,
-                              permissions: checked
-                                ? current.permissions.filter((item) => item !== permission)
-                                : [...current.permissions, permission]
-                            }))
-                          }
-                        />
-                        <span>{translatePermission(permission)}</span>
-                      </label>
-                    );
-                  })}
+                <div className="mb-2 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-slate-700">سطوح دسترسی</div>
+                    <div className="text-xs text-slate-500">Permissionها بر اساس ماژول‌های سیستم گروه‌بندی شده‌اند.</div>
+                  </div>
+                  <input
+                    value={rolePermissionSearch}
+                    onChange={(event) => setRolePermissionSearch(event.target.value)}
+                    placeholder="جست‌وجوی دسترسی..."
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm md:max-w-xs"
+                  />
+                </div>
+                <div className="space-y-4">
+                  {rolePermissionGroups.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+                      دسترسی منطبق با جست‌وجو پیدا نشد.
+                    </div>
+                  ) : (
+                    rolePermissionGroups.map((group) => (
+                      <div key={group.key} className="rounded-2xl border border-slate-200 p-4">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <div>
+                            <div className="font-medium text-slate-900">{group.title}</div>
+                            <div className="text-xs text-slate-500">{group.permissions.length} دسترسی</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setRoleForm((current) => ({
+                                ...current,
+                                permissions: Array.from(
+                                  new Set([
+                                    ...current.permissions,
+                                    ...group.permissions.map((permission) => permission.key)
+                                  ])
+                                )
+                              }))
+                            }
+                            className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700"
+                          >
+                            انتخاب همه گروه
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                          {group.permissions.map((permission) => {
+                            const checked = roleForm.permissions.includes(permission.key);
+                            return (
+                              <label key={permission.key} className="flex items-start gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={() => toggleRolePermission(permission.key)}
+                                  className="mt-1"
+                                />
+                                <span className="space-y-1">
+                                  <span className="block font-medium text-slate-900">{permission.displayName}</span>
+                                  <span className="block text-xs text-slate-500">{permission.description}</span>
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -1292,10 +1384,110 @@ export default function UsersPageClient() {
                   ) : (
                     selectedUser.effectivePermissions.map((permission) => (
                       <span key={permission} className="rounded-full bg-teal-50 px-3 py-1 text-xs font-medium text-teal-700">
-                        {translatePermission(permission)}
+                        {getPermissionLabel(permission)}
                       </span>
                     ))
                   )}
+                </div>
+              </InfoCard>
+
+              <InfoCard title="دسترسی‌های مستقیم کاربر">
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div className="text-xs text-slate-500">
+                      این دسترسی‌ها علاوه بر نقش‌های کاربر اعمال می‌شوند و در `Effective Permissions` لحاظ می‌شوند.
+                    </div>
+                    <input
+                      value={userPermissionSearch}
+                      onChange={(event) => setUserPermissionSearch(event.target.value)}
+                      placeholder="جست‌وجوی دسترسی کاربر..."
+                      className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm md:max-w-xs"
+                    />
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {selectedUser.directPermissions.length === 0 ? (
+                      <span className="text-sm text-slate-500">برای این کاربر هنوز دسترسی مستقیم تعریف نشده است.</span>
+                    ) : (
+                      selectedUser.directPermissions.map((permission) => (
+                        <span key={permission} className="rounded-full bg-violet-50 px-3 py-1 text-xs font-medium text-violet-700">
+                          {getPermissionLabel(permission)}
+                        </span>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    {userPermissionGroups.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-slate-300 px-4 py-6 text-center text-sm text-slate-500">
+                        دسترسی منطبق با جست‌وجو پیدا نشد.
+                      </div>
+                    ) : (
+                      userPermissionGroups.map((group) => (
+                        <div key={group.key} className="rounded-2xl border border-slate-200 p-4">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <div>
+                              <div className="font-medium text-slate-900">{group.title}</div>
+                              <div className="text-xs text-slate-500">{group.permissions.length} دسترسی</div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUserPermissionDraft((current) =>
+                                  Array.from(
+                                    new Set([
+                                      ...current,
+                                      ...group.permissions.map((permission) => permission.key)
+                                    ])
+                                  )
+                                )
+                              }
+                              className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-medium text-slate-700"
+                            >
+                              افزودن همه گروه
+                            </button>
+                          </div>
+                          <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
+                            {group.permissions.map((permission) => {
+                              const checked = userPermissionDraft.includes(permission.key);
+                              return (
+                                <label key={permission.key} className="flex items-start gap-3 rounded-xl border border-slate-200 px-3 py-3 text-sm text-slate-700">
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => toggleUserPermission(permission.key)}
+                                    className="mt-1"
+                                  />
+                                  <span className="space-y-1">
+                                    <span className="block font-medium text-slate-900">{permission.displayName}</span>
+                                    <span className="block text-xs text-slate-500">{permission.description}</span>
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleSaveUserPermissions()}
+                      disabled={savingUserPermissions}
+                      className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+                    >
+                      {savingUserPermissions ? 'در حال ذخیره...' : 'ذخیره دسترسی‌های مستقیم'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUserPermissionDraft(selectedUser.directPermissions)}
+                      className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700"
+                    >
+                      بازنشانی به وضعیت ذخیره‌شده
+                    </button>
+                  </div>
                 </div>
               </InfoCard>
 
@@ -1586,4 +1778,48 @@ function StatusChip({
       {active ? activeLabel : inactiveLabel}
     </span>
   );
+}
+
+function buildPermissionGroups(permissions: PermissionDefinitionDto[]): PermissionGroup[] {
+  const groups = new Map<string, PermissionGroup>();
+
+  permissions.forEach((permission) => {
+    const existing = groups.get(permission.group);
+    if (existing) {
+      existing.permissions.push(permission);
+      return;
+    }
+
+    groups.set(permission.group, {
+      key: permission.group,
+      title: permission.groupDisplayName,
+      permissions: [permission]
+    });
+  });
+
+  return Array.from(groups.values()).map((group) => ({
+    ...group,
+    permissions: [...group.permissions].sort((left, right) => left.displayName.localeCompare(right.displayName, 'fa'))
+  }));
+}
+
+function filterPermissionGroups(groups: PermissionGroup[], searchTerm: string): PermissionGroup[] {
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  if (!normalizedSearch) {
+    return groups;
+  }
+
+  return groups
+    .map((group) => ({
+      ...group,
+      permissions: group.permissions.filter((permission) =>
+        [
+          permission.displayName,
+          permission.description,
+          permission.groupDisplayName,
+          permission.key
+        ].some((value) => value.toLowerCase().includes(normalizedSearch))
+      )
+    }))
+    .filter((group) => group.permissions.length > 0);
 }

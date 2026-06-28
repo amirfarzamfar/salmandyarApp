@@ -27,6 +27,7 @@ public class UserDetailDto : UserListDto
     public string? BanReason { get; set; }
     public string? LastLoginIp { get; set; }
     public bool LockoutEnabled { get; set; }
+    public List<string> DirectPermissions { get; set; } = new();
     public List<AuditLogDto> AuditLogs { get; set; } = new();
     public List<UserPatientAssignmentDto> AssignedPatients { get; set; } = new();
 }
@@ -129,6 +130,11 @@ public class UpdateUserContactVerificationDto
     public bool PhoneNumberConfirmed { get; set; }
 }
 
+public class UpdateUserPermissionsDto
+{
+    public List<string> Permissions { get; set; } = new();
+}
+
 public class UserPatientAssignmentDto
 {
     public Guid Id { get; set; }
@@ -151,6 +157,15 @@ public class RoleManagementDto
     public List<string> Permissions { get; set; } = new();
 }
 
+public class PermissionDefinitionDto
+{
+    public string Key { get; set; } = string.Empty;
+    public string Group { get; set; } = string.Empty;
+    public string GroupDisplayName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}
+
 public class UpsertRoleDto
 {
     public string Name { get; set; } = string.Empty;
@@ -160,5 +175,5 @@ public class UpsertRoleDto
 public class RoleCatalogDto
 {
     public List<RoleManagementDto> Roles { get; set; } = new();
-    public List<string> AvailablePermissions { get; set; } = new();
+    public List<PermissionDefinitionDto> AvailablePermissions { get; set; } = new();
 }

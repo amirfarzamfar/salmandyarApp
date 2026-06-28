@@ -187,6 +187,23 @@ public class UsersController : ControllerBase
         }
     }
 
+    [HttpPatch("{id}/permissions")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin}")]
+    public async Task<IActionResult> UpdatePermissions(string id, [FromBody] UpdateUserPermissionsDto dto)
+    {
+        try
+        {
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+            var result = await _userService.UpdateUserPermissionsAsync(id, dto, adminId);
+            if (!result) return NotFound(new { error = "کاربر یافت نشد." });
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPatch("{id}/lock")]
     [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> SetLock(string id, [FromBody] SetUserLockDto dto)

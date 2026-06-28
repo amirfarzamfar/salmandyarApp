@@ -4,5 +4,5 @@ namespace Salmandyar.Application.Common.Interfaces.Authentication;
 
 public interface IJwtTokenGenerator
 {
-    string GenerateToken(User user, IList<string> roles);
+    Task<string> GenerateTokenAsync(User user, IList<string> roles);
 }
