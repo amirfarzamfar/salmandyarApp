@@ -301,10 +301,19 @@ public class MedicationService : IMedicationService
         var dose = await GetDoseForRecordingAsync(doseId);
         if (dose == null) throw new KeyNotFoundException("Dose not found");
 
-        await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
-            userId,
-            dose.PatientMedication.CareRecipientId,
-            PatientSelfServiceFeatures.MedicationKardex);
+        if (dto.Status == DoseStatus.Taken)
+        {
+            await _patientSelfServiceAccessService.EnsureMedicationDoseConfirmationAllowedAsync(
+                userId,
+                dose.PatientMedication.CareRecipientId);
+        }
+        else
+        {
+            await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
+                userId,
+                dose.PatientMedication.CareRecipientId,
+                PatientSelfServiceFeatures.MedicationKardex);
+        }
 
         if (preventBeforeScheduledTime)
         {

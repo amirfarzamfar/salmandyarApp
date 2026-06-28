@@ -245,6 +245,31 @@ public class PatientSelfServiceAccessService : IPatientSelfServiceAccessService
         }
     }
 
+    public async Task EnsureMedicationDoseConfirmationAllowedAsync(string actorUserId, int careRecipientId)
+    {
+        var roles = await GetRolesAsync(actorUserId);
+
+        if (roles.Contains(Roles.PatientFamily))
+        {
+            throw new PatientSelfServiceAccessDeniedException("ثبت اطلاعات برای همراه بیمار مجاز نیست.");
+        }
+
+        var isPatientSelfServiceUser = roles.Contains(Roles.Patient) || roles.Contains(Roles.Elderly);
+        if (!isPatientSelfServiceUser)
+        {
+            return;
+        }
+
+        var careRecipient = await _context.CareRecipients
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Id == careRecipientId);
+
+        if (careRecipient == null || !string.Equals(careRecipient.UserId, actorUserId, StringComparison.Ordinal))
+        {
+            throw new PatientSelfServiceAccessDeniedException("امکان ثبت فقط برای حساب خود بیمار یا سالمند مجاز است.");
+        }
+    }
+
     private async Task<PatientSelfServiceAccessPolicy?> GetPolicyAsync(int careRecipientId)
     {
         return await _context.Set<PatientSelfServiceAccessPolicy>()

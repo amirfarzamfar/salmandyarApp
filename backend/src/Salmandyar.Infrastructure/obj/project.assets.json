@@ -1290,11 +1290,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj": {
-              "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj"
+            "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj": {
+              "projectPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj"
             },
-            "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj": {
-              "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj"
+            "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj": {
+              "projectPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj"
             }
           }
         }

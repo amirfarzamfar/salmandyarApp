@@ -7,6 +7,7 @@ public interface IPatientSelfServiceAccessService
     Task<PatientSelfServiceAccessSummaryDto?> UpdateByUserIdAsync(string userId, UpdatePatientSelfServiceAccessDto dto, string adminUserId);
     Task<List<PatientSelfServiceAccessAuditDto>> GetAuditTrailByUserIdAsync(string userId);
     Task EnsureFeatureSubmissionAllowedAsync(string actorUserId, int careRecipientId, string featureKey);
+    Task EnsureMedicationDoseConfirmationAllowedAsync(string actorUserId, int careRecipientId);
 }
 
 public class UpdatePatientSelfServiceAccessDto

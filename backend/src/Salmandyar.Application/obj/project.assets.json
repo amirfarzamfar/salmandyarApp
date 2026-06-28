@@ -611,11 +611,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj",
+      "projectUniqueName": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj",
       "projectName": "Salmandyar.Application",
-      "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj",
+      "projectPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj",
       "packagesPath": "C:\\Users\\amirFarzam\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\obj\\",
+      "outputPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\amirFarzam\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -630,8 +630,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj": {
-              "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj"
+            "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj": {
+              "projectPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj"
             }
           }
         }
