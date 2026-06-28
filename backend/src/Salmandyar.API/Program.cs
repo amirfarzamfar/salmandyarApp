@@ -20,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<Salmandyar.Application.Services.Notifications.IRealtimeNotificationDispatcher, SignalRRealtimeNotificationDispatcher>();
+builder.Services.AddSingleton<Salmandyar.Application.Services.Users.IUserPresenceTracker, UserPresenceTracker>();
 builder.Services.AddHealthChecks();
 builder.Services.AddProblemDetails();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>

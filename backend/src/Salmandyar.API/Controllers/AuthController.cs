@@ -66,6 +66,7 @@ public class AuthController : ControllerBase
         try
         {
             var response = await _authService.LoginAsync(request);
+            await _userService.RecordSuccessfulLoginAsync(response.Id, HttpContext.Connection.RemoteIpAddress?.ToString());
             return Ok(response);
         }
         catch (Exception ex)
@@ -94,6 +95,7 @@ public class AuthController : ControllerBase
         try
         {
             var response = await _authService.VerifyOtpLoginAsync(request);
+            await _userService.RecordSuccessfulLoginAsync(response.Id, HttpContext.Connection.RemoteIpAddress?.ToString());
             return Ok(response);
         }
         catch (Exception ex)
