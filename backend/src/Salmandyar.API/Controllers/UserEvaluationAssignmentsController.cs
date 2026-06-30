@@ -9,7 +9,6 @@ namespace Salmandyar.API.Controllers;
 
 [ApiController]
 [Route("api/admin/user-evaluation-assignments")]
-// [Authorize(Roles = "Admin,Manager")]
 public class UserEvaluationAssignmentsController : ControllerBase
 {
     private readonly IUserEvaluationAssignmentService _service;
@@ -20,6 +19,7 @@ public class UserEvaluationAssignmentsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<ActionResult<UserEvaluationAssignmentDto>> AssignEvaluation(CreateUserEvaluationAssignmentDto dto)
     {
         try
@@ -34,6 +34,7 @@ public class UserEvaluationAssignmentsController : ControllerBase
     }
 
     [HttpPost("bulk")]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<ActionResult<List<UserEvaluationAssignmentDto>>> BulkAssignEvaluation(BulkAssignUserEvaluationDto dto)
     {
         var results = await _service.BulkAssignEvaluationAsync(dto);
@@ -41,6 +42,7 @@ public class UserEvaluationAssignmentsController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<ActionResult<UserEvaluationAssignmentDto>> GetAssignment(int id)
     {
         var result = await _service.GetAssignmentByIdAsync(id);
@@ -52,6 +54,7 @@ public class UserEvaluationAssignmentsController : ControllerBase
     }
 
     [HttpGet("user/{userId}")]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<ActionResult<List<UserEvaluationAssignmentDto>>> GetUserAssignments(string userId)
     {
         var result = await _service.GetUserAssignmentsAsync(userId);
@@ -59,6 +62,7 @@ public class UserEvaluationAssignmentsController : ControllerBase
     }
 
     [HttpGet("my/pending")]
+    [Authorize]
     public async Task<ActionResult<List<UserEvaluationAssignmentDto>>> GetMyPendingAssignments()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -74,6 +78,7 @@ public class UserEvaluationAssignmentsController : ControllerBase
     }
 
     [HttpGet("summaries")]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<ActionResult<List<UserEvaluationSummaryDto>>> GetUserSummaries([FromQuery] string? role, [FromQuery] bool? isActive, [FromQuery] AssessmentType? formType)
     {
         var result = await _service.GetUserEvaluationSummariesAsync(role, isActive, formType);
@@ -81,6 +86,7 @@ public class UserEvaluationAssignmentsController : ControllerBase
     }
 
     [HttpPost("check-expired")]
+    [Authorize(Roles = "Admin,Manager")]
     public async Task<IActionResult> CheckExpired()
     {
         await _service.MarkAsExpiredAsync();

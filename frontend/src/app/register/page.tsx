@@ -11,8 +11,7 @@ import { Eye, EyeOff, UserPlus, Phone, User, Mail, CreditCard, Lock, Briefcase }
 import Link from 'next/link';
 
 const roles = [
-  { value: 'Manager', label: 'مدیر' },
-  { value: 'Supervisor', label: 'سوپروایزر' },
+  // { value: 'Manager', label: 'مدیر' },
   { value: 'Nurse', label: 'پرستار' },
   { value: 'AssistantNurse', label: 'کمک پرستار' },
   { value: 'Physiotherapist', label: 'فیزیوتراپ' },
