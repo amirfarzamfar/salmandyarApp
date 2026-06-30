@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Enums;
 
@@ -21,7 +22,7 @@ public static class DbInitializer
     {
         if (seedRoles)
         {
-            var roles = new[] { "Admin", "SuperAdmin", "Manager", "Supervisor", "Nurse", "AssistantNurse", "Physiotherapist", "ElderlyCareAssistant", "Elderly", "Patient", "PatientFamily" };
+            var roles = new[] { Roles.Admin, Roles.SuperAdmin, Roles.Manager, Roles.Supervisor, Roles.Nurse, Roles.AssistantNurse, Roles.Physiotherapist, Roles.ElderlyCareAssistant, Roles.Elderly, Roles.Patient, Roles.PatientFamily };
             foreach (var role in roles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
@@ -36,7 +37,11 @@ public static class DbInitializer
             !string.IsNullOrWhiteSpace(adminOptions.PhoneNumber) &&
             !string.IsNullOrWhiteSpace(adminOptions.Password))
         {
-            var adminUser = await context.Users.FirstOrDefaultAsync(u => u.Email == adminOptions.Email);
+            var adminUser = await userManager.FindByNameAsync(adminOptions.PhoneNumber)
+                ?? await userManager.Users.FirstOrDefaultAsync(u =>
+                    u.PhoneNumber == adminOptions.PhoneNumber ||
+                    u.Email == adminOptions.Email);
+
             if (adminUser == null)
             {
                 adminUser = new User
@@ -49,13 +54,73 @@ public static class DbInitializer
                     EmailConfirmed = true,
                     IsActive = true
                 };
-                await userManager.CreateAsync(adminUser, adminOptions.Password);
+                var createResult = await userManager.CreateAsync(adminUser, adminOptions.Password);
+                if (!createResult.Succeeded)
+                {
+                    throw new InvalidOperationException($"ساخت کاربر SuperAdmin انجام نشد: {string.Join(", ", createResult.Errors.Select(x => x.Description))}");
+                }
+            }
+            else
+            {
+                adminUser.UserName = adminOptions.PhoneNumber;
+                adminUser.Email = adminOptions.Email;
+                adminUser.PhoneNumber = adminOptions.PhoneNumber;
+                adminUser.FirstName = string.IsNullOrWhiteSpace(adminOptions.FirstName) ? adminUser.FirstName : adminOptions.FirstName;
+                adminUser.LastName = string.IsNullOrWhiteSpace(adminOptions.LastName) ? adminUser.LastName : adminOptions.LastName;
+                adminUser.EmailConfirmed = true;
+                adminUser.IsActive = true;
+
+                var updateResult = await userManager.UpdateAsync(adminUser);
+                if (!updateResult.Succeeded)
+                {
+                    throw new InvalidOperationException($"به‌روزرسانی کاربر SuperAdmin انجام نشد: {string.Join(", ", updateResult.Errors.Select(x => x.Description))}");
+                }
+
+                var passwordValid = await userManager.CheckPasswordAsync(adminUser, adminOptions.Password);
+                if (!passwordValid)
+                {
+                    var hasPassword = await userManager.HasPasswordAsync(adminUser);
+                    IdentityResult passwordResult;
+
+                    if (hasPassword)
+                    {
+                        var resetToken = await userManager.GeneratePasswordResetTokenAsync(adminUser);
+                        passwordResult = await userManager.ResetPasswordAsync(adminUser, resetToken, adminOptions.Password);
+                    }
+                    else
+                    {
+                        passwordResult = await userManager.AddPasswordAsync(adminUser, adminOptions.Password);
+                    }
+
+                    if (!passwordResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"تنظیم رمز عبور کاربر SuperAdmin انجام نشد: {string.Join(", ", passwordResult.Errors.Select(x => x.Description))}");
+                    }
+                }
             }
 
-            if (!await userManager.IsInRoleAsync(adminUser, "Admin"))
-                await userManager.AddToRoleAsync(adminUser, "Admin");
-            if (!await userManager.IsInRoleAsync(adminUser, "SuperAdmin"))
-                await userManager.AddToRoleAsync(adminUser, "SuperAdmin");
+            var currentRoles = await userManager.GetRolesAsync(adminUser);
+            var rolesToRemove = currentRoles
+                .Where(role => !string.Equals(role, Roles.SuperAdmin, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+
+            if (rolesToRemove.Length > 0)
+            {
+                var removeRolesResult = await userManager.RemoveFromRolesAsync(adminUser, rolesToRemove);
+                if (!removeRolesResult.Succeeded)
+                {
+                    throw new InvalidOperationException($"حذف نقش‌های اضافی کاربر SuperAdmin انجام نشد: {string.Join(", ", removeRolesResult.Errors.Select(x => x.Description))}");
+                }
+            }
+
+            if (!await userManager.IsInRoleAsync(adminUser, Roles.SuperAdmin))
+            {
+                var roleResult = await userManager.AddToRoleAsync(adminUser, Roles.SuperAdmin);
+                if (!roleResult.Succeeded)
+                {
+                    throw new InvalidOperationException($"اختصاص نقش SuperAdmin انجام نشد: {string.Join(", ", roleResult.Errors.Select(x => x.Description))}");
+                }
+            }
         }
 
         if (!seedSampleData)
