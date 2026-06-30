@@ -12,8 +12,13 @@ import {
   useAdministrationTrendReport,
   useAdministrationAdherenceBreakdownReport,
   useAdministrationStaffPerformanceReport,
+  useCorrectDose,
+  useRecordDoseByNurse,
+  useResetDoseLog,
+  useReviewDose,
 } from "@/features/medications/hooks/useKardex";
 import {
+  MedicationDose,
   MedicationAdministrationReportFilters,
   MedicationAdministrationReportRow,
   MedicationAdministrationOutcome,
@@ -28,6 +33,9 @@ import {
 import { formatTehranDateValue } from "@/lib/tehran-date";
 import { MedicationDoseManagementDialog } from "@/features/medications/components/admin/MedicationDoseManagementDialog";
 import { downloadMedicationAdministrationCsv, openMedicationAdministrationPrintView } from "@/features/medications/lib/medication-administration-export";
+import { AdministrationModal } from "@/features/medications/components/kardex/AdministrationModal";
+import { medicationService } from "@/services/medication.service";
+import { toast } from "react-hot-toast";
 
 export default function MedicationAdministrationPage() {
   const [activeTab, setActiveTab] = useState<"dashboard" | "rows" | "adherence" | "settings">("dashboard");
@@ -43,6 +51,9 @@ export default function MedicationAdministrationPage() {
 
   const [selectedRow, setSelectedRow] = useState<MedicationAdministrationReportRow | null>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
+  const [selectedQuickDose, setSelectedQuickDose] = useState<MedicationDose | null>(null);
+  const [isQuickEditOpen, setIsQuickEditOpen] = useState(false);
+  const [isQuickEditLoading, setIsQuickEditLoading] = useState(false);
 
   const filters = useMemo<MedicationAdministrationReportFilters>(() => ({
     from,
@@ -58,6 +69,10 @@ export default function MedicationAdministrationPage() {
   const { data: trend, isLoading: isLoadingTrend } = useAdministrationTrendReport(filters);
   const { data: adherenceBreakdown, isLoading: isLoadingAdherence } = useAdministrationAdherenceBreakdownReport(filters);
   const { data: staffPerformance, isLoading: isLoadingStaff } = useAdministrationStaffPerformanceReport(filters);
+  const { mutateAsync: recordDoseByNurse } = useRecordDoseByNurse();
+  const { mutateAsync: reviewDose } = useReviewDose();
+  const { mutateAsync: correctDose } = useCorrectDose();
+  const { mutateAsync: resetDoseLog } = useResetDoseLog();
 
   const maxTrendValue = Math.max(
     1,
@@ -104,6 +119,71 @@ export default function MedicationAdministrationPage() {
   const openManage = (row: MedicationAdministrationReportRow) => {
     setSelectedRow(row);
     setIsManageOpen(true);
+  };
+
+  const openQuickEdit = async (row: MedicationAdministrationReportRow) => {
+    try {
+      setIsQuickEditLoading(true);
+      const dose = await medicationService.getDose(row.careRecipientId, row.doseId);
+      setSelectedQuickDose(dose);
+      setIsQuickEditOpen(true);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "دریافت اطلاعات نوبت دارو انجام نشد.");
+    } finally {
+      setIsQuickEditLoading(false);
+    }
+  };
+
+  const handleQuickRecord = async (payload: {
+    outcome: MedicationAdministrationOutcome;
+    actualAdministrationAt?: string;
+    notes?: string;
+    clinicalNotes?: string;
+    missedReason?: string;
+  }) => {
+    if (!selectedQuickDose) return;
+
+    await recordDoseByNurse({
+      doseId: selectedQuickDose.id,
+      ...payload,
+    });
+    toast.success("وضعیت نوبت دارو ثبت شد");
+  };
+
+  const handleQuickReview = async (approve: boolean, reason?: string, clinicalNotes?: string) => {
+    if (!selectedQuickDose) return;
+
+    await reviewDose({
+      doseId: selectedQuickDose.id,
+      approve,
+      reason,
+      clinicalNotes,
+    });
+    toast.success(approve ? "ثبت بیمار تأیید شد" : "ثبت بیمار رد شد");
+  };
+
+  const handleQuickCorrect = async (payload: {
+    outcome: MedicationAdministrationOutcome;
+    actualAdministrationAt?: string;
+    correctionReason: string;
+    notes?: string;
+    clinicalNotes?: string;
+    missedReason?: string;
+  }) => {
+    if (!selectedQuickDose) return;
+
+    await correctDose({
+      doseId: selectedQuickDose.id,
+      ...payload,
+    });
+    toast.success("وضعیت نوبت دارو اصلاح شد");
+  };
+
+  const handleQuickReset = async () => {
+    if (!selectedQuickDose) return;
+
+    await resetDoseLog(selectedQuickDose.id);
+    toast.success("ثبت نوبت بازگردانی شد");
   };
 
   const exportCsv = () => {
@@ -475,12 +555,14 @@ export default function MedicationAdministrationPage() {
                       >
                         مدیریت
                       </button>
-                      <Link
-                        href={`/dashboard/patients/${row.careRecipientId}?tab=medications&doseId=${row.doseId}`}
-                        className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-50"
+                      <button
+                        type="button"
+                        onClick={() => void openQuickEdit(row)}
+                        disabled={isQuickEditLoading}
+                        className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-black text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
                       >
-                        پرونده
-                      </Link>
+                        اصلاح سریع
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -551,9 +633,14 @@ export default function MedicationAdministrationPage() {
                           >
                             مدیریت
                           </button>
-                          <Link href={`/dashboard/patients/${row.careRecipientId}?tab=medications&doseId=${row.doseId}`} className="rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-700 hover:bg-slate-50">
-                            پرونده
-                          </Link>
+                          <button
+                            type="button"
+                            onClick={() => void openQuickEdit(row)}
+                            disabled={isQuickEditLoading}
+                            className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-black text-indigo-700 hover:bg-indigo-100 disabled:opacity-60"
+                          >
+                            اصلاح سریع
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -664,6 +751,22 @@ export default function MedicationAdministrationPage() {
           }
         }}
         row={selectedRow}
+      />
+
+      <AdministrationModal
+        isOpen={isQuickEditOpen}
+        onClose={() => {
+          setIsQuickEditOpen(false);
+          setSelectedQuickDose(null);
+        }}
+        dose={selectedQuickDose}
+        mode="admin"
+        onRecord={handleQuickRecord}
+        onReview={handleQuickReview}
+        onCorrect={handleQuickCorrect}
+        onReset={() => {
+          void handleQuickReset();
+        }}
       />
     </div>
   );
