@@ -8,10 +8,11 @@ import { User, Stethoscope, Clock, CalendarDays } from "lucide-react";
 interface CaregiverScheduleProps {
   assignments: AssignmentDto[];
   onEdit?: (assignment: AssignmentDto) => void;
+  currentDate?: Date;
 }
 
-export function CaregiverSchedule({ assignments, onEdit }: CaregiverScheduleProps) {
-  const startDate = startOfWeek(new Date(), { weekStartsOn: 6 }); // Saturday start
+export function CaregiverSchedule({ assignments, onEdit, currentDate = new Date() }: CaregiverScheduleProps) {
+  const startDate = startOfWeek(currentDate, { weekStartsOn: 6 }); // Saturday start
   const days = Array.from({ length: 7 }, (_, i) => addDays(startDate, i));
 
   const getAssignmentsForDay = (date: Date) => {

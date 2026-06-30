@@ -1,10 +1,12 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.DTOs.Assignments;
+using Salmandyar.Application.DTOs.Common;
 using Salmandyar.Application.Services.Assignments;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Enums;
 using Salmandyar.Infrastructure.Persistence;
+using System.Text.Json;
 
 namespace Salmandyar.Infrastructure.Services.Assignments;
 
@@ -19,7 +21,7 @@ public class CareAssignmentService : ICareAssignmentService
         _validator = validator;
     }
 
-    public async Task<AssignmentDto> CreateAssignmentAsync(CreateAssignmentDto dto)
+    public async Task<AssignmentDto> CreateAssignmentAsync(CreateAssignmentDto dto, string? currentUserId = null)
     {
         var validationResult = await _validator.ValidateAsync(dto);
         if (!validationResult.IsValid)
@@ -81,19 +83,40 @@ public class CareAssignmentService : ICareAssignmentService
             IsPrimaryCaregiver = dto.IsPrimaryCaregiver,
             Notes = dto.Notes,
             CreatedAt = DateTimeOffset.UtcNow,
-            CreatedBy = "Admin" 
+            CreatedBy = currentUserId ?? "System" 
         };
 
         _context.CareAssignments.Add(assignment);
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = currentUserId,
+            Action = "Create",
+            EntityName = "CareAssignment",
+            EntityId = assignment.Id.ToString(),
+            Details = JsonSerializer.Serialize(new { NewValue = assignment })
+        });
+
         await _context.SaveChangesAsync();
 
         return await MapToDto(assignment);
     }
 
-    public async Task<AssignmentDto> UpdateAssignmentAsync(Guid id, UpdateAssignmentDto dto)
+    public async Task<AssignmentDto> UpdateAssignmentAsync(Guid id, UpdateAssignmentDto dto, string? currentUserId = null)
     {
         var assignment = await _context.CareAssignments.FindAsync(id);
         if (assignment == null) throw new KeyNotFoundException("تخصیص یافت نشد.");
+
+        var oldValue = JsonSerializer.Serialize(new { 
+            assignment.PatientId, 
+            assignment.CaregiverId, 
+            assignment.AssignmentType, 
+            assignment.ShiftSlot, 
+            assignment.StartDate, 
+            assignment.EndDate, 
+            assignment.IsPrimaryCaregiver, 
+            assignment.Notes 
+        });
 
         // Ensure StartDate is UTC
         var startDateUtc = dto.StartDate.ToUniversalTime();
@@ -148,22 +171,52 @@ public class CareAssignmentService : ICareAssignmentService
         assignment.Notes = dto.Notes;
         assignment.LastModifiedAt = DateTimeOffset.UtcNow;
 
+        var newValue = JsonSerializer.Serialize(new { 
+            assignment.PatientId, 
+            assignment.CaregiverId, 
+            assignment.AssignmentType, 
+            assignment.ShiftSlot, 
+            assignment.StartDate, 
+            assignment.EndDate, 
+            assignment.IsPrimaryCaregiver, 
+            assignment.Notes 
+        });
+
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = currentUserId,
+            Action = "Update",
+            EntityName = "CareAssignment",
+            EntityId = assignment.Id.ToString(),
+            Details = JsonSerializer.Serialize(new { OldValue = oldValue, NewValue = newValue })
+        });
+
         await _context.SaveChangesAsync();
         return await MapToDto(assignment);
     }
 
-    public async Task UpdateAssignmentStatusAsync(Guid id, UpdateAssignmentStatusDto dto)
+    public async Task UpdateAssignmentStatusAsync(Guid id, UpdateAssignmentStatusDto dto, string? currentUserId = null)
     {
         var assignment = await _context.CareAssignments.FindAsync(id);
         if (assignment == null) throw new KeyNotFoundException("تخصیص یافت نشد.");
 
+        var oldStatus = assignment.Status;
         assignment.Status = dto.Status;
         assignment.LastModifiedAt = DateTimeOffset.UtcNow;
         
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = currentUserId,
+            Action = "UpdateStatus",
+            EntityName = "CareAssignment",
+            EntityId = assignment.Id.ToString(),
+            Details = JsonSerializer.Serialize(new { OldStatus = oldStatus.ToString(), NewStatus = dto.Status.ToString() })
+        });
+
         await _context.SaveChangesAsync();
     }
 
-    public async Task<List<AssignmentDto>> GetCalendarAsync(DateTimeOffset start, DateTimeOffset end, int? patientId = null, string? caregiverId = null)
+    public async Task<List<AssignmentDto>> GetCalendarAsync(DateTimeOffset start, DateTimeOffset end, int? patientId = null, string? caregiverId = null, AssignmentStatus? status = null)
     {
         var query = _context.CareAssignments
             .Include(a => a.Patient)
@@ -175,6 +228,9 @@ public class CareAssignmentService : ICareAssignmentService
 
         if (!string.IsNullOrEmpty(caregiverId))
             query = query.Where(a => a.CaregiverId == caregiverId);
+
+        if (status.HasValue)
+            query = query.Where(a => a.Status == status.Value);
 
         var assignments = await query.ToListAsync();
         
@@ -196,7 +252,71 @@ public class CareAssignmentService : ICareAssignmentService
         }).ToList();
     }
 
+    public async Task<PagedResponse<AssignmentDto>> GetAssignmentsPagedAsync(int pageNumber, int pageSize, DateTimeOffset? start, DateTimeOffset? end, string? search, int? patientId = null, string? caregiverId = null, AssignmentStatus? status = null)
+    {
+        var query = _context.CareAssignments
+            .Include(a => a.Patient)
+            .Include(a => a.Caregiver)
+            .AsQueryable();
+
+        if (start.HasValue)
+            query = query.Where(a => (a.EndDate ?? DateTimeOffset.MaxValue) >= start.Value);
+            
+        if (end.HasValue)
+            query = query.Where(a => a.StartDate <= end.Value);
+
+        if (patientId.HasValue)
+            query = query.Where(a => a.PatientId == patientId);
+
+        if (!string.IsNullOrEmpty(caregiverId))
+            query = query.Where(a => a.CaregiverId == caregiverId);
+
+        if (status.HasValue)
+            query = query.Where(a => a.Status == status.Value);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            search = search.Trim();
+            query = query.Where(a => 
+                (a.Patient.FirstName + " " + a.Patient.LastName).Contains(search) ||
+                (a.Caregiver.FirstName + " " + a.Caregiver.LastName).Contains(search) ||
+                (a.Notes != null && a.Notes.Contains(search)));
+        }
+
+        var totalCount = await query.CountAsync();
+
+        var assignments = await query
+            .OrderByDescending(a => a.StartDate)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PagedResponse<AssignmentDto>
+        {
+            TotalCount = totalCount,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            Items = assignments.Select(a => new AssignmentDto
+            {
+                Id = a.Id,
+                PatientId = a.PatientId,
+                PatientName = $"{a.Patient.FirstName} {a.Patient.LastName}",
+                CaregiverId = a.CaregiverId,
+                CaregiverName = $"{a.Caregiver.FirstName} {a.Caregiver.LastName}",
+                AssignmentType = a.AssignmentType,
+                ShiftSlot = a.ShiftSlot,
+                StartDate = a.StartDate,
+                EndDate = a.EndDate,
+                Status = a.Status,
+                IsPrimaryCaregiver = a.IsPrimaryCaregiver,
+                Notes = a.Notes,
+                CreatedAt = a.CreatedAt
+            }).ToList()
+        };
+    }
+
     private async Task<AssignmentDto> MapToDto(CareAssignment a)
+
     {
         // Reload to get navigation properties
         await _context.Entry(a).Reference(x => x.Patient).LoadAsync();
