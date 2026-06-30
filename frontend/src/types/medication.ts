@@ -351,6 +351,32 @@ export interface MedicationAdministrationTrendPoint {
     skippedCount: number;
 }
 
+export interface MedicationAdministrationPatientMedicationAdherence {
+    careRecipientId: number;
+    patientName: string;
+    medicationId: number;
+    medicationName: string;
+    totalDoses: number;
+    takenCount: number;
+    onTimeCount: number;
+    lateCount: number;
+    missedCount: number;
+    skippedCount: number;
+    adherenceRate: number;
+    onTimeRate: number;
+}
+
+export interface MedicationAdministrationStaffPerformance {
+    userId: string;
+    userName: string;
+    recordedCount: number;
+    verifiedCount: number;
+    correctedCount: number;
+    lateCount: number;
+    missedCount: number;
+    totalTouchedCount: number;
+}
+
 export interface MedicationAdministrationReportFilters {
     from: string;
     to: string;
@@ -358,6 +384,7 @@ export interface MedicationAdministrationReportFilters {
     medicationId?: number;
     shiftSlot?: ShiftSlot;
     recordedByUserId?: string;
+    search?: string;
 }
 
 export interface MedicationInventoryTransaction {

@@ -2,6 +2,9 @@
 
 import { PortalCard } from "./ui/portal-card";
 import { PortalButton } from "./ui/portal-button";
+import DatePicker from "react-multi-date-picker";
+import persian from "react-date-object/calendars/persian";
+import persian_fa from "react-date-object/locales/persian_fa";
 import {
   AlertCircle,
   CheckCircle2,
@@ -42,6 +45,7 @@ import {
   isDoseCompleted,
   isDosePendingReview,
 } from "@/features/medications/lib/administration-ui";
+import { formatTehranDateValue } from "@/lib/tehran-date";
 
 interface MedicationTimelineProps {
   patientId?: number;
@@ -50,7 +54,7 @@ interface MedicationTimelineProps {
 }
 
 export function MedicationTimeline({ patientId, medicationAccess, highlightedDoseId }: MedicationTimelineProps) {
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = formatTehranDateValue(new Date());
   const { data: doses, isLoading } = useKardex(patientId ?? 0, today);
   const { mutateAsync: confirmDose, isPending: isConfirming } = useConfirmDoseByPatient();
   const { mutateAsync: skipDose, isPending: isSkipping } = useSkipDoseByPatient();
@@ -63,7 +67,7 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
   const [historyOutcome, setHistoryOutcome] = useState<string>("");
   const [historyTiming, setHistoryTiming] = useState<string>("");
   const [onlyIssues, setOnlyIssues] = useState(false);
-  const [historyFrom, setHistoryFrom] = useState(format(addDays(new Date(), -30), "yyyy-MM-dd"));
+  const [historyFrom, setHistoryFrom] = useState(formatTehranDateValue(addDays(new Date(), -30)));
   const [historyTo, setHistoryTo] = useState(today);
   const doseRefs = useRef<Record<number, HTMLDivElement | null>>({});
   const { data: historyItems, isLoading: isHistoryLoading } = useDoseHistory(historyDoseId);
@@ -397,6 +401,10 @@ interface DoseSectionProps {
   onOpenHistory: (doseId: number) => void;
 }
 
+function toDatePickerValue(value?: string) {
+  return value ? new Date(`${value}T12:00:00`) : undefined;
+}
+
 function DoseSection({
   title,
   description,
@@ -658,17 +666,37 @@ function MedicationHistoryPanel({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <input
-              type="date"
-              value={filters.from ?? ""}
-              onChange={(event) => onChangeFrom(event.target.value)}
-              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-medical-400"
+            <DatePicker
+              value={toDatePickerValue(filters.from)}
+              onChange={(date: any) => {
+                if (date?.isValid) {
+                  onChangeFrom(formatTehranDateValue(date.toDate()));
+                } else {
+                  onChangeFrom("");
+                }
+              }}
+              calendar={persian}
+              locale={persian_fa}
+              calendarPosition="bottom-right"
+              inputClass="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-medical-400"
+              containerStyle={{ width: "100%" }}
+              placeholder="از تاریخ"
             />
-            <input
-              type="date"
-              value={filters.to ?? ""}
-              onChange={(event) => onChangeTo(event.target.value)}
-              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-medical-400"
+            <DatePicker
+              value={toDatePickerValue(filters.to)}
+              onChange={(date: any) => {
+                if (date?.isValid) {
+                  onChangeTo(formatTehranDateValue(date.toDate()));
+                } else {
+                  onChangeTo("");
+                }
+              }}
+              calendar={persian}
+              locale={persian_fa}
+              calendarPosition="bottom-right"
+              inputClass="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-medical-400"
+              containerStyle={{ width: "100%" }}
+              placeholder="تا تاریخ"
             />
             <div className="relative">
               <Search className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />

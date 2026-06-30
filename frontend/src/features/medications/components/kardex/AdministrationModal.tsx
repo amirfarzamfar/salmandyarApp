@@ -58,12 +58,6 @@ export const AdministrationModal = ({ isOpen, onClose, mode = 'staff', dose, onR
   const [action, setAction] = useState<'recordTaken' | 'recordMissed' | 'approve' | 'reject' | 'correctTaken' | 'correctMissed' | null>(null);
   const { data: historyItems, isLoading: isLoadingHistory } = useDoseHistory(dose?.id);
 
-  if (!dose) return null;
-
-  const statusPresentation = getMedicationDoseStatusPresentation(dose);
-  const pendingReview = isDosePendingReview(dose);
-  const canReset = Boolean(onReset && (dose.status !== 0 || dose.actualAdministrationAt || dose.notes || dose.missedReason));
-
   useEffect(() => {
     if (!isOpen) {
       setAction(null);
@@ -72,6 +66,10 @@ export const AdministrationModal = ({ isOpen, onClose, mode = 'staff', dose, onR
       setCorrectionReason("");
     }
   }, [isOpen]);
+
+  const statusPresentation = dose ? getMedicationDoseStatusPresentation(dose) : null;
+  const pendingReview = dose ? isDosePendingReview(dose) : false;
+  const canReset = Boolean(dose && onReset && (dose.status !== 0 || dose.actualAdministrationAt || dose.notes || dose.missedReason));
 
   const actionTitle = useMemo(() => {
     switch (action) {
@@ -91,6 +89,8 @@ export const AdministrationModal = ({ isOpen, onClose, mode = 'staff', dose, onR
         return '';
     }
   }, [action]);
+
+  if (!dose || !statusPresentation) return null;
 
   const handleConfirm = async () => {
     if (action === 'recordTaken') {

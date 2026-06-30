@@ -1,6 +1,8 @@
 import axios from '@/lib/axios';
 
 export interface MedicationAlertSettings {
+  allowEarlyConfirmationMinutes: number;
+  allowLateConfirmationMinutes: number;
   smsTemplate: string;
   emailSubjectTemplate: string;
   emailBodyTemplate: string;
@@ -9,6 +11,8 @@ export interface MedicationAlertSettings {
 }
 
 export interface UpdateMedicationAlertSettingsDto {
+  allowEarlyConfirmationMinutes: number;
+  allowLateConfirmationMinutes: number;
   smsTemplate: string;
   emailSubjectTemplate: string;
   emailBodyTemplate: string;

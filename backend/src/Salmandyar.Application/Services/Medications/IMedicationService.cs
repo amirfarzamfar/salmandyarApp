@@ -15,8 +15,10 @@ public interface IMedicationService
     Task<MedicationDoseDto?> GetDoseForPatientAsync(int patientId, int doseId);
     Task<List<MedicationDoseDto>> GetShiftMedicationAdministrationAsync(string caregiverId, ShiftSlot? shiftSlot, DateTime date, bool pendingOnly);
     Task<List<MedicationDoseStatusHistoryDto>> GetDoseHistoryAsync(int doseId);
-    Task<MedicationAdministrationOverviewReportDto> GetAdministrationOverviewReportAsync(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId);
-    Task<List<MedicationAdministrationTrendPointDto>> GetAdministrationTrendReportAsync(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId);
+    Task<MedicationAdministrationOverviewReportDto> GetAdministrationOverviewReportAsync(DateTime from, DateTime to, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search);
+    Task<List<MedicationAdministrationTrendPointDto>> GetAdministrationTrendReportAsync(DateTime from, DateTime to, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search);
+    Task<List<MedicationAdministrationPatientMedicationAdherenceDto>> GetAdministrationAdherenceBreakdownAsync(DateTime from, DateTime to, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search);
+    Task<List<MedicationAdministrationStaffPerformanceDto>> GetAdministrationStaffPerformanceReportAsync(DateTime from, DateTime to, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search);
     Task<int?> GetDoseCareRecipientIdAsync(int doseId);
     Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId, bool preventBeforeScheduledTime);
     Task<MedicationDoseDto> ConfirmDoseByPatientAsync(int doseId, PatientConfirmMedicationDoseDto dto, string userId);

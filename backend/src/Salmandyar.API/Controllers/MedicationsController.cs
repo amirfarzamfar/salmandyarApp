@@ -281,14 +281,15 @@ public class MedicationsController : ControllerBase
         [FromQuery] int? patientId,
         [FromQuery] int? medicationId,
         [FromQuery] ShiftSlot? shiftSlot,
-        [FromQuery] string? recordedByUserId)
+        [FromQuery] string? recordedByUserId,
+        [FromQuery] string? search)
     {
         if (!IsAdminLikeActor())
         {
             return Forbid();
         }
 
-        return Ok(await _medicationService.GetAdministrationOverviewReportAsync(from, to, patientId, medicationId, shiftSlot, recordedByUserId));
+        return Ok(await _medicationService.GetAdministrationOverviewReportAsync(from, to, patientId, medicationId, shiftSlot, recordedByUserId, search));
     }
 
     [HttpGet("reports/missed-trends")]
@@ -298,14 +299,51 @@ public class MedicationsController : ControllerBase
         [FromQuery] int? patientId,
         [FromQuery] int? medicationId,
         [FromQuery] ShiftSlot? shiftSlot,
-        [FromQuery] string? recordedByUserId)
+        [FromQuery] string? recordedByUserId,
+        [FromQuery] string? search)
     {
         if (!IsAdminLikeActor())
         {
             return Forbid();
         }
 
-        return Ok(await _medicationService.GetAdministrationTrendReportAsync(from, to, patientId, medicationId, shiftSlot, recordedByUserId));
+        return Ok(await _medicationService.GetAdministrationTrendReportAsync(from, to, patientId, medicationId, shiftSlot, recordedByUserId, search));
+    }
+
+    [HttpGet("reports/adherence-breakdown")]
+    public async Task<ActionResult<List<MedicationAdministrationPatientMedicationAdherenceDto>>> GetAdministrationAdherenceBreakdown(
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to,
+        [FromQuery] int? patientId,
+        [FromQuery] int? medicationId,
+        [FromQuery] ShiftSlot? shiftSlot,
+        [FromQuery] string? recordedByUserId,
+        [FromQuery] string? search)
+    {
+        if (!IsAdminLikeActor())
+        {
+            return Forbid();
+        }
+
+        return Ok(await _medicationService.GetAdministrationAdherenceBreakdownAsync(from, to, patientId, medicationId, shiftSlot, recordedByUserId, search));
+    }
+
+    [HttpGet("reports/staff-performance")]
+    public async Task<ActionResult<List<MedicationAdministrationStaffPerformanceDto>>> GetAdministrationStaffPerformance(
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to,
+        [FromQuery] int? patientId,
+        [FromQuery] int? medicationId,
+        [FromQuery] ShiftSlot? shiftSlot,
+        [FromQuery] string? recordedByUserId,
+        [FromQuery] string? search)
+    {
+        if (!IsAdminLikeActor())
+        {
+            return Forbid();
+        }
+
+        return Ok(await _medicationService.GetAdministrationStaffPerformanceReportAsync(from, to, patientId, medicationId, shiftSlot, recordedByUserId, search));
     }
 
     [HttpPost("doses/{doseId}/confirm-by-patient")]

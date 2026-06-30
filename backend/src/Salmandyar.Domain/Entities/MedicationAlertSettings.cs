@@ -3,6 +3,8 @@ namespace Salmandyar.Domain.Entities;
 public class MedicationAlertSettings
 {
     public int Id { get; set; }
+    public int AllowEarlyConfirmationMinutes { get; set; } = 30;
+    public int AllowLateConfirmationMinutes { get; set; } = 120;
     public string SmsTemplate { get; set; } = "هشدار اتمام دارو: {MedicationName} برای {PatientName} به موجودی {CurrentStock} رسیده است. آستانه هشدار {AlertThreshold} است. زمان: {DateTime}.";
     public string EmailSubjectTemplate { get; set; } = "هشدار اتمام موجودی دارو - {MedicationName}";
     public string EmailBodyTemplate { get; set; } = "داروی {MedicationName} برای بیمار {PatientName} به موجودی {CurrentStock} رسیده است. آستانه هشدار {AlertThreshold} است. زمان: {DateTime}.";

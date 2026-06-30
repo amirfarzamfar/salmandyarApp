@@ -452,12 +452,11 @@ public class MedicationService : IMedicationService
         }).ToList();
     }
 
-    public async Task<MedicationAdministrationOverviewReportDto> GetAdministrationOverviewReportAsync(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId)
+    public async Task<MedicationAdministrationOverviewReportDto> GetAdministrationOverviewReportAsync(DateTime from, DateTime to, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search)
     {
-        var normalizedFromUtc = NormalizeUtc(fromUtc);
-        var normalizedToUtc = NormalizeUtc(toUtc);
+        var (normalizedFromUtc, normalizedToUtc) = NormalizeIranDateRangeUtc(from, to);
 
-        var doses = await BuildAdministrationReportQuery(normalizedFromUtc, normalizedToUtc, patientId, medicationId, shiftSlot, recordedByUserId)
+        var doses = await BuildAdministrationReportQuery(normalizedFromUtc, normalizedToUtc, patientId, medicationId, shiftSlot, recordedByUserId, search)
             .OrderByDescending(d => d.ScheduledTime)
             .ToListAsync();
 
@@ -516,13 +515,12 @@ public class MedicationService : IMedicationService
         };
     }
 
-    public async Task<List<MedicationAdministrationTrendPointDto>> GetAdministrationTrendReportAsync(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId)
+    public async Task<List<MedicationAdministrationTrendPointDto>> GetAdministrationTrendReportAsync(DateTime from, DateTime to, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search)
     {
-        var normalizedFromUtc = NormalizeUtc(fromUtc);
-        var normalizedToUtc = NormalizeUtc(toUtc);
+        var (normalizedFromUtc, normalizedToUtc) = NormalizeIranDateRangeUtc(from, to);
 
         var tz = GetIranTimeZone();
-        var doses = await BuildAdministrationReportQuery(normalizedFromUtc, normalizedToUtc, patientId, medicationId, shiftSlot, recordedByUserId)
+        var doses = await BuildAdministrationReportQuery(normalizedFromUtc, normalizedToUtc, patientId, medicationId, shiftSlot, recordedByUserId, search)
             .Select(d => new
             {
                 d.ScheduledTime,
@@ -542,6 +540,188 @@ public class MedicationService : IMedicationService
                 MissedCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Missed),
                 SkippedCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.SkippedByPatient)
             })
+            .ToList();
+    }
+
+    public async Task<List<MedicationAdministrationPatientMedicationAdherenceDto>> GetAdministrationAdherenceBreakdownAsync(DateTime from, DateTime to, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search)
+    {
+        var (normalizedFromUtc, normalizedToUtc) = NormalizeIranDateRangeUtc(from, to);
+
+        var grouped = await BuildAdministrationReportQuery(normalizedFromUtc, normalizedToUtc, patientId, medicationId, shiftSlot, recordedByUserId, search)
+            .Select(d => new
+            {
+                d.PatientMedication.CareRecipientId,
+                PatientFirstName = d.PatientMedication.CareRecipient.FirstName,
+                PatientLastName = d.PatientMedication.CareRecipient.LastName,
+                MedicationId = d.PatientMedicationId,
+                MedicationName = d.PatientMedication.Name,
+                d.AdministrationOutcome,
+                d.TimingStatus
+            })
+            .GroupBy(d => new
+            {
+                d.CareRecipientId,
+                d.PatientFirstName,
+                d.PatientLastName,
+                d.MedicationId,
+                d.MedicationName
+            })
+            .Select(g => new
+            {
+                g.Key.CareRecipientId,
+                g.Key.PatientFirstName,
+                g.Key.PatientLastName,
+                g.Key.MedicationId,
+                g.Key.MedicationName,
+                TotalDoses = g.Count(),
+                TakenCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Taken),
+                OnTimeCount = g.Count(x => x.TimingStatus == MedicationTimingStatus.OnTime),
+                LateCount = g.Count(x => x.TimingStatus == MedicationTimingStatus.Late),
+                MissedCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Missed),
+                SkippedCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.SkippedByPatient)
+            })
+            .OrderByDescending(x => x.MissedCount)
+            .ThenByDescending(x => x.LateCount)
+            .ThenBy(x => x.PatientFirstName)
+            .ThenBy(x => x.MedicationName)
+            .Take(500)
+            .ToListAsync();
+
+        return grouped.Select(x =>
+        {
+            var total = x.TotalDoses;
+            var adherenceRate = total == 0 ? 0 : Math.Round((decimal)x.TakenCount / total * 100, 2);
+            var onTimeRate = total == 0 ? 0 : Math.Round((decimal)x.OnTimeCount / total * 100, 2);
+
+            return new MedicationAdministrationPatientMedicationAdherenceDto
+            {
+                CareRecipientId = x.CareRecipientId,
+                PatientName = $"{x.PatientFirstName} {x.PatientLastName}".Trim(),
+                MedicationId = x.MedicationId,
+                MedicationName = x.MedicationName,
+                TotalDoses = total,
+                TakenCount = x.TakenCount,
+                OnTimeCount = x.OnTimeCount,
+                LateCount = x.LateCount,
+                MissedCount = x.MissedCount,
+                SkippedCount = x.SkippedCount,
+                AdherenceRate = adherenceRate,
+                OnTimeRate = onTimeRate
+            };
+        }).ToList();
+    }
+
+    public async Task<List<MedicationAdministrationStaffPerformanceDto>> GetAdministrationStaffPerformanceReportAsync(DateTime from, DateTime to, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search)
+    {
+        var (normalizedFromUtc, normalizedToUtc) = NormalizeIranDateRangeUtc(from, to);
+
+        var baseQuery = BuildAdministrationReportQuery(normalizedFromUtc, normalizedToUtc, patientId, medicationId, shiftSlot, recordedByUserId, search)
+            .Select(d => new
+            {
+                d.RecordedByUserId,
+                RecordedFirstName = d.RecordedByUser != null ? d.RecordedByUser.FirstName : null,
+                RecordedLastName = d.RecordedByUser != null ? d.RecordedByUser.LastName : null,
+                d.VerifiedByUserId,
+                VerifiedFirstName = d.VerifiedByUser != null ? d.VerifiedByUser.FirstName : null,
+                VerifiedLastName = d.VerifiedByUser != null ? d.VerifiedByUser.LastName : null,
+                d.CorrectedByUserId,
+                CorrectedFirstName = d.CorrectedByUser != null ? d.CorrectedByUser.FirstName : null,
+                CorrectedLastName = d.CorrectedByUser != null ? d.CorrectedByUser.LastName : null,
+                d.TimingStatus,
+                d.AdministrationOutcome
+            });
+
+        var recorded = await baseQuery
+            .Where(x => x.RecordedByUserId != null)
+            .GroupBy(x => new { x.RecordedByUserId, x.RecordedFirstName, x.RecordedLastName })
+            .Select(g => new
+            {
+                UserId = g.Key.RecordedByUserId!,
+                FirstName = g.Key.RecordedFirstName,
+                LastName = g.Key.RecordedLastName,
+                RecordedCount = g.Count(),
+                LateCount = g.Count(x => x.TimingStatus == MedicationTimingStatus.Late),
+                MissedCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Missed)
+            })
+            .ToListAsync();
+
+        var verified = await baseQuery
+            .Where(x => x.VerifiedByUserId != null)
+            .GroupBy(x => new { x.VerifiedByUserId, x.VerifiedFirstName, x.VerifiedLastName })
+            .Select(g => new
+            {
+                UserId = g.Key.VerifiedByUserId!,
+                FirstName = g.Key.VerifiedFirstName,
+                LastName = g.Key.VerifiedLastName,
+                VerifiedCount = g.Count()
+            })
+            .ToListAsync();
+
+        var corrected = await baseQuery
+            .Where(x => x.CorrectedByUserId != null)
+            .GroupBy(x => new { x.CorrectedByUserId, x.CorrectedFirstName, x.CorrectedLastName })
+            .Select(g => new
+            {
+                UserId = g.Key.CorrectedByUserId!,
+                FirstName = g.Key.CorrectedFirstName,
+                LastName = g.Key.CorrectedLastName,
+                CorrectedCount = g.Count()
+            })
+            .ToListAsync();
+
+        var map = new Dictionary<string, MedicationAdministrationStaffPerformanceDto>(StringComparer.OrdinalIgnoreCase);
+
+        void EnsureUser(string userId, string? firstName, string? lastName)
+        {
+            if (map.ContainsKey(userId))
+            {
+                return;
+            }
+
+            map[userId] = new MedicationAdministrationStaffPerformanceDto
+            {
+                UserId = userId,
+                UserName = $"{firstName} {lastName}".Trim(),
+                RecordedCount = 0,
+                VerifiedCount = 0,
+                CorrectedCount = 0,
+                LateCount = 0,
+                MissedCount = 0,
+                TotalTouchedCount = 0
+            };
+        }
+
+        foreach (var item in recorded)
+        {
+            EnsureUser(item.UserId, item.FirstName, item.LastName);
+            map[item.UserId].RecordedCount = item.RecordedCount;
+            map[item.UserId].LateCount = item.LateCount;
+            map[item.UserId].MissedCount = item.MissedCount;
+        }
+
+        foreach (var item in verified)
+        {
+            EnsureUser(item.UserId, item.FirstName, item.LastName);
+            map[item.UserId].VerifiedCount = item.VerifiedCount;
+        }
+
+        foreach (var item in corrected)
+        {
+            EnsureUser(item.UserId, item.FirstName, item.LastName);
+            map[item.UserId].CorrectedCount = item.CorrectedCount;
+        }
+
+        foreach (var kv in map)
+        {
+            kv.Value.TotalTouchedCount = kv.Value.RecordedCount + kv.Value.VerifiedCount + kv.Value.CorrectedCount;
+        }
+
+        return map.Values
+            .OrderByDescending(x => x.MissedCount)
+            .ThenByDescending(x => x.LateCount)
+            .ThenByDescending(x => x.TotalTouchedCount)
+            .ThenBy(x => x.UserName)
+            .Take(200)
             .ToList();
     }
 
@@ -613,13 +793,8 @@ public class MedicationService : IMedicationService
         EnsureDoseSnapshots(dose);
 
         var actualAdministrationAt = NormalizeUtc(dto.ActualAdministrationAt ?? DateTime.UtcNow);
-        ValidateNotBeforeScheduled(dose, actualAdministrationAt);
-
-        var allowedUntil = dose.AllowedConfirmationUntil ?? DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc).AddMinutes(dose.AdministrationWindowMinutesSnapshot);
-        if (actualAdministrationAt > allowedUntil)
-        {
-            throw new InvalidOperationException("مهلت ثبت مصرف توسط بیمار برای این نوبت به پایان رسیده است.");
-        }
+        var patientConfirmationSettings = await _medicationAlertSettingsService.GetSettingsEntityAsync();
+        EnsureWithinPatientConfirmationWindow(dose, actualAdministrationAt, patientConfirmationSettings.AllowEarlyConfirmationMinutes, patientConfirmationSettings.AllowLateConfirmationMinutes);
 
         var previousStatus = CaptureSnapshot(dose);
         var timingStatus = CalculateTimingStatus(dose.ScheduledTime, actualAdministrationAt, MedicationAdministrationOutcome.Taken);
@@ -675,7 +850,8 @@ public class MedicationService : IMedicationService
 
         EnsureDoseCanBeSelfConfirmed(dose);
         EnsureDoseSnapshots(dose);
-        ValidateNotBeforeScheduled(dose, DateTime.UtcNow);
+        var patientConfirmationSettings = await _medicationAlertSettingsService.GetSettingsEntityAsync();
+        EnsureWithinPatientConfirmationWindow(dose, DateTime.UtcNow, patientConfirmationSettings.AllowEarlyConfirmationMinutes, patientConfirmationSettings.AllowLateConfirmationMinutes);
 
         var previousStatus = CaptureSnapshot(dose);
         var nextStatus = MapLegacyDoseStatus(MedicationAdministrationOutcome.SkippedByPatient, MedicationTimingStatus.Unknown);
@@ -1587,16 +1763,33 @@ public class MedicationService : IMedicationService
         };
     }
 
-    private static void ValidateNotBeforeScheduled(MedicationDose dose, DateTime actualAdministrationAt)
+    private static void EnsureWithinPatientConfirmationWindow(
+        MedicationDose dose,
+        DateTime actualAdministrationAt,
+        int allowEarlyConfirmationMinutes,
+        int allowLateConfirmationMinutes)
     {
         var scheduledUtc = NormalizeUtc(dose.ScheduledTime);
         var actualUtc = NormalizeUtc(actualAdministrationAt);
+        var effectiveEarlyMinutes = Math.Max(0, allowEarlyConfirmationMinutes);
+        var effectiveLateMinutes = Math.Max(1, allowLateConfirmationMinutes);
+        var earliestAllowedUtc = scheduledUtc.AddMinutes(-effectiveEarlyMinutes);
+        var latestAllowedUtc = scheduledUtc.AddMinutes(effectiveLateMinutes);
+        var tz = GetIranTimeZone();
+        var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
 
-        if (actualUtc < scheduledUtc)
+        if (actualUtc < earliestAllowedUtc)
         {
-            var tz = GetIranTimeZone();
-            var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
-            throw new InvalidOperationException($"زمان مصرف این دارو هنوز نرسیده است. زمان برنامه‌ریزی‌شده: {scheduledLocal:HH:mm}");
+            var earliestAllowedLocal = TimeZoneInfo.ConvertTimeFromUtc(earliestAllowedUtc, tz);
+            throw new InvalidOperationException(
+                $"ثبت مصرف این دارو فقط از {earliestAllowedLocal:HH:mm} مجاز است. زمان برنامه‌ریزی‌شده: {scheduledLocal:HH:mm}");
+        }
+
+        if (actualUtc > latestAllowedUtc)
+        {
+            var latestAllowedLocal = TimeZoneInfo.ConvertTimeFromUtc(latestAllowedUtc, tz);
+            throw new InvalidOperationException(
+                $"مهلت ثبت مصرف این دارو تا {latestAllowedLocal:HH:mm} بوده و به پایان رسیده است.");
         }
     }
 
@@ -2176,13 +2369,14 @@ public class MedicationService : IMedicationService
         };
     }
 
-    private IQueryable<MedicationDose> BuildAdministrationReportQuery(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId)
+    private IQueryable<MedicationDose> BuildAdministrationReportQuery(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId, string? search)
     {
         var query = _context.MedicationDoses
             .Include(d => d.PatientMedication)
                 .ThenInclude(m => m.CareRecipient)
             .Include(d => d.RecordedByUser)
             .Include(d => d.VerifiedByUser)
+            .Include(d => d.CorrectedByUser)
             .Where(d => d.ScheduledTime >= fromUtc && d.ScheduledTime <= toUtc);
 
         if (patientId.HasValue)
@@ -2205,7 +2399,37 @@ public class MedicationService : IMedicationService
             query = query.Where(d => d.RecordedByUserId == recordedByUserId || d.VerifiedByUserId == recordedByUserId || d.CorrectedByUserId == recordedByUserId);
         }
 
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(d =>
+                d.PatientMedication.Name.Contains(term) ||
+                d.PatientMedication.CareRecipient.FirstName.Contains(term) ||
+                d.PatientMedication.CareRecipient.LastName.Contains(term) ||
+                (d.RecordedByUser != null && (d.RecordedByUser.FirstName.Contains(term) || d.RecordedByUser.LastName.Contains(term))) ||
+                (d.VerifiedByUser != null && (d.VerifiedByUser.FirstName.Contains(term) || d.VerifiedByUser.LastName.Contains(term))) ||
+                (d.CorrectedByUser != null && (d.CorrectedByUser.FirstName.Contains(term) || d.CorrectedByUser.LastName.Contains(term))) ||
+                (d.MissedReason != null && d.MissedReason.Contains(term)) ||
+                (d.Notes != null && d.Notes.Contains(term)) ||
+                (d.ClinicalNotes != null && d.ClinicalNotes.Contains(term)));
+        }
+
         return query;
+    }
+
+    private static (DateTime FromUtc, DateTime ToUtc) NormalizeIranDateRangeUtc(DateTime from, DateTime to)
+    {
+        var tz = GetIranTimeZone();
+        var fromLocalDate = GetIranLocalDate(from, tz);
+        var toLocalDate = GetIranLocalDate(to, tz);
+
+        var startLocal = new DateTime(fromLocalDate.Year, fromLocalDate.Month, fromLocalDate.Day, 0, 0, 0, DateTimeKind.Unspecified);
+        var endLocal = new DateTime(toLocalDate.Year, toLocalDate.Month, toLocalDate.Day, 23, 59, 59, 999, DateTimeKind.Unspecified);
+
+        var startUtc = TimeZoneInfo.ConvertTimeToUtc(startLocal, tz);
+        var endUtc = TimeZoneInfo.ConvertTimeToUtc(endLocal, tz);
+
+        return (startUtc, endUtc);
     }
 
     private static string GetPatientDisplayName(MedicationDose dose)

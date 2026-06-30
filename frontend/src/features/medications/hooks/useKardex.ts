@@ -190,3 +190,19 @@ export const useAdministrationTrendReport = (filters?: MedicationAdministrationR
     enabled: !!filters,
   });
 };
+
+export const useAdministrationAdherenceBreakdownReport = (filters?: MedicationAdministrationReportFilters | null) => {
+  return useQuery({
+    queryKey: ['medication-administration-adherence-breakdown', filters],
+    queryFn: async () => medicationService.getAdministrationAdherenceBreakdownReport(filters!),
+    enabled: !!filters,
+  });
+};
+
+export const useAdministrationStaffPerformanceReport = (filters?: MedicationAdministrationReportFilters | null) => {
+  return useQuery({
+    queryKey: ['medication-administration-staff-performance', filters],
+    queryFn: async () => medicationService.getAdministrationStaffPerformanceReport(filters!),
+    enabled: !!filters,
+  });
+};

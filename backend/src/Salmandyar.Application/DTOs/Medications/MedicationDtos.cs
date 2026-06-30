@@ -306,6 +306,34 @@ public class MedicationAdministrationTrendPointDto
     public int SkippedCount { get; set; }
 }
 
+public class MedicationAdministrationPatientMedicationAdherenceDto
+{
+    public int CareRecipientId { get; set; }
+    public string PatientName { get; set; } = string.Empty;
+    public int MedicationId { get; set; }
+    public string MedicationName { get; set; } = string.Empty;
+    public int TotalDoses { get; set; }
+    public int TakenCount { get; set; }
+    public int OnTimeCount { get; set; }
+    public int LateCount { get; set; }
+    public int MissedCount { get; set; }
+    public int SkippedCount { get; set; }
+    public decimal AdherenceRate { get; set; }
+    public decimal OnTimeRate { get; set; }
+}
+
+public class MedicationAdministrationStaffPerformanceDto
+{
+    public string UserId { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public int RecordedCount { get; set; }
+    public int VerifiedCount { get; set; }
+    public int CorrectedCount { get; set; }
+    public int LateCount { get; set; }
+    public int MissedCount { get; set; }
+    public int TotalTouchedCount { get; set; }
+}
+
 public class MedicationInventoryTransactionDto
 {
     public int Id { get; set; }

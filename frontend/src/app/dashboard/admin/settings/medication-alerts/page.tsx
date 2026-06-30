@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
-import { Save, Bell, Mail, MessageSquare } from 'lucide-react';
+import { Save, Bell, Mail, MessageSquare, Clock3 } from 'lucide-react';
 import {
   medicationAlertSettingsService,
   UpdateMedicationAlertSettingsDto,
@@ -17,6 +17,8 @@ export default function MedicationAlertSettingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { register, handleSubmit, setValue, formState: { isSubmitting } } = useForm<FormData>({
     defaultValues: {
+      allowEarlyConfirmationMinutes: 30,
+      allowLateConfirmationMinutes: 120,
       smsTemplate: '',
       emailSubjectTemplate: '',
       emailBodyTemplate: '',
@@ -28,6 +30,8 @@ export default function MedicationAlertSettingsPage() {
     const load = async () => {
       try {
         const data = await medicationAlertSettingsService.get();
+        setValue('allowEarlyConfirmationMinutes', data.allowEarlyConfirmationMinutes);
+        setValue('allowLateConfirmationMinutes', data.allowLateConfirmationMinutes);
         setValue('smsTemplate', data.smsTemplate);
         setValue('emailSubjectTemplate', data.emailSubjectTemplate);
         setValue('emailBodyTemplate', data.emailBodyTemplate);
@@ -65,8 +69,8 @@ export default function MedicationAlertSettingsPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">تنظیم پیام هشدار دارو</h1>
-          <p className="mt-1 text-sm text-gray-500">متن پیامک، ایمیل و نوتیفیکیشن داخل سیستم برای هشدار کمبود موجودی دارو.</p>
+          <h1 className="text-2xl font-bold text-gray-800">تنظیمات پایش و هشدار دارو</h1>
+          <p className="mt-1 text-sm text-gray-500">مدیریت بازه مجاز ثبت مصرف توسط بیمار به‌همراه قالب پیام‌های هشدار کمبود موجودی دارو.</p>
         </div>
         <div className="rounded-2xl bg-slate-100 px-4 py-2 text-sm text-slate-700">
           متغیرها: {variables.join(' - ')}
@@ -74,6 +78,38 @@ export default function MedicationAlertSettingsPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <TemplateCard
+          title="تنظیمات پایش مصرف دارو"
+          icon={<Clock3 className="h-5 w-5" />}
+          colorClass="from-indigo-500 to-violet-600"
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-slate-700">بازه مجاز ثبت مصرف قبل از زمان دارو (دقیقه)</label>
+              <input
+                type="number"
+                min={0}
+                max={720}
+                {...register('allowEarlyConfirmationMinutes', { valueAsNumber: true })}
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+              />
+              <p className="text-xs text-slate-500">تعیین می‌کند بیمار چند دقیقه قبل از زمان مقرر بتواند مصرف دارو را ثبت کند. مثال: 30 دقیقه.</p>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-bold text-slate-700">بازه مجاز ثبت مصرف با تأخیر (دقیقه)</label>
+              <input
+                type="number"
+                min={1}
+                max={1440}
+                {...register('allowLateConfirmationMinutes', { valueAsNumber: true })}
+                className="w-full rounded-2xl border border-gray-300 px-4 py-3 outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
+              />
+              <p className="text-xs text-slate-500">تعیین می‌کند بیمار تا چند دقیقه پس از زمان مقرر امکان ثبت مصرف داشته باشد. مثال: 120 دقیقه.</p>
+            </div>
+          </div>
+        </TemplateCard>
+
         <TemplateCard
           title="نوتیفیکیشن داخل سیستم"
           icon={<Bell className="h-5 w-5" />}

@@ -15,6 +15,8 @@ import {
   MedicationAdministrationOverviewReport,
   MedicationAdministrationTrendPoint,
   MedicationAdministrationReportFilters,
+  MedicationAdministrationPatientMedicationAdherence,
+  MedicationAdministrationStaffPerformance,
   MedicationInventoryTransaction,
   MedicationAlertHistory,
   UpdateMedicationInventoryDto,
@@ -105,6 +107,20 @@ export const medicationService = {
 
   getAdministrationTrendReport: async (filters: MedicationAdministrationReportFilters) => {
     const response = await api.get<MedicationAdministrationTrendPoint[]>('/medications/reports/missed-trends', {
+      params: filters
+    });
+    return response.data;
+  },
+
+  getAdministrationAdherenceBreakdownReport: async (filters: MedicationAdministrationReportFilters) => {
+    const response = await api.get<MedicationAdministrationPatientMedicationAdherence[]>('/medications/reports/adherence-breakdown', {
+      params: filters
+    });
+    return response.data;
+  },
+
+  getAdministrationStaffPerformanceReport: async (filters: MedicationAdministrationReportFilters) => {
+    const response = await api.get<MedicationAdministrationStaffPerformance[]>('/medications/reports/staff-performance', {
       params: filters
     });
     return response.data;
