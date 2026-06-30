@@ -13,6 +13,7 @@ import { UserProfileModal } from "@/components/common/UserProfileModal";
 import { useUser } from "@/components/auth/UserContext";
 import { PatientSelector } from "@/components/nurse-portal/PatientSelector";
 import { ReportWriter } from "@/components/nurse-portal/report-writer";
+import { ShiftMedicationBoard } from "@/components/nurse-portal/shift-medication-board";
 
 export default function NursePortalPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -306,6 +307,9 @@ export default function NursePortalPage() {
           )}
         </div>
       </div>
+
+      <ShiftMedicationBoard />
+
       {user && (
         <UserProfileModal
             user={user}

@@ -1,42 +1,47 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '@/lib/axios';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { medicationService } from '@/services/medication.service';
-
-// #region debug-point C:kardex-query
-const reportKardexDebug = (hypothesisId: string, msg: string, data?: unknown) =>
-  fetch('http://127.0.0.1:7777/event', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      sessionId: 'medication-kardex-list',
-      runId: 'pre-fix',
-      hypothesisId,
-      location: 'useKardex.ts',
-      msg: `[DEBUG] ${msg}`,
-      data,
-      ts: Date.now(),
-    }),
-  }).catch(() => {});
-// #endregion
+import { MedicationAdministrationOutcome, MedicationAdministrationReportFilters, PatientMedicationHistoryFilters, ShiftSlot } from '@/types/medication';
 
 export const useKardex = (patientId: number, date: string) => {
   return useQuery({
     queryKey: ['kardex', patientId, date],
-    queryFn: async () => {
-      void reportKardexDebug('C', 'kardex query started', { patientId, date });
-      const { data } = await api.get(`/medications/patient/${patientId}/schedule`, {
-        params: { date }
-      });
-      void reportKardexDebug('C', 'kardex query succeeded', {
-        patientId,
-        date,
-        count: Array.isArray(data) ? data.length : null,
-        medicationIds: Array.isArray(data) ? [...new Set(data.map((item: { medicationId: number }) => item.medicationId))] : null,
-      });
-      return data;
-    },
+    queryFn: async () => medicationService.getDailySchedule(patientId, new Date(date)),
     enabled: !!patientId && !!date,
   });
+};
+
+export const useShiftMedicationBoard = (date: string, options?: { shiftSlot?: ShiftSlot; pendingOnly?: boolean }) => {
+  return useQuery({
+    queryKey: ['medication-shift-board', date, options?.shiftSlot, options?.pendingOnly ?? true],
+    queryFn: async () => medicationService.getShiftBoard(new Date(date), options),
+    enabled: !!date,
+  });
+};
+
+export const useDoseHistory = (doseId?: number | null) => {
+  return useQuery({
+    queryKey: ['medication-dose-history', doseId],
+    queryFn: async () => medicationService.getDoseHistory(doseId!),
+    enabled: !!doseId,
+  });
+};
+
+export const usePatientMedicationHistory = (patientId: number, filters?: PatientMedicationHistoryFilters | null) => {
+  return useQuery({
+    queryKey: ['patient-medication-history', patientId, filters],
+    queryFn: async () => medicationService.getPatientMedicationHistory(patientId, filters ?? undefined),
+    enabled: !!patientId,
+  });
+};
+
+const invalidateMedicationQueries = (queryClient: ReturnType<typeof useQueryClient>) => {
+  queryClient.invalidateQueries({ queryKey: ['kardex'] });
+  queryClient.invalidateQueries({ queryKey: ['medications'] });
+  queryClient.invalidateQueries({ queryKey: ['medication-shift-board'] });
+  queryClient.invalidateQueries({ queryKey: ['medication-dose-history'] });
+  queryClient.invalidateQueries({ queryKey: ['patient-medication-history'] });
+  queryClient.invalidateQueries({ queryKey: ['medication-administration-report'] });
+  queryClient.invalidateQueries({ queryKey: ['medication-administration-trend'] });
 };
 
 export const useLogDose = () => {
@@ -44,18 +49,118 @@ export const useLogDose = () => {
   
   return useMutation({
     mutationFn: async ({ doseId, status, notes, missedReason, takenAt }: { doseId: number, status: number, notes?: string, missedReason?: string, takenAt: string }) => {
-      const { data } = await api.post(`/medications/doses/${doseId}/log`, {
+      return medicationService.logDose(doseId, {
         status,
         notes,
         missedReason,
-        takenAt
+        takenAt,
+        sideEffectSeverity: 0,
       });
-      return data;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate relevant queries to refresh the UI
-      queryClient.invalidateQueries({ queryKey: ['kardex'] });
+    onSuccess: () => {
+      invalidateMedicationQueries(queryClient);
     }
+  });
+};
+
+export const useConfirmDoseByPatient = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ doseId, notes, patientComment, actualAdministrationAt }: { doseId: number; notes?: string; patientComment?: string; actualAdministrationAt?: string }) =>
+      medicationService.confirmDoseByPatient(doseId, { notes, patientComment, actualAdministrationAt }),
+    onSuccess: () => invalidateMedicationQueries(queryClient),
+  });
+};
+
+export const useSkipDoseByPatient = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ doseId, reason, notes, patientComment }: { doseId: number; reason: string; notes?: string; patientComment?: string }) =>
+      medicationService.skipDoseByPatient(doseId, { reason, notes, patientComment }),
+    onSuccess: () => invalidateMedicationQueries(queryClient),
+  });
+};
+
+export const useRecordDoseByNurse = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      doseId,
+      outcome,
+      actualAdministrationAt,
+      notes,
+      clinicalNotes,
+      patientComment,
+      missedReason,
+    }: {
+      doseId: number;
+      outcome: MedicationAdministrationOutcome;
+      actualAdministrationAt?: string;
+      notes?: string;
+      clinicalNotes?: string;
+      patientComment?: string;
+      missedReason?: string;
+    }) =>
+      medicationService.recordDoseByNurse(doseId, {
+        outcome,
+        actualAdministrationAt,
+        notes,
+        clinicalNotes,
+        patientComment,
+        missedReason,
+        sideEffectSeverity: 0,
+      }),
+    onSuccess: () => invalidateMedicationQueries(queryClient),
+  });
+};
+
+export const useReviewDose = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ doseId, approve, reason, clinicalNotes }: { doseId: number; approve: boolean; reason?: string; clinicalNotes?: string }) =>
+      medicationService.reviewDose(doseId, { approve, reason, clinicalNotes }),
+    onSuccess: () => invalidateMedicationQueries(queryClient),
+  });
+};
+
+export const useCorrectDose = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      doseId,
+      outcome,
+      actualAdministrationAt,
+      correctionReason,
+      notes,
+      clinicalNotes,
+      patientComment,
+      missedReason,
+    }: {
+      doseId: number;
+      outcome: MedicationAdministrationOutcome;
+      actualAdministrationAt?: string;
+      correctionReason: string;
+      notes?: string;
+      clinicalNotes?: string;
+      patientComment?: string;
+      missedReason?: string;
+    }) =>
+      medicationService.correctDose(doseId, {
+        outcome,
+        actualAdministrationAt,
+        correctionReason,
+        notes,
+        clinicalNotes,
+        patientComment,
+        missedReason,
+        sideEffectSeverity: 0,
+      }),
+    onSuccess: () => invalidateMedicationQueries(queryClient),
   });
 };
 
@@ -65,8 +170,23 @@ export const useResetDoseLog = () => {
   return useMutation({
     mutationFn: async (doseId: number) => medicationService.resetDoseLog(doseId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['kardex'] });
-      queryClient.invalidateQueries({ queryKey: ['medications'] });
+      invalidateMedicationQueries(queryClient);
     }
+  });
+};
+
+export const useAdministrationOverviewReport = (filters?: MedicationAdministrationReportFilters | null) => {
+  return useQuery({
+    queryKey: ['medication-administration-report', filters],
+    queryFn: async () => medicationService.getAdministrationOverviewReport(filters!),
+    enabled: !!filters,
+  });
+};
+
+export const useAdministrationTrendReport = (filters?: MedicationAdministrationReportFilters | null) => {
+  return useQuery({
+    queryKey: ['medication-administration-trend', filters],
+    queryFn: async () => medicationService.getAdministrationTrendReport(filters!),
+    enabled: !!filters,
   });
 };

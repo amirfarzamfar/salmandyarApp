@@ -1,28 +1,33 @@
 import { useEffect, useState } from 'react';
-import { useKardex, useLogDose, useResetDoseLog } from '../../hooks/useKardex';
+import { useCorrectDose, useKardex, useRecordDoseByNurse, useResetDoseLog, useReviewDose } from '../../hooks/useKardex';
 import { AdministrationModal } from './AdministrationModal';
-import { DoseStatus } from '@/types/medication';
+import { DoseStatus, MedicationAdministrationOutcome, MedicationDose } from '@/types/medication';
 import { format, parseISO } from 'date-fns';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
 import { StockStatusBadge } from '../shared/StockStatusBadge';
+import { getMedicationDoseStatusPresentation } from '../../lib/administration-ui';
+import { toast } from 'react-hot-toast';
 
 interface KardexTimelineProps {
   patientId: number;
   highlightedDoseId?: number | null;
+  mode?: 'staff' | 'admin';
 }
 
-export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineProps) => {
+export const KardexTimeline = ({ patientId, highlightedDoseId, mode = 'admin' }: KardexTimelineProps) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const dateString = format(selectedDate, 'yyyy-MM-dd');
   
   const { data: doses, isLoading } = useKardex(patientId, dateString);
-  const { mutate: logDose } = useLogDose();
-  const { mutate: resetDoseLog } = useResetDoseLog();
+  const { mutateAsync: recordDose } = useRecordDoseByNurse();
+  const { mutateAsync: reviewDose } = useReviewDose();
+  const { mutateAsync: correctDose } = useCorrectDose();
+  const { mutateAsync: resetDoseLog } = useResetDoseLog();
   
-  const [selectedDose, setSelectedDose] = useState<any>(null);
+  const [selectedDose, setSelectedDose] = useState<MedicationDose | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [highlightHandled, setHighlightHandled] = useState(false);
 
@@ -64,31 +69,70 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
     setIsModalOpen(true);
   };
 
-  const handleAdminister = (note?: string) => {
-    if (selectedDose) {
-      logDose({
+  const handleRecord = async (payload: {
+    outcome: MedicationAdministrationOutcome;
+    actualAdministrationAt?: string;
+    notes?: string;
+    clinicalNotes?: string;
+    missedReason?: string;
+  }) => {
+    if (!selectedDose) return;
+
+    try {
+      await recordDose({
         doseId: selectedDose.id,
-        status: DoseStatus.Taken,
-        notes: note,
-        takenAt: new Date().toISOString()
+        ...payload,
       });
+      toast.success('وضعیت نوبت دارو ثبت شد');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'ثبت وضعیت دارو انجام نشد.');
     }
   };
 
-  const handleSkip = (reason: string) => {
-    if (selectedDose) {
-      logDose({
+  const handleReview = async (approve: boolean, reason?: string, clinicalNotes?: string) => {
+    if (!selectedDose) return;
+
+    try {
+      await reviewDose({
         doseId: selectedDose.id,
-        status: DoseStatus.Skipped,
-        missedReason: reason,
-        takenAt: new Date().toISOString()
+        approve,
+        reason,
+        clinicalNotes,
       });
+      toast.success(approve ? 'ثبت بیمار تأیید شد' : 'ثبت بیمار رد شد');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'بازبینی نوبت دارو انجام نشد.');
     }
   };
 
-  const handleReset = () => {
-    if (selectedDose) {
-      resetDoseLog(selectedDose.id);
+  const handleCorrect = async (payload: {
+    outcome: MedicationAdministrationOutcome;
+    actualAdministrationAt?: string;
+    correctionReason: string;
+    notes?: string;
+    clinicalNotes?: string;
+    missedReason?: string;
+  }) => {
+    if (!selectedDose) return;
+
+    try {
+      await correctDose({
+        doseId: selectedDose.id,
+        ...payload,
+      });
+      toast.success('وضعیت نوبت دارو اصلاح شد');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'اصلاح وضعیت انجام نشد.');
+    }
+  };
+
+  const handleReset = async () => {
+    if (!selectedDose) return;
+    try {
+      await resetDoseLog(selectedDose.id);
+      toast.success('ثبت نوبت بازگردانی شد');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || 'بازگردانی ثبت انجام نشد.');
     }
   };
 
@@ -181,17 +225,19 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
                             return (
                                 <div key={h} className="flex-1 border-r border-gray-100 relative flex items-center justify-center z-10 group/cell">
                                     {hourDoses.map((dose: any) => {
+                                        const presentation = getMedicationDoseStatusPresentation(dose);
                                         let statusClass = "bg-blue-50 border-blue-200 text-blue-600 hover:bg-blue-100";
-                                        if (dose.status === DoseStatus.Taken) statusClass = "bg-green-50 border-green-200 text-green-600 hover:bg-green-100";
-                                        else if (dose.status === DoseStatus.Missed) statusClass = "bg-red-50 border-red-200 text-red-600 hover:bg-red-100";
-                                        else if (dose.status === DoseStatus.Skipped) statusClass = "bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100";
+                                        if (presentation.className.includes('emerald') || presentation.className.includes('teal')) statusClass = "bg-green-50 border-green-200 text-green-600 hover:bg-green-100";
+                                        else if (presentation.className.includes('rose')) statusClass = "bg-red-50 border-red-200 text-red-600 hover:bg-red-100";
+                                        else if (presentation.className.includes('orange')) statusClass = "bg-orange-50 border-orange-200 text-orange-600 hover:bg-orange-100";
+                                        else if (presentation.className.includes('violet')) statusClass = "bg-violet-50 border-violet-200 text-violet-600 hover:bg-violet-100";
                                         
                                         return (
                                             <button
                                                 key={dose.id}
                                                 onClick={() => handleDoseClick(dose)}
                                                 className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold transition-transform hover:scale-110 shadow-sm ${statusClass}`}
-                                                title={`${format(parseISO(dose.scheduledTime), 'HH:mm')} - ${dose.status}${dose.missedReason ? ` - ${dose.missedReason}` : ''}`}
+                                                title={`${format(parseISO(dose.scheduledTime), 'HH:mm')} - ${presentation.label}${dose.missedReason ? ` - ${dose.missedReason}` : ''}`}
                                             >
                                                 {format(parseISO(dose.scheduledTime), 'mm') === '00' ? '' : format(parseISO(dose.scheduledTime), 'mm')}
                                                 {/* Indicator dot */}
@@ -214,8 +260,10 @@ export const KardexTimeline = ({ patientId, highlightedDoseId }: KardexTimelineP
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         dose={selectedDose}
-        onAdminister={handleAdminister}
-        onSkip={handleSkip}
+        mode={mode}
+        onRecord={handleRecord}
+        onReview={handleReview}
+        onCorrect={mode === 'admin' ? handleCorrect : undefined}
         onReset={handleReset}
       />
     </div>

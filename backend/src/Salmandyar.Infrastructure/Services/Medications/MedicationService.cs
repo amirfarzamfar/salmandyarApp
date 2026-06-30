@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Salmandyar.Application.DTOs.Medications;
 using Salmandyar.Application.Services.Medications;
 using Salmandyar.Application.Services.Notifications;
@@ -268,10 +269,82 @@ public class MedicationService : IMedicationService
         var doses = await _context.MedicationDoses
             .Include(d => d.PatientMedication)
             .Include(d => d.TakenByUser)
+            .Include(d => d.RecordedByUser)
+            .Include(d => d.VerifiedByUser)
+            .Include(d => d.CorrectedByUser)
             .Where(d => d.PatientMedication.CareRecipientId == patientId &&
                         d.ScheduledTime >= startOfDayUtc &&
                         d.ScheduledTime <= endOfDayUtc)
             .OrderBy(d => d.ScheduledTime)
+            .ToListAsync();
+
+        return doses.Select(MapToDoseDto).ToList();
+    }
+
+    public async Task<List<MedicationDoseDto>> GetPatientMedicationHistoryAsync(
+        int patientId,
+        DateTime? from,
+        DateTime? to,
+        MedicationAdministrationOutcome? administrationOutcome,
+        MedicationTimingStatus? timingStatus,
+        bool onlyIssues,
+        string? search)
+    {
+        var tz = GetIranTimeZone();
+        var todayLocal = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, tz).Date;
+        var defaultFromLocal = todayLocal.AddDays(-30);
+        var defaultToLocal = todayLocal;
+
+        var fromLocalDate = GetIranLocalDate(from ?? defaultFromLocal, tz);
+        var toLocalDate = GetIranLocalDate(to ?? defaultToLocal, tz);
+
+        var startOfDayLocal = new DateTime(fromLocalDate.Year, fromLocalDate.Month, fromLocalDate.Day, 0, 0, 0, DateTimeKind.Unspecified);
+        var endOfDayLocal = new DateTime(toLocalDate.Year, toLocalDate.Month, toLocalDate.Day, 23, 59, 59, 999, DateTimeKind.Unspecified);
+        var startOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(startOfDayLocal, tz);
+        var endOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(endOfDayLocal, tz);
+
+        var query = _context.MedicationDoses
+            .Include(d => d.PatientMedication)
+            .Include(d => d.TakenByUser)
+            .Include(d => d.RecordedByUser)
+            .Include(d => d.VerifiedByUser)
+            .Include(d => d.CorrectedByUser)
+            .Where(d => d.PatientMedication.CareRecipientId == patientId &&
+                        d.ScheduledTime >= startOfDayUtc &&
+                        d.ScheduledTime <= endOfDayUtc);
+
+        if (administrationOutcome.HasValue)
+        {
+            query = query.Where(d => d.AdministrationOutcome == administrationOutcome.Value);
+        }
+
+        if (timingStatus.HasValue)
+        {
+            query = query.Where(d => d.TimingStatus == timingStatus.Value);
+        }
+
+        if (onlyIssues)
+        {
+            query = query.Where(d =>
+                d.AdministrationOutcome == MedicationAdministrationOutcome.Missed ||
+                d.AdministrationOutcome == MedicationAdministrationOutcome.SkippedByPatient ||
+                d.TimingStatus == MedicationTimingStatus.Late ||
+                d.TimingStatus == MedicationTimingStatus.Missed);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var trimmedSearch = search.Trim();
+            query = query.Where(d =>
+                d.PatientMedication.Name.Contains(trimmedSearch) ||
+                (d.Notes != null && d.Notes.Contains(trimmedSearch)) ||
+                (d.MissedReason != null && d.MissedReason.Contains(trimmedSearch)) ||
+                (d.PatientComment != null && d.PatientComment.Contains(trimmedSearch)));
+        }
+
+        var doses = await query
+            .OrderByDescending(d => d.ScheduledTime)
+            .Take(250)
             .ToListAsync();
 
         return doses.Select(MapToDoseDto).ToList();
@@ -282,10 +355,194 @@ public class MedicationService : IMedicationService
         var dose = await _context.MedicationDoses
             .Include(d => d.PatientMedication)
             .Include(d => d.TakenByUser)
+            .Include(d => d.RecordedByUser)
+            .Include(d => d.VerifiedByUser)
+            .Include(d => d.CorrectedByUser)
             .Where(d => d.Id == doseId && d.PatientMedication.CareRecipientId == patientId)
             .FirstOrDefaultAsync();
 
         return dose == null ? null : MapToDoseDto(dose);
+    }
+
+    public async Task<List<MedicationDoseDto>> GetShiftMedicationAdministrationAsync(string caregiverId, ShiftSlot? shiftSlot, DateTime date, bool pendingOnly)
+    {
+        var tz = GetIranTimeZone();
+        var iranDate = GetIranLocalDate(date, tz);
+        var startOfDayLocal = new DateTime(iranDate.Year, iranDate.Month, iranDate.Day, 0, 0, 0, DateTimeKind.Unspecified);
+        var endOfDayLocal = new DateTime(iranDate.Year, iranDate.Month, iranDate.Day, 23, 59, 59, 999, DateTimeKind.Unspecified);
+        var startOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(startOfDayLocal, tz);
+        var endOfDayUtc = TimeZoneInfo.ConvertTimeToUtc(endOfDayLocal, tz);
+
+        var query = _context.MedicationDoses
+            .Include(d => d.PatientMedication)
+                .ThenInclude(m => m.CareRecipient)
+            .Include(d => d.TakenByUser)
+            .Include(d => d.RecordedByUser)
+            .Include(d => d.VerifiedByUser)
+            .Include(d => d.CorrectedByUser)
+            .Where(d => d.ScheduledTime >= startOfDayUtc &&
+                        d.ScheduledTime <= endOfDayUtc);
+
+        if (!string.Equals(caregiverId, "*", StringComparison.Ordinal))
+        {
+            var assignedPatientIds = await _context.CareAssignments
+                .Where(x => x.CaregiverId == caregiverId &&
+                            x.Status == AssignmentStatus.Active &&
+                            (!x.EndDate.HasValue || x.EndDate > DateTimeOffset.UtcNow) &&
+                            (!shiftSlot.HasValue || x.ShiftSlot == null || x.ShiftSlot == shiftSlot))
+                .Select(x => x.PatientId)
+                .Distinct()
+                .ToListAsync();
+
+            if (assignedPatientIds.Count == 0)
+            {
+                return [];
+            }
+
+            query = query.Where(d => assignedPatientIds.Contains(d.PatientMedication.CareRecipientId));
+        }
+
+        if (shiftSlot.HasValue)
+        {
+            query = query.Where(d => d.ScheduledShiftSlot == shiftSlot.Value);
+        }
+
+        if (pendingOnly)
+        {
+            query = query.Where(d => d.VerificationStatus == MedicationVerificationStatus.Pending ||
+                                     d.Status == DoseStatus.Scheduled ||
+                                     d.Status == DoseStatus.Due ||
+                                     d.Status == DoseStatus.Missed);
+        }
+
+        var doses = await query
+            .OrderBy(d => d.ScheduledTime)
+            .ThenBy(d => d.PatientMedication.Name)
+            .ToListAsync();
+
+        return doses.Select(MapToDoseDto).ToList();
+    }
+
+    public async Task<List<MedicationDoseStatusHistoryDto>> GetDoseHistoryAsync(int doseId)
+    {
+        var histories = await _context.MedicationDoseStatusHistories
+            .Include(x => x.ChangedByUser)
+            .Where(x => x.MedicationDoseId == doseId)
+            .OrderByDescending(x => x.ChangedAtUtc)
+            .ToListAsync();
+
+        return histories.Select(x => new MedicationDoseStatusHistoryDto
+        {
+            Id = x.Id,
+            ChangedAtUtc = x.ChangedAtUtc,
+            Action = x.Action,
+            ChangedByName = x.ChangedByUser != null ? $"{x.ChangedByUser.FirstName} {x.ChangedByUser.LastName}".Trim() : x.ChangedByUserId,
+            Reason = x.Reason,
+            Notes = x.Notes,
+            FromStatus = x.FromStatus,
+            ToStatus = x.ToStatus,
+            FromAdministrationOutcome = x.FromAdministrationOutcome,
+            ToAdministrationOutcome = x.ToAdministrationOutcome,
+            FromTimingStatus = x.FromTimingStatus,
+            ToTimingStatus = x.ToTimingStatus,
+            FromVerificationStatus = x.FromVerificationStatus,
+            ToVerificationStatus = x.ToVerificationStatus,
+            SourceType = x.SourceType,
+            MetadataJson = x.MetadataJson
+        }).ToList();
+    }
+
+    public async Task<MedicationAdministrationOverviewReportDto> GetAdministrationOverviewReportAsync(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId)
+    {
+        var normalizedFromUtc = NormalizeUtc(fromUtc);
+        var normalizedToUtc = NormalizeUtc(toUtc);
+
+        var doses = await BuildAdministrationReportQuery(normalizedFromUtc, normalizedToUtc, patientId, medicationId, shiftSlot, recordedByUserId)
+            .OrderByDescending(d => d.ScheduledTime)
+            .ToListAsync();
+
+        var total = doses.Count;
+        var taken = doses.Count(d => d.AdministrationOutcome == MedicationAdministrationOutcome.Taken);
+        var onTime = doses.Count(d => d.TimingStatus == MedicationTimingStatus.OnTime);
+        var late = doses.Count(d => d.TimingStatus == MedicationTimingStatus.Late);
+        var missed = doses.Count(d => d.AdministrationOutcome == MedicationAdministrationOutcome.Missed);
+        var skipped = doses.Count(d => d.AdministrationOutcome == MedicationAdministrationOutcome.SkippedByPatient);
+        var pending = doses.Count(d => d.VerificationStatus == MedicationVerificationStatus.Pending && d.Status == DoseStatus.Scheduled);
+
+        return new MedicationAdministrationOverviewReportDto
+        {
+            TotalDoses = total,
+            TakenCount = taken,
+            OnTimeCount = onTime,
+            LateCount = late,
+            MissedCount = missed,
+            SkippedCount = skipped,
+            PendingCount = pending,
+            AdherenceRate = total == 0 ? 0 : Math.Round((decimal)taken / total * 100, 2),
+            OnTimeRate = total == 0 ? 0 : Math.Round((decimal)onTime / total * 100, 2),
+            Patients = doses
+                .GroupBy(d => new { d.PatientMedication.CareRecipientId, PatientName = GetPatientDisplayName(d) })
+                .Select(g => new MedicationAdministrationPatientSummaryDto
+                {
+                    CareRecipientId = g.Key.CareRecipientId,
+                    PatientName = g.Key.PatientName,
+                    TotalDoses = g.Count(),
+                    TakenCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Taken),
+                    MissedCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Missed),
+                    LateCount = g.Count(x => x.TimingStatus == MedicationTimingStatus.Late),
+                    AdherenceRate = g.Any() ? Math.Round((decimal)g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Taken) / g.Count() * 100, 2) : 0
+                })
+                .OrderByDescending(x => x.MissedCount)
+                .ThenBy(x => x.PatientName)
+                .Take(12)
+                .ToList(),
+            MostMissedMedications = doses
+                .Where(d => d.AdministrationOutcome == MedicationAdministrationOutcome.Missed)
+                .GroupBy(d => new { d.PatientMedicationId, d.PatientMedication.Name })
+                .Select(g => new MedicationAdministrationMissedMedicationDto
+                {
+                    MedicationId = g.Key.PatientMedicationId,
+                    MedicationName = g.Key.Name,
+                    MissedCount = g.Count()
+                })
+                .OrderByDescending(x => x.MissedCount)
+                .ThenBy(x => x.MedicationName)
+                .Take(10)
+                .ToList(),
+            Rows = doses
+                .Take(200)
+                .Select(MapToAdministrationReportRowDto)
+                .ToList()
+        };
+    }
+
+    public async Task<List<MedicationAdministrationTrendPointDto>> GetAdministrationTrendReportAsync(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId)
+    {
+        var normalizedFromUtc = NormalizeUtc(fromUtc);
+        var normalizedToUtc = NormalizeUtc(toUtc);
+
+        var tz = GetIranTimeZone();
+        var doses = await BuildAdministrationReportQuery(normalizedFromUtc, normalizedToUtc, patientId, medicationId, shiftSlot, recordedByUserId)
+            .Select(d => new
+            {
+                d.ScheduledTime,
+                d.AdministrationOutcome,
+                d.TimingStatus
+            })
+            .ToListAsync();
+
+        return doses
+            .GroupBy(d => TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(d.ScheduledTime, DateTimeKind.Utc), tz).Date)
+            .OrderBy(g => g.Key)
+            .Select(g => new MedicationAdministrationTrendPointDto
+            {
+                Date = DateTime.SpecifyKind(g.Key, DateTimeKind.Unspecified),
+                TakenCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Taken),
+                LateCount = g.Count(x => x.TimingStatus == MedicationTimingStatus.Late),
+                MissedCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.Missed),
+                SkippedCount = g.Count(x => x.AdministrationOutcome == MedicationAdministrationOutcome.SkippedByPatient)
+            })
+            .ToList();
     }
 
     public async Task<int?> GetDoseCareRecipientIdAsync(int doseId)
@@ -298,62 +555,333 @@ public class MedicationService : IMedicationService
 
     public async Task RecordDoseAsync(int doseId, RecordDoseDto dto, string userId, bool preventBeforeScheduledTime)
     {
+        if (preventBeforeScheduledTime)
+        {
+            if (dto.Status == DoseStatus.Taken)
+            {
+                await ConfirmDoseByPatientAsync(doseId, new PatientConfirmMedicationDoseDto
+                {
+                    ActualAdministrationAt = dto.TakenAt,
+                    Notes = dto.Notes,
+                    PatientComment = dto.Notes
+                }, userId);
+            }
+            else
+            {
+                await SkipDoseByPatientAsync(doseId, new PatientSkipMedicationDoseDto
+                {
+                    Reason = string.IsNullOrWhiteSpace(dto.MissedReason) ? "توسط بیمار ثبت نشد" : dto.MissedReason,
+                    Notes = dto.Notes,
+                    PatientComment = dto.Notes
+                }, userId);
+            }
+
+            return;
+        }
+
+        var outcome = dto.Status switch
+        {
+            DoseStatus.Taken => MedicationAdministrationOutcome.Taken,
+            DoseStatus.Missed => MedicationAdministrationOutcome.Missed,
+            DoseStatus.Skipped => MedicationAdministrationOutcome.SkippedByPatient,
+            _ => MedicationAdministrationOutcome.Unknown
+        };
+
+        await RecordDoseByNurseAsync(doseId, new NurseRecordMedicationDoseDto
+        {
+            Outcome = outcome,
+            ActualAdministrationAt = dto.Status == DoseStatus.Taken ? dto.TakenAt : null,
+            Notes = dto.Notes,
+            ClinicalNotes = dto.Notes,
+            MissedReason = dto.MissedReason,
+            SideEffectSeverity = dto.SideEffectSeverity,
+            SideEffectDescription = dto.SideEffectDescription,
+            AttachmentPath = dto.AttachmentPath
+        }, userId, isAdminLike: false);
+    }
+
+    public async Task<MedicationDoseDto> ConfirmDoseByPatientAsync(int doseId, PatientConfirmMedicationDoseDto dto, string userId)
+    {
         var dose = await GetDoseForRecordingAsync(doseId);
         if (dose == null) throw new KeyNotFoundException("Dose not found");
 
-        if (dto.Status == DoseStatus.Taken)
+        await _patientSelfServiceAccessService.EnsureMedicationDoseConfirmationAllowedAsync(
+            userId,
+            dose.PatientMedication.CareRecipientId);
+
+        EnsureDoseCanBeSelfConfirmed(dose);
+        EnsureDoseSnapshots(dose);
+
+        var actualAdministrationAt = NormalizeUtc(dto.ActualAdministrationAt ?? DateTime.UtcNow);
+        ValidateNotBeforeScheduled(dose, actualAdministrationAt);
+
+        var allowedUntil = dose.AllowedConfirmationUntil ?? DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc).AddMinutes(dose.AdministrationWindowMinutesSnapshot);
+        if (actualAdministrationAt > allowedUntil)
         {
-            await _patientSelfServiceAccessService.EnsureMedicationDoseConfirmationAllowedAsync(
-                userId,
-                dose.PatientMedication.CareRecipientId);
+            throw new InvalidOperationException("مهلت ثبت مصرف توسط بیمار برای این نوبت به پایان رسیده است.");
+        }
+
+        var previousStatus = CaptureSnapshot(dose);
+        var timingStatus = CalculateTimingStatus(dose.ScheduledTime, actualAdministrationAt, MedicationAdministrationOutcome.Taken);
+        var nextStatus = MapLegacyDoseStatus(MedicationAdministrationOutcome.Taken, timingStatus);
+
+        ApplyAdministrationState(
+            dose,
+            MedicationAdministrationOutcome.Taken,
+            timingStatus,
+            MedicationVerificationStatus.Pending,
+            MedicationAdministrationSourceType.Patient,
+            actualAdministrationAt,
+            userId,
+            notes: dto.Notes,
+            clinicalNotes: null,
+            patientComment: dto.PatientComment,
+            missedReason: null,
+            correctionReason: null,
+            attachmentPath: null,
+            sideEffectSeverity: dose.SideEffectSeverity,
+            sideEffectDescription: dose.SideEffectDescription,
+            nextStatus: nextStatus,
+            updatedByUserId: userId);
+
+        await ApplyDoseInventoryImpactAsync(dose, dose.PatientMedication, previousStatus.Status, nextStatus, userId);
+        await AddDoseHistoryAsync(dose, previousStatus, "PatientConfirmed", userId, MedicationAdministrationSourceType.Patient, dto.PatientComment, dto.Notes);
+        AddDoseAuditLog(dose.Id, userId, "MedicationDose:PatientConfirmed", new
+        {
+            actualAdministrationAt,
+            timingStatus,
+            verificationStatus = MedicationVerificationStatus.Pending
+        });
+
+        await EvaluateLowStockAlertAsync(dose.PatientMedication);
+        await _context.SaveChangesAsync();
+        return MapToDoseDto(dose);
+    }
+
+    public async Task<MedicationDoseDto> SkipDoseByPatientAsync(int doseId, PatientSkipMedicationDoseDto dto, string userId)
+    {
+        var dose = await GetDoseForRecordingAsync(doseId);
+        if (dose == null) throw new KeyNotFoundException("Dose not found");
+
+        await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
+            userId,
+            dose.PatientMedication.CareRecipientId,
+            PatientSelfServiceFeatures.MedicationKardex);
+
+        if (string.IsNullOrWhiteSpace(dto.Reason))
+        {
+            throw new InvalidOperationException("علت عدم مصرف باید ثبت شود.");
+        }
+
+        EnsureDoseCanBeSelfConfirmed(dose);
+        EnsureDoseSnapshots(dose);
+        ValidateNotBeforeScheduled(dose, DateTime.UtcNow);
+
+        var previousStatus = CaptureSnapshot(dose);
+        var nextStatus = MapLegacyDoseStatus(MedicationAdministrationOutcome.SkippedByPatient, MedicationTimingStatus.Unknown);
+
+        ApplyAdministrationState(
+            dose,
+            MedicationAdministrationOutcome.SkippedByPatient,
+            MedicationTimingStatus.Unknown,
+            MedicationVerificationStatus.Pending,
+            MedicationAdministrationSourceType.Patient,
+            actualAdministrationAt: null,
+            recordedByUserId: userId,
+            notes: dto.Notes,
+            clinicalNotes: null,
+            patientComment: dto.PatientComment,
+            missedReason: dto.Reason,
+            correctionReason: null,
+            attachmentPath: null,
+            sideEffectSeverity: dose.SideEffectSeverity,
+            sideEffectDescription: dose.SideEffectDescription,
+            nextStatus: nextStatus,
+            updatedByUserId: userId);
+
+        await ApplyDoseInventoryImpactAsync(dose, dose.PatientMedication, previousStatus.Status, nextStatus, userId);
+        await AddDoseHistoryAsync(dose, previousStatus, "PatientSkipped", userId, MedicationAdministrationSourceType.Patient, dto.Reason, dto.Notes);
+        AddDoseAuditLog(dose.Id, userId, "MedicationDose:PatientSkipped", new
+        {
+            reason = dto.Reason
+        });
+
+        await EvaluateLowStockAlertAsync(dose.PatientMedication);
+        await _context.SaveChangesAsync();
+        return MapToDoseDto(dose);
+    }
+
+    public async Task<MedicationDoseDto> RecordDoseByNurseAsync(int doseId, NurseRecordMedicationDoseDto dto, string userId, bool isAdminLike)
+    {
+        var dose = await GetDoseForRecordingAsync(doseId);
+        if (dose == null) throw new KeyNotFoundException("Dose not found");
+
+        EnsureDoseSnapshots(dose);
+
+        var actualAdministrationAt = dto.Outcome == MedicationAdministrationOutcome.Taken
+            ? NormalizeUtc(dto.ActualAdministrationAt ?? DateTime.UtcNow)
+            : (DateTime?)null;
+        var timingStatus = dto.Outcome switch
+        {
+            MedicationAdministrationOutcome.Taken => CalculateTimingStatus(dose.ScheduledTime, actualAdministrationAt!.Value, dto.Outcome),
+            MedicationAdministrationOutcome.Missed => MedicationTimingStatus.Missed,
+            _ => MedicationTimingStatus.Unknown
+        };
+        var verificationStatus = isAdminLike
+            ? MedicationVerificationStatus.CorrectedByAdmin
+            : MedicationVerificationStatus.ConfirmedByNurse;
+        var sourceType = isAdminLike
+            ? MedicationAdministrationSourceType.Admin
+            : MedicationAdministrationSourceType.Nurse;
+        var nextStatus = MapLegacyDoseStatus(dto.Outcome, timingStatus);
+        var previousStatus = CaptureSnapshot(dose);
+
+        ApplyAdministrationState(
+            dose,
+            dto.Outcome,
+            timingStatus,
+            verificationStatus,
+            sourceType,
+            actualAdministrationAt,
+            userId,
+            notes: dto.Notes,
+            clinicalNotes: dto.ClinicalNotes,
+            patientComment: dto.PatientComment,
+            missedReason: dto.MissedReason,
+            correctionReason: isAdminLike ? "ثبت مستقیم توسط مدیر/ادمین" : null,
+            attachmentPath: dto.AttachmentPath,
+            sideEffectSeverity: dto.SideEffectSeverity,
+            sideEffectDescription: dto.SideEffectDescription,
+            nextStatus: nextStatus,
+            updatedByUserId: userId);
+
+        await ApplyDoseInventoryImpactAsync(dose, dose.PatientMedication, previousStatus.Status, nextStatus, userId);
+        await AddDoseHistoryAsync(dose, previousStatus, isAdminLike ? "AdminRecorded" : "NurseRecorded", userId, sourceType, dto.MissedReason, dto.ClinicalNotes ?? dto.Notes);
+        AddDoseAuditLog(dose.Id, userId, isAdminLike ? "MedicationDose:AdminRecorded" : "MedicationDose:NurseRecorded", new
+        {
+            dto.Outcome,
+            timingStatus,
+            verificationStatus
+        });
+
+        await EvaluateLowStockAlertAsync(dose.PatientMedication);
+        await _context.SaveChangesAsync();
+        return MapToDoseDto(dose);
+    }
+
+    public async Task<MedicationDoseDto> ReviewDoseAsync(int doseId, ReviewMedicationDoseDto dto, string userId, bool isAdminLike)
+    {
+        var dose = await GetDoseForRecordingAsync(doseId);
+        if (dose == null) throw new KeyNotFoundException("Dose not found");
+
+        EnsureDoseSnapshots(dose);
+
+        var previousStatus = CaptureSnapshot(dose);
+
+        if (dto.Approve)
+        {
+            dose.VerificationStatus = isAdminLike
+                ? MedicationVerificationStatus.CorrectedByAdmin
+                : MedicationVerificationStatus.ConfirmedByNurse;
+            dose.VerifiedByUserId = userId;
+            if (isAdminLike)
+            {
+                dose.CorrectedByUserId = userId;
+            }
+
+            dose.ClinicalNotes = string.IsNullOrWhiteSpace(dto.ClinicalNotes) ? dose.ClinicalNotes : dto.ClinicalNotes.Trim();
+            dose.UpdatedAt = DateTime.UtcNow;
+
+            await AddDoseHistoryAsync(dose, previousStatus, isAdminLike ? "AdminApproved" : "NurseApproved", userId, isAdminLike ? MedicationAdministrationSourceType.Admin : MedicationAdministrationSourceType.Nurse, dto.Reason, dto.ClinicalNotes);
+            AddDoseAuditLog(dose.Id, userId, "MedicationDose:Approved", new
+            {
+                approved = true,
+                verificationStatus = dose.VerificationStatus
+            });
         }
         else
         {
-            await _patientSelfServiceAccessService.EnsureFeatureSubmissionAllowedAsync(
-                userId,
-                dose.PatientMedication.CareRecipientId,
-                PatientSelfServiceFeatures.MedicationKardex);
-        }
-
-        if (preventBeforeScheduledTime)
-        {
-            var scheduledUtc = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc);
-            var nowUtc = DateTime.UtcNow;
-            if (nowUtc < scheduledUtc)
+            if (string.IsNullOrWhiteSpace(dto.Reason))
             {
-                var tz = GetIranTimeZone();
-                var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
-                throw new InvalidOperationException($"زمان مصرف این دارو هنوز نرسیده است. زمان برنامه‌ریزی‌شده: {scheduledLocal:HH:mm}");
+                throw new InvalidOperationException("برای رد تایید بیمار، ثبت دلیل الزامی است.");
             }
+
+            await ApplyDoseInventoryImpactAsync(dose, dose.PatientMedication, previousStatus.Status, DoseStatus.Scheduled, userId);
+            ResetDoseState(dose, preserveSnapshots: true);
+            dose.VerificationStatus = MedicationVerificationStatus.RejectedByNurse;
+            dose.VerifiedByUserId = userId;
+            dose.ClinicalNotes = string.IsNullOrWhiteSpace(dto.ClinicalNotes) ? dose.ClinicalNotes : dto.ClinicalNotes.Trim();
+            dose.MissedReason = dto.Reason.Trim();
+            dose.UpdatedAt = DateTime.UtcNow;
+
+            await AddDoseHistoryAsync(dose, previousStatus, "PatientReportRejected", userId, isAdminLike ? MedicationAdministrationSourceType.Admin : MedicationAdministrationSourceType.Nurse, dto.Reason, dto.ClinicalNotes);
+            AddDoseAuditLog(dose.Id, userId, "MedicationDose:Rejected", new
+            {
+                approved = false,
+                reason = dto.Reason
+            });
         }
 
-        var previousStatus = dose.Status;
-        var medication = dose.PatientMedication;
+        await EvaluateLowStockAlertAsync(dose.PatientMedication);
+        await _context.SaveChangesAsync();
+        return MapToDoseDto(dose);
+    }
 
-        dose.Status = dto.Status;
-        dose.TakenAt = dto.Status == DoseStatus.Taken ? dto.TakenAt : null;
-        dose.TakenByUserId = userId;
-        dose.Notes = dto.Notes;
-        dose.MissedReason = dto.MissedReason;
-        dose.SideEffectSeverity = dto.SideEffectSeverity;
-        dose.SideEffectDescription = dto.SideEffectDescription;
-        dose.AttachmentPath = dto.AttachmentPath;
-        dose.UpdatedAt = DateTime.UtcNow;
+    public async Task<MedicationDoseDto> CorrectDoseAsync(int doseId, CorrectMedicationDoseDto dto, string userId)
+    {
+        var dose = await GetDoseForRecordingAsync(doseId);
+        if (dose == null) throw new KeyNotFoundException("Dose not found");
 
-        await ApplyDoseInventoryImpactAsync(dose, medication, previousStatus, dto.Status, userId);
-
-        _context.AuditLogs.Add(new AuditLog
+        if (string.IsNullOrWhiteSpace(dto.CorrectionReason))
         {
-            UserId = userId,
-            Action = $"Medication {dto.Status}",
-            EntityName = "MedicationDose",
-            EntityId = doseId.ToString(),
-            CreatedAt = DateTime.UtcNow,
-            Details = $"Status changed from {previousStatus} to {dto.Status}. Notes: {dto.Notes}. Attachment: {dto.AttachmentPath}"
+            throw new InvalidOperationException("دلیل اصلاح توسط ادمین الزامی است.");
+        }
+
+        EnsureDoseSnapshots(dose);
+
+        var previousStatus = CaptureSnapshot(dose);
+        var actualAdministrationAt = dto.Outcome == MedicationAdministrationOutcome.Taken
+            ? NormalizeUtc(dto.ActualAdministrationAt ?? DateTime.UtcNow)
+            : (DateTime?)null;
+        var timingStatus = dto.Outcome switch
+        {
+            MedicationAdministrationOutcome.Taken => CalculateTimingStatus(dose.ScheduledTime, actualAdministrationAt!.Value, dto.Outcome),
+            MedicationAdministrationOutcome.Missed => MedicationTimingStatus.Missed,
+            _ => MedicationTimingStatus.Unknown
+        };
+        var nextStatus = MapLegacyDoseStatus(dto.Outcome, timingStatus);
+
+        ApplyAdministrationState(
+            dose,
+            dto.Outcome,
+            timingStatus,
+            MedicationVerificationStatus.CorrectedByAdmin,
+            MedicationAdministrationSourceType.Admin,
+            actualAdministrationAt,
+            userId,
+            notes: dto.Notes,
+            clinicalNotes: dto.ClinicalNotes,
+            patientComment: dto.PatientComment,
+            missedReason: dto.MissedReason,
+            correctionReason: dto.CorrectionReason,
+            attachmentPath: dto.AttachmentPath,
+            sideEffectSeverity: dto.SideEffectSeverity,
+            sideEffectDescription: dto.SideEffectDescription,
+            nextStatus: nextStatus,
+            updatedByUserId: userId);
+
+        await ApplyDoseInventoryImpactAsync(dose, dose.PatientMedication, previousStatus.Status, nextStatus, userId);
+        await AddDoseHistoryAsync(dose, previousStatus, "AdminCorrected", userId, MedicationAdministrationSourceType.Admin, dto.CorrectionReason, dto.ClinicalNotes ?? dto.Notes);
+        AddDoseAuditLog(dose.Id, userId, "MedicationDose:Corrected", new
+        {
+            dto.Outcome,
+            timingStatus,
+            dto.CorrectionReason
         });
 
-        await EvaluateLowStockAlertAsync(medication);
+        await EvaluateLowStockAlertAsync(dose.PatientMedication);
         await _context.SaveChangesAsync();
+        return MapToDoseDto(dose);
     }
 
     public async Task ResetDoseAsync(int doseId, string userId)
@@ -366,29 +894,17 @@ public class MedicationService : IMedicationService
             dose.PatientMedication.CareRecipientId,
             PatientSelfServiceFeatures.MedicationKardex);
 
-        var previousStatus = dose.Status;
-        await ApplyDoseInventoryImpactAsync(dose, dose.PatientMedication, previousStatus, DoseStatus.Scheduled, userId);
+        var previousStatus = CaptureSnapshot(dose);
+        await ApplyDoseInventoryImpactAsync(dose, dose.PatientMedication, previousStatus.Status, DoseStatus.Scheduled, userId);
 
-        dose.Status = DoseStatus.Scheduled;
-        dose.TakenAt = null;
-        dose.TakenByUserId = null;
-        dose.Notes = null;
-        dose.MissedReason = null;
-        dose.SideEffectSeverity = SideEffectSeverity.None;
-        dose.SideEffectDescription = null;
-        dose.AttachmentPath = null;
+        ResetDoseState(dose, preserveSnapshots: true);
         dose.UpdatedAt = DateTime.UtcNow;
-        dose.EscalationLevel = DoseEscalationLevel.None;
-        dose.LastEscalationTime = null;
 
-        _context.AuditLogs.Add(new AuditLog
+        await AddDoseHistoryAsync(dose, previousStatus, "MedicationReset", userId, MedicationAdministrationSourceType.Admin, "بازگردانی ثبت دوز", null);
+        AddDoseAuditLog(doseId, userId, "MedicationDose:Reset", new
         {
-            UserId = userId,
-            Action = "MedicationReset",
-            EntityName = "MedicationDose",
-            EntityId = doseId.ToString(),
-            CreatedAt = DateTime.UtcNow,
-            Details = $"Dose log reset from {previousStatus} to Scheduled."
+            fromStatus = previousStatus.Status,
+            toStatus = DoseStatus.Scheduled
         });
 
         await EvaluateLowStockAlertAsync(dose.PatientMedication);
@@ -588,8 +1104,38 @@ public class MedicationService : IMedicationService
             var med = dose.PatientMedication;
             var careRecipient = med.CareRecipient;
             var scheduledUtc = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc);
-            var graceTime = scheduledUtc.AddMinutes(med.GracePeriodMinutes);
+            EnsureDoseSnapshots(dose);
+            var graceTime = dose.AllowedConfirmationUntil ?? scheduledUtc.AddMinutes(dose.AdministrationWindowMinutesSnapshot);
             var recipientIds = new List<string>();
+
+            if (now > graceTime && dose.Status == DoseStatus.Scheduled)
+            {
+                var previousStatus = CaptureSnapshot(dose);
+                ApplyAdministrationState(
+                    dose,
+                    MedicationAdministrationOutcome.Missed,
+                    MedicationTimingStatus.Missed,
+                    MedicationVerificationStatus.Pending,
+                    MedicationAdministrationSourceType.System,
+                    actualAdministrationAt: null,
+                    recordedByUserId: null,
+                    notes: "به‌صورت خودکار به‌عنوان مصرف‌نشده ثبت شد.",
+                    clinicalNotes: null,
+                    patientComment: null,
+                    missedReason: "عدم ثبت در بازه مجاز",
+                    correctionReason: null,
+                    attachmentPath: null,
+                    sideEffectSeverity: dose.SideEffectSeverity,
+                    sideEffectDescription: dose.SideEffectDescription,
+                    nextStatus: DoseStatus.Missed,
+                    updatedByUserId: null);
+
+                await AddDoseHistoryAsync(dose, previousStatus, "AutoMarkedMissed", "System", MedicationAdministrationSourceType.System, "عدم ثبت در بازه مجاز", null);
+                AddDoseAuditLog(dose.Id, "System", "MedicationDose:AutoMarkedMissed", new
+                {
+                    allowedUntil = graceTime
+                });
+            }
 
             var assignedPrimaryCaregiverIds = await _context.CareAssignments
                 .Where(a => a.PatientId == careRecipient.Id
@@ -870,11 +1416,19 @@ public class MedicationService : IMedicationService
 
             if (!exists)
             {
+                var windowMinutes = GetAdministrationWindowMinutes(med);
                 _context.MedicationDoses.Add(new MedicationDose
                 {
                     PatientMedicationId = med.Id,
                     ScheduledTime = scheduledTime,
+                    AllowedConfirmationUntil = scheduledTime.AddMinutes(windowMinutes),
+                    AdministrationWindowMinutesSnapshot = windowMinutes,
+                    ScheduledShiftSlot = ResolveShiftSlot(scheduledTime),
                     Status = DoseStatus.Scheduled,
+                    AdministrationOutcome = MedicationAdministrationOutcome.Unknown,
+                    TimingStatus = MedicationTimingStatus.Unknown,
+                    VerificationStatus = MedicationVerificationStatus.Pending,
+                    SourceType = MedicationAdministrationSourceType.System,
                     CreatedAt = DateTime.UtcNow
                 });
             }
@@ -893,6 +1447,10 @@ public class MedicationService : IMedicationService
             .Include(d => d.PatientMedication)
                 .ThenInclude(m => m.CareRecipient)
                     .ThenInclude(cr => cr.FamilyMember)
+            .Include(d => d.TakenByUser)
+            .Include(d => d.RecordedByUser)
+            .Include(d => d.VerifiedByUser)
+            .Include(d => d.CorrectedByUser)
             .FirstOrDefaultAsync(d => d.Id == doseId);
     }
 
@@ -965,6 +1523,254 @@ public class MedicationService : IMedicationService
         });
 
         await Task.CompletedTask;
+    }
+
+    private static int GetAdministrationWindowMinutes(PatientMedication medication)
+    {
+        return Math.Max(1, medication.GracePeriodMinutes);
+    }
+
+    private static ShiftSlot ResolveShiftSlot(DateTime scheduledTimeUtc)
+    {
+        var tz = GetIranTimeZone();
+        var localHour = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(scheduledTimeUtc, DateTimeKind.Utc), tz).Hour;
+
+        if (localHour >= 6 && localHour < 14)
+        {
+            return ShiftSlot.Morning;
+        }
+
+        if (localHour >= 14 && localHour < 22)
+        {
+            return ShiftSlot.Evening;
+        }
+
+        return ShiftSlot.Night;
+    }
+
+    private static DateTime NormalizeUtc(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+    }
+
+    private static MedicationTimingStatus CalculateTimingStatus(DateTime scheduledTime, DateTime actualAdministrationAt, MedicationAdministrationOutcome outcome)
+    {
+        if (outcome == MedicationAdministrationOutcome.Missed)
+        {
+            return MedicationTimingStatus.Missed;
+        }
+
+        if (outcome != MedicationAdministrationOutcome.Taken)
+        {
+            return MedicationTimingStatus.Unknown;
+        }
+
+        return NormalizeUtc(actualAdministrationAt) <= NormalizeUtc(scheduledTime)
+            ? MedicationTimingStatus.OnTime
+            : MedicationTimingStatus.Late;
+    }
+
+    private static DoseStatus MapLegacyDoseStatus(MedicationAdministrationOutcome outcome, MedicationTimingStatus timingStatus)
+    {
+        return outcome switch
+        {
+            MedicationAdministrationOutcome.Taken when timingStatus == MedicationTimingStatus.Late => DoseStatus.Late,
+            MedicationAdministrationOutcome.Taken => DoseStatus.Taken,
+            MedicationAdministrationOutcome.Missed => DoseStatus.Missed,
+            MedicationAdministrationOutcome.SkippedByPatient => DoseStatus.Skipped,
+            _ => DoseStatus.Scheduled
+        };
+    }
+
+    private static void ValidateNotBeforeScheduled(MedicationDose dose, DateTime actualAdministrationAt)
+    {
+        var scheduledUtc = NormalizeUtc(dose.ScheduledTime);
+        var actualUtc = NormalizeUtc(actualAdministrationAt);
+
+        if (actualUtc < scheduledUtc)
+        {
+            var tz = GetIranTimeZone();
+            var scheduledLocal = TimeZoneInfo.ConvertTimeFromUtc(scheduledUtc, tz);
+            throw new InvalidOperationException($"زمان مصرف این دارو هنوز نرسیده است. زمان برنامه‌ریزی‌شده: {scheduledLocal:HH:mm}");
+        }
+    }
+
+    private static void EnsureDoseCanBeSelfConfirmed(MedicationDose dose)
+    {
+        if (dose.Status != DoseStatus.Scheduled && dose.VerificationStatus != MedicationVerificationStatus.RejectedByNurse)
+        {
+            throw new InvalidOperationException("برای این نوبت قبلاً ثبت مصرف انجام شده است.");
+        }
+    }
+
+    private static void EnsureDoseSnapshots(MedicationDose dose)
+    {
+        if (dose.AdministrationWindowMinutesSnapshot <= 0)
+        {
+            dose.AdministrationWindowMinutesSnapshot = GetAdministrationWindowMinutes(dose.PatientMedication);
+        }
+
+        if (!dose.AllowedConfirmationUntil.HasValue)
+        {
+            dose.AllowedConfirmationUntil = NormalizeUtc(dose.ScheduledTime).AddMinutes(dose.AdministrationWindowMinutesSnapshot);
+        }
+
+        if (dose.ScheduledShiftSlot == ShiftSlot.None)
+        {
+            dose.ScheduledShiftSlot = ResolveShiftSlot(dose.ScheduledTime);
+        }
+    }
+
+    private static DoseStateSnapshot CaptureSnapshot(MedicationDose dose)
+    {
+        return new DoseStateSnapshot(
+            dose.Status,
+            dose.AdministrationOutcome,
+            dose.TimingStatus,
+            dose.VerificationStatus);
+    }
+
+    private static void ApplyAdministrationState(
+        MedicationDose dose,
+        MedicationAdministrationOutcome outcome,
+        MedicationTimingStatus timingStatus,
+        MedicationVerificationStatus verificationStatus,
+        MedicationAdministrationSourceType sourceType,
+        DateTime? actualAdministrationAt,
+        string? recordedByUserId,
+        string? notes,
+        string? clinicalNotes,
+        string? patientComment,
+        string? missedReason,
+        string? correctionReason,
+        string? attachmentPath,
+        SideEffectSeverity sideEffectSeverity,
+        string? sideEffectDescription,
+        DoseStatus nextStatus,
+        string? updatedByUserId)
+    {
+        var normalizedActualAdministrationAt = actualAdministrationAt.HasValue ? NormalizeUtc(actualAdministrationAt.Value) : (DateTime?)null;
+
+        dose.Status = nextStatus;
+        dose.AdministrationOutcome = outcome;
+        dose.TimingStatus = timingStatus;
+        dose.VerificationStatus = verificationStatus;
+        dose.SourceType = sourceType;
+        dose.ActualAdministrationAt = normalizedActualAdministrationAt;
+        dose.TakenAt = normalizedActualAdministrationAt;
+        dose.DelayMinutes = normalizedActualAdministrationAt.HasValue
+            ? (int)Math.Max(0, Math.Round((normalizedActualAdministrationAt.Value - NormalizeUtc(dose.ScheduledTime)).TotalMinutes))
+            : null;
+        dose.RecordedByUserId = recordedByUserId;
+        dose.TakenByUserId = outcome == MedicationAdministrationOutcome.Taken ? recordedByUserId : null;
+        dose.VerifiedByUserId = verificationStatus is MedicationVerificationStatus.ConfirmedByNurse or MedicationVerificationStatus.RejectedByNurse
+            ? updatedByUserId
+            : dose.VerifiedByUserId;
+        dose.CorrectedByUserId = verificationStatus == MedicationVerificationStatus.CorrectedByAdmin
+            ? updatedByUserId
+            : dose.CorrectedByUserId;
+        dose.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        dose.ClinicalNotes = string.IsNullOrWhiteSpace(clinicalNotes) ? null : clinicalNotes.Trim();
+        dose.PatientComment = string.IsNullOrWhiteSpace(patientComment) ? null : patientComment.Trim();
+        dose.MissedReason = string.IsNullOrWhiteSpace(missedReason) ? null : missedReason.Trim();
+        dose.CorrectionReason = string.IsNullOrWhiteSpace(correctionReason) ? null : correctionReason.Trim();
+        dose.AttachmentPath = string.IsNullOrWhiteSpace(attachmentPath) ? null : attachmentPath.Trim();
+        dose.SideEffectSeverity = sideEffectSeverity;
+        dose.SideEffectDescription = string.IsNullOrWhiteSpace(sideEffectDescription) ? null : sideEffectDescription.Trim();
+        dose.RecordedShiftSlot = normalizedActualAdministrationAt.HasValue ? ResolveShiftSlot(normalizedActualAdministrationAt.Value) : ShiftSlot.None;
+        dose.UpdatedAt = DateTime.UtcNow;
+        dose.EscalationLevel = outcome == MedicationAdministrationOutcome.Missed ? dose.EscalationLevel : DoseEscalationLevel.None;
+        dose.LastEscalationTime = outcome == MedicationAdministrationOutcome.Missed ? dose.LastEscalationTime : null;
+    }
+
+    private static void ResetDoseState(MedicationDose dose, bool preserveSnapshots)
+    {
+        dose.Status = DoseStatus.Scheduled;
+        dose.AdministrationOutcome = MedicationAdministrationOutcome.Unknown;
+        dose.TimingStatus = MedicationTimingStatus.Unknown;
+        dose.VerificationStatus = MedicationVerificationStatus.Pending;
+        dose.SourceType = MedicationAdministrationSourceType.Unknown;
+        dose.ActualAdministrationAt = null;
+        dose.TakenAt = null;
+        dose.DelayMinutes = null;
+        dose.TakenByUserId = null;
+        dose.RecordedByUserId = null;
+        dose.VerifiedByUserId = null;
+        dose.CorrectedByUserId = null;
+        dose.Notes = null;
+        dose.ClinicalNotes = null;
+        dose.PatientComment = null;
+        dose.MissedReason = null;
+        dose.CorrectionReason = null;
+        dose.SideEffectSeverity = SideEffectSeverity.None;
+        dose.SideEffectDescription = null;
+        dose.AttachmentPath = null;
+        dose.EscalationLevel = DoseEscalationLevel.None;
+        dose.LastEscalationTime = null;
+        dose.RecordedShiftSlot = ShiftSlot.None;
+
+        if (!preserveSnapshots)
+        {
+            dose.AllowedConfirmationUntil = null;
+            dose.AdministrationWindowMinutesSnapshot = 0;
+            dose.ScheduledShiftSlot = ShiftSlot.None;
+        }
+    }
+
+    private async Task AddDoseHistoryAsync(
+        MedicationDose dose,
+        DoseStateSnapshot previousState,
+        string action,
+        string? changedByUserId,
+        MedicationAdministrationSourceType sourceType,
+        string? reason,
+        string? notes)
+    {
+        _context.MedicationDoseStatusHistories.Add(new MedicationDoseStatusHistory
+        {
+            MedicationDoseId = dose.Id,
+            FromStatus = previousState.Status,
+            ToStatus = dose.Status,
+            FromAdministrationOutcome = previousState.AdministrationOutcome,
+            ToAdministrationOutcome = dose.AdministrationOutcome,
+            FromTimingStatus = previousState.TimingStatus,
+            ToTimingStatus = dose.TimingStatus,
+            FromVerificationStatus = previousState.VerificationStatus,
+            ToVerificationStatus = dose.VerificationStatus,
+            SourceType = sourceType,
+            Action = action,
+            Reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim(),
+            Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim(),
+            MetadataJson = JsonSerializer.Serialize(new
+            {
+                dose.DelayMinutes,
+                dose.RecordedShiftSlot,
+                dose.ScheduledShiftSlot,
+                dose.SourceType
+            }),
+            ChangedByUserId = changedByUserId,
+            ChangedAtUtc = DateTime.UtcNow
+        });
+
+        await Task.CompletedTask;
+    }
+
+    private void AddDoseAuditLog(int doseId, string? userId, string action, object payload)
+    {
+        _context.AuditLogs.Add(new AuditLog
+        {
+            UserId = userId,
+            Action = action,
+            EntityName = "MedicationDose",
+            EntityId = doseId.ToString(),
+            CreatedAt = DateTime.UtcNow,
+            Details = JsonSerializer.Serialize(payload)
+        });
     }
 
     private async Task EvaluateLowStockAlertAsync(PatientMedication medication)
@@ -1305,18 +2111,36 @@ public class MedicationService : IMedicationService
         {
             Id = dose.Id,
             MedicationId = dose.PatientMedicationId,
+            CareRecipientId = dose.PatientMedication.CareRecipientId,
+            PatientName = GetPatientDisplayName(dose),
             MedicationName = dose.PatientMedication.Name,
             Dosage = dose.PatientMedication.Dosage,
             Route = dose.PatientMedication.Route,
             Instructions = dose.PatientMedication.Instructions ?? string.Empty,
             ScheduledTime = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc),
+            AllowedConfirmationUntil = dose.AllowedConfirmationUntil.HasValue ? DateTime.SpecifyKind(dose.AllowedConfirmationUntil.Value, DateTimeKind.Utc) : null,
             Status = dose.Status,
+            AdministrationOutcome = dose.AdministrationOutcome,
+            TimingStatus = dose.TimingStatus,
+            VerificationStatus = dose.VerificationStatus,
+            SourceType = dose.SourceType,
             TakenAt = dose.TakenAt.HasValue ? DateTime.SpecifyKind(dose.TakenAt.Value, DateTimeKind.Utc) : null,
+            ActualAdministrationAt = dose.ActualAdministrationAt.HasValue ? DateTime.SpecifyKind(dose.ActualAdministrationAt.Value, DateTimeKind.Utc) : null,
+            DelayMinutes = dose.DelayMinutes,
+            AdministrationWindowMinutesSnapshot = dose.AdministrationWindowMinutesSnapshot,
             TakenByName = dose.TakenByUser != null ? $"{dose.TakenByUser.FirstName} {dose.TakenByUser.LastName}".Trim() : null,
+            RecordedByName = dose.RecordedByUser != null ? $"{dose.RecordedByUser.FirstName} {dose.RecordedByUser.LastName}".Trim() : null,
+            VerifiedByName = dose.VerifiedByUser != null ? $"{dose.VerifiedByUser.FirstName} {dose.VerifiedByUser.LastName}".Trim() : null,
+            CorrectedByName = dose.CorrectedByUser != null ? $"{dose.CorrectedByUser.FirstName} {dose.CorrectedByUser.LastName}".Trim() : null,
             Notes = dose.Notes,
+            ClinicalNotes = dose.ClinicalNotes,
+            PatientComment = dose.PatientComment,
+            CorrectionReason = dose.CorrectionReason,
             MissedReason = dose.MissedReason,
             SideEffectSeverity = dose.SideEffectSeverity,
             SideEffectDescription = dose.SideEffectDescription,
+            ScheduledShiftSlot = dose.ScheduledShiftSlot,
+            RecordedShiftSlot = dose.RecordedShiftSlot,
             CurrentQuantity = dose.PatientMedication.TotalQuantity,
             AlertLimit = dose.PatientMedication.AlertLimit,
             DoseQuantity = dose.PatientMedication.DoseQuantity,
@@ -1327,6 +2151,68 @@ public class MedicationService : IMedicationService
             IsReminderSent = dose.IsReminderSent,
             EscalationLevel = dose.EscalationLevel
         };
+    }
+
+    private static MedicationAdministrationReportRowDto MapToAdministrationReportRowDto(MedicationDose dose)
+    {
+        return new MedicationAdministrationReportRowDto
+        {
+            DoseId = dose.Id,
+            CareRecipientId = dose.PatientMedication.CareRecipientId,
+            PatientName = GetPatientDisplayName(dose),
+            MedicationId = dose.PatientMedicationId,
+            MedicationName = dose.PatientMedication.Name,
+            ScheduledTime = DateTime.SpecifyKind(dose.ScheduledTime, DateTimeKind.Utc),
+            ActualAdministrationAt = dose.ActualAdministrationAt.HasValue ? DateTime.SpecifyKind(dose.ActualAdministrationAt.Value, DateTimeKind.Utc) : null,
+            Status = dose.Status,
+            AdministrationOutcome = dose.AdministrationOutcome,
+            TimingStatus = dose.TimingStatus,
+            VerificationStatus = dose.VerificationStatus,
+            RecordedByName = dose.RecordedByUser != null ? $"{dose.RecordedByUser.FirstName} {dose.RecordedByUser.LastName}".Trim() : null,
+            VerifiedByName = dose.VerifiedByUser != null ? $"{dose.VerifiedByUser.FirstName} {dose.VerifiedByUser.LastName}".Trim() : null,
+            ScheduledShiftSlot = dose.ScheduledShiftSlot,
+            DelayMinutes = dose.DelayMinutes,
+            Notes = dose.Notes
+        };
+    }
+
+    private IQueryable<MedicationDose> BuildAdministrationReportQuery(DateTime fromUtc, DateTime toUtc, int? patientId, int? medicationId, ShiftSlot? shiftSlot, string? recordedByUserId)
+    {
+        var query = _context.MedicationDoses
+            .Include(d => d.PatientMedication)
+                .ThenInclude(m => m.CareRecipient)
+            .Include(d => d.RecordedByUser)
+            .Include(d => d.VerifiedByUser)
+            .Where(d => d.ScheduledTime >= fromUtc && d.ScheduledTime <= toUtc);
+
+        if (patientId.HasValue)
+        {
+            query = query.Where(d => d.PatientMedication.CareRecipientId == patientId.Value);
+        }
+
+        if (medicationId.HasValue)
+        {
+            query = query.Where(d => d.PatientMedicationId == medicationId.Value);
+        }
+
+        if (shiftSlot.HasValue)
+        {
+            query = query.Where(d => d.ScheduledShiftSlot == shiftSlot.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(recordedByUserId))
+        {
+            query = query.Where(d => d.RecordedByUserId == recordedByUserId || d.VerifiedByUserId == recordedByUserId || d.CorrectedByUserId == recordedByUserId);
+        }
+
+        return query;
+    }
+
+    private static string GetPatientDisplayName(MedicationDose dose)
+    {
+        var patient = dose.PatientMedication.CareRecipient;
+        var fullName = $"{patient.FirstName} {patient.LastName}".Trim();
+        return string.IsNullOrWhiteSpace(fullName) ? $"بیمار #{patient.Id}" : fullName;
     }
 
     private static TimeZoneInfo GetIranTimeZone()
@@ -1475,6 +2361,12 @@ public class MedicationService : IMedicationService
 
         return output;
     }
+
+    private sealed record DoseStateSnapshot(
+        DoseStatus Status,
+        MedicationAdministrationOutcome AdministrationOutcome,
+        MedicationTimingStatus TimingStatus,
+        MedicationVerificationStatus VerificationStatus);
 
     private sealed record AlertRecipient(
         MedicationAlertRecipientType RecipientType,

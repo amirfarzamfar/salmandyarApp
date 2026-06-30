@@ -79,7 +79,7 @@ export default function MedicationsTab({ patientId, highlightedDoseId }: Props) 
       {/* Main Content */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-1">
         {activeTab === 'schedule' ? (
-            <KardexTimeline patientId={patientId} highlightedDoseId={highlightedDoseId ?? null} />
+            <KardexTimeline patientId={patientId} highlightedDoseId={highlightedDoseId ?? null} mode="admin" />
         ) : (
             <div className="p-4">
                 <PatientMedicationList patientId={patientId} />

@@ -64,6 +64,16 @@ public class MedicationsController : ControllerBase
         return userId;
     }
 
+    private bool IsPatientSelfServiceActor()
+    {
+        return User.IsInRole(Roles.Patient) || User.IsInRole(Roles.Elderly) || User.IsInRole(Roles.PatientFamily);
+    }
+
+    private bool IsAdminLikeActor()
+    {
+        return User.IsInRole(Roles.SuperAdmin) || User.IsInRole(Roles.Admin) || User.IsInRole(Roles.Manager) || User.IsInRole(Roles.Supervisor);
+    }
+
     [HttpGet("patient/{patientId}")]
     public async Task<ActionResult<List<MedicationDto>>> GetPatientMedications(int patientId)
     {
@@ -186,6 +196,30 @@ public class MedicationsController : ControllerBase
         return Ok(await _medicationService.GetDailyScheduleAsync(patientId, date));
     }
 
+    [HttpGet("patient/{patientId}/history")]
+    public async Task<ActionResult<List<MedicationDoseDto>>> GetPatientMedicationHistory(
+        int patientId,
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        [FromQuery] MedicationAdministrationOutcome? administrationOutcome,
+        [FromQuery] MedicationTimingStatus? timingStatus,
+        [FromQuery] bool onlyIssues = false,
+        [FromQuery] string? search = null)
+    {
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(patientId, restrictedCaregiverId);
+        if (patient == null) return Forbid();
+
+        return Ok(await _medicationService.GetPatientMedicationHistoryAsync(
+            patientId,
+            from,
+            to,
+            administrationOutcome,
+            timingStatus,
+            onlyIssues,
+            search));
+    }
+
     [HttpGet("patient/{patientId}/doses/{doseId}")]
     public async Task<ActionResult<MedicationDoseDto>> GetDose(int patientId, int doseId)
     {
@@ -197,6 +231,234 @@ public class MedicationsController : ControllerBase
         if (dose == null) return NotFound(new { error = "Dose not found" });
 
         return Ok(dose);
+    }
+
+    [HttpGet("shift-board")]
+    public async Task<ActionResult<List<MedicationDoseDto>>> GetShiftBoard([FromQuery] DateTime date, [FromQuery] ShiftSlot? shiftSlot, [FromQuery] bool pendingOnly = true)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+        var isShiftRestrictedStaff =
+            User.IsInRole(Roles.Nurse) ||
+            User.IsInRole(Roles.AssistantNurse) ||
+            User.IsInRole(Roles.Physiotherapist) ||
+            User.IsInRole(Roles.ElderlyCareAssistant);
+
+        if (!isShiftRestrictedStaff && !IsAdminLikeActor())
+        {
+            return Forbid();
+        }
+
+        if (isShiftRestrictedStaff)
+        {
+            return Ok(await _medicationService.GetShiftMedicationAdministrationAsync(userId, shiftSlot, date, pendingOnly));
+        }
+
+        return Ok(await _medicationService.GetShiftMedicationAdministrationAsync("*", shiftSlot, date, pendingOnly));
+    }
+
+    [HttpGet("doses/{doseId}/history")]
+    public async Task<ActionResult<List<MedicationDoseStatusHistoryDto>>> GetDoseHistory(int doseId)
+    {
+        var careRecipientId = await _medicationService.GetDoseCareRecipientIdAsync(doseId);
+        if (!careRecipientId.HasValue) return NotFound(new { error = "Dose not found" });
+
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        if (!string.IsNullOrEmpty(restrictedCaregiverId))
+        {
+            var patient = await _patientService.GetPatientByIdAsync(careRecipientId.Value, restrictedCaregiverId);
+            if (patient == null) return Forbid();
+        }
+
+        return Ok(await _medicationService.GetDoseHistoryAsync(doseId));
+    }
+
+    [HttpGet("reports/overview")]
+    public async Task<ActionResult<MedicationAdministrationOverviewReportDto>> GetAdministrationOverviewReport(
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to,
+        [FromQuery] int? patientId,
+        [FromQuery] int? medicationId,
+        [FromQuery] ShiftSlot? shiftSlot,
+        [FromQuery] string? recordedByUserId)
+    {
+        if (!IsAdminLikeActor())
+        {
+            return Forbid();
+        }
+
+        return Ok(await _medicationService.GetAdministrationOverviewReportAsync(from, to, patientId, medicationId, shiftSlot, recordedByUserId));
+    }
+
+    [HttpGet("reports/missed-trends")]
+    public async Task<ActionResult<List<MedicationAdministrationTrendPointDto>>> GetAdministrationTrendReport(
+        [FromQuery] DateTime from,
+        [FromQuery] DateTime to,
+        [FromQuery] int? patientId,
+        [FromQuery] int? medicationId,
+        [FromQuery] ShiftSlot? shiftSlot,
+        [FromQuery] string? recordedByUserId)
+    {
+        if (!IsAdminLikeActor())
+        {
+            return Forbid();
+        }
+
+        return Ok(await _medicationService.GetAdministrationTrendReportAsync(from, to, patientId, medicationId, shiftSlot, recordedByUserId));
+    }
+
+    [HttpPost("doses/{doseId}/confirm-by-patient")]
+    public async Task<ActionResult<MedicationDoseDto>> ConfirmByPatient(int doseId, [FromBody] PatientConfirmMedicationDoseDto dto)
+    {
+        if (!IsPatientSelfServiceActor())
+        {
+            return Forbid();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+        try
+        {
+            return Ok(await _medicationService.ConfirmDoseByPatientAsync(doseId, dto, userId));
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("doses/{doseId}/skip-by-patient")]
+    public async Task<ActionResult<MedicationDoseDto>> SkipByPatient(int doseId, [FromBody] PatientSkipMedicationDoseDto dto)
+    {
+        if (!IsPatientSelfServiceActor())
+        {
+            return Forbid();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+        try
+        {
+            return Ok(await _medicationService.SkipDoseByPatientAsync(doseId, dto, userId));
+        }
+        catch (PatientSelfServiceAccessDeniedException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("doses/{doseId}/record-by-nurse")]
+    public async Task<ActionResult<MedicationDoseDto>> RecordByNurse(int doseId, [FromBody] NurseRecordMedicationDoseDto dto)
+    {
+        if (IsPatientSelfServiceActor())
+        {
+            return Forbid();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+        try
+        {
+            var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+            if (!string.IsNullOrEmpty(restrictedCaregiverId))
+            {
+                var careRecipientId = await _medicationService.GetDoseCareRecipientIdAsync(doseId);
+                if (!careRecipientId.HasValue) return NotFound(new { error = "Dose not found" });
+
+                var patient = await _patientService.GetPatientByIdAsync(careRecipientId.Value, restrictedCaregiverId);
+                if (patient == null) return Forbid();
+            }
+
+            return Ok(await _medicationService.RecordDoseByNurseAsync(doseId, dto, userId, IsAdminLikeActor()));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("doses/{doseId}/review")]
+    public async Task<ActionResult<MedicationDoseDto>> ReviewDose(int doseId, [FromBody] ReviewMedicationDoseDto dto)
+    {
+        if (IsPatientSelfServiceActor())
+        {
+            return Forbid();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+        try
+        {
+            var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+            if (!string.IsNullOrEmpty(restrictedCaregiverId))
+            {
+                var careRecipientId = await _medicationService.GetDoseCareRecipientIdAsync(doseId);
+                if (!careRecipientId.HasValue) return NotFound(new { error = "Dose not found" });
+
+                var patient = await _patientService.GetPatientByIdAsync(careRecipientId.Value, restrictedCaregiverId);
+                if (patient == null) return Forbid();
+            }
+
+            return Ok(await _medicationService.ReviewDoseAsync(doseId, dto, userId, IsAdminLikeActor()));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("doses/{doseId}/correct")]
+    public async Task<ActionResult<MedicationDoseDto>> CorrectDose(int doseId, [FromBody] CorrectMedicationDoseDto dto)
+    {
+        if (!IsAdminLikeActor())
+        {
+            return Forbid();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+
+        try
+        {
+            return Ok(await _medicationService.CorrectDoseAsync(doseId, dto, userId));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
     }
 
     [HttpPost("doses/{doseId}/log")]

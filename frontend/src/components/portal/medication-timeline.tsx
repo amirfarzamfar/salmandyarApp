@@ -5,23 +5,43 @@ import { PortalButton } from "./ui/portal-button";
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
+  ChevronUp,
   Clock,
-  List,
+  Filter,
+  History,
   Pill,
+  Search,
+  ShieldCheck,
   Sparkles
 } from "lucide-react";
 import { CardSkeleton } from "./ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-import { useKardex, useLogDose } from "@/features/medications/hooks/useKardex";
-import { DoseStatus, MedicationDose } from "@/types/medication";
+import {
+  useConfirmDoseByPatient,
+  useDoseHistory,
+  useKardex,
+  usePatientMedicationHistory,
+  useSkipDoseByPatient,
+} from "@/features/medications/hooks/useKardex";
+import {
+  MedicationAdministrationOutcome,
+  MedicationDose,
+  MedicationTimingStatus,
+  PatientMedicationHistoryFilters,
+} from "@/types/medication";
 import { PatientSelfServiceFeatureStatus } from "@/types/patient-self-service";
-import { format, parseISO } from "date-fns";
+import { addDays, format, parseISO } from "date-fns";
 import { toast } from "react-hot-toast";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PatientMedicationList } from "@/features/medications/components/patient/PatientMedicationList";
 import { X } from "lucide-react";
 import { StockStatusBadge } from "@/features/medications/components/shared/StockStatusBadge";
+import {
+  getMedicationDoseStatusPresentation,
+  isDoseCompleted,
+  isDosePendingReview,
+} from "@/features/medications/lib/administration-ui";
 
 interface MedicationTimelineProps {
   patientId?: number;
@@ -32,50 +52,70 @@ interface MedicationTimelineProps {
 export function MedicationTimeline({ patientId, medicationAccess, highlightedDoseId }: MedicationTimelineProps) {
   const today = format(new Date(), 'yyyy-MM-dd');
   const { data: doses, isLoading } = useKardex(patientId ?? 0, today);
-  const { mutateAsync: logDose, isPending: isLoggingDose } = useLogDose();
-  const [showList, setShowList] = useState(false);
+  const { mutateAsync: confirmDose, isPending: isConfirming } = useConfirmDoseByPatient();
+  const { mutateAsync: skipDose, isPending: isSkipping } = useSkipDoseByPatient();
   const [activeDoseId, setActiveDoseId] = useState<number | null>(null);
+  const [historyDoseId, setHistoryDoseId] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<"today" | "history">("today");
+  const [showOverdue, setShowOverdue] = useState(false);
+  const [showCompleted, setShowCompleted] = useState(false);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyOutcome, setHistoryOutcome] = useState<string>("");
+  const [historyTiming, setHistoryTiming] = useState<string>("");
+  const [onlyIssues, setOnlyIssues] = useState(false);
+  const [historyFrom, setHistoryFrom] = useState(format(addDays(new Date(), -30), "yyyy-MM-dd"));
+  const [historyTo, setHistoryTo] = useState(today);
   const doseRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const { data: historyItems, isLoading: isHistoryLoading } = useDoseHistory(historyDoseId);
 
   const normalizedDoses = useMemo(() => (doses ?? []) as MedicationDose[], [doses]);
-  const now = useMemo(() => new Date(), [normalizedDoses]);
+  const now = new Date();
+  const historyFilters = useMemo<PatientMedicationHistoryFilters>(() => ({
+    from: historyFrom,
+    to: historyTo,
+    administrationOutcome: historyOutcome === "" ? undefined : Number(historyOutcome) as MedicationAdministrationOutcome,
+    timingStatus: historyTiming === "" ? undefined : Number(historyTiming) as MedicationTimingStatus,
+    onlyIssues,
+    search: historySearch.trim() || undefined,
+  }), [historyFrom, historyOutcome, historySearch, historyTiming, historyTo, onlyIssues]);
+  const { data: patientHistory, isLoading: isLoadingHistoryList } = usePatientMedicationHistory(patientId ?? 0, historyFilters);
 
-  const dueDoses = useMemo(
+  const actionableDoses = useMemo(
     () =>
       normalizedDoses.filter((dose) => {
-        if (dose.status === DoseStatus.Taken) {
+        if (isDoseCompleted(dose)) {
           return false;
         }
 
         const scheduled = parseISO(dose.scheduledTime);
-        return !Number.isNaN(scheduled.getTime()) && scheduled <= now;
+        return !Number.isNaN(scheduled.getTime()) && scheduled >= now;
       }),
     [normalizedDoses, now]
   );
 
-  const upcomingDoses = useMemo(
+  const overdueDoses = useMemo(
     () =>
       normalizedDoses.filter((dose) => {
-        if (dose.status === DoseStatus.Taken) {
+        if (isDoseCompleted(dose)) {
           return false;
         }
 
         const scheduled = parseISO(dose.scheduledTime);
-        return Number.isNaN(scheduled.getTime()) || scheduled > now;
+        return !Number.isNaN(scheduled.getTime()) && scheduled < now;
       }),
     [normalizedDoses, now]
   );
 
   const completedDoses = useMemo(
-    () => normalizedDoses.filter((dose) => dose.status === DoseStatus.Taken),
+    () => normalizedDoses.filter((dose) => isDoseCompleted(dose)),
     [normalizedDoses]
   );
 
-  const nextDose = dueDoses[0] ?? upcomingDoses[0] ?? null;
-  const completedCount = completedDoses.length;
+  const nextDose = actionableDoses[0] ?? overdueDoses[0] ?? null;
+  const completedCount = completedDoses.filter((dose) => dose.administrationOutcome === 1).length;
   const totalCount = normalizedDoses.length;
-  const dueCount = dueDoses.length;
-  const upcomingCount = upcomingDoses.length;
+  const dueCount = actionableDoses.length;
+  const overdueCount = overdueDoses.length;
   const hasImplicitSelfConfirmNotice = Boolean(medicationAccess && !medicationAccess.canSubmitNow);
 
   useEffect(() => {
@@ -97,12 +137,31 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
 
     try {
       setActiveDoseId(doseId);
-      await logDose({
+      await confirmDose({
         doseId,
-        status: DoseStatus.Taken,
-        takenAt: new Date().toISOString()
+        actualAdministrationAt: new Date().toISOString(),
       });
-      toast.success("مصرف دارو ثبت شد");
+      toast.success("مصرف دارو ثبت شد و برای پرستار قابل مشاهده است");
+    } catch (error: any) {
+      toast.error(error?.response?.data?.error || "ثبت مصرف دارو انجام نشد.");
+    } finally {
+      setActiveDoseId(null);
+    }
+  };
+
+  const handleSkipDose = async (doseId: number) => {
+    const reason = window.prompt("علت عدم مصرف را وارد کنید:");
+    if (!reason?.trim()) {
+      return;
+    }
+
+    try {
+      setActiveDoseId(doseId);
+      await skipDose({
+        doseId,
+        reason,
+      });
+      toast.success("عدم مصرف دارو ثبت شد");
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "ثبت مصرف دارو انجام نشد.");
     } finally {
@@ -135,8 +194,8 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
 
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <SummaryPill label="کل دوزها" value={totalCount.toString()} tone="slate" />
-              <SummaryPill label="نیازمند اقدام" value={dueCount.toString()} tone="amber" />
-              <SummaryPill label="در ادامه روز" value={upcomingCount.toString()} tone="blue" />
+              <SummaryPill label="منتظر مصرف" value={dueCount.toString()} tone="blue" />
+              <SummaryPill label="گذشته از زمان" value={overdueCount.toString()} tone="amber" />
               <SummaryPill label="ثبت‌شده" value={completedCount.toString()} tone="green" />
             </div>
           </div>
@@ -161,103 +220,161 @@ export function MedicationTimeline({ patientId, medicationAccess, highlightedDos
 
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => setShowList(true)}
+                onClick={() => setActiveTab("history")}
                 className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-medical-200 hover:bg-medical-50"
               >
-                <List className="h-4 w-4" />
-                لیست کامل داروها
+                <History className="h-4 w-4" />
+                تاریخچه مصرف
               </button>
               <div className="flex items-center gap-2 rounded-2xl bg-teal-50 px-4 py-3 text-sm font-medium text-teal-700">
                 <CheckCircle2 className="h-4 w-4" />
-                تایید مصرف فقط برای دوزهای موعدرسیده فعال است
+                فقط نوبت‌های منتظر مصرف در نمای اصلی نمایش داده می‌شوند
               </div>
             </div>
           </div>
         </div>
       </PortalCard>
 
-      {hasImplicitSelfConfirmNotice && (
-        <div className="rounded-3xl border border-emerald-100 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-          برای تایید مصرف داروهای موعدرسیده در این بخش، دیگر نیازی به فعال‌سازی ادمین ندارید.
-          سایر عملیات کاردکس ممکن است همچنان بر اساس تنظیمات دسترسی کنترل شوند.
-        </div>
-      )}
+      <div className="flex w-full rounded-2xl bg-white p-1 shadow-sm ring-1 ring-slate-100">
+        <button
+          type="button"
+          onClick={() => setActiveTab("today")}
+          className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition ${activeTab === "today" ? "bg-medical-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+        >
+          امروز
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("history")}
+          className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition ${activeTab === "history" ? "bg-medical-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}
+        >
+          تاریخچه مصرف
+        </button>
+      </div>
 
-      {!normalizedDoses.length ? (
+     
+
+      {activeTab === "today" && !normalizedDoses.length ? (
         <PortalCard className="border border-dashed border-slate-200 bg-slate-50/70 text-center">
           <div className="py-6 text-slate-500">امروز هیچ دارویی برای شما برنامه‌ریزی نشده است.</div>
         </PortalCard>
-      ) : (
+      ) : activeTab === "today" ? (
         <div className="space-y-5">
           <DoseSection
-            title="الان باید انجام شود"
-            description="داروهایی که زمان مصرفشان رسیده و آماده تایید هستند."
-            tone="amber"
-            doses={dueDoses}
-            highlightedDoseId={highlightedDoseId}
-            activeDoseId={activeDoseId}
-            isLoggingDose={isLoggingDose}
-            doseRefs={doseRefs}
-            onTakeMed={handleTakeMed}
-          />
-
-          <DoseSection
-            title="در ادامه امروز"
-            description="دوزهای بعدی که هنوز زمان مصرفشان نرسیده است."
+            title="نوبت‌های در انتظار امروز"
+            description="فقط داروهایی که هنوز زمان مصرفشان نرسیده یا در صف مصرف امروز هستند."
             tone="blue"
-            doses={upcomingDoses}
+            doses={actionableDoses}
+            emptyMessage="در حال حاضر نوبت بازی برای ادامه روز ندارید."
             highlightedDoseId={highlightedDoseId}
             activeDoseId={activeDoseId}
-            isLoggingDose={isLoggingDose}
+            isLoadingAction={isConfirming || isSkipping}
             doseRefs={doseRefs}
             onTakeMed={handleTakeMed}
+            onSkipDose={handleSkipDose}
+            onOpenHistory={setHistoryDoseId}
           />
 
-          <DoseSection
-            title="ثبت‌شده‌های امروز"
-            description="داروهایی که مصرفشان برای امروز ثبت شده است."
+          <CollapsibleDoseSection
+            title="گذشته از زمان مصرف"
+            description="نوبت‌هایی که زمان مصرفشان گذشته است."
+            tone="amber"
+            doses={overdueDoses}
+            isOpen={showOverdue}
+            onToggle={() => setShowOverdue((value) => !value)}
+            highlightedDoseId={highlightedDoseId}
+            activeDoseId={activeDoseId}
+            isLoadingAction={isConfirming || isSkipping}
+            doseRefs={doseRefs}
+            onTakeMed={handleTakeMed}
+            onSkipDose={handleSkipDose}
+            onOpenHistory={setHistoryDoseId}
+          />
+
+          <CollapsibleDoseSection
+            title="مصرف‌شده‌ها و ثبت‌های امروز"
+            description="نوبت‌های ثبت‌شده امروز ."
             tone="green"
             doses={completedDoses}
+            isOpen={showCompleted}
+            onToggle={() => setShowCompleted((value) => !value)}
             highlightedDoseId={highlightedDoseId}
             activeDoseId={activeDoseId}
-            isLoggingDose={isLoggingDose}
+            isLoadingAction={isConfirming || isSkipping}
             doseRefs={doseRefs}
             onTakeMed={handleTakeMed}
+            onSkipDose={handleSkipDose}
+            onOpenHistory={setHistoryDoseId}
           />
         </div>
+      ) : (
+        <MedicationHistoryPanel
+          doses={(patientHistory ?? []) as MedicationDose[]}
+          isLoading={isLoadingHistoryList}
+          filters={historyFilters}
+          onChangeSearch={setHistorySearch}
+          onChangeOutcome={setHistoryOutcome}
+          onChangeTiming={setHistoryTiming}
+          onChangeOnlyIssues={setOnlyIssues}
+          onChangeFrom={setHistoryFrom}
+          onChangeTo={setHistoryTo}
+          onOpenHistory={setHistoryDoseId}
+        />
       )}
 
-      {/* Full List Modal */}
       <AnimatePresence>
-        {showList && (
+        {historyDoseId && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+            onClick={() => setHistoryDoseId(null)}
+          >
             <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-                onClick={() => setShowList(false)}
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              className="w-full max-w-2xl rounded-[2rem] bg-white p-6"
+              onClick={(event) => event.stopPropagation()}
             >
-                <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.95, opacity: 0 }}
-                    className="w-full max-w-2xl bg-white rounded-[2rem] p-6 max-h-[85vh] overflow-y-auto"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-gray-800">لیست کامل داروها</h3>
-                        <button onClick={() => setShowList(false)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200">
-                            <X className="w-5 h-5 text-gray-500" />
-                        </button>
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900">تاریخچه ثبت این نوبت</h3>
+                  <p className="mt-1 text-sm text-slate-500">همه تغییرات، تاییدها و اصلاح‌ها در این بخش ثبت می‌شود.</p>
+                </div>
+                <button onClick={() => setHistoryDoseId(null)} className="rounded-full bg-slate-100 p-2 text-slate-500">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {isHistoryLoading ? (
+                <div className="py-10 text-center text-slate-500">در حال دریافت تاریخچه...</div>
+              ) : !historyItems?.length ? (
+                <div className="rounded-3xl border border-dashed border-slate-200 px-5 py-8 text-center text-slate-500">
+                  هنوز سابقه‌ای برای این نوبت ثبت نشده است.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {historyItems.map((item) => (
+                    <div key={item.id} className="rounded-3xl border border-slate-200 p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-bold text-slate-900">{item.action}</div>
+                        <div className="text-xs text-slate-500">
+                          {new Date(item.changedAtUtc).toLocaleString('fa-IR')}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-sm text-slate-600">
+                        توسط: {item.changedByName || 'سیستم'}
+                      </div>
+                      {item.reason && <div className="mt-2 text-sm text-slate-700">دلیل: {item.reason}</div>}
+                      {item.notes && <div className="mt-1 text-sm text-slate-700">یادداشت: {item.notes}</div>}
                     </div>
-                    <PatientMedicationList
-                      patientId={patientId}
-                      allowEdit={Boolean(medicationAccess?.canSubmitNow)}
-                      allowDelete={false}
-                      allowInventoryManagement={false}
-                    />
-                </motion.div>
+                  ))}
+                </div>
+              )}
             </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
@@ -269,11 +386,15 @@ interface DoseSectionProps {
   description: string;
   tone: "amber" | "blue" | "green";
   doses: MedicationDose[];
+  emptyMessage?: string;
+  hideHeader?: boolean;
   highlightedDoseId?: number | null;
   activeDoseId: number | null;
-  isLoggingDose: boolean;
+  isLoadingAction: boolean;
   doseRefs: React.MutableRefObject<Record<number, HTMLDivElement | null>>;
   onTakeMed: (doseId: number, scheduledTime?: string) => void | Promise<void>;
+  onSkipDose: (doseId: number) => void | Promise<void>;
+  onOpenHistory: (doseId: number) => void;
 }
 
 function DoseSection({
@@ -281,11 +402,15 @@ function DoseSection({
   description,
   tone,
   doses,
+  emptyMessage,
+  hideHeader,
   highlightedDoseId,
   activeDoseId,
-  isLoggingDose,
+  isLoadingAction,
   doseRefs,
-  onTakeMed
+  onTakeMed,
+  onSkipDose,
+  onOpenHistory
 }: DoseSectionProps) {
   const toneClasses = {
     amber: {
@@ -307,29 +432,33 @@ function DoseSection({
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-col gap-2 px-1 md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-slate-900">{title}</h3>
-            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${toneClasses.badge}`}>
-              {doses.length} مورد
-            </span>
+      {!hideHeader ? (
+        <div className="flex flex-col gap-2 px-1 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+              <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${toneClasses.badge}`}>
+                {doses.length} مورد
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-slate-500">{description}</p>
           </div>
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
         </div>
-      </div>
+      ) : null}
 
       {doses.length === 0 ? (
         <div className={`rounded-3xl border border-dashed bg-white px-5 py-6 text-sm text-slate-500 ${toneClasses.border}`}>
-          موردی در این بخش وجود ندارد.
+          {emptyMessage ?? "موردی در این بخش وجود ندارد."}
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           {doses.map((dose) => {
             const scheduled = parseISO(dose.scheduledTime);
-            const isEarly = dose.status !== DoseStatus.Taken && !Number.isNaN(scheduled.getTime()) && new Date() < scheduled;
-            const isTaken = dose.status === DoseStatus.Taken;
-            const isBusy = isLoggingDose && activeDoseId === dose.id;
+            const isEarly = !isDoseCompleted(dose) && !Number.isNaN(scheduled.getTime()) && new Date() < scheduled;
+            const isCompleted = isDoseCompleted(dose);
+            const isBusy = isLoadingAction && activeDoseId === dose.id;
+            const statusPresentation = getMedicationDoseStatusPresentation(dose);
+            const pendingReview = isDosePendingReview(dose);
 
             return (
               <div
@@ -340,7 +469,7 @@ function DoseSection({
                 className={dose.id === highlightedDoseId ? "rounded-[36px] ring-2 ring-red-400 ring-offset-4 ring-offset-white" : ""}
               >
                 <PortalCard
-                  variant={isTaken ? "calm" : "default"}
+                  variant={isCompleted ? "calm" : "default"}
                   className="h-full border border-slate-100 bg-white/95"
                   noPadding
                 >
@@ -352,10 +481,12 @@ function DoseSection({
                         </div>
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h4 className={`text-lg font-bold ${isTaken ? "text-slate-500 line-through decoration-2 decoration-emerald-400" : "text-slate-900"}`}>
+                            <h4 className={`text-lg font-bold ${isCompleted ? "text-slate-500" : "text-slate-900"}`}>
                               {dose.medicationName}
                             </h4>
-                            <StatusBadge dose={dose} />
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusPresentation.className}`}>
+                              {statusPresentation.label}
+                            </span>
                           </div>
                           <p className="mt-1 text-sm text-slate-500">
                             {dose.dosage} - {dose.route}
@@ -363,7 +494,7 @@ function DoseSection({
                         </div>
                       </div>
 
-                      {isTaken ? (
+                      {isCompleted ? (
                         <div className="rounded-full bg-emerald-500 p-1.5 text-white">
                           <CheckCircle2 className="h-5 w-5" />
                         </div>
@@ -382,10 +513,17 @@ function DoseSection({
                       />
                       <InfoTile
                         label="وضعیت ثبت"
-                        value={isTaken ? "مصرف ثبت شده" : isEarly ? "هنوز زمان نرسیده" : "آماده تایید"}
+                        value={pendingReview ? "در انتظار تأیید پرستار" : isCompleted ? statusPresentation.label : isEarly ? "هنوز زمان نرسیده" : "آماده تایید"}
                         icon={<AlertCircle className="h-4 w-4" />}
                       />
                     </div>
+
+                    {dose.recordedByName && (
+                      <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                        ثبت‌کننده: {dose.recordedByName}
+                        {dose.verifiedByName ? ` - تأیید: ${dose.verifiedByName}` : ''}
+                      </div>
+                    )}
 
                     {(dose.instructions || dose.currentQuantity >= 0) && (
                       <div className="rounded-3xl border border-slate-100 bg-slate-50/80 p-4">
@@ -406,19 +544,47 @@ function DoseSection({
                       </div>
                     )}
 
-                    <PortalButton
-                      variant={isTaken ? "calm" : "primary"}
-                      onClick={() => void onTakeMed(dose.id, dose.scheduledTime)}
-                      disabled={isTaken || isEarly || isBusy}
-                      isLoading={isBusy}
-                      className="w-full shadow-none"
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <PortalButton
+                        variant={isCompleted ? "calm" : "primary"}
+                        onClick={() => void onTakeMed(dose.id, dose.scheduledTime)}
+                        disabled={isCompleted || isEarly || isBusy}
+                        isLoading={isBusy}
+                        className="w-full shadow-none"
+                      >
+                        {isCompleted ? "برای امروز ثبت شده" : isEarly ? "هنوز زمانش نرسیده" : "تایید مصرف"}
+                      </PortalButton>
+                      <PortalButton
+                        variant="outline"
+                        onClick={() => void onSkipDose(dose.id)}
+                        disabled={isCompleted || isEarly || isBusy}
+                        className="w-full shadow-none"
+                      >
+                        مصرف نکردم
+                      </PortalButton>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => onOpenHistory(dose.id)}
+                      className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                     >
-                      {isTaken ? "برای امروز ثبت شده" : isEarly ? "هنوز زمانش نرسیده" : "تایید مصرف این دارو"}
-                    </PortalButton>
+                      <History className="h-4 w-4" />
+                      مشاهده تاریخچه
+                    </button>
 
                     {isEarly && (
                       <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
                         هنوز زمان مصرف این دارو نرسیده است.
+                      </div>
+                    )}
+
+                    {pendingReview && (
+                      <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="h-4 w-4" />
+                          ثبت شما انجام شده و منتظر بررسی تیم درمان است.
+                        </div>
                       </div>
                     )}
                   </div>
@@ -429,6 +595,177 @@ function DoseSection({
         </div>
       )}
     </section>
+  );
+}
+
+function CollapsibleDoseSection(props: DoseSectionProps & { isOpen: boolean; onToggle: () => void }) {
+  const { title, description, doses, isOpen, onToggle, tone, ...rest } = props;
+
+  return (
+    <section className="space-y-3">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between rounded-3xl border border-slate-200 bg-white px-5 py-4 text-right shadow-sm transition hover:bg-slate-50"
+      >
+        <div>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
+              {doses.length} مورد
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-slate-500">{description}</p>
+        </div>
+        {isOpen ? <ChevronUp className="h-5 w-5 text-slate-500" /> : <ChevronDown className="h-5 w-5 text-slate-500" />}
+      </button>
+
+      {isOpen ? <DoseSection title={title} description={description} tone={tone} doses={doses} hideHeader {...rest} /> : null}
+    </section>
+  );
+}
+
+function MedicationHistoryPanel({
+  doses,
+  isLoading,
+  filters,
+  onChangeSearch,
+  onChangeOutcome,
+  onChangeTiming,
+  onChangeOnlyIssues,
+  onChangeFrom,
+  onChangeTo,
+  onOpenHistory,
+}: {
+  doses: MedicationDose[];
+  isLoading: boolean;
+  filters: PatientMedicationHistoryFilters;
+  onChangeSearch: (value: string) => void;
+  onChangeOutcome: (value: string) => void;
+  onChangeTiming: (value: string) => void;
+  onChangeOnlyIssues: (value: boolean) => void;
+  onChangeFrom: (value: string) => void;
+  onChangeTo: (value: string) => void;
+  onOpenHistory: (doseId: number) => void;
+}) {
+  return (
+    <div className="space-y-5">
+      <PortalCard className="bg-white">
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-medical-600" />
+            <h3 className="text-lg font-bold text-slate-900">فیلتر تاریخچه مصرف</h3>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            <input
+              type="date"
+              value={filters.from ?? ""}
+              onChange={(event) => onChangeFrom(event.target.value)}
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-medical-400"
+            />
+            <input
+              type="date"
+              value={filters.to ?? ""}
+              onChange={(event) => onChangeTo(event.target.value)}
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-medical-400"
+            />
+            <div className="relative">
+              <Search className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={filters.search ?? ""}
+                onChange={(event) => onChangeSearch(event.target.value)}
+                placeholder="جستجو در نام دارو یا علت عدم مصرف"
+                className="w-full rounded-2xl border border-slate-200 py-3 pr-10 pl-4 outline-none focus:border-medical-400"
+              />
+            </div>
+            <select
+              value={filters.administrationOutcome ?? ""}
+              onChange={(event) => onChangeOutcome(event.target.value)}
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-medical-400"
+            >
+              <option value="">همه وضعیت‌های مصرف</option>
+              <option value={MedicationAdministrationOutcome.Taken}>مصرف شده</option>
+              <option value={MedicationAdministrationOutcome.Missed}>فراموش شده</option>
+              <option value={MedicationAdministrationOutcome.SkippedByPatient}>مصرف نکردم</option>
+            </select>
+            <select
+              value={filters.timingStatus ?? ""}
+              onChange={(event) => onChangeTiming(event.target.value)}
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-medical-400"
+            >
+              <option value="">همه وضعیت‌های زمانی</option>
+              <option value={MedicationTimingStatus.OnTime}>به‌موقع</option>
+              <option value={MedicationTimingStatus.Late}>با تأخیر</option>
+              <option value={MedicationTimingStatus.Missed}>Missed</option>
+            </select>
+            <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={Boolean(filters.onlyIssues)}
+                onChange={(event) => onChangeOnlyIssues(event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              فقط موارد مسئله‌دار
+            </label>
+          </div>
+        </div>
+      </PortalCard>
+
+      {isLoading ? (
+        <CardSkeleton />
+      ) : !doses.length ? (
+        <PortalCard className="border border-dashed border-slate-200 bg-slate-50/70 text-center">
+          <div className="py-8 text-slate-500">موردی برای تاریخچه مصرف با این فیلترها پیدا نشد.</div>
+        </PortalCard>
+      ) : (
+        <div className="space-y-3">
+          {doses.map((dose) => {
+            const statusPresentation = getMedicationDoseStatusPresentation(dose);
+
+            return (
+              <PortalCard key={dose.id} className="bg-white">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-lg font-bold text-slate-900">{dose.medicationName}</h4>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${statusPresentation.className}`}>
+                        {statusPresentation.label}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                      <span>زمان برنامه‌ریزی: {new Date(dose.scheduledTime).toLocaleString("fa-IR")}</span>
+                      {dose.actualAdministrationAt ? (
+                        <span>زمان ثبت: {new Date(dose.actualAdministrationAt).toLocaleString("fa-IR")}</span>
+                      ) : null}
+                      {typeof dose.delayMinutes === "number" ? <span>تاخیر: {dose.delayMinutes} دقیقه</span> : null}
+                    </div>
+                    {(dose.missedReason || dose.patientComment || dose.notes || dose.clinicalNotes) && (
+                      <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        {dose.missedReason ? <div>علت عدم مصرف: {dose.missedReason}</div> : null}
+                        {dose.patientComment ? <div>توضیح بیمار: {dose.patientComment}</div> : null}
+                        {dose.notes ? <div>یادداشت: {dose.notes}</div> : null}
+                        {dose.clinicalNotes ? <div>یادداشت بالینی: {dose.clinicalNotes}</div> : null}
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => onOpenHistory(dose.id)}
+                    className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                  >
+                    <History className="h-4 w-4" />
+                    جزئیات و تاریخچه نوبت
+                  </button>
+                </div>
+              </PortalCard>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -473,23 +810,6 @@ function InfoTile({
       </div>
       <div className="mt-2 text-base font-bold text-slate-900">{value}</div>
     </div>
-  );
-}
-
-function StatusBadge({ dose }: { dose: MedicationDose }) {
-  const config =
-    dose.status === DoseStatus.Taken
-      ? { label: "ثبت شده", className: "bg-emerald-100 text-emerald-700" }
-      : dose.status === DoseStatus.Late
-        ? { label: "با تاخیر", className: "bg-rose-100 text-rose-700" }
-        : dose.status === DoseStatus.Due
-          ? { label: "موعد رسیده", className: "bg-amber-100 text-amber-700" }
-          : { label: "برنامه‌ریزی شده", className: "bg-sky-100 text-sky-700" };
-
-  return (
-    <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${config.className}`}>
-      {config.label}
-    </span>
   );
 }
 

@@ -19,6 +19,40 @@ public enum DoseStatus
     Skipped = 6
 }
 
+public enum MedicationAdministrationOutcome
+{
+    Unknown = 0,
+    Taken = 1,
+    Missed = 2,
+    SkippedByPatient = 3,
+    NotApplicable = 4
+}
+
+public enum MedicationTimingStatus
+{
+    Unknown = 0,
+    OnTime = 1,
+    Late = 2,
+    Missed = 3
+}
+
+public enum MedicationVerificationStatus
+{
+    Pending = 0,
+    ConfirmedByNurse = 1,
+    CorrectedByAdmin = 2,
+    RejectedByNurse = 3
+}
+
+public enum MedicationAdministrationSourceType
+{
+    Unknown = 0,
+    Patient = 1,
+    Nurse = 2,
+    System = 3,
+    Admin = 4
+}
+
 public enum SideEffectSeverity
 {
     None = 0,

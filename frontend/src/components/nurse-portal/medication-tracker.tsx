@@ -63,7 +63,7 @@ export function MedicationTracker({ patientId }: { patientId: number }) {
 
       <div className="bg-gray-50/50 rounded-3xl p-1 border border-dashed border-gray-200">
           {activeTab === 'schedule' ? (
-            <KardexTimeline patientId={patientId} />
+            <KardexTimeline patientId={patientId} mode="staff" />
           ) : (
             <div className="p-4">
                 <PatientMedicationList patientId={patientId} />

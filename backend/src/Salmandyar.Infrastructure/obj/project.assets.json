@@ -1271,11 +1271,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\Salmandyar.Infrastructure.csproj",
+      "projectUniqueName": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\Salmandyar.Infrastructure.csproj",
       "projectName": "Salmandyar.Infrastructure",
-      "projectPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\Salmandyar.Infrastructure.csproj",
+      "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\Salmandyar.Infrastructure.csproj",
       "packagesPath": "C:\\Users\\amirFarzam\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\obj\\",
+      "outputPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\amirFarzam\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -1290,11 +1290,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj": {
-              "projectPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj"
+            "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj": {
+              "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Application\\Salmandyar.Application.csproj"
             },
-            "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj": {
-              "projectPath": "c:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj"
+            "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj": {
+              "projectPath": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.Domain\\Salmandyar.Domain.csproj"
             }
           }
         }

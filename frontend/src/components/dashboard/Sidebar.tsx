@@ -13,6 +13,7 @@ const navigation = [
   { name: 'مدیریت کاربران', href: '/dashboard/admin/users', icon: Users },
   { name: 'دسترسی ثبت اطلاعات', href: '/dashboard/admin/users?selfService=1', icon: ShieldCheck },
   { name: 'مدیریت شیفت‌ها', href: '/dashboard/admin/shifts', icon: Clock },
+  { name: 'پایش مصرف دارو', href: '/dashboard/admin/medication-administration', icon: BarChart2 },
   { name: 'پیکربندی گزارشات', href: '/dashboard/admin/report-config', icon: Settings },
   { 
     name: 'مدیریت آزمون‌ها', 

@@ -728,14 +728,38 @@ namespace Salmandyar.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("ActualAdministrationAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("AdministrationOutcome")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AdministrationWindowMinutesSnapshot")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("AllowedConfirmationUntil")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("AppliedInventoryQuantity")
                         .HasColumnType("integer");
 
                     b.Property<string>("AttachmentPath")
                         .HasColumnType("text");
 
+                    b.Property<string>("ClinicalNotes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CorrectedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CorrectionReason")
+                        .HasColumnType("text");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DelayMinutes")
+                        .HasColumnType("integer");
 
                     b.Property<int>("EscalationLevel")
                         .HasColumnType("integer");
@@ -752,7 +776,19 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
+                    b.Property<string>("PatientComment")
+                        .HasColumnType("text");
+
                     b.Property<int>("PatientMedicationId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RecordedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("RecordedShiftSlot")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ScheduledShiftSlot")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("ScheduledTime")
@@ -764,6 +800,9 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<int>("SideEffectSeverity")
                         .HasColumnType("integer");
 
+                    b.Property<int>("SourceType")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -773,16 +812,98 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<string>("TakenByUserId")
                         .HasColumnType("text");
 
+                    b.Property<int>("TimingStatus")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<int>("VerificationStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("VerifiedByUserId")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("PatientMedicationId");
+                    b.HasIndex("CorrectedByUserId");
+
+                    b.HasIndex("RecordedByUserId");
 
                     b.HasIndex("TakenByUserId");
 
+                    b.HasIndex("VerifiedByUserId");
+
+                    b.HasIndex("PatientMedicationId", "ScheduledTime")
+                        .IsUnique();
+
                     b.ToTable("MedicationDoses", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationDoseStatusHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChangedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("FromAdministrationOutcome")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FromStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FromTimingStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FromVerificationStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MedicationDoseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .HasColumnType("text");
+
+                    b.Property<int>("SourceType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ToAdministrationOutcome")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ToStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ToTimingStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ToVerificationStatus")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedByUserId");
+
+                    b.HasIndex("MedicationDoseId", "ChangedAtUtc");
+
+                    b.ToTable("MedicationDoseStatusHistories", (string)null);
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationInventoryTransaction", b =>
@@ -2553,20 +2674,59 @@ namespace Salmandyar.Infrastructure.Migrations
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationDose", b =>
                 {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "CorrectedByUser")
+                        .WithMany()
+                        .HasForeignKey("CorrectedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Salmandyar.Domain.Entities.Medications.PatientMedication", "PatientMedication")
                         .WithMany("Doses")
                         .HasForeignKey("PatientMedicationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Salmandyar.Domain.Entities.User", "RecordedByUser")
+                        .WithMany()
+                        .HasForeignKey("RecordedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Salmandyar.Domain.Entities.User", "TakenByUser")
                         .WithMany()
                         .HasForeignKey("TakenByUserId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Salmandyar.Domain.Entities.User", "VerifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("VerifiedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CorrectedByUser");
+
                     b.Navigation("PatientMedication");
 
+                    b.Navigation("RecordedByUser");
+
                     b.Navigation("TakenByUser");
+
+                    b.Navigation("VerifiedByUser");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationDoseStatusHistory", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "ChangedByUser")
+                        .WithMany()
+                        .HasForeignKey("ChangedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.Medications.MedicationDose", "MedicationDose")
+                        .WithMany("StatusHistories")
+                        .HasForeignKey("MedicationDoseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ChangedByUser");
+
+                    b.Navigation("MedicationDose");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationInventoryTransaction", b =>
@@ -2969,6 +3129,11 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("SelfServiceAccessPolicy");
 
                     b.Navigation("VitalSigns");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationDose", b =>
+                {
+                    b.Navigation("StatusHistories");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.PatientMedication", b =>

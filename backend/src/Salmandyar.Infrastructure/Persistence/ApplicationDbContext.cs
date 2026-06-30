@@ -54,6 +54,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     // Medication Module
     public DbSet<PatientMedication> PatientMedications { get; set; }
     public DbSet<MedicationDose> MedicationDoses { get; set; }
+    public DbSet<MedicationDoseStatusHistory> MedicationDoseStatusHistories { get; set; }
     public DbSet<MedicationInventoryTransaction> MedicationInventoryTransactions { get; set; }
     public DbSet<MedicationAlertHistory> MedicationAlertHistories { get; set; }
 
@@ -480,6 +481,18 @@ public class ApplicationDbContext : IdentityDbContext<User>
                 v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
                 v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
 
+        builder.Entity<MedicationDose>()
+            .Property(d => d.AllowedConfirmationUntil)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<MedicationDose>()
+            .Property(d => d.ActualAdministrationAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
         builder.Entity<PatientMedication>()
             .HasOne(m => m.CareRecipient)
             .WithMany()
@@ -497,6 +510,49 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(d => d.TakenByUserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<MedicationDose>()
+            .HasOne(d => d.RecordedByUser)
+            .WithMany()
+            .HasForeignKey(d => d.RecordedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<MedicationDose>()
+            .HasOne(d => d.VerifiedByUser)
+            .WithMany()
+            .HasForeignKey(d => d.VerifiedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<MedicationDose>()
+            .HasOne(d => d.CorrectedByUser)
+            .WithMany()
+            .HasForeignKey(d => d.CorrectedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<MedicationDose>()
+            .HasIndex(d => new { d.PatientMedicationId, d.ScheduledTime })
+            .IsUnique();
+
+        builder.Entity<MedicationDoseStatusHistory>().ToTable("MedicationDoseStatusHistories");
+
+        builder.Entity<MedicationDoseStatusHistory>()
+            .Property(h => h.ChangedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<MedicationDoseStatusHistory>()
+            .HasOne(h => h.MedicationDose)
+            .WithMany(d => d.StatusHistories)
+            .HasForeignKey(h => h.MedicationDoseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<MedicationDoseStatusHistory>()
+            .HasOne(h => h.ChangedByUser)
+            .WithMany()
+            .HasForeignKey(h => h.ChangedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<MedicationDoseStatusHistory>()
+            .HasIndex(h => new { h.MedicationDoseId, h.ChangedAtUtc });
 
         builder.Entity<MedicationInventoryTransaction>().ToTable("MedicationInventoryTransactions");
         builder.Entity<MedicationInventoryTransaction>()
