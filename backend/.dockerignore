@@ -1,0 +1,11 @@
+.git
+.vs
+artifacts
+**/bin
+**/obj
+**/.idea
+**/.vscode
+**/*.user
+**/*.suo
+**/*.ncrunch*
+README.md

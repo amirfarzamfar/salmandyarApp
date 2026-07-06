@@ -34,11 +34,15 @@ export const authService = {
     const response = await api.put('/auth/profile', data);
     return response.data;
   },
-  logout: () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    sessionStorage.removeItem('token');
-    sessionStorage.removeItem('user');
+  logout: async () => {
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+    }
   },
   getToken: () => {
     if (typeof window !== 'undefined') {

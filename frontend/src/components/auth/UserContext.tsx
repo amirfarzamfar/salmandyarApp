@@ -3,18 +3,19 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { AuthResponse } from '@/types/auth';
 import { useRouter } from 'next/navigation';
+import { authService } from '@/services/auth.service';
 
 interface UserContextType {
   user: AuthResponse | null;
   loading: boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => void;
 }
 
 const UserContext = createContext<UserContextType>({
   user: null,
   loading: true,
-  logout: () => {},
+  logout: async () => {},
   refreshUser: () => {},
 });
 
@@ -51,11 +52,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('user');
-    sessionStorage.removeItem('token');
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
     router.push('/login');
   };

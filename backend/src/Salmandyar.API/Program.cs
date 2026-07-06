@@ -101,6 +101,7 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
+var enableHttpsRedirection = builder.Configuration.GetValue("Networking:EnableHttpsRedirection", !app.Environment.IsDevelopment());
 
 var supportedCultures = new[]
 {
@@ -151,7 +152,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseForwardedHeaders();
-app.UseHttpsRedirection();
+
+if (enableHttpsRedirection)
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseStaticFiles();
 

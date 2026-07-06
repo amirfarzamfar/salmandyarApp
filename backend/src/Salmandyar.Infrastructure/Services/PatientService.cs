@@ -13,6 +13,8 @@ namespace Salmandyar.Infrastructure.Services;
 
 public class PatientService : IPatientService
 {
+    private sealed record ActiveCaregiverContact(string CaregiverId, string CaregiverName, string? PhoneNumber);
+
     private readonly ApplicationDbContext _context;
     private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
     private readonly IUserNotificationService _userNotificationService;
@@ -166,6 +168,27 @@ public class PatientService : IPatientService
             _context.CareRecipients.Add(entity);
             await _context.SaveChangesAsync();
         }
+    }
+
+    public async Task<CurrentShiftNurseContactDto?> GetCurrentShiftNurseContactAsync(int patientId, string? caregiverId = null)
+    {
+        var patient = await GetPatientByIdAsync(patientId, caregiverId);
+        if (patient == null)
+        {
+            return null;
+        }
+
+        var activeCaregiverByPatientId = await GetActiveCaregiverContactsByPatientIdsAsync(new List<int> { patientId });
+        if (!activeCaregiverByPatientId.TryGetValue(patientId, out var caregiver))
+        {
+            return null;
+        }
+
+        return new CurrentShiftNurseContactDto(
+            caregiver.CaregiverId,
+            caregiver.CaregiverName,
+            caregiver.PhoneNumber
+        );
     }
 
     public async Task<PatientDto> CreatePatientAsync(CreatePatientDto dto)
@@ -914,7 +937,16 @@ public class PatientService : IPatientService
 
     private async Task<Dictionary<int, (string CaregiverId, string CaregiverName)>> GetActiveCaregiversByPatientIdsAsync(List<int> patientIds)
     {
-        if (patientIds.Count == 0) return new Dictionary<int, (string CaregiverId, string CaregiverName)>();
+        var contacts = await GetActiveCaregiverContactsByPatientIdsAsync(patientIds);
+        return contacts.ToDictionary(
+            x => x.Key,
+            x => (x.Value.CaregiverId, x.Value.CaregiverName)
+        );
+    }
+
+    private async Task<Dictionary<int, ActiveCaregiverContact>> GetActiveCaregiverContactsByPatientIdsAsync(List<int> patientIds)
+    {
+        if (patientIds.Count == 0) return new Dictionary<int, ActiveCaregiverContact>();
 
         var nowUtc = DateTimeOffset.UtcNow;
         var iranTz = ResolveIranTimeZone();
@@ -938,19 +970,23 @@ public class PatientService : IPatientService
 
         var caregivers = await _context.Users
             .Where(u => caregiverIds.Contains(u.Id))
-            .Select(u => new { u.Id, u.FirstName, u.LastName })
+            .Select(u => new { u.Id, u.FirstName, u.LastName, u.PhoneNumber })
             .ToListAsync();
 
-        var caregiverNameById = caregivers.ToDictionary(
+        var caregiverById = caregivers.ToDictionary(
             x => x.Id,
-            x => $"{x.FirstName} {x.LastName}"
+            x => new ActiveCaregiverContact(
+                x.Id,
+                $"{x.FirstName} {x.LastName}",
+                x.PhoneNumber
+            )
         );
 
         return validAssignments
-            .Where(x => caregiverNameById.ContainsKey(x.CaregiverId))
+            .Where(x => caregiverById.ContainsKey(x.CaregiverId))
             .ToDictionary(
                 x => x.PatientId,
-                x => (x.CaregiverId, caregiverNameById[x.CaregiverId])
+                x => caregiverById[x.CaregiverId]
             );
     }
 

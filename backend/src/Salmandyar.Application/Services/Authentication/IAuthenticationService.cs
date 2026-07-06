@@ -6,6 +6,7 @@ public interface IAuthenticationService
 {
     Task<AuthenticationResponse> RegisterAsync(RegisterRequest request);
     Task<AuthenticationResponse> LoginAsync(LoginRequest request);
+    Task LogoutAsync(string userId);
     Task RequestOtpLoginAsync(RequestOtpLoginRequest request);
     Task<AuthenticationResponse> VerifyOtpLoginAsync(VerifyOtpLoginRequest request);
     Task ChangePasswordAsync(ChangePasswordRequest request);

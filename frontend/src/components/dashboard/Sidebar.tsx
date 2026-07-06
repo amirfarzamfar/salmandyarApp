@@ -64,8 +64,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const toggleSubMenu = (name: string) => {
     setOpenSubMenus(prev => ({ ...prev, [name]: !prev[name] }));
   };
-  const handleLogout = () => {
-    authService.logout();
+  const handleLogout = async () => {
+    await authService.logout();
     onClose();
     router.push('/login');
   };

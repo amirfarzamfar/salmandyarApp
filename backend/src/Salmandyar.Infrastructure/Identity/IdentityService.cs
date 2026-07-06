@@ -8,10 +8,12 @@ namespace Salmandyar.Infrastructure.Identity;
 public class IdentityService : IIdentityService
 {
     private readonly UserManager<User> _userManager;
+    private readonly RoleManager<IdentityRole> _roleManager;
 
-    public IdentityService(UserManager<User> userManager)
+    public IdentityService(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
     {
         _userManager = userManager;
+        _roleManager = roleManager;
     }
 
     public async Task<(bool Success, string[] Errors)> CreateUserAsync(User user, string password, string role)
@@ -20,6 +22,15 @@ public class IdentityService : IIdentityService
         if (!result.Succeeded)
         {
             return (false, result.Errors.Select(e => e.Description).ToArray());
+        }
+
+        if (!await _roleManager.RoleExistsAsync(role))
+        {
+            var createRoleResult = await _roleManager.CreateAsync(new IdentityRole(role));
+            if (!createRoleResult.Succeeded)
+            {
+                return (false, createRoleResult.Errors.Select(e => e.Description).ToArray());
+            }
         }
 
         var roleResult = await _userManager.AddToRoleAsync(user, role);
@@ -49,6 +60,15 @@ public class IdentityService : IIdentityService
     public async Task<User?> GetUserByIdAsync(string userId)
     {
         return await _userManager.FindByIdAsync(userId);
+    }
+
+    public async Task InvalidateUserSessionsAsync(User user)
+    {
+        var result = await _userManager.UpdateSecurityStampAsync(user);
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(string.Join(", ", result.Errors.Select(e => e.Description)));
+        }
     }
 
     public async Task<bool> CheckPasswordAsync(User user, string password)

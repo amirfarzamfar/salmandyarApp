@@ -1,0 +1,121 @@
+name: ${COMPOSE_PROJECT_NAME:-salmandyar}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  migrations:
+    build:
+      context: ./backend
+      dockerfile: src/Salmandyar.API/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      JwtSettings__Secret: ${JWT_SECRET}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+    entrypoint:
+      - /app/efbundle
+    command:
+      - --connection
+      - Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+    restart: "no"
+    profiles:
+      - tools
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: src/Salmandyar.API/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      JwtSettings__Secret: ${JWT_SECRET}
+      JwtSettings__Issuer: ${JWT_ISSUER}
+      JwtSettings__Audience: ${JWT_AUDIENCE}
+      Database__ApplyMigrationsOnStartup: ${DB_APPLY_MIGRATIONS:-false}
+      Database__SeedRolesOnStartup: ${DB_SEED_ROLES:-false}
+      Database__SeedAdminUserOnStartup: ${DB_SEED_ADMIN_USER:-false}
+      Database__SeedSampleDataOnStartup: ${DB_SEED_SAMPLE_DATA:-false}
+      Database__AdminUser__Email: ${ADMIN_EMAIL:-}
+      Database__AdminUser__PhoneNumber: ${ADMIN_PHONE_NUMBER:-}
+      Database__AdminUser__Password: ${ADMIN_PASSWORD:-}
+      Database__AdminUser__FirstName: ${ADMIN_FIRST_NAME:-مدیر}
+      Database__AdminUser__LastName: ${ADMIN_LAST_NAME:-سیستم}
+      Cors__AllowedOrigins__0: ${APP_ORIGIN}
+      Networking__EnableHttpsRedirection: "false"
+    volumes:
+      - backend_uploads:/app/wwwroot/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-/api}
+        NEXT_PUBLIC_ENABLE_REALTIME: ${NEXT_PUBLIC_ENABLE_REALTIME:-true}
+        NEXT_PUBLIC_SIGNALR_TRANSPORT: ${NEXT_PUBLIC_SIGNALR_TRANSPORT:-websockets}
+        NEXT_PUBLIC_REALTIME_DEBUG: ${NEXT_PUBLIC_REALTIME_DEBUG:-false}
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:3000/api/health').then((response)=>process.exit(response.ok?0:1)).catch(()=>process.exit(1))
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      frontend:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    ports:
+      - "80:80"
+    volumes:
+      - ./ops/nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  postgres_data:
+  backend_uploads:

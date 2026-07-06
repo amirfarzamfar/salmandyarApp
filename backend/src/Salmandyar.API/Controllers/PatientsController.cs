@@ -70,6 +70,17 @@ public class PatientsController : ControllerBase
         return Ok(patient);
     }
 
+    [HttpGet("{id}/current-shift-nurse")]
+    public async Task<ActionResult<CurrentShiftNurseContactDto?>> GetCurrentShiftNurse(int id)
+    {
+        var restrictedCaregiverId = GetCaregiverIdIfRestricted();
+        var patient = await _patientService.GetPatientByIdAsync(id, restrictedCaregiverId);
+        if (patient == null) return NotFound();
+
+        var nurse = await _patientService.GetCurrentShiftNurseContactAsync(id, restrictedCaregiverId);
+        return Ok(nurse);
+    }
+
     [HttpGet("{id}/self-service-access")]
     public async Task<IActionResult> GetSelfServiceAccess(int id)
     {

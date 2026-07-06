@@ -11,6 +11,7 @@ import { Eye, EyeOff, KeyRound, Lock, LogIn, Mail, MessageSquare, User } from 'l
 import Link from 'next/link';
 import { useUser } from '@/components/auth/UserContext';
 import type { AuthResponse } from '@/types/auth';
+import { resolveRoleHomePath } from '@/utils/role-routing';
 
 const schema = z.object({
   identifier: z.string().min(1, 'لطفا شماره موبایل یا ایمیل خود را وارد کنید'),
@@ -65,17 +66,7 @@ export default function LoginPage() {
       title: 'ورود موفقیت‌آمیز'
     });
 
-    if (['Patient', 'Elderly', 'PatientFamily'].includes(response.role)) {
-      router.push('/portal');
-      return;
-    }
-
-    if (['Nurse', 'AssistantNurse', 'ElderlyCareAssistant', 'Physiotherapist'].includes(response.role)) {
-      router.push('/nurse-portal');
-      return;
-    }
-
-    router.push('/dashboard');
+    router.push(resolveRoleHomePath(response.role));
   };
 
   const onSubmit = async (data: FormData) => {

@@ -6,6 +6,7 @@ public interface IPatientService
 {
     Task<List<PatientListDto>> GetAllPatientsAsync(string? caregiverId = null);
     Task<PatientDto?> GetPatientByIdAsync(int id, string? caregiverId = null);
+    Task<CurrentShiftNurseContactDto?> GetCurrentShiftNurseContactAsync(int patientId, string? caregiverId = null);
     Task<PatientDto> CreatePatientAsync(CreatePatientDto dto);
     Task CreatePatientForUserAsync(string userId, string firstName, string lastName);
     Task<PatientDto> UpdatePatientAdminInfoAsync(int id, UpdatePatientAdminInfoDto dto);

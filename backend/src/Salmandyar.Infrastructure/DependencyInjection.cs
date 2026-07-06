@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using Salmandyar.Application.Common.Interfaces;
 using Salmandyar.Application.Common.Interfaces.Authentication;
 using Salmandyar.Application.Common.Interfaces.Identity;
@@ -150,6 +151,31 @@ public static class DependencyInjection
 
             options.Events = new JwtBearerEvents
             {
+                OnTokenValidated = async context =>
+                {
+                    var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                    var tokenSecurityStamp = context.Principal?.FindFirstValue(JwtTokenGenerator.SecurityStampClaimType);
+
+                    if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(tokenSecurityStamp))
+                    {
+                        context.Fail("توکن نامعتبر است.");
+                        return;
+                    }
+
+                    var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<User>>();
+                    var user = await userManager.FindByIdAsync(userId);
+                    if (user == null || !user.IsActive)
+                    {
+                        context.Fail("نشست کاربری معتبر نیست.");
+                        return;
+                    }
+
+                    var currentSecurityStamp = await userManager.GetSecurityStampAsync(user);
+                    if (!string.Equals(currentSecurityStamp, tokenSecurityStamp, StringComparison.Ordinal))
+                    {
+                        context.Fail("نشست کاربری منقضی شده است.");
+                    }
+                },
                 OnMessageReceived = context =>
                 {
                     var accessToken = context.Request.Query["access_token"];

@@ -30,6 +30,12 @@ public record PatientListDto(
     bool IsProfileCompleted
 );
 
+public record CurrentShiftNurseContactDto(
+    string CaregiverId,
+    string FullName,
+    string? PhoneNumber
+);
+
 public record CreatePatientDto(
     string FirstName,
     string LastName,

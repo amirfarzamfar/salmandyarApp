@@ -75,6 +75,28 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<IActionResult> Logout()
+    {
+        try
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            await _authService.LogoutAsync(userId);
+            return Ok(new { message = "خروج از حساب با موفقیت انجام شد." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Logout failed for current user.");
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpPost("login-otp/request")]
     public async Task<IActionResult> RequestOtpLogin(RequestOtpLoginRequest request)
     {

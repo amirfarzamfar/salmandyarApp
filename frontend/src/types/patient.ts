@@ -27,6 +27,12 @@ export interface Patient extends PatientList {
   responsibleNurseId?: string;
 }
 
+export interface CurrentShiftNurseContact {
+  caregiverId: string;
+  fullName: string;
+  phoneNumber?: string | null;
+}
+
 export interface VitalSign {
   id: number;
   recordedAt: string;

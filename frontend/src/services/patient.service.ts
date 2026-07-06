@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { Patient, PatientList, VitalSign, CareService, NursingReport, CreateCareService, AddVitalSignResult, VitalSignAcknowledgementResult } from '@/types/patient';
+import { Patient, PatientList, VitalSign, CareService, NursingReport, CreateCareService, AddVitalSignResult, VitalSignAcknowledgementResult, CurrentShiftNurseContact } from '@/types/patient';
 import { PatientSelfServiceAccessSummary } from '@/types/patient-self-service';
 
 export const patientService = {
@@ -23,6 +23,10 @@ export const patientService = {
       console.error(`Error fetching patient ${id}:`, error);
       throw error;
     }
+  },
+  getCurrentShiftNurseContact: async (id: number) => {
+    const response = await api.get<CurrentShiftNurseContact | null>(`/patients/${id}/current-shift-nurse`);
+    return response.data;
   },
   getVitals: async (id: number) => {
     const response = await api.get<VitalSign[]>(`/patients/${id}/vitals`);

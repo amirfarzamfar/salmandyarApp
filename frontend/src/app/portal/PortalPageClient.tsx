@@ -308,7 +308,7 @@ export default function PortalPageClient() {
         </motion.main>
       </div>
 
-      <QuickConnect />
+      <QuickConnect patientId={patientId} />
     </div>
   );
 }

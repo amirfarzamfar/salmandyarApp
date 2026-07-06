@@ -9,6 +9,7 @@ import Swal from 'sweetalert2';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, UserPlus, Phone, User, Mail, CreditCard, Lock, Briefcase } from 'lucide-react';
 import Link from 'next/link';
+import { resolveRoleHomePath } from '@/utils/role-routing';
 
 const roles = [
   // { value: 'Manager', label: 'مدیر' },
@@ -74,14 +75,7 @@ export default function RegisterPage() {
         confirmButtonText: 'ورود به پنل',
         confirmButtonColor: '#0d9488'
       }).then(() => {
-        // Redirect based on role
-        if (['Patient', 'Elderly', 'PatientFamily'].includes(response.role)) {
-          router.push('/portal');
-        } else if (['Nurse', 'AssistantNurse', 'ElderlyCareAssistant', 'Physiotherapist'].includes(response.role)) {
-          router.push('/nurse-portal');
-        } else {
-          router.push('/dashboard');
-        }
+        router.push(resolveRoleHomePath(response.role));
       });
     } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       Swal.fire({

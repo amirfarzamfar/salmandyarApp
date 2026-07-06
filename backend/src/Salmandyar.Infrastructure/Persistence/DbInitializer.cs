@@ -20,10 +20,24 @@ public static class DbInitializer
         bool seedSampleData,
         SeedAdminUserOptions adminOptions)
     {
-        if (seedRoles)
+        var systemRoles = new[]
         {
-            var roles = new[] { Roles.Admin, Roles.SuperAdmin, Roles.Manager, Roles.Supervisor, Roles.Nurse, Roles.AssistantNurse, Roles.Physiotherapist, Roles.ElderlyCareAssistant, Roles.Elderly, Roles.Patient, Roles.PatientFamily };
-            foreach (var role in roles)
+            Roles.Admin,
+            Roles.SuperAdmin,
+            Roles.Manager,
+            Roles.Supervisor,
+            Roles.Nurse,
+            Roles.AssistantNurse,
+            Roles.Physiotherapist,
+            Roles.ElderlyCareAssistant,
+            Roles.Elderly,
+            Roles.Patient,
+            Roles.PatientFamily
+        };
+
+        if (seedRoles || seedAdminUser)
+        {
+            foreach (var role in systemRoles)
             {
                 if (!await roleManager.RoleExistsAsync(role))
                 {

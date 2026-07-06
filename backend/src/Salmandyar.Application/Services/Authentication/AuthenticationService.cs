@@ -15,6 +15,48 @@ public class AuthenticationService : IAuthenticationService
 {
     private const string SmsChannel = "sms";
     private const string EmailChannel = "email";
+    private static readonly HashSet<string> PublicRegistrationRoles = new(StringComparer.OrdinalIgnoreCase)
+    {
+        Roles.Nurse,
+        Roles.AssistantNurse,
+        Roles.Physiotherapist,
+        Roles.ElderlyCareAssistant,
+        Roles.Elderly,
+        Roles.Patient,
+        Roles.PatientFamily
+    };
+
+    private static readonly Dictionary<string, string> RoleAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        [Roles.SuperAdmin] = Roles.SuperAdmin,
+        [Roles.Admin] = Roles.Admin,
+        [Roles.Manager] = Roles.Manager,
+        [Roles.Supervisor] = Roles.Supervisor,
+        [Roles.Nurse] = Roles.Nurse,
+        [Roles.AssistantNurse] = Roles.AssistantNurse,
+        [Roles.Physiotherapist] = Roles.Physiotherapist,
+        [Roles.ElderlyCareAssistant] = Roles.ElderlyCareAssistant,
+        [Roles.Elderly] = Roles.Elderly,
+        [Roles.Patient] = Roles.Patient,
+        [Roles.PatientFamily] = Roles.PatientFamily,
+        ["سوپر ادمین"] = Roles.SuperAdmin,
+        ["سوپرا دمین"] = Roles.SuperAdmin,
+        ["ادمین"] = Roles.Admin,
+        ["مدیر"] = Roles.Manager,
+        ["سوپروایزر"] = Roles.Supervisor,
+        ["سرپرست"] = Roles.Supervisor,
+        ["پرستار"] = Roles.Nurse,
+        ["کمک پرستار"] = Roles.AssistantNurse,
+        ["فیزیوتراپ"] = Roles.Physiotherapist,
+        ["فیزیوتراپیست"] = Roles.Physiotherapist,
+        ["سالمندیار"] = Roles.ElderlyCareAssistant,
+        ["مراقب سالمند"] = Roles.ElderlyCareAssistant,
+        ["سالمند"] = Roles.Elderly,
+        ["بیمار"] = Roles.Patient,
+        ["خانواده بیمار"] = Roles.PatientFamily,
+        ["خانواده سالمند"] = Roles.PatientFamily,
+        ["خانواده"] = Roles.PatientFamily
+    };
 
     private readonly IIdentityService _identityService;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
@@ -44,6 +86,8 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<AuthenticationResponse> RegisterAsync(RegisterRequest request)
     {
+        var normalizedRole = NormalizeRegistrationRole(request.Role);
+
         if (!string.IsNullOrEmpty(request.Email))
         {
             var existingUserByEmail = await _identityService.GetUserByEmailAsync(request.Email);
@@ -68,18 +112,18 @@ public class AuthenticationService : IAuthenticationService
             PhoneNumber = request.PhoneNumber
         };
 
-        var (success, errors) = await _identityService.CreateUserAsync(user, request.Password, request.Role);
+        var (success, errors) = await _identityService.CreateUserAsync(user, request.Password, normalizedRole);
         if (!success)
         {
             throw new Exception($"ثبت‌نام با خطا مواجه شد: {string.Join(", ", errors)}");
         }
 
-        if (request.Role == Roles.Patient || request.Role == Roles.Elderly)
+        if (normalizedRole == Roles.Patient || normalizedRole == Roles.Elderly)
         {
             await _patientService.CreatePatientForUserAsync(user.Id, request.FirstName, request.LastName);
         }
 
-        var token = await _jwtTokenGenerator.GenerateTokenAsync(user, new[] { request.Role });
+        var token = await _jwtTokenGenerator.GenerateTokenAsync(user, new[] { normalizedRole });
 
         return new AuthenticationResponse(
             user.Id,
@@ -87,7 +131,7 @@ public class AuthenticationService : IAuthenticationService
             user.LastName,
             user.Email ?? string.Empty,
             user.PhoneNumber ?? string.Empty,
-            request.Role,
+            normalizedRole,
             token
         );
     }
@@ -107,6 +151,17 @@ public class AuthenticationService : IAuthenticationService
         }
 
         return await BuildAuthenticationResponseAsync(user);
+    }
+
+    public async Task LogoutAsync(string userId)
+    {
+        var user = await _identityService.GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            throw new Exception("کاربر یافت نشد.");
+        }
+
+        await _identityService.InvalidateUserSessionsAsync(user);
     }
 
     public async Task RequestOtpLoginAsync(RequestOtpLoginRequest request)
@@ -343,6 +398,27 @@ public class AuthenticationService : IAuthenticationService
             EmailChannel => settings.EmailEnabled,
             _ => false
         };
+    }
+
+    private static string NormalizeRegistrationRole(string role)
+    {
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            throw new Exception("نقش کاربری الزامی است.");
+        }
+
+        var normalizedInput = role.Trim();
+        if (!RoleAliases.TryGetValue(normalizedInput, out var canonicalRole))
+        {
+            throw new Exception("نقش انتخاب‌شده معتبر نیست.");
+        }
+
+        if (!PublicRegistrationRoles.Contains(canonicalRole))
+        {
+            throw new Exception("ثبت‌نام عمومی برای نقش‌های مدیریتی مجاز نیست.");
+        }
+
+        return canonicalRole;
     }
 
     private Task SendOtpAsync(string channel, string destination, string code, int expiryMinutes)
