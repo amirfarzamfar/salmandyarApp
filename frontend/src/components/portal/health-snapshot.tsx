@@ -103,9 +103,42 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
 
     return window.sessionStorage.getItem(`portal-vital-alert-dismissed:${patientId}`) ?? "";
   });
+  // #region debug-point C:portal-health-mount
+  useMemo(() => {
+    fetch("http://127.0.0.1:7777/event", {
+      method: "POST",
+      body: JSON.stringify({
+        sessionId: "vitals-realtime-sync",
+        runId: "pre-fix",
+        hypothesisId: "C",
+        location: "health-snapshot:mount",
+        msg: "[DEBUG] Portal health snapshot mounted",
+        data: { patientId },
+        ts: Date.now()
+      })
+    }).catch(() => {});
+    return null;
+  }, [patientId]);
+  // #endregion
   const { data: vitals, isLoading } = useQuery({
     queryKey: ["vitals", patientId],
-    queryFn: () => patientService.getVitals(patientId),
+    queryFn: async () => {
+      // #region debug-point C:portal-vitals-fetch
+      fetch("http://127.0.0.1:7777/event", {
+        method: "POST",
+        body: JSON.stringify({
+          sessionId: "vitals-realtime-sync",
+          runId: "pre-fix",
+          hypothesisId: "C",
+          location: "health-snapshot:queryFn",
+          msg: "[DEBUG] Portal health snapshot fetching vitals",
+          data: { patientId },
+          ts: Date.now()
+        })
+      }).catch(() => {});
+      // #endregion
+      return patientService.getVitals(patientId);
+    },
   });
 
   const acknowledgeMutation = useMutation({

@@ -98,6 +98,20 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
 
         await connection.invoke("JoinPatientGroup", patientId.toString());
         connection.on("ReceiveVitalUpdate", () => {
+          // #region debug-point B:admin-vitals-receive
+          fetch("http://127.0.0.1:7777/event", {
+            method: "POST",
+            body: JSON.stringify({
+              sessionId: "vitals-realtime-sync",
+              runId: "pre-fix",
+              hypothesisId: "B",
+              location: "VitalSignsTab:ReceiveVitalUpdate",
+              msg: "[DEBUG] Admin/patient profile listener received ReceiveVitalUpdate",
+              data: { patientId },
+              ts: Date.now()
+            })
+          }).catch(() => {});
+          // #endregion
           fetchVitals();
         });
       } catch (err) {

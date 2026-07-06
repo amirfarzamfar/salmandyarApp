@@ -162,6 +162,30 @@ public class PatientsController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
         }
 
+        // #region debug-point A:vital-broadcast
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                using var client = new HttpClient();
+                var payload = new
+                {
+                    sessionId = "vitals-realtime-sync",
+                    runId = "pre-fix",
+                    hypothesisId = "A",
+                    location = "PatientsController:AddVitalSign",
+                    msg = "[DEBUG] Vital sign saved; broadcasting ReceiveVitalUpdate",
+                    data = new { dto.CareRecipientId, RoutePatientId = id, RecorderUserId = userId },
+                    ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                };
+                await client.PostAsJsonAsync("http://127.0.0.1:7777/event", payload);
+            }
+            catch
+            {
+            }
+        });
+        // #endregion
+
         await _hubContext.Clients.Group($"Patient_{dto.CareRecipientId}").SendAsync("ReceiveVitalUpdate");
 
         return Ok(result);

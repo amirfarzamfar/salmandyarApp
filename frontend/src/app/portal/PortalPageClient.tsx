@@ -16,6 +16,7 @@ import { Eye, Smartphone, ShieldCheck, ClipboardCheck, ArrowLeft, User } from "l
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { patientService } from "@/services/patient.service";
 import { Patient } from "@/types/patient";
 import { PatientSelfServiceAccessSummary } from "@/types/patient-self-service";
@@ -24,8 +25,15 @@ import { useUser } from "@/components/auth/UserContext";
 import { PatientSelfServicePanel } from "@/components/portal/patient-self-service-panel";
 import { MedicationAlertBanner } from "@/components/portal/medication-alert-banner";
 import { PatientProfileDto, PatientProfileService } from "@/services/patient-profile.service";
+import {
+  createHubConnection,
+  isRealtimeEnabled,
+  reportSignalRError,
+  stopHubConnectionSafely,
+} from "@/lib/network";
 
 export default function PortalPageClient() {
+  const queryClient = useQueryClient();
   const [isElderMode, setIsElderMode] = useState(false);
   const [isFamilyMode, setIsFamilyMode] = useState(false);
   const [patient, setPatient] = useState<Patient | null>(null);
@@ -96,6 +104,62 @@ export default function PortalPageClient() {
       console.error("Failed to refresh self-service access", error);
     }
   };
+
+  useEffect(() => {
+    if (!patientId || !isRealtimeEnabled()) {
+      return;
+    }
+
+    const connection = createHubConnection({
+      hubPath: "/serviceHub",
+    });
+    let isActive = true;
+    let startPromise: Promise<void> | null = null;
+
+    const startConnection = async () => {
+      try {
+        startPromise = connection.start();
+        await startPromise;
+        if (!isActive) {
+          await stopHubConnectionSafely(connection);
+          return;
+        }
+
+        await connection.invoke("JoinPatientGroup", patientId.toString());
+        connection.on("ReceiveVitalUpdate", () => {
+          // #region debug-point D:portal-vitals-receive
+          fetch("http://127.0.0.1:7777/event", {
+            method: "POST",
+            body: JSON.stringify({
+              sessionId: "vitals-realtime-sync",
+              runId: "post-fix",
+              hypothesisId: "D",
+              location: "PortalPageClient:ReceiveVitalUpdate",
+              msg: "[DEBUG] Portal received ReceiveVitalUpdate and invalidated vitals query",
+              data: { patientId },
+              ts: Date.now()
+            })
+          }).catch(() => {});
+          // #endregion
+          void queryClient.invalidateQueries({ queryKey: ["vitals", patientId] });
+        });
+      } catch (err) {
+        if (isActive) {
+          reportSignalRError("SignalR portal vital connection error", err);
+        }
+      } finally {
+        startPromise = null;
+      }
+    };
+
+    void startConnection();
+
+    return () => {
+      isActive = false;
+      connection.off("ReceiveVitalUpdate");
+      void stopHubConnectionSafely(connection, startPromise);
+    };
+  }, [patientId, queryClient]);
 
   if (userLoading || isLoading) {
     return (
