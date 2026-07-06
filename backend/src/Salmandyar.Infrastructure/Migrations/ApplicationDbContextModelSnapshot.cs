@@ -601,34 +601,281 @@ namespace Salmandyar.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Bio")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ExperienceYears")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsVerified")
+                    b.Property<bool>("AcceptCollaborationTerms")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("LicenseNumber")
+                    b.Property<bool>("AcceptDocumentReviewConsent")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AcceptPatientConfidentiality")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("AcceptProfessionalEthics")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("AccountNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BankName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BirthCertificateNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("BirthPlace")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("CanStayAtPatientHome")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CardNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CertificatesJson")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ChildrenCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<int>("CompletionPercentage")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CooperationType")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CurrentEmploymentStatus")
+                        .HasColumnType("text");
+
+                    b.Property<int>("CurrentStep")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomSkillsJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactAddress")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactMobile")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactPhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmergencyContactRelationship")
+                        .HasColumnType("text");
+
+                    b.Property<string>("EmploymentStatus")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("Specialization")
-                        .IsRequired()
+                    b.Property<int?>("ExperienceYears")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FatherName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FirstName")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("ForceCompletedByAdmin")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("FullAddress")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("GPA")
+                        .HasPrecision(4, 2)
+                        .HasColumnType("numeric(4,2)");
+
+                    b.Property<string>("Gender")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("GraduationYear")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("HasDrivingLicense")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Iban")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LandlinePhone")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastName")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastUpdatedByName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastUpdatedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LastWorkplace")
+                        .HasColumnType("text");
+
+                    b.Property<string>("LatestDegree")
+                        .HasColumnType("text");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Major")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MaritalStatus")
+                        .HasColumnType("text");
+
+                    b.Property<string>("MobileNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NationalCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nationality")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NursingSystemNumber")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PersonalPhotoUrl")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PostalCode")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Province")
+                        .HasColumnType("text");
+
+                    b.Property<string>("RegisteredRole")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReviewNote")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReviewedByName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ServiceAreasJson")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ServiceRadiusKm")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ShiftPreferencesJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SkillsJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("University")
                         .HasColumnType("text");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("VehicleType")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("NationalCode")
+                        .IsUnique();
 
                     b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("CaregiverProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.CaregiverProfileDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CaregiverProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ExpireAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FileUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MimeType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReviewNote")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReviewedByName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CaregiverProfileId", "DocumentType")
+                        .IsUnique();
+
+                    b.ToTable("CaregiverProfileDocuments", (string)null);
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.MedicationAlertSettings", b =>
@@ -2652,6 +2899,17 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.CaregiverProfileDocument", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.CaregiverProfile", "CaregiverProfile")
+                        .WithMany("Documents")
+                        .HasForeignKey("CaregiverProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CaregiverProfile");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationAlertHistory", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
@@ -3135,6 +3393,11 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("SelfServiceAccessPolicy");
 
                     b.Navigation("VitalSigns");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.CaregiverProfile", b =>
+                {
+                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationDose", b =>

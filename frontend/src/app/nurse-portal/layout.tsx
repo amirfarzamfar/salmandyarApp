@@ -4,6 +4,7 @@ import { NurseBottomNav } from "@/components/nurse-portal/bottom-nav";
 import { NurseSidebar } from "@/components/nurse-portal/sidebar";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { MedicationAlertBanner } from "@/components/portal/medication-alert-banner";
+import { CaregiverProfileGuard } from "@/components/caregiver-profile/CaregiverProfileGuard";
 
 export const metadata: Metadata = {
   title: "پنل پرستار | سالمندیار",
@@ -34,11 +35,15 @@ export default function NursePortalLayout({
       </div>
 
       <main className="w-full max-w-md mx-auto md:max-w-none md:mx-0 md:px-8 md:py-8 min-h-screen transition-all duration-300 relative">
-        {/* Desktop Notification Center - Floating Top Left */}
-        <div className="hidden md:block absolute top-8 left-8 z-50">
+        {/* Desktop Notification Center */}
+        <div className="mb-6 hidden md:flex md:justify-end">
           <NotificationCenter appearance="dashboard" />
         </div>
         
+        <div className="mb-6">
+          <CaregiverProfileGuard />
+        </div>
+
         <div className="mb-6">
           <MedicationAlertBanner />
         </div>

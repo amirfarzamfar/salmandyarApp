@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
     public DbSet<CareRecipient> CareRecipients { get; set; }
     public DbSet<CaregiverProfile> CaregiverProfiles { get; set; }
+    public DbSet<CaregiverProfileDocument> CaregiverProfileDocuments { get; set; }
     public DbSet<VitalSign> VitalSigns { get; set; }
     public DbSet<CareService> CareServices { get; set; }
     public DbSet<ServiceDefinition> ServiceDefinitions { get; set; }
@@ -100,6 +101,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
         builder.Entity<NursingReportDetail>().ToTable("NursingReportDetail");
         builder.Entity<CareRecipient>().ToTable("CareRecipients");
         builder.Entity<CaregiverProfile>().ToTable("CaregiverProfiles");
+        builder.Entity<CaregiverProfileDocument>().ToTable("CaregiverProfileDocuments");
         builder.Entity<CareService>().ToTable("CareServices");
         builder.Entity<ServiceDefinition>().ToTable("ServiceDefinitions");
         builder.Entity<VitalSign>().ToTable("VitalSigns");
@@ -170,6 +172,36 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasOne(c => c.User)
             .WithOne(u => u.CaregiverProfile)
             .HasForeignKey<CaregiverProfile>(c => c.UserId);
+
+        builder.Entity<CaregiverProfile>()
+            .HasIndex(c => c.UserId)
+            .IsUnique();
+
+        builder.Entity<CaregiverProfile>()
+            .HasIndex(c => c.NationalCode)
+            .IsUnique();
+
+        builder.Entity<CaregiverProfile>()
+            .Property(c => c.EmploymentStatus)
+            .HasConversion<string>();
+
+        builder.Entity<CaregiverProfile>()
+            .Property(c => c.GPA)
+            .HasPrecision(4, 2);
+
+        builder.Entity<CaregiverProfileDocument>()
+            .HasOne(d => d.CaregiverProfile)
+            .WithMany(p => p.Documents)
+            .HasForeignKey(d => d.CaregiverProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CaregiverProfileDocument>()
+            .HasIndex(d => new { d.CaregiverProfileId, d.DocumentType })
+            .IsUnique();
+
+        builder.Entity<CaregiverProfileDocument>()
+            .Property(d => d.Status)
+            .HasConversion<string>();
 
         builder.Entity<CareRecipient>()
             .HasOne(c => c.FamilyMember)

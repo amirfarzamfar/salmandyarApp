@@ -31,6 +31,8 @@ using Salmandyar.Application.Services.UserEvaluations;
 using Salmandyar.Infrastructure.Services.UserEvaluations;
 using Salmandyar.Application.Services.Medications;
 using Salmandyar.Infrastructure.Services.Medications;
+using Salmandyar.Application.Services.CaregiverProfiles;
+using Salmandyar.Infrastructure.Services.CaregiverProfiles;
 
 namespace Salmandyar.Infrastructure;
 
@@ -116,6 +118,7 @@ public static class DependencyInjection
         services.AddScoped<IUserEvaluationService, UserEvaluationService>();
         services.AddScoped<IUserEvaluationAssignmentService, UserEvaluationAssignmentService>();
         services.AddScoped<IPatientProfileService, PatientProfileService>();
+        services.AddScoped<ICaregiverProfileService, CaregiverProfileService>();
 
         // Notifications
         services.AddScoped<INotificationService, LoggerNotificationService>();

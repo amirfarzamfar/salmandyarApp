@@ -28,7 +28,7 @@ export default function Navbar() {
             <div className="ml-4 flex items-center md:ml-6 gap-3">
                <div className="flex items-center gap-2 text-gray-600 ml-4">
                   <Phone size={18} />
-                  <span className="font-semibold text-lg" dir="ltr">021-12345678</span>
+                  <span className="font-semibold text-lg" dir="ltr">09128718237</span>
                </div>
               <Link href="/login">
                 <Button variant="ghost" size="sm">ورود</Button>

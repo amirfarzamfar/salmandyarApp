@@ -14,6 +14,7 @@ import { useUser } from "@/components/auth/UserContext";
 import { PatientSelector } from "@/components/nurse-portal/PatientSelector";
 import { ReportWriter } from "@/components/nurse-portal/report-writer";
 import { ShiftMedicationBoard } from "@/components/nurse-portal/shift-medication-board";
+import { CaregiverDashboardDto, caregiverProfileService } from "@/services/caregiver-profile.service";
 
 export default function NursePortalPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -31,18 +32,30 @@ export default function NursePortalPage() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isPatientSelectorOpen, setIsPatientSelectorOpen] = useState(false);
   const [selectedPatientForReport, setSelectedPatientForReport] = useState<number | null>(null);
+  const [employmentDashboard, setEmploymentDashboard] = useState<CaregiverDashboardDto>({
+    profileCompletionPercentage: 0,
+    documentVerificationStatus: 'ارسال نشده',
+    employmentStatus: 'پیش‌نویس',
+    performanceScore: 0,
+    shiftCount: 0,
+    lastActivityAt: undefined,
+  });
 
   useEffect(() => {
     const fetchPatients = async () => {
       try {
         setIsLoading(true);
         const data = await nursePortalService.getMyPatients();
+        const caregiverDashboard = await caregiverProfileService.getMyDashboard().catch(() => null);
         setPatients(data);
         setStats(prev => ({
           ...prev,
           total: data.length,
           critical: data.filter(p => p.currentStatus !== 'Stable').length
         }));
+        if (caregiverDashboard) {
+          setEmploymentDashboard(caregiverDashboard);
+        }
       } catch (error) {
         console.error(error);
         toast.error("خطا در دریافت لیست بیماران");
@@ -104,7 +117,7 @@ export default function NursePortalPage() {
       </header>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <div className="bg-medical-500 text-white p-4 rounded-[1.5rem] shadow-glow-medical relative overflow-hidden">
           <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/10 rounded-full blur-2xl" />
           <div className="relative z-10">
@@ -123,6 +136,39 @@ export default function NursePortalPage() {
           <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">وظایف امروز</div>
           <Calendar className="absolute bottom-3 left-3 w-8 h-8 text-amber-500/10" />
         </div>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-[1.5rem] shadow-soft-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+          <div className="text-3xl font-black text-teal-500 mb-1">{employmentDashboard.profileCompletionPercentage}%</div>
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">تکمیل پروفایل</div>
+          <Check className="absolute bottom-3 left-3 w-8 h-8 text-teal-500/10" />
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-[1.5rem] shadow-soft-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+          <div className="text-sm font-black text-indigo-500 mb-1">{employmentDashboard.documentVerificationStatus}</div>
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">وضعیت مدارک</div>
+          <FileText className="absolute bottom-3 left-3 w-8 h-8 text-indigo-500/10" />
+        </div>
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-[1.5rem] shadow-soft-sm border border-gray-100 dark:border-gray-700 relative overflow-hidden">
+          <div className="text-3xl font-black text-emerald-500 mb-1">{employmentDashboard.shiftCount}</div>
+          <div className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">تعداد شیفت‌ها</div>
+          <Clock className="absolute bottom-3 left-3 w-8 h-8 text-emerald-500/10" />
+        </div>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-soft-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="text-xs font-black text-gray-400 dark:text-gray-500">وضعیت استخدام</div>
+          <div className="mt-2 text-lg font-black text-gray-900 dark:text-white">{employmentDashboard.employmentStatus}</div>
+        </div>
+        <div className="rounded-[1.75rem] border border-gray-100 bg-white p-4 shadow-soft-sm dark:border-gray-700 dark:bg-gray-800">
+          <div className="text-xs font-black text-gray-400 dark:text-gray-500">امتیاز عملکرد</div>
+          <div className="mt-2 text-lg font-black text-gray-900 dark:text-white">{employmentDashboard.performanceScore}</div>
+        </div>
+        <Link href="/nurse-portal/employment-profile" className="rounded-[1.75rem] border border-medical-100 bg-gradient-to-br from-medical-50 to-white p-4 shadow-soft-sm dark:border-medical-900/40 dark:from-medical-900/20 dark:to-gray-800">
+          <div className="text-xs font-black text-medical-500">پروفایل استخدامی</div>
+          <div className="mt-2 text-lg font-black text-gray-900 dark:text-white">ادامه یا ویرایش اطلاعات</div>
+          <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            آخرین فعالیت: {employmentDashboard.lastActivityAt ? new Date(employmentDashboard.lastActivityAt).toLocaleString('fa-IR') : 'هنوز فعالیتی ثبت نشده'}
+          </div>
+        </Link>
       </div>
 
       {/* Search & Filter */}

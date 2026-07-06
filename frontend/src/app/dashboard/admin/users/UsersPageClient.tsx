@@ -3,6 +3,7 @@
 import type { AxiosError } from 'axios';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import Swal, { type SweetAlertOptions } from 'sweetalert2';
 import { toast } from 'react-hot-toast';
 import {
@@ -43,6 +44,7 @@ import { AssignmentStatus, AssignmentType, ShiftSlot } from '@/types/assignment'
 import type { PatientList } from '@/types/patient';
 import { translateRole } from '@/utils/role-translation';
 import { PatientSelfServiceAccessModal } from '@/components/admin/users/PatientSelfServiceAccessModal';
+import CaregiverProfileWizard from '@/components/caregiver-profile/CaregiverProfileWizard';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +59,7 @@ const caregiverRoles = ['Nurse', 'AssistantNurse', 'Physiotherapist', 'ElderlyCa
 type UserFormState = CreateAdminUserDto;
 type RoleFormState = { name: string; permissions: string[] };
 type PermissionGroup = { key: string; title: string; permissions: PermissionDefinitionDto[] };
+type DetailSection = 'overview' | 'employment-profile';
 type AssignmentFormState = {
   patientId: string;
   assignmentType: AssignmentType;
@@ -164,7 +167,8 @@ const canManageSelfService = (user: Pick<UserListDto, 'roles'>) =>
 const canReceiveAssignments = (user: Pick<UserListDto, 'roles'>) =>
   user.roles.some((role) => caregiverRoles.includes(role));
 
-export default function UsersPageClient() {
+export default function UsersPageClient({ mode = 'users' }: { mode?: 'users' | 'personnel' }) {
+  const isPersonnelMode = mode === 'personnel';
   const searchParams = useSearchParams();
   const selfServiceMode = searchParams.get('selfService') === '1';
   const userFormDialogRef = useRef<HTMLDivElement | null>(null);
@@ -177,7 +181,7 @@ export default function UsersPageClient() {
   const [totalCount, setTotalCount] = useState(0);
   const [filter, setFilter] = useState<UserFilterDto>({
     pageNumber: 1,
-    pageSize: 10,
+    pageSize: mode === 'personnel' ? 200 : 10,
     searchTerm: '',
     role: '',
     isActive: undefined,
@@ -187,6 +191,7 @@ export default function UsersPageClient() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserDetailDto | null>(null);
+  const [detailSection, setDetailSection] = useState<DetailSection>('overview');
   const [userFormOpen, setUserFormOpen] = useState(false);
   const [userForm, setUserForm] = useState<UserFormState>(emptyUserForm);
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -204,7 +209,13 @@ export default function UsersPageClient() {
   const [userPermissionSearch, setUserPermissionSearch] = useState('');
   const [savingUserPermissions, setSavingUserPermissions] = useState(false);
 
-  const roleOptions = useMemo(() => roleCatalog.roles.map((role) => role.name), [roleCatalog.roles]);
+  const roleOptions = useMemo(
+    () =>
+      roleCatalog.roles
+        .map((role) => role.name)
+        .filter((role) => (isPersonnelMode ? caregiverRoles.includes(role) : true)),
+    [isPersonnelMode, roleCatalog.roles]
+  );
   const eligibleUsers = useMemo(() => users.filter(canManageSelfService), [users]);
   const permissionDefinitionMap = useMemo(
     () => new Map(roleCatalog.availablePermissions.map((permission) => [permission.key, permission])),
@@ -244,8 +255,9 @@ export default function UsersPageClient() {
     setLoading(true);
     try {
       const result = await userService.getUsers(filter);
-      setUsers(result.items);
-      setTotalCount(result.totalCount);
+      const nextUsers = isPersonnelMode ? result.items.filter(canReceiveAssignments) : result.items;
+      setUsers(nextUsers);
+      setTotalCount(isPersonnelMode ? nextUsers.length : result.totalCount);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'دریافت لیست کاربران انجام نشد.'));
     } finally {
@@ -267,6 +279,7 @@ export default function UsersPageClient() {
     try {
       const detail = await userService.getUserById(userId);
       setSelectedUser(detail);
+      setDetailSection('overview');
       setUserPermissionDraft(detail.directPermissions);
       setUserPermissionSearch('');
       if (openDialog) {
@@ -298,13 +311,13 @@ export default function UsersPageClient() {
   }, []);
 
   useEffect(() => {
-    if (!selfServiceMode) return;
+    if (isPersonnelMode || !selfServiceMode) return;
     setFilter((current) => ({
       ...current,
       role: current.role || 'Patient',
       pageNumber: 1
     }));
-  }, [selfServiceMode]);
+  }, [isPersonnelMode, selfServiceMode]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {
@@ -701,7 +714,7 @@ export default function UsersPageClient() {
           ویرایش
         </span>
       </button>
-      {canManageSelfService(user) && (
+      {!isPersonnelMode && canManageSelfService(user) && (
         <button
           type="button"
           onClick={() => setSelectedUserForAccess(user)}
@@ -720,22 +733,26 @@ export default function UsersPageClient() {
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">مرکز مدیریت کاربران</h1>
+          <h1 className="text-2xl font-bold text-slate-900">{isPersonnelMode ? 'مدیریت پرسنل' : 'مرکز مدیریت کاربران'}</h1>
           <p className="mt-1 text-sm text-slate-500">
-            ایجاد و ویرایش کاربران، مدیریت نقش‌ها و دسترسی‌ها، امنیت حساب، لاگ فعالیت و تخصیص بیماران.
+            {isPersonnelMode
+              ? 'مدیریت پرسنل درمانی، پروفایل استخدامی، تخصیص بیماران، مدارک، وضعیت همکاری و عملیات منابع انسانی.'
+              : 'ایجاد و ویرایش کاربران، مدیریت نقش‌ها و دسترسی‌ها، امنیت حساب، لاگ فعالیت و تخصیص بیماران.'}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={openRoleDialogForCreate}
-            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            <span className="inline-flex items-center gap-2">
-              <Settings2 className="h-4 w-4" />
-              نقش‌ها و دسترسی‌ها
-            </span>
-          </button>
+          {!isPersonnelMode && (
+            <button
+              type="button"
+              onClick={openRoleDialogForCreate}
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Settings2 className="h-4 w-4" />
+                نقش‌ها و دسترسی‌ها
+              </span>
+            </button>
+          )}
           <button
             type="button"
             onClick={openCreateUserDialog}
@@ -743,56 +760,95 @@ export default function UsersPageClient() {
           >
             <span className="inline-flex items-center gap-2">
               <UserPlus className="h-4 w-4" />
-              کاربر جدید
+              {isPersonnelMode ? 'پرسنل جدید' : 'کاربر جدید'}
             </span>
           </button>
         </div>
       </div>
 
-      <div className="rounded-2xl border border-teal-200 bg-teal-50/70 p-4 shadow-sm">
+      <div className={`rounded-2xl p-4 shadow-sm ${isPersonnelMode ? 'border border-indigo-200 bg-indigo-50/70' : 'border border-teal-200 bg-teal-50/70'}`}>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-teal-700 shadow-sm">
-              <ShieldCheck className="h-5 w-5" />
+            <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ${isPersonnelMode ? 'text-indigo-700' : 'text-teal-700'}`}>
+              {isPersonnelMode ? <Shield className="h-5 w-5" /> : <ShieldCheck className="h-5 w-5" />}
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">مدیریت دسترسی ثبت اطلاعات بیمار و سالمند</h2>
+              <h2 className="text-base font-bold text-slate-900">
+                {isPersonnelMode ? 'مدیریت حرفه‌ای پرسنل و پروفایل استخدامی' : 'مدیریت دسترسی ثبت اطلاعات بیمار و سالمند'}
+              </h2>
               <p className="mt-1 text-sm text-slate-600">
-                برای کاربران دارای نقش «بیمار» یا «سالمند» می‌توانید از همین صفحه دسترسی ثبت علائم حیاتی و کاردکس دارویی را مدیریت کنید.
+                {isPersonnelMode
+                  ? 'در این بخش فقط پرسنل درمانی نمایش داده می‌شوند و مدیریت پروفایل استخدامی، مدارک، وضعیت همکاری و تخصیص‌ها از همین صفحه انجام می‌شود.'
+                  : 'برای کاربران دارای نقش «بیمار» یا «سالمند» می‌توانید از همین صفحه دسترسی ثبت علائم حیاتی و کاردکس دارویی را مدیریت کنید.'}
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setFilter((current) => ({ ...current, role: 'Patient', pageNumber: 1 }))}
-              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
-            >
-              فقط بیماران
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilter((current) => ({ ...current, role: 'Elderly', pageNumber: 1 }))}
-              className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
-            >
-              فقط سالمندان
-            </button>
+            {isPersonnelMode ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setFilter((current) => ({ ...current, role: 'Nurse', pageNumber: 1 }))}
+                  className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  فقط پرستار
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilter((current) => ({ ...current, role: 'AssistantNurse', pageNumber: 1 }))}
+                  className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  فقط کمک‌پرستار
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilter((current) => ({ ...current, role: 'ElderlyCareAssistant', pageNumber: 1 }))}
+                  className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  فقط سالمندیار
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilter((current) => ({ ...current, role: 'Physiotherapist', pageNumber: 1 }))}
+                  className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  فقط فیزیوتراپ
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setFilter((current) => ({ ...current, role: 'Patient', pageNumber: 1 }))}
+                  className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  فقط بیماران
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilter((current) => ({ ...current, role: 'Elderly', pageNumber: 1 }))}
+                  className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  فقط سالمندان
+                </button>
+              </>
+            )}
             <button
               type="button"
               onClick={() => setFilter((current) => ({ ...current, role: '', pageNumber: 1 }))}
               className="rounded-xl border border-white/80 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-white/60"
             >
-              همه کاربران
+              {isPersonnelMode ? 'همه پرسنل' : 'همه کاربران'}
             </button>
           </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2 text-xs">
           <span className="rounded-full bg-white px-3 py-1 font-medium text-slate-700">
-            کاربران قابل تنظیم در این صفحه: {eligibleUsers.length}
+            {isPersonnelMode ? `پرسنل قابل مدیریت در این صفحه: ${users.length}` : `کاربران قابل تنظیم در این صفحه: ${eligibleUsers.length}`}
           </span>
-          {selfServiceMode && (
+          {!isPersonnelMode && selfServiceMode && (
             <span className="rounded-full bg-teal-700 px-3 py-1 font-medium text-white">
               حالت مدیریت دسترسی فعال است
             </span>
@@ -989,7 +1045,7 @@ export default function UsersPageClient() {
 
         <div className="flex flex-col gap-3 border-t border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div className="text-sm text-slate-500">
-            نمایش {totalCount === 0 ? 0 : (filter.pageNumber - 1) * filter.pageSize + 1} تا {Math.min(filter.pageNumber * filter.pageSize, totalCount)} از {totalCount} کاربر
+            نمایش {totalCount === 0 ? 0 : (filter.pageNumber - 1) * filter.pageSize + 1} تا {Math.min(filter.pageNumber * filter.pageSize, totalCount)} از {totalCount} {isPersonnelMode ? 'پرسنل' : 'کاربر'}
           </div>
           <div className="flex gap-2">
             <button
@@ -1015,9 +1071,11 @@ export default function UsersPageClient() {
       <Dialog open={userFormOpen} onOpenChange={setUserFormOpen}>
         <DialogContent ref={userFormDialogRef} className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{editingUserId ? 'ویرایش کاربر' : 'ایجاد کاربر جدید'}</DialogTitle>
+            <DialogTitle>{editingUserId ? (isPersonnelMode ? 'ویرایش پرسنل' : 'ویرایش کاربر') : isPersonnelMode ? 'ایجاد پرسنل جدید' : 'ایجاد کاربر جدید'}</DialogTitle>
             <DialogDescription>
-              اطلاعات پایه کاربر، نقش‌ها، وضعیت فعال‌بودن و تایید اطلاعات تماس را از همین پنجره مدیریت کنید.
+              {isPersonnelMode
+                ? 'اطلاعات پایه پرسنل، نقش شغلی، وضعیت فعال‌بودن و اطلاعات تماس را از همین پنجره مدیریت کنید.'
+                : 'اطلاعات پایه کاربر، نقش‌ها، وضعیت فعال‌بودن و تایید اطلاعات تماس را از همین پنجره مدیریت کنید.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1283,11 +1341,23 @@ export default function UsersPageClient() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+      <Dialog
+        open={detailOpen}
+        onOpenChange={(open) => {
+          setDetailOpen(open);
+          if (!open) {
+            setDetailSection('overview');
+          }
+        }}
+      >
         <DialogContent ref={detailDialogRef} className="max-w-6xl">
           <DialogHeader>
-            <DialogTitle>جزئیات کاربر</DialogTitle>
-            <DialogDescription>نمای کامل وضعیت حساب، تایید تماس، لاگ‌ها و تخصیص‌های کاربر.</DialogDescription>
+            <DialogTitle>{isPersonnelMode ? 'جزئیات پرسنل' : 'جزئیات کاربر'}</DialogTitle>
+            <DialogDescription>
+              {isPersonnelMode
+                ? 'نمای کامل وضعیت حساب، پروفایل استخدامی، مدارک، لاگ‌ها و تخصیص‌های پرسنل.'
+                : 'نمای کامل وضعیت حساب، تایید تماس، لاگ‌ها و تخصیص‌های کاربر.'}
+            </DialogDescription>
           </DialogHeader>
 
           {detailLoading || !selectedUser ? (
@@ -1360,6 +1430,23 @@ export default function UsersPageClient() {
                 <InfoCard title="عملیات مدیریتی">
                   <div className="flex flex-wrap gap-2">
                     <ActionButton onClick={() => void openEditUserDialog(selectedUser.id)} icon={<Pencil className="h-4 w-4" />} label="ویرایش کاربر" />
+                    {isPersonnelMode && canReceiveAssignments(selectedUser) && (
+                  <>
+                    <ActionButton
+                      onClick={() => setDetailSection('employment-profile')}
+                      icon={<ShieldCheck className="h-4 w-4" />}
+                      label="مدیریت پروفایل استخدامی"
+                      className={detailSection === 'employment-profile' ? 'border-teal-200 bg-teal-50 text-teal-700' : ''}
+                    />
+                    <Link
+                      href={`/dashboard/personnel/employment-profile?userId=${selectedUser.id}`}
+                      className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    >
+                      <ShieldCheck className="h-4 w-4" />
+                      صفحه مستقل
+                    </Link>
+                  </>
+                )}
                     <ActionButton onClick={() => void handleStatusChange(selectedUser)} icon={<Ban className="h-4 w-4" />} label={selectedUser.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'} />
                     <ActionButton onClick={() => void handleLockToggle(selectedUser)} icon={<Lock className="h-4 w-4" />} label={selectedUser.isLocked ? 'بازکردن قفل' : 'قفل حساب'} />
                     <ActionButton onClick={() => void handleResetPassword(selectedUser)} icon={<KeyRound className="h-4 w-4" />} label="ریست رمز عبور" />
@@ -1377,6 +1464,42 @@ export default function UsersPageClient() {
                 </InfoCard>
               </div>
 
+              {isPersonnelMode && canReceiveAssignments(selectedUser) && (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDetailSection('overview')}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                      detailSection === 'overview'
+                        ? 'bg-slate-900 text-white'
+                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    نمای کلی کاربر
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDetailSection('employment-profile')}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                      detailSection === 'employment-profile'
+                        ? 'bg-teal-600 text-white'
+                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    پروفایل استخدامی
+                  </button>
+                </div>
+              )}
+
+              {isPersonnelMode && detailSection === 'employment-profile' && canReceiveAssignments(selectedUser) ? (
+                <InfoCard title="مدیریت پروفایل استخدامی پرسنل">
+                  <div className="mb-4 rounded-2xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm leading-7 text-teal-800">
+                    در این بخش ادمین می‌تواند پروفایل استخدامی، مدارک، وضعیت تایید، توضیحات اصلاح، ثبت نهایی اجباری و Audit اختصاصی این پرسنل را بدون خروج از مدیریت پرسنل مشاهده و ویرایش کند.
+                  </div>
+                  <CaregiverProfileWizard adminUserId={selectedUser.id} />
+                </InfoCard>
+              ) : (
+                <>
               <InfoCard title="سطوح دسترسی موثر">
                 <div className="flex flex-wrap gap-2">
                   {selectedUser.effectivePermissions.length === 0 ? (
@@ -1643,6 +1766,8 @@ export default function UsersPageClient() {
                   </div>
                 )}
               </InfoCard>
+                </>
+              )}
             </div>
           )}
         </DialogContent>
