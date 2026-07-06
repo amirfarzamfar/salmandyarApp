@@ -251,7 +251,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
     if (shouldSyncStepFromServer) {
       setCurrentStep(Math.max(1, profileQuery.data.currentStep || 1));
     }
-    setShowSuccess(profileQuery.data.isCompleted && profileQuery.data.currentStep >= 10);
+    setShowSuccess(!isAdminMode && profileQuery.data.isCompleted && profileQuery.data.currentStep >= 10);
     setIsDirty(false);
     setIsInitialized(true);
   }, [isInitialized, profileQuery.data]);
@@ -275,7 +275,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
     onSuccess: (response) => {
       queryClient.setQueryData(['caregiver-profile', adminUserId ?? 'me'], response);
       setForm((prev) => ({ ...prev, ...response }));
-      setShowSuccess(true);
+      setShowSuccess(!isAdminMode);
       setIsDirty(false);
       toast.success(adminUserId ? 'پروفایل توسط مدیریت نهایی شد.' : 'پروفایل شما با موفقیت ثبت شد.');
     },
@@ -405,9 +405,20 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
   const updateDocumentStatus = async (documentId: number, payload: UpdateCaregiverDocumentStatusDto) => {
     if (!adminUserId) return;
     try {
-      const updatedDocument = await caregiverProfileService.updateDocumentStatus(adminUserId, documentId, payload);
-      const nextDocuments = form.documents.map((item) => (item.id === documentId ? updatedDocument : item));
-      setForm((prev) => ({ ...prev, documents: nextDocuments }));
+      await caregiverProfileService.updateDocumentStatus(adminUserId, documentId, payload);
+      const refreshedProfile = await caregiverProfileService.getUserProfile(adminUserId);
+      queryClient.setQueryData(['caregiver-profile', adminUserId], refreshedProfile);
+      setForm((prev) => ({
+        ...prev,
+        ...refreshedProfile,
+        shiftPreferences: refreshedProfile.shiftPreferences ?? [],
+        serviceAreas: refreshedProfile.serviceAreas ?? [],
+        skills: refreshedProfile.skills ?? [],
+        customSkills: refreshedProfile.customSkills ?? [],
+        certificates: refreshedProfile.certificates ?? [],
+        documents: refreshedProfile.documents ?? [],
+        auditLogs: refreshedProfile.auditLogs ?? [],
+      }));
       toast.success('وضعیت مدرک به‌روزرسانی شد.');
     } catch (error: any) {
       toast.error(error?.response?.data?.error ?? 'به‌روزرسانی وضعیت مدرک انجام نشد.');
@@ -422,7 +433,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
     );
   }
 
-  if (showSuccess) {
+  if (!isAdminMode && showSuccess) {
     return (
       <div className="mx-auto max-w-3xl">
         <div className="rounded-[32px] border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-8 text-center shadow-sm dark:border-emerald-900 dark:from-emerald-950/30 dark:to-gray-900">
