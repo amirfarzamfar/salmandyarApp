@@ -444,21 +444,25 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
-      <div className="grid gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <aside className="rounded-[28px] border border-slate-200 bg-white/90 p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900/80">
-          <div className="mb-4 flex items-center justify-between">
+    <div className="mx-auto max-w-7xl px-1 sm:px-0">
+      <div className="grid gap-4 lg:gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+        <aside className="light-scrollbar rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 sm:rounded-[28px] sm:p-5 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <div className="text-xs font-bold text-teal-600 dark:text-teal-400">HR Onboarding</div>
               <h1 className="mt-1 text-xl font-black text-slate-900 dark:text-white">تکمیل پروفایل استخدامی</h1>
             </div>
-            <Badge className={cn('border', completionBadgeTone)}>{form.employmentStatusLabel}</Badge>
+            <Badge className={cn('w-fit border', completionBadgeTone)}>{form.employmentStatusLabel}</Badge>
           </div>
           <Progress value={form.completionPercentage} className="h-2.5 bg-slate-100 dark:bg-slate-800" />
           <div className="mt-2 text-xs font-bold text-slate-500 dark:text-slate-400">
             {form.completionPercentage}% تکمیل شده
           </div>
-          <div className="mt-6 space-y-2">
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 xl:hidden dark:border-slate-800 dark:bg-slate-950/40">
+            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400">مرحله فعلی</div>
+            <div className="mt-1 text-sm font-black text-slate-900 dark:text-white">{stepTitles[currentStep - 1]}</div>
+          </div>
+          <div className="mt-6 hidden xl:block xl:space-y-2">
             {stepTitles.map((step, index) => {
               const stepNumber = index + 1;
               const isActive = stepNumber === currentStep;
@@ -469,7 +473,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
                   type="button"
                   onClick={() => setCurrentStep(stepNumber)}
                   className={cn(
-                    'flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-right transition-all',
+                    'flex w-full min-w-0 items-center gap-3 rounded-2xl border px-3 py-3 text-right transition-all',
                     isActive
                       ? 'border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-200'
                       : 'border-transparent bg-slate-50 text-slate-600 hover:bg-slate-100 dark:bg-slate-800/60 dark:text-slate-300 dark:hover:bg-slate-800',
@@ -501,22 +505,22 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
           </div>
         </aside>
 
-        <section className="rounded-[30px] border border-slate-200 bg-white/95 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/95 sm:p-6 lg:p-8">
+        <section className="min-w-0 rounded-[24px] border border-slate-200 bg-white/95 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/95 sm:rounded-[30px] sm:p-6 lg:p-8">
           <div className="mb-6 flex flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <div className="text-xs font-bold text-slate-500 dark:text-slate-400">مرحله {currentStep} از 10</div>
-              <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">{stepTitles[currentStep - 1]}</h2>
+              <h2 className="mt-1 text-xl font-black text-slate-900 dark:text-white sm:text-2xl">{stepTitles[currentStep - 1]}</h2>
               <p className="mt-2 text-sm leading-7 text-slate-500 dark:text-slate-400">
                 اطلاعات این مرحله به‌صورت خودکار ذخیره می‌شود و در ورود بعدی از همین مرحله ادامه پیدا می‌کند.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" onClick={handleSaveDraft} disabled={updateMutation.isPending || completeMutation.isPending}>
+            <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+              <Button className="w-full sm:w-auto" variant="outline" onClick={handleSaveDraft} disabled={updateMutation.isPending || completeMutation.isPending}>
                 {updateMutation.isPending ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
                 ذخیره 
               </Button>
               {isAdminMode && (
-                <Button variant="secondary" onClick={() => completeMutation.mutate()} disabled={completeMutation.isPending}>
+                <Button className="w-full sm:w-auto" variant="secondary" onClick={() => completeMutation.mutate()} disabled={completeMutation.isPending}>
                   <ShieldCheck className="ml-2 h-4 w-4" />
                   Force Complete
                 </Button>
@@ -524,8 +528,47 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
             </div>
           </div>
 
+          <div className="mb-6 xl:hidden">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="text-xs font-bold text-slate-500 dark:text-slate-400">مسیر تکمیل فرم</div>
+                <div className="text-xs font-bold text-teal-600 dark:text-teal-400">{form.completionPercentage}%</div>
+              </div>
+              <div className="light-scrollbar flex gap-2 overflow-x-auto pb-1">
+                {stepTitles.map((step, index) => {
+                  const stepNumber = index + 1;
+                  const isActive = stepNumber === currentStep;
+                  const isDone = stepNumber < currentStep || (stepNumber === 10 && form.isCompleted);
+                  return (
+                    <button
+                      key={`mobile-step-${step}`}
+                      type="button"
+                      onClick={() => setCurrentStep(stepNumber)}
+                      className={cn(
+                        'flex min-w-[150px] shrink-0 items-center gap-2 rounded-2xl border px-3 py-2 text-right transition',
+                        isActive
+                          ? 'border-teal-200 bg-teal-50 text-teal-800 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-200'
+                          : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300',
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-black',
+                          isDone ? 'bg-emerald-600 text-white' : isActive ? 'bg-teal-600 text-white' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+                        )}
+                      >
+                        {isDone ? <CheckCircle2 className="h-3.5 w-3.5" /> : stepNumber}
+                      </span>
+                      <span className="truncate text-xs font-bold">{step}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           {currentStep === 1 && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               <Field label="نام" error={errors.firstName}><Input value={form.firstName ?? ''} onChange={(value) => setField('firstName', value)} /></Field>
               <Field label="نام خانوادگی" error={errors.lastName}><Input value={form.lastName ?? ''} onChange={(value) => setField('lastName', value)} /></Field>
               <Field label="نام پدر" error={errors.fatherName}><Input value={form.fatherName ?? ''} onChange={(value) => setField('fatherName', value)} /></Field>
@@ -550,7 +593,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
           )}
 
           {currentStep === 2 && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               <Field label="موبایل ثبت‌نامی">
                 <Input value={form.mobileNumber ?? ''} onChange={() => undefined} disabled />
               </Field>
@@ -571,7 +614,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
 
           {currentStep === 3 && (
             <div className="space-y-5">
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 xl:grid-cols-2">
                 <Field label="نوع همکاری" error={errors.cooperationType}>
                   <Input value={form.cooperationType ?? form.registeredRole ?? ''} onChange={() => undefined} disabled />
                 </Field>
@@ -606,7 +649,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
                   )
                 }
               />
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <CheckRow label="امکان اقامت در منزل بیمار" checked={form.canStayAtPatientHome} onChange={(value) => setField('canStayAtPatientHome', value)} />
                 {/* <CheckRow label="دارای گواهینامه" checked={form.hasDrivingLicense} onChange={(value) => setField('hasDrivingLicense', value)} /> */}
               </div>
@@ -615,10 +658,10 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
                   <MapPin className="h-4 w-4" />
                   مناطق قابل پوشش
                 </div>
-                <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+                <div className="grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
                   <Select value={coverageDraft.province} options={iranProvinces.map((item) => item.name)} onChange={(value) => setCoverageDraft({ province: value, city: '' })} />
                   <Select value={coverageDraft.city} options={getCitiesByProvince(coverageDraft.province)} onChange={(value) => setCoverageDraft((prev) => ({ ...prev, city: value }))} />
-                  <Button onClick={addCoverageArea}>افزودن</Button>
+                  <Button className="w-full lg:w-auto" onClick={addCoverageArea}>افزودن</Button>
                 </div>
                 {errors.serviceAreas && <ErrorText>{errors.serviceAreas}</ErrorText>}
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -650,7 +693,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
                 <div className="mb-3 text-sm font-bold text-slate-800 dark:text-slate-200">سایر مهارت‌ها</div>
                 <div className="flex flex-col gap-3 sm:flex-row">
                   <Input value={customSkillInput} onChange={setCustomSkillInput} placeholder="مثلاً تزریقات کودکان" />
-                  <Button onClick={addCustomSkill}>افزودن</Button>
+                  <Button className="w-full sm:w-auto" onClick={addCustomSkill}>افزودن</Button>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {form.customSkills.map((skill) => (
@@ -664,7 +707,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
           )}
 
           {currentStep === 5 && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               <Field label="آخرین مدرک" error={errors.latestDegree}><Select value={form.latestDegree ?? ''} options={degreeOptions} onChange={(value) => setField('latestDegree', value)} /></Field>
               <Field label="رشته" error={errors.major}><Input value={form.major ?? ''} onChange={(value) => setField('major', value)} /></Field>
               <Field label="دانشگاه" error={errors.university}><Input value={form.university ?? ''} onChange={(value) => setField('university', value)} /></Field>
@@ -675,13 +718,13 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
 
           {currentStep === 6 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-sm font-bold text-slate-700 dark:text-slate-200">لیست دوره‌ها و گواهینامه‌ها</div>
-                <Button onClick={() => setField('certificates', [...form.certificates, { title: '', organizer: '' }])}>افزودن دوره</Button>
+                <Button className="w-full sm:w-auto" onClick={() => setField('certificates', [...form.certificates, { title: '', organizer: '' }])}>افزودن دوره</Button>
               </div>
               {errors.certificates && <ErrorText>{errors.certificates}</ErrorText>}
               {form.certificates.map((certificate, index) => (
-                <div key={`certificate-${index}`} className="grid gap-4 rounded-3xl border border-slate-200 p-4 dark:border-slate-800 md:grid-cols-2">
+                <div key={`certificate-${index}`} className="grid gap-4 rounded-3xl border border-slate-200 p-4 dark:border-slate-800 xl:grid-cols-2">
                   <Field label="عنوان دوره">
                     <Input value={certificate.title} onChange={(value) => updateCertificate(index, { title: value })} />
                   </Field>
@@ -710,7 +753,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
           {currentStep === 7 && (
             <div className="space-y-4">
               {errors.documents && <ErrorText>{errors.documents}</ErrorText>}
-              <div className="grid gap-4 lg:grid-cols-2">
+              <div className="grid gap-4 2xl:grid-cols-2">
                 {CAREGIVER_DOCUMENT_TYPES.map((documentType) => {
                   const uploaded = form.documents.find((item) => item.documentType === documentType.id);
                   return (
@@ -731,7 +774,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
           )}
 
           {currentStep === 8 && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               <Field label="بانک"><Input value={form.bankName ?? ''} onChange={(value) => setField('bankName', value)} /></Field>
               <Field label="شماره حساب"><Input value={form.accountNumber ?? ''} onChange={(value) => setField('accountNumber', onlyDigits(value))} /></Field>
               <Field label="شماره کارت"><Input value={form.cardNumber ?? ''} onChange={(value) => setField('cardNumber', onlyDigits(value))} /></Field>
@@ -740,7 +783,7 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
           )}
 
           {currentStep === 9 && (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 xl:grid-cols-2">
               <Field label="نام" error={errors.emergencyContactName}><Input value={form.emergencyContactName ?? ''} onChange={(value) => setField('emergencyContactName', value)} /></Field>
               <Field label="نسبت" error={errors.emergencyContactRelationship}><Select value={form.emergencyContactRelationship ?? ''} options={relationshipOptions} onChange={(value) => setField('emergencyContactRelationship', value)} /></Field>
               <Field label="موبایل" error={errors.emergencyContactMobile}><Input value={form.emergencyContactMobile ?? ''} onChange={(value) => setField('emergencyContactMobile', onlyDigits(value))} /></Field>
@@ -758,17 +801,17 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
             </div>
           )}
 
-          <div className="mt-8 flex flex-col gap-3 border-t border-slate-200 pt-5 dark:border-slate-800 sm:flex-row sm:items-center sm:justify-between">
+          <div className="sticky bottom-20 z-10 -mx-4 mt-8 flex flex-col gap-3 border-t border-slate-200 bg-white/95 px-4 pt-5 pb-2 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:backdrop-blur-0 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
               <Clock3 className="h-4 w-4" />
               ذخیره خودکار فعال است
             </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" onClick={handlePrevious} disabled={currentStep === 1}>
+            <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
+              <Button className="w-full" variant="outline" onClick={handlePrevious} disabled={currentStep === 1}>
                 <ArrowRight className="ml-2 h-4 w-4" />
                 مرحله قبل
               </Button>
-              <Button onClick={handleNext} disabled={updateMutation.isPending || completeMutation.isPending}>
+              <Button className="w-full" onClick={handleNext} disabled={updateMutation.isPending || completeMutation.isPending}>
                 {currentStep === 10 ? 'ثبت نهایی' : 'مرحله بعد'}
                 <ArrowLeft className="mr-2 h-4 w-4" />
               </Button>
@@ -900,7 +943,7 @@ function ToggleGroup({
             type="button"
             onClick={() => onToggle(option)}
             className={cn(
-              'rounded-full border px-4 py-2 text-sm transition',
+              'w-full rounded-2xl border px-4 py-2.5 text-sm transition sm:w-auto sm:rounded-full',
               values.includes(option)
                 ? 'border-teal-600 bg-teal-600 text-white'
                 : 'border-slate-200 bg-white text-slate-700 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
@@ -928,9 +971,9 @@ function CheckRow({
 }) {
   return (
     <label className="block rounded-3xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-      <div className="flex items-center gap-3">
-        <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="h-5 w-5 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
-        <span className="text-sm font-medium text-slate-800 dark:text-slate-100">{label}</span>
+      <div className="flex items-start gap-3">
+        <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 rounded border-slate-300 text-teal-600 focus:ring-teal-500" />
+        <span className="min-w-0 text-sm font-medium leading-6 text-slate-800 dark:text-slate-100">{label}</span>
       </div>
       {error && <ErrorText>{error}</ErrorText>}
     </label>
@@ -977,12 +1020,12 @@ function DocumentCard({
 
   return (
     <div className="rounded-[28px] border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <div className="text-sm font-black text-slate-900 dark:text-white">{documentType}</div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">{required ? 'الزامی' : 'اختیاری'}</div>
         </div>
-        <Badge className={cn('border', getDocumentStatusTone(document?.status))}>
+        <Badge className={cn('w-fit border', getDocumentStatusTone(document?.status))}>
           {document?.statusLabel ?? 'آپلود نشده'}
         </Badge>
       </div>
@@ -991,7 +1034,13 @@ function DocumentCard({
         <div className="rounded-2xl border border-slate-200 bg-white p-3 text-xs dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-200">
             <FileCheck2 className="h-4 w-4" />
-            {document.fileName}
+            <span
+              className="min-w-0 flex-1 truncate"
+              title={document.fileName}
+              dir="ltr"
+            >
+              {document.fileName}
+            </span>
           </div>
           <div className="mt-2 text-slate-500 dark:text-slate-400">{new Date(document.uploadedAt).toLocaleString('fa-IR')}</div>
           {document.reviewNote && (
@@ -1009,7 +1058,7 @@ function DocumentCard({
         </div>
       )}
 
-      <label className="mt-4 flex cursor-pointer items-center justify-center gap-2 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-bold text-teal-700 transition hover:bg-teal-100 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-300">
+      <label className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-bold text-teal-700 transition hover:bg-teal-100 dark:border-teal-900 dark:bg-teal-950/30 dark:text-teal-300">
         {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
         {document ? 'آپلود مجدد' : 'آپلود فایل'}
         <input
