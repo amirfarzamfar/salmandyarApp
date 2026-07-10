@@ -3,8 +3,13 @@
 import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useUser } from '@/components/auth/UserContext';
+import { resolveRoleHomePath } from '@/utils/role-routing';
 
 export default function HeroSection() {
+  const { user, loading } = useUser();
+  const panelHref = resolveRoleHomePath(user?.role);
+
   return (
     <section className="relative bg-gradient-to-br from-teal-50 to-white pt-32 pb-20 overflow-hidden">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,9 +30,17 @@ export default function HeroSection() {
               ما شما را با پرستاران حرفه‌ای و تایید شده مرتبط می‌کنیم تا اطمینان حاصل کنیم که عزیزان شما بهترین حمایت، راحتی و مراقبت‌های پزشکی را در امنیت خانه خود دریافت می‌کنند.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/register">
-                <Button size="lg" className="w-full sm:w-auto">درخواست پرستار</Button>
-              </Link>
+              {loading ? (
+                <div className="h-12 w-full sm:w-48 rounded-full bg-teal-100 animate-pulse" />
+              ) : user ? (
+                <Link href={panelHref}>
+                  <Button size="lg" className="w-full sm:w-auto">ورود به پنل کاربری</Button>
+                </Link>
+              ) : (
+                <Link href="/register">
+                  <Button size="lg" className="w-full sm:w-auto">درخواست پرستار</Button>
+                </Link>
+              )}
               <Link href="#services">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto">مشاهده خدمات</Button>
               </Link>

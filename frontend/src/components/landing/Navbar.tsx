@@ -4,9 +4,64 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Menu, X, Phone } from 'lucide-react';
 import { useState } from 'react';
+import { useUser } from '@/components/auth/UserContext';
+import { resolveRoleHomePath } from '@/utils/role-routing';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, loading } = useUser();
+
+  const panelHref = resolveRoleHomePath(user?.role);
+
+  const renderDesktopActions = () => {
+    if (loading) {
+      return <div className="h-9 w-36 rounded-full bg-gray-100 animate-pulse" />;
+    }
+
+    if (user) {
+      return (
+        <Link href={panelHref}>
+          <Button size="sm">ورود به پنل کاربری</Button>
+        </Link>
+      );
+    }
+
+    return (
+      <>
+        <Link href="/login">
+          <Button variant="ghost" size="sm">ورود</Button>
+        </Link>
+        <Link href="/register">
+          <Button size="sm">شروع کنید</Button>
+        </Link>
+      </>
+    );
+  };
+
+  const renderMobileActions = () => {
+    if (loading) {
+      return <div className="h-10 w-full rounded-full bg-gray-100 animate-pulse" />;
+    }
+
+    if (user) {
+      return (
+        <Link href={panelHref} className="w-full">
+          <Button className="w-full">ورود به پنل کاربری</Button>
+        </Link>
+      );
+    }
+
+    return (
+      <>
+        <Link href="/login" className="w-full">
+          <Button variant="outline" className="w-full">ورود</Button>
+        </Link>
+        <Link href="/register" className="w-full">
+          <Button className="w-full">شروع کنید</Button>
+        </Link>
+      </>
+    );
+  };
 
   return (
     <nav className="fixed top-0 z-50 w-full bg-white/80 backdrop-blur-md shadow-sm">
@@ -30,12 +85,7 @@ export default function Navbar() {
                   <Phone size={18} />
                   <span className="font-semibold text-lg" dir="ltr">09128718237</span>
                </div>
-              <Link href="/login">
-                <Button variant="ghost" size="sm">ورود</Button>
-              </Link>
-              <Link href="/register">
-                <Button size="sm">شروع کنید</Button>
-              </Link>
+              {renderDesktopActions()}
             </div>
           </div>
           <div className="-mr-2 flex md:hidden">
@@ -59,12 +109,7 @@ export default function Navbar() {
           </div>
           <div className="border-t border-gray-200 pb-3 pt-4">
             <div className="flex items-center px-5 gap-3 flex-col">
-              <Link href="/login" className="w-full">
-                <Button variant="outline" className="w-full">ورود</Button>
-              </Link>
-              <Link href="/register" className="w-full">
-                <Button className="w-full">شروع کنید</Button>
-              </Link>
+              {renderMobileActions()}
             </div>
           </div>
         </div>
