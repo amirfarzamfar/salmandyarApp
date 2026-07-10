@@ -54,6 +54,20 @@ const getCaregiverDocumentLabel = (documentType: string) => {
   return caregiverDocumentLabelMap.get(documentType) ?? documentType;
 };
 
+const shortenFileName = (fileName?: string, maxLength = 42) => {
+  if (!fileName) return '-';
+  if (fileName.length <= maxLength) return fileName;
+
+  const extensionIndex = fileName.lastIndexOf('.');
+  const extension = extensionIndex > 0 ? fileName.slice(extensionIndex) : '';
+  const baseName = extensionIndex > 0 ? fileName.slice(0, extensionIndex) : fileName;
+  const preservedLength = Math.max(8, maxLength - extension.length - 3);
+  const startLength = Math.ceil(preservedLength * 0.55);
+  const endLength = Math.max(4, preservedLength - startLength);
+
+  return `${baseName.slice(0, startLength)}...${baseName.slice(-endLength)}${extension}`;
+};
+
 export default function CaregiverProfileApprovedOverview({ profile, isAdminMode = false }: Props) {
   const approvedDocuments = profile.documents.filter((document) => document.status === CaregiverProfileDocumentStatus.Approved);
   const pendingDocuments = profile.documents.filter((document) => document.status === CaregiverProfileDocumentStatus.PendingReview);
@@ -199,9 +213,9 @@ export default function CaregiverProfileApprovedOverview({ profile, isAdminMode 
                 href={resolveApiUrl(document.fileUrl)}
                 target="_blank"
                 rel="noreferrer"
-                className="block rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 transition hover:border-teal-200 hover:bg-teal-50/60 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-teal-900"
+                className="block min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3 transition hover:border-teal-200 hover:bg-teal-50/60 dark:border-slate-800 dark:bg-slate-950/40 dark:hover:border-teal-900"
               >
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                       <div className="min-w-0">
@@ -214,11 +228,11 @@ export default function CaregiverProfileApprovedOverview({ profile, isAdminMode 
                       </Badge>
                     </div>
                     <div
-                      className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
+                      className="mt-1 block min-w-0 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-slate-500 dark:text-slate-400"
                       dir="ltr"
                       title={document.fileName}
                     >
-                    {document.fileName}
+                      {shortenFileName(document.fileName)}
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-slate-400 dark:text-slate-500">
                       <CalendarDays className="h-3.5 w-3.5 shrink-0" />
