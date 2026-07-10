@@ -47,6 +47,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [AllowAnonymous]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         try
@@ -61,6 +62,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         try
@@ -98,6 +100,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login-otp/request")]
+    [AllowAnonymous]
     public async Task<IActionResult> RequestOtpLogin(RequestOtpLoginRequest request)
     {
         try
@@ -112,6 +115,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login-otp/verify")]
+    [AllowAnonymous]
     public async Task<IActionResult> VerifyOtpLogin(VerifyOtpLoginRequest request)
     {
         try
@@ -150,6 +154,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("forgot-password")]
+    [AllowAnonymous]
     public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request)
     {
         try
@@ -164,6 +169,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("reset-password")]
+    [AllowAnonymous]
     public async Task<IActionResult> ResetPassword(ResetPasswordRequest request)
     {
         try

@@ -8,7 +8,7 @@ namespace Salmandyar.API.Controllers;
 
 [ApiController]
 [Route("api/assessment-reports")]
-// [Authorize(Roles = Roles.Admin)] // Should be restricted to Admin
+[Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
 public class AssessmentReportsController : ControllerBase
 {
     private readonly IAssessmentReportService _reportService;

@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '@/lib/network';
+import { clearAuthSession, getStoredToken } from '@/lib/auth-session';
+
+const protectedPrefixes = ['/dashboard', '/nurse-portal', '/portal'];
 
 const api = axios.create({
   baseURL: getApiBaseUrl(),
@@ -10,7 +13,7 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token = getStoredToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -23,12 +26,11 @@ api.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       if (typeof window !== 'undefined') {
-        // Clear storage and redirect to login on 401
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
-        window.location.href = '/login';
+        clearAuthSession('expired');
+        const isProtectedPage = protectedPrefixes.some((prefix) => window.location.pathname === prefix || window.location.pathname.startsWith(`${prefix}/`));
+        if (isProtectedPage && window.location.pathname !== '/login') {
+          window.location.replace('/login');
+        }
       }
     }
     return Promise.reject(error);

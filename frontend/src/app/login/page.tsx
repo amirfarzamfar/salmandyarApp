@@ -6,12 +6,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { authService } from '@/services/auth.service';
 import Swal from 'sweetalert2';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, KeyRound, Lock, LogIn, Mail, MessageSquare, User } from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@/components/auth/UserContext';
 import type { AuthResponse } from '@/types/auth';
 import { resolveRoleHomePath } from '@/utils/role-routing';
+import { persistAuthSession } from '@/lib/auth-session';
+import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
 
 const schema = z.object({
   identifier: z.string().min(1, 'لطفا شماره موبایل یا ایمیل خود را وارد کنید'),
@@ -22,6 +24,7 @@ type FormData = z.infer<typeof schema>;
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { refreshUser } = useUser();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -39,15 +42,8 @@ export default function LoginPage() {
   });
 
   const completeLogin = async (response: AuthResponse) => {
-    if (rememberMe) {
-      localStorage.setItem('token', response.token);
-      localStorage.setItem('user', JSON.stringify(response));
-    } else {
-      sessionStorage.setItem('token', response.token);
-      sessionStorage.setItem('user', JSON.stringify(response));
-    }
-
-    refreshUser();
+    persistAuthSession(response, rememberMe);
+    await refreshUser();
 
     const Toast = Swal.mixin({
       toast: true,
@@ -66,7 +62,9 @@ export default function LoginPage() {
       title: 'ورود موفقیت‌آمیز'
     });
 
-    router.push(resolveRoleHomePath(response.role));
+    const redirectTarget = searchParams.get('redirect');
+    const safeRedirectTarget = redirectTarget?.startsWith('/') ? redirectTarget : null;
+    router.replace(safeRedirectTarget || resolveRoleHomePath(response.role));
   };
 
   const onSubmit = async (data: FormData) => {
@@ -142,7 +140,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-[family-name:var(--font-vazirmatn)]" dir="rtl">
+    <GuestOnlyRoute>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-[family-name:var(--font-vazirmatn)]" dir="rtl">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-teal-100 rounded-full flex items-center justify-center mb-4">
@@ -384,6 +383,7 @@ export default function LoginPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </GuestOnlyRoute>
   );
 }

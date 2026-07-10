@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Application.DTOs.Reminders;
@@ -10,6 +11,7 @@ namespace Salmandyar.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ServiceRemindersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

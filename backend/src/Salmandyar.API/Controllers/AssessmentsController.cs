@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Salmandyar.Application.DTOs.Assessments;
 using Salmandyar.Application.Services.Assessments;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Enums;
 using System.Security.Claims;
 
@@ -19,7 +20,7 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpPost("forms")]
-    // [Authorize(Roles = "Admin")] // Uncomment when roles are set up
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> CreateForm([FromBody] CreateAssessmentFormDto dto)
     {
         var form = await _assessmentService.CreateFormAsync(dto);
@@ -27,6 +28,7 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpGet("forms")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> GetAllForms()
     {
         var forms = await _assessmentService.GetAllFormsAsync();
@@ -34,6 +36,7 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpGet("forms/details/{id}")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> GetFormById(int id)
     {
         var form = await _assessmentService.GetFormByIdAsync(id);
@@ -42,6 +45,7 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpPut("forms/{id}")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> UpdateForm(int id, [FromBody] CreateAssessmentFormDto dto)
     {
         try
@@ -56,6 +60,7 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpDelete("forms/{id}")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> DeleteForm(int id)
     {
         await _assessmentService.DeleteFormAsync(id);
@@ -63,6 +68,7 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpPatch("forms/{id}/toggle")]
+    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
     public async Task<IActionResult> ToggleForm(int id)
     {
         await _assessmentService.ToggleFormActivationAsync(id);
@@ -70,6 +76,7 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpGet("forms/{type}")]
+    [Authorize]
     public async Task<IActionResult> GetActiveForm(AssessmentType type)
     {
         var form = await _assessmentService.GetActiveFormAsync(type);
@@ -78,6 +85,7 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpGet("forms/list/{type}")]
+    [Authorize]
     public async Task<IActionResult> GetActiveFormsByType(AssessmentType type)
     {
         var forms = await _assessmentService.GetActiveFormsByTypeAsync(type);

@@ -10,6 +10,8 @@ import {
   reportSignalRError,
   stopHubConnectionSafely,
 } from '@/lib/network';
+import { getStoredToken } from '@/lib/auth-session';
+import { useUser } from '@/components/auth/UserContext';
 
 type RealtimeNotificationPayload = {
   title: string;
@@ -61,6 +63,8 @@ function playPortalMedicationAlertTone() {
 }
 
 export function RealtimeNotificationListener() {
+  const { isAuthenticated } = useUser();
+
   useEffect(() => {
     // #region debug-point A:client-reporter
     const dbg = (hypothesisId: string, msg: string, data?: Record<string, unknown>) => {
@@ -92,7 +96,7 @@ export function RealtimeNotificationListener() {
 
     if (!realtimeOn) return;
 
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const token = getStoredToken();
     // #region debug-point A:token
     dbg('A', 'token-check', { hasToken: Boolean(token) });
     // #endregion
@@ -247,7 +251,7 @@ export function RealtimeNotificationListener() {
           reportSignalRError('SignalR notification connection error', err);
         }
         // #region debug-point A:join-fail
-        dbg('A', 'signalr:error', { error: String((err as any)?.message ?? err) });
+        dbg('A', 'signalr:error', { error: err instanceof Error ? err.message : String(err) });
         // #endregion
       } finally {
         startPromise = null;
@@ -264,7 +268,7 @@ export function RealtimeNotificationListener() {
         await stopHubConnectionSafely(connection, startPromise);
       })();
     };
-  }, []);
+  }, [isAuthenticated]);
 
   return null;
 }

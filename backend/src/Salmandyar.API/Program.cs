@@ -167,7 +167,7 @@ app.UseCors(corsPolicyName);
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health").AllowAnonymous();
 app.MapControllers();
 app.MapHub<ServiceHub>("/serviceHub").RequireCors(corsPolicyName);
 app.MapHub<NotificationHub>("/notificationHub").RequireCors(corsPolicyName);

@@ -4,9 +4,32 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, Clock, AlertTriangle, FileText } from 'lucide-react';
 import { notificationService, UserNotification, NotificationType } from '@/services/notification.service';
 import { useRouter } from 'next/navigation';
+import { getStoredToken } from '@/lib/auth-session';
 
 interface NotificationCenterProps {
     appearance?: 'dashboard' | 'portal';
+}
+
+function getErrorDebugDetails(error: unknown) {
+    if (!error || typeof error !== 'object') {
+        return {
+            status: undefined,
+            url: undefined,
+            message: String(error),
+        };
+    }
+
+    const candidate = error as {
+        response?: { status?: number };
+        config?: { url?: string };
+        message?: string;
+    };
+
+    return {
+        status: candidate.response?.status,
+        url: candidate.config?.url,
+        message: candidate.message ?? String(error),
+    };
 }
 
 export function NotificationCenter({ appearance = 'dashboard' }: NotificationCenterProps) {
@@ -41,7 +64,7 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
             path: window.location.pathname,
             apiBaseUrl: (process.env.NEXT_PUBLIC_API_BASE_URL ?? null),
             realtimeEnabled: (process.env.NEXT_PUBLIC_ENABLE_REALTIME ?? null),
-            hasToken: Boolean(localStorage.getItem('token') || sessionStorage.getItem('token')),
+            hasToken: Boolean(getStoredToken()),
         });
         // #endregion
         fetchUnreadCount();
@@ -79,7 +102,7 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
         try {
             // #region debug-point B:unread-start
             dbg('B', 'fetchUnreadCount:start', {
-                hasToken: Boolean(localStorage.getItem('token') || sessionStorage.getItem('token')),
+                hasToken: Boolean(getStoredToken()),
             });
             // #endregion
             const count = await notificationService.getUnreadCount();
@@ -89,9 +112,8 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
             // #endregion
         } catch (error) {
             // #region debug-point B:unread-fail
-            const status = (error as any)?.response?.status;
-            const url = (error as any)?.config?.url;
-            dbg('B', 'fetchUnreadCount:fail', { status, url, error: String((error as any)?.message ?? error) });
+            const details = getErrorDebugDetails(error);
+            dbg('B', 'fetchUnreadCount:fail', { status: details.status, url: details.url, error: details.message });
             // #endregion
             console.error('Failed to fetch notification count', error);
         }
@@ -103,7 +125,7 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
             // #region debug-point C:list-start
             dbg('C', 'fetchNotifications:start', {
                 unreadOnly: true,
-                hasToken: Boolean(localStorage.getItem('token') || sessionStorage.getItem('token')),
+                hasToken: Boolean(getStoredToken()),
             });
             // #endregion
             const data = await notificationService.getMyNotifications(true);
@@ -122,9 +144,8 @@ export function NotificationCenter({ appearance = 'dashboard' }: NotificationCen
             // #endregion
         } catch (error) {
             // #region debug-point C:list-fail
-            const status = (error as any)?.response?.status;
-            const url = (error as any)?.config?.url;
-            dbg('C', 'fetchNotifications:fail', { status, url, error: String((error as any)?.message ?? error) });
+            const details = getErrorDebugDetails(error);
+            dbg('C', 'fetchNotifications:fail', { status: details.status, url: details.url, error: details.message });
             // #endregion
             console.error('Failed to fetch notifications', error);
         } finally {

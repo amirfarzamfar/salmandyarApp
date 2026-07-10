@@ -1,22 +1,26 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { AuthResponse } from '@/types/auth';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/services/auth.service';
+import { clearAuthSession, getStorageMode, getStoredToken, getStoredUser, persistAuthSession, subscribeToAuthChanges, syncAuthSessionFromBrowserState } from '@/lib/auth-session';
+import { isJwtExpired } from '@/lib/auth-jwt';
 
 interface UserContextType {
   user: AuthResponse | null;
   loading: boolean;
+  isAuthenticated: boolean;
   logout: () => Promise<void>;
-  refreshUser: () => void;
+  refreshUser: () => Promise<AuthResponse | null>;
 }
 
 const UserContext = createContext<UserContextType>({
   user: null,
   loading: true,
+  isAuthenticated: false,
   logout: async () => {},
-  refreshUser: () => {},
+  refreshUser: async () => null,
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -24,42 +28,89 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const loadUser = () => {
+  const loadUser = useCallback(async () => {
+    syncAuthSessionFromBrowserState();
+
     try {
-      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const token = getStoredToken();
+      const storedUser = getStoredUser();
       
-      if (storedUser && token) {
-        setUser(JSON.parse(storedUser));
-      } else {
+      if (!token) {
         setUser(null);
+        return null;
       }
+
+      if (isJwtExpired(token, 5)) {
+        clearAuthSession('expired');
+        setUser(null);
+        return null;
+      }
+    
+      const profile = await authService.getMe();
+      const nextUser: AuthResponse = {
+        id: profile.id,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        email: profile.email ?? storedUser?.email ?? '',
+        phoneNumber: profile.phoneNumber ?? storedUser?.phoneNumber ?? '',
+        role: profile.role ?? storedUser?.role ?? '',
+        token,
+      };
+    
+      persistAuthSession(nextUser, getStorageMode() === 'local', 'login', false);
+      setUser(nextUser);
+      return nextUser;
     } catch (error) {
-      console.error('Error loading user from storage:', error);
+      console.error('Error validating current session:', error);
+      clearAuthSession('invalid');
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadUser();
-    
-    // Listen for storage events (in case login happens in another tab)
-    const handleStorageChange = () => loadUser();
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+    let isMounted = true;
+
+    const refresh = async () => {
+      if (!isMounted) {
+        return;
+      }
+
+      setLoading(true);
+      await loadUser();
+    };
+
+    void refresh();
+
+    const unsubscribe = subscribeToAuthChanges(() => {
+      void refresh();
+    });
+
+    const handlePageRestore = () => {
+      void refresh();
+    };
+
+    window.addEventListener('pageshow', handlePageRestore);
+    document.addEventListener('visibilitychange', handlePageRestore);
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+      window.removeEventListener('pageshow', handlePageRestore);
+      document.removeEventListener('visibilitychange', handlePageRestore);
+    };
+  }, [loadUser]);
 
   const logout = async () => {
     await authService.logout();
     setUser(null);
-    router.push('/login');
+    router.replace('/login');
   };
 
   return (
-    <UserContext.Provider value={{ user, loading, logout, refreshUser: loadUser }}>
+    <UserContext.Provider value={{ user, loading, isAuthenticated: !!user, logout, refreshUser: loadUser }}>
       {children}
     </UserContext.Provider>
   );

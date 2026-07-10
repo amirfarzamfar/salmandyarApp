@@ -1,5 +1,6 @@
 import api from '@/lib/axios';
 import { LoginRequest, RegisterRequest, AuthResponse, ChangePasswordRequest, ForgotPasswordRequest, ResetPasswordRequest, OtpLoginRequest, OtpLoginVerifyRequest } from '@/types/auth';
+import { clearAuthSession, getStoredToken } from '@/lib/auth-session';
 
 export const authService = {
   login: async (data: LoginRequest) => {
@@ -34,20 +35,18 @@ export const authService = {
     const response = await api.put('/auth/profile', data);
     return response.data;
   },
+  getMe: async () => {
+    const response = await api.get('/auth/me');
+    return response.data;
+  },
   logout: async () => {
     try {
       await api.post('/auth/logout');
     } finally {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      sessionStorage.removeItem('token');
-      sessionStorage.removeItem('user');
+      clearAuthSession('logout');
     }
   },
   getToken: () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('token') || sessionStorage.getItem('token');
-    }
-    return null;
+    return getStoredToken();
   },
 };
