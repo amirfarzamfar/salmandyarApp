@@ -187,7 +187,7 @@ const validateStep = (step: number, profile: CaregiverProfileDto): StepErrors =>
   }
 
   if (step === 6) {
-    if (profile.certificates.length === 0) errors.certificates = 'حداقل یک دوره یا گواهینامه ثبت کنید.';
+    // مرحله دوره‌ها و گواهینامه‌ها اختیاری است.
   }
 
   if (step === 7) {
@@ -730,7 +730,10 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
           {currentStep === 6 && (
             <div className="space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="text-sm font-bold text-slate-700 dark:text-slate-200">لیست دوره‌ها و گواهینامه‌ها</div>
+                <div>
+                  <div className="text-sm font-bold text-slate-700 dark:text-slate-200">لیست دوره‌ها و گواهینامه‌ها</div>
+                  <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">این بخش اختیاری است و در صورت نداشتن موردی می‌توانید بدون ثبت آن ادامه دهید.</div>
+                </div>
                 <Button className="w-full sm:w-auto" onClick={() => setField('certificates', [...form.certificates, { title: '', organizer: '' }])}>افزودن دوره</Button>
               </div>
               {errors.certificates && <ErrorText>{errors.certificates}</ErrorText>}

@@ -294,6 +294,22 @@ public class CaregiverProfileService : ICaregiverProfileService
         profile.IsCompleted = profile.IsCompleted || profile.CompletionPercentage == 100;
         RefreshEmploymentStatus(profile);
 
+        // #region debug-point C:update-profile
+        await ReportDebugAsync(
+            "pre-fix",
+            "C",
+            "CaregiverProfileService.UpdateProfileAsync",
+            "[DEBUG] caregiver profile autosave snapshot",
+            new
+            {
+                userId,
+                dtoCurrentStep = dto.CurrentStep,
+                profileCurrentStep = profile.CurrentStep,
+                profile.CompletionPercentage,
+                snapshot = BuildCompletionDebugSnapshot(profile)
+            });
+        // #endregion
+
         await _context.SaveChangesAsync();
         await _auditLogService.LogAsync(
             actorUserId,
@@ -310,6 +326,22 @@ public class CaregiverProfileService : ICaregiverProfileService
     {
         var profile = await GetOrCreateProfileAsync(userId);
         profile.CompletionPercentage = CalculateCompletionPercentage(profile);
+
+        // #region debug-point A:complete-profile
+        await ReportDebugAsync(
+            "pre-fix",
+            profile.CompletionPercentage < 100 ? "A" : "D",
+            "CaregiverProfileService.CompleteProfileAsync",
+            "[DEBUG] caregiver profile final completion check",
+            new
+            {
+                userId,
+                force,
+                profile.CompletionPercentage,
+                profile.CurrentStep,
+                snapshot = BuildCompletionDebugSnapshot(profile)
+            });
+        // #endregion
 
         if (!force && profile.CompletionPercentage < 100)
         {
@@ -579,8 +611,7 @@ public class CaregiverProfileService : ICaregiverProfileService
             !string.IsNullOrWhiteSpace(profile.BirthPlace) &&
             !string.IsNullOrWhiteSpace(profile.Gender) &&
             !string.IsNullOrWhiteSpace(profile.MaritalStatus) &&
-            !string.IsNullOrWhiteSpace(profile.Nationality) &&
-            !string.IsNullOrWhiteSpace(profile.PersonalPhotoUrl))
+            !string.IsNullOrWhiteSpace(profile.Nationality))
         {
             completedSteps++;
         }
@@ -617,10 +648,7 @@ public class CaregiverProfileService : ICaregiverProfileService
             completedSteps++;
         }
 
-        if (DeserializeList<CourseCertificateDto>(profile.CertificatesJson).Count > 0)
-        {
-            completedSteps++;
-        }
+        completedSteps++;
 
         var uploadedTypes = profile.Documents
             .Select(x => x.DocumentType)
@@ -650,6 +678,116 @@ public class CaregiverProfileService : ICaregiverProfileService
 
         return completedSteps * 10;
     }
+
+    // #region debug-point A:helpers
+    private static object BuildCompletionDebugSnapshot(CaregiverProfile profile)
+    {
+        var certificates = DeserializeList<CourseCertificateDto>(profile.CertificatesJson);
+        var shiftPreferences = DeserializeList<string>(profile.ShiftPreferencesJson);
+        var serviceAreas = DeserializeList<CoverageAreaDto>(profile.ServiceAreasJson);
+        var skills = DeserializeList<string>(profile.SkillsJson);
+        var customSkills = DeserializeList<string>(profile.CustomSkillsJson);
+        var uploadedTypes = profile.Documents
+            .Select(x => x.DocumentType)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var missingRequiredDocuments = RequiredDocumentTypes
+            .Where(required => !uploadedTypes.Contains(required))
+            .ToArray();
+
+        return new
+        {
+            step1UiFieldsOk = !string.IsNullOrWhiteSpace(profile.FirstName) &&
+                              !string.IsNullOrWhiteSpace(profile.LastName) &&
+                              !string.IsNullOrWhiteSpace(profile.FatherName) &&
+                              !string.IsNullOrWhiteSpace(profile.NationalCode) &&
+                              !string.IsNullOrWhiteSpace(profile.BirthCertificateNumber) &&
+                              profile.DateOfBirth.HasValue &&
+                              !string.IsNullOrWhiteSpace(profile.BirthPlace) &&
+                              !string.IsNullOrWhiteSpace(profile.Gender) &&
+                              !string.IsNullOrWhiteSpace(profile.MaritalStatus) &&
+                              !string.IsNullOrWhiteSpace(profile.Nationality),
+            hasPersonalPhotoUrl = !string.IsNullOrWhiteSpace(profile.PersonalPhotoUrl),
+            step2Ok = !string.IsNullOrWhiteSpace(profile.MobileNumber) &&
+                      !string.IsNullOrWhiteSpace(profile.FullAddress) &&
+                      !string.IsNullOrWhiteSpace(profile.Province) &&
+                      !string.IsNullOrWhiteSpace(profile.City) &&
+                      !string.IsNullOrWhiteSpace(profile.PostalCode),
+            step3Ok = !string.IsNullOrWhiteSpace(profile.CooperationType) &&
+                      profile.ExperienceYears.HasValue &&
+                      !string.IsNullOrWhiteSpace(profile.CurrentEmploymentStatus) &&
+                      shiftPreferences.Count > 0 &&
+                      profile.ServiceRadiusKm.HasValue &&
+                      serviceAreas.Count > 0,
+            step4Ok = skills.Count + customSkills.Count > 0,
+            step5Ok = !string.IsNullOrWhiteSpace(profile.LatestDegree) &&
+                      !string.IsNullOrWhiteSpace(profile.Major) &&
+                      !string.IsNullOrWhiteSpace(profile.University) &&
+                      profile.GraduationYear.HasValue,
+            step6CertificatesCount = certificates.Count,
+            step7RequiredDocumentsOk = missingRequiredDocuments.Length == 0,
+            missingRequiredDocuments,
+            step8BankInfoAlwaysCounted = true,
+            step9Ok = !string.IsNullOrWhiteSpace(profile.EmergencyContactName) &&
+                      !string.IsNullOrWhiteSpace(profile.EmergencyContactRelationship) &&
+                      !string.IsNullOrWhiteSpace(profile.EmergencyContactMobile) &&
+                      !string.IsNullOrWhiteSpace(profile.EmergencyContactAddress),
+            step10Ok = profile.AcceptCollaborationTerms &&
+                       profile.AcceptPatientConfidentiality &&
+                       profile.AcceptProfessionalEthics &&
+                       profile.AcceptDocumentReviewConsent
+        };
+    }
+
+    private static async Task ReportDebugAsync(string runId, string hypothesisId, string location, string msg, object data)
+    {
+        try
+        {
+            var debugServerUrl = "http://127.0.0.1:7777/event";
+            var debugSessionId = "caregiver-profile-90";
+            var debugEnvPath = Path.Combine(AppContext.BaseDirectory, ".dbg", "caregiver-profile-90.env");
+
+            if (!File.Exists(debugEnvPath))
+            {
+                debugEnvPath = Path.Combine(Directory.GetCurrentDirectory(), ".dbg", "caregiver-profile-90.env");
+            }
+
+            if (File.Exists(debugEnvPath))
+            {
+                foreach (var line in File.ReadAllLines(debugEnvPath))
+                {
+                    if (line.StartsWith("DEBUG_SERVER_URL=", StringComparison.Ordinal))
+                    {
+                        debugServerUrl = line["DEBUG_SERVER_URL=".Length..].Trim();
+                    }
+                    else if (line.StartsWith("DEBUG_SESSION_ID=", StringComparison.Ordinal))
+                    {
+                        debugSessionId = line["DEBUG_SESSION_ID=".Length..].Trim();
+                    }
+                }
+            }
+
+            using var client = new HttpClient();
+            using var content = new StringContent(
+                JsonSerializer.Serialize(new
+                {
+                    sessionId = debugSessionId,
+                    runId,
+                    hypothesisId,
+                    location,
+                    msg,
+                    data,
+                    ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                }),
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+            using var _ = await client.PostAsync(debugServerUrl, content);
+        }
+        catch
+        {
+        }
+    }
+    // #endregion
 
     private static (int Pending, int Approved, int NeedsCorrection, int Rejected) BuildDocumentStats(IEnumerable<CaregiverProfileDocument> documents)
     {

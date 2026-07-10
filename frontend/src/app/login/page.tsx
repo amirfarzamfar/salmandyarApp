@@ -269,9 +269,9 @@ export default function LoginPage() {
           </form>
         ) : (
           <div className="mt-6 space-y-5">
-            <div className="rounded-xl border border-teal-100 bg-teal-50 p-4 text-sm text-teal-800">
+            {/* <div className="rounded-xl border border-teal-100 bg-teal-50 p-4 text-sm text-teal-800">
               این روش فقط برای کاربرانی است که قبلا ثبت نام کرده‌اند. کد ورود به کانال ثبت‌شده‌ی کاربر ارسال می‌شود.
-            </div>
+            </div> */}
 
             <div>
               <label htmlFor="otp-identifier" className="block text-sm font-medium text-gray-700 mb-1">شماره موبایل یا ایمیل</label>
