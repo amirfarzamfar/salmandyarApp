@@ -224,6 +224,118 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\048c34f9-7474-4345-9209-9c94a274d62c_WorkHistory_afcf62c12d6044629e71ad81e4b5ef41.jpg))</OriginalItemSpec>
     </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_BirthCertificate_b62517ab3fa84083a44cf59e1d0de775.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_BirthCertificate_b62517ab3fa84083a44cf59e1d0de775.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_BirthCertificate_b62517ab3fa84083a44cf59e1d0de775.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_CPR_4b763197d58442ffaf2f800e3c0874d1.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_CPR_4b763197d58442ffaf2f800e3c0874d1.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_CPR_4b763197d58442ffaf2f800e3c0874d1.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_DigitalSignature_4f8119b305fa4e30a57183f468fad8dd.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_DigitalSignature_4f8119b305fa4e30a57183f468fad8dd.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_DigitalSignature_4f8119b305fa4e30a57183f468fad8dd.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_EducationDegree_575daf0e67024cfb8b470e62ea0b8fd7.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_EducationDegree_575daf0e67024cfb8b470e62ea0b8fd7.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_EducationDegree_575daf0e67024cfb8b470e62ea0b8fd7.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_HealthCertificate_04facf015ff44ba7a0019246f9a730eb.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_HealthCertificate_04facf015ff44ba7a0019246f9a730eb.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_HealthCertificate_04facf015ff44ba7a0019246f9a730eb.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_Insurance_08a3fc98d48848cd8e91472db1b7b7d6.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_Insurance_08a3fc98d48848cd8e91472db1b7b7d6.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_Insurance_08a3fc98d48848cd8e91472db1b7b7d6.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NationalCardBack_af2c20402d1b44dab3662c0fd3fde103.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NationalCardBack_af2c20402d1b44dab3662c0fd3fde103.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NationalCardBack_af2c20402d1b44dab3662c0fd3fde103.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NationalCardFront_3930d054b21e4044b95ff65cafd30198.jpg))">
       <SourceType>Package</SourceType>
       <SourceId>Salmandyar.API</SourceId>
@@ -239,6 +351,102 @@
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NationalCardFront_3930d054b21e4044b95ff65cafd30198.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NoAddiction_398c7d99355a42daa5b22095102947ed.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NoAddiction_398c7d99355a42daa5b22095102947ed.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NoAddiction_398c7d99355a42daa5b22095102947ed.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NoCriminalRecord_810d7c95155441e98c8e87443b8f78fe.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NoCriminalRecord_810d7c95155441e98c8e87443b8f78fe.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_NoCriminalRecord_810d7c95155441e98c8e87443b8f78fe.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_ProfilePhoto_3f14725eeaeb4590b2f31c7565c2fe7a.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_ProfilePhoto_3f14725eeaeb4590b2f31c7565c2fe7a.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_ProfilePhoto_3f14725eeaeb4590b2f31c7565c2fe7a.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_ReferralLetter_c1c80121424c45cab53534846f8b00a7.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_ReferralLetter_c1c80121424c45cab53534846f8b00a7.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_ReferralLetter_c1c80121424c45cab53534846f8b00a7.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_Resume_7e4636778b20425d8707859b12ef9127.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_Resume_7e4636778b20425d8707859b12ef9127.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_Resume_7e4636778b20425d8707859b12ef9127.jpg))</OriginalItemSpec>
+    </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_WorkHistory_b3e649dec9364ec99dc0ce2649c34817.jpg))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/caregiver-profiles/546b7a51-f8df-4dfd-85ed-b4d78fc6971d_WorkHistory_b3e649dec9364ec99dc0ce2649c34817.jpg</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\546b7a51-f8df-4dfd-85ed-b4d78fc6971d_WorkHistory_b3e649dec9364ec99dc0ce2649c34817.jpg))</OriginalItemSpec>
     </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\caregiver-profiles\5c80b1df-33f5-44cf-90c0-1c9be4582ca6_NationalCardBack_e05611c47b534f839abae27d9291b1ad.jpg))">
       <SourceType>Package</SourceType>

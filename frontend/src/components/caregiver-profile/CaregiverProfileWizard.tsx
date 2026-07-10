@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { resolveApiUrl } from '@/lib/network';
 import { getCitiesByProvince, iranProvinces } from '@/data/iran-locations';
+import CaregiverProfileApprovedOverview from '@/components/caregiver-profile/CaregiverProfileApprovedOverview';
 import {
   CAREGIVER_DOCUMENT_ACCEPT,
   CAREGIVER_DOCUMENT_TYPES,
@@ -251,7 +252,12 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
     if (shouldSyncStepFromServer) {
       setCurrentStep(Math.max(1, profileQuery.data.currentStep || 1));
     }
-    setShowSuccess(!isAdminMode && profileQuery.data.isCompleted && profileQuery.data.currentStep >= 10);
+    setShowSuccess(
+      !isAdminMode &&
+        profileQuery.data.isCompleted &&
+        profileQuery.data.currentStep >= 10 &&
+        profileQuery.data.employmentStatus !== CaregiverEmploymentApprovalStatus.Approved,
+    );
     setIsDirty(false);
     setIsInitialized(true);
   }, [isInitialized, profileQuery.data]);
@@ -323,6 +329,8 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
         return 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:border-slate-700';
     }
   }, [form.employmentStatus]);
+
+  const isApprovedProfile = form.employmentStatus === CaregiverEmploymentApprovalStatus.Approved;
 
   const setField = <K extends keyof CaregiverProfileDto>(key: K, value: CaregiverProfileDto[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -454,8 +462,17 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
     );
   }
 
+  if (!isAdminMode && isApprovedProfile) {
+    return (
+      <div className="mx-auto max-w-7xl px-1 sm:px-0">
+        <CaregiverProfileApprovedOverview profile={form} />
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-7xl px-1 sm:px-0">
+    <div className="mx-auto max-w-7xl space-y-4 px-1 sm:px-0">
+      {isApprovedProfile && <CaregiverProfileApprovedOverview profile={form} isAdminMode={isAdminMode} />}
       <div className="grid gap-4 lg:gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
         <aside className="light-scrollbar rounded-[24px] border border-slate-200 bg-white/90 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900/80 sm:rounded-[28px] sm:p-5 xl:sticky xl:top-6 xl:max-h-[calc(100vh-3rem)] xl:overflow-y-auto">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -510,9 +527,17 @@ export default function CaregiverProfileWizard({ adminUserId }: Props) {
               );
             })}
           </div>
-          <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs leading-6 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
-            برای فعال شدن حساب کاربری و شروع همکاری، لطفاً اطلاعات استخدامی خود را تکمیل کنید.
-            تا زمان تکمیل اطلاعات و تایید مدارک توسط مدیریت، برخی امکانات پنل محدود خواهد بود.
+          <div
+            className={cn(
+              'mt-6 rounded-2xl p-4 text-xs leading-6',
+              isApprovedProfile
+                ? 'border border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200'
+                : 'border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200',
+            )}
+          >
+            {isApprovedProfile
+              ? 'این پروفایل توسط مدیریت تایید شده است. خلاصه مشخصات تاییدشده در بالای صفحه نمایش داده می‌شود و در صورت نیاز می‌توانید جزئیات فرم را نیز مرور کنید.'
+              : 'برای فعال شدن حساب کاربری و شروع همکاری، لطفاً اطلاعات استخدامی خود را تکمیل کنید. تا زمان تکمیل اطلاعات و تایید مدارک توسط مدیریت، برخی امکانات پنل محدود خواهد بود.'}
           </div>
         </aside>
 
