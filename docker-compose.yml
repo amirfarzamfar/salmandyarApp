@@ -56,6 +56,7 @@ services:
       Database__ApplyMigrationsOnStartup: ${DB_APPLY_MIGRATIONS:-false}
       Database__SeedRolesOnStartup: ${DB_SEED_ROLES:-false}
       Database__SeedAdminUserOnStartup: ${DB_SEED_ADMIN_USER:-false}
+      Database__SeedServiceDefinitionsOnStartup: ${DB_SEED_SERVICE_DEFINITIONS:-true}
       Database__SeedSampleDataOnStartup: ${DB_SEED_SAMPLE_DATA:-false}
       Database__AdminUser__Email: ${ADMIN_EMAIL:-}
       Database__AdminUser__PhoneNumber: ${ADMIN_PHONE_NUMBER:-}

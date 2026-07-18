@@ -203,9 +203,10 @@ static async Task ApplyStartupDatabaseTasksAsync(
     var applyMigrations = configuration.GetValue("Database:ApplyMigrationsOnStartup", environment.IsDevelopment());
     var seedRoles = configuration.GetValue("Database:SeedRolesOnStartup", environment.IsDevelopment());
     var seedAdminUser = configuration.GetValue("Database:SeedAdminUserOnStartup", environment.IsDevelopment());
+    var seedServiceDefinitions = configuration.GetValue("Database:SeedServiceDefinitionsOnStartup", true);
     var seedSampleData = configuration.GetValue("Database:SeedSampleDataOnStartup", environment.IsDevelopment());
 
-    if (!applyMigrations && !seedRoles && !seedAdminUser && !seedSampleData)
+    if (!applyMigrations && !seedRoles && !seedAdminUser && !seedServiceDefinitions && !seedSampleData)
     {
         logger.LogInformation("Automatic database startup tasks are disabled for environment {EnvironmentName}.", environment.EnvironmentName);
         return;
@@ -231,6 +232,7 @@ static async Task ApplyStartupDatabaseTasksAsync(
             roleManager,
             seedRoles,
             seedAdminUser,
+            seedServiceDefinitions,
             seedSampleData,
             new SeedAdminUserOptions(
                 configuration["Database:AdminUser:Email"],

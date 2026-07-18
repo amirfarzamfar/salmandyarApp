@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Salmandyar.Domain.Constants;
 using Salmandyar.Application.Services.ServiceCatalog;
 using Salmandyar.Application.Services.ServiceCatalog.Dtos;
 
@@ -34,7 +35,7 @@ public class ServiceDefinitionsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Manager,Supervisor,Nurse")]
+    [Authorize(Roles = Roles.ServiceCatalogManagementRoles)]
     public async Task<IActionResult> Create([FromBody] CreateServiceDefinitionDto dto)
     {
         await _service.CreateAsync(dto);
@@ -42,7 +43,7 @@ public class ServiceDefinitionsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Manager,Supervisor,Nurse")]
+    [Authorize(Roles = Roles.ServiceCatalogManagementRoles)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateServiceDefinitionDto dto)
     {
         await _service.UpdateAsync(id, dto);
@@ -50,7 +51,7 @@ public class ServiceDefinitionsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Manager,Supervisor,Nurse")]
+    [Authorize(Roles = Roles.ServiceCatalogManagementRoles)]
     public async Task<IActionResult> Delete(int id)
     {
         await _service.DeleteAsync(id);

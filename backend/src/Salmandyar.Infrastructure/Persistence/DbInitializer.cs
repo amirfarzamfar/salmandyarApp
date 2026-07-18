@@ -17,6 +17,7 @@ public static class DbInitializer
         RoleManager<IdentityRole> roleManager,
         bool seedRoles,
         bool seedAdminUser,
+        bool seedServiceDefinitions,
         bool seedSampleData,
         SeedAdminUserOptions adminOptions)
     {
@@ -137,6 +138,23 @@ public static class DbInitializer
             }
         }
 
+        // Seed Services
+        if (seedServiceDefinitions && !context.ServiceDefinitions.Any())
+        {
+            var services = new List<ServiceDefinition>
+            {
+                new ServiceDefinition { Title = "تزریقات", Category = ServiceCategory.Nursing, Description = "تزریق عضلانی یا وریدی" },
+                new ServiceDefinition { Title = "پانسمان", Category = ServiceCategory.Nursing, Description = "تعویض پانسمان زخم" },
+                new ServiceDefinition { Title = "ساکشن", Category = ServiceCategory.Nursing, Description = "ساکشن ترشحات تنفسی" },
+                new ServiceDefinition { Title = "ویزیت پزشک عمومی", Category = ServiceCategory.Medical, Description = "معاینه عمومی بیمار" },
+                new ServiceDefinition { Title = "فیزیوتراپی", Category = ServiceCategory.Rehabilitation, Description = "تمرینات حرکتی و فیزیوتراپی" },
+                new ServiceDefinition { Title = "حمام بیمار", Category = ServiceCategory.PersonalCare, Description = "کمک در استحمام بیمار" },
+                new ServiceDefinition { Title = "تعویض سوند", Category = ServiceCategory.Nursing, Description = "تعویض سوند ادراری" }
+            };
+            context.ServiceDefinitions.AddRange(services);
+            await context.SaveChangesAsync();
+        }
+
         if (!seedSampleData)
         {
             return;
@@ -179,23 +197,6 @@ public static class DbInitializer
                 Needs = "نیاز به کمک در راه رفتن"
             };
             context.CareRecipients.Add(patient);
-            await context.SaveChangesAsync();
-        }
-
-        // Seed Services
-        if (!context.ServiceDefinitions.Any())
-        {
-            var services = new List<ServiceDefinition>
-            {
-                new ServiceDefinition { Title = "تزریقات", Category = ServiceCategory.Nursing, Description = "تزریق عضلانی یا وریدی" },
-                new ServiceDefinition { Title = "پانسمان", Category = ServiceCategory.Nursing, Description = "تعویض پانسمان زخم" },
-                new ServiceDefinition { Title = "ساکشن", Category = ServiceCategory.Nursing, Description = "ساکشن ترشحات تنفسی" },
-                new ServiceDefinition { Title = "ویزیت پزشک عمومی", Category = ServiceCategory.Medical, Description = "معاینه عمومی بیمار" },
-                new ServiceDefinition { Title = "فیزیوتراپی", Category = ServiceCategory.Rehabilitation, Description = "تمرینات حرکتی و فیزیوتراپی" },
-                new ServiceDefinition { Title = "حمام بیمار", Category = ServiceCategory.PersonalCare, Description = "کمک در استحمام بیمار" },
-                new ServiceDefinition { Title = "تعویض سوند", Category = ServiceCategory.Nursing, Description = "تعویض سوند ادراری" }
-            };
-            context.ServiceDefinitions.AddRange(services);
             await context.SaveChangesAsync();
         }
 

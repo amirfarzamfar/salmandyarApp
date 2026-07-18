@@ -14,4 +14,5 @@ public static class Roles
     public const string Patient = "Patient";
     public const string PatientFamily = "PatientFamily";
     public const string CaregiverPanelRoles = $"{Nurse},{AssistantNurse},{ElderlyCareAssistant},{Physiotherapist}";
+    public const string ServiceCatalogManagementRoles = $"{SuperAdmin},{Admin},{Manager},{Supervisor},{Nurse}";
 }
