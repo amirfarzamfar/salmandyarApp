@@ -105,18 +105,18 @@ export default function PatientProfilePageClient() {
 
       <div className="bg-white rounded-xl shadow-sm overflow-hidden">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex" aria-label="Tabs">
+          <nav className="-mb-px flex gap-2 overflow-x-auto whitespace-nowrap px-2 scrollbar-hide md:overflow-visible md:whitespace-normal md:px-0" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-1/5 py-4 px-1 text-center border-b-2 font-medium text-sm flex items-center justify-center transition-colors ${
+                className={`flex-shrink-0 md:flex-1 w-auto py-3 md:py-4 px-3 md:px-1 text-center border-b-2 font-medium text-xs md:text-sm flex items-center justify-center transition-colors ${
                   activeTab === tab.id
                     ? 'border-teal-500 text-teal-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
-                <tab.icon className={`ml-2 h-5 w-5 ${activeTab === tab.id ? 'text-teal-500' : 'text-gray-400'}`} />
+                <tab.icon className={`ml-2 h-4 w-4 md:h-5 md:w-5 ${activeTab === tab.id ? 'text-teal-500' : 'text-gray-400'}`} />
                 {tab.label}
               </button>
             ))}
@@ -136,4 +136,3 @@ export default function PatientProfilePageClient() {
     </div>
   );
 }
-
