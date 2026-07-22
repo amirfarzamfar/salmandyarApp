@@ -6,7 +6,6 @@ import { assessmentService } from '@/services/assessment.service';
 import { userEvaluationService } from '@/services/user-evaluation.service';
 import { AssessmentForm, SubmitAssessmentDto } from '@/types/assessment';
 import AssessmentTaker from '@/components/assessments/AssessmentTaker';
-import { ArrowRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 function PatientAssessmentDetailContent() {
@@ -72,26 +71,12 @@ function PatientAssessmentDetailContent() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">آزمون مورد نظر یافت نشد.</p>
-        <button 
-          onClick={() => router.back()}
-          className="mt-4 text-indigo-600 font-medium"
-        >
-          بازگشت
-        </button>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <button 
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition-colors mb-4"
-      >
-        <ArrowRight size={18} />
-        <span>بازگشت</span>
-      </button>
-
       <AssessmentTaker 
         form={form} 
         onSubmit={handleSubmit} 

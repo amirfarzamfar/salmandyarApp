@@ -2,6 +2,7 @@
 
 import { User, HeartPulse } from "lucide-react";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
+import { PublicSiteLink } from "@/components/navigation/PublicSiteLink";
 
 interface SmartHeaderProps {
   patientName: string;
@@ -66,7 +67,10 @@ export function SmartHeader({ patientName, patientStatus, onAvatarClick }: Smart
       </div>
 
       <div className="shrink-0 self-start sm:self-auto">
-        <NotificationCenter appearance="portal" />
+        <div className="flex items-center gap-2">
+          <PublicSiteLink className="h-10 w-10 px-0 sm:h-10 sm:w-auto sm:px-3" />
+          <NotificationCenter appearance="portal" />
+        </div>
       </div>
     </header>
   );

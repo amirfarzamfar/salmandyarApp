@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { AuthResponse } from '@/types/auth';
 import { translateRole } from '@/utils/role-translation';
 import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { PublicSiteLink } from '@/components/navigation/PublicSiteLink';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -58,6 +59,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
         >
           <Search className="h-5 w-5" />
         </button>
+        <PublicSiteLink className="rounded-lg border-slate-200 bg-white px-2.5 sm:px-3" />
         <NotificationCenter />
         <div className="flex items-center">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-100 font-bold text-teal-800">

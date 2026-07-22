@@ -1,17 +1,21 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { assessmentService } from '@/services/assessment.service';
 import { userEvaluationService } from '@/services/user-evaluation.service';
 import { AssessmentForm, SubmitAssessmentDto } from '@/types/assessment';
 import AssessmentTaker from '@/components/assessments/AssessmentTaker';
-import { ArrowRight } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
+import { SmartBackLink } from '@/components/navigation/SmartBackLink';
+import { getPanelNavigation } from '@/components/navigation/panel-navigation';
 
 function NurseAssessmentDetailContent() {
   const { id } = useParams();
   const router = useRouter();
+  const pathname = usePathname();
+  const nav = getPanelNavigation("nurse", pathname);
   const searchParams = useSearchParams();
   const source = searchParams.get('source');
   const [form, setForm] = useState<AssessmentForm | null>(null);
@@ -77,25 +81,19 @@ function NurseAssessmentDetailContent() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">آزمون مورد نظر یافت نشد.</p>
-        <button 
-          onClick={() => router.back()}
-          className="mt-4 text-teal-600 font-medium"
-        >
-          بازگشت
-        </button>
+        <div className="mt-4 flex justify-center">
+          <SmartBackLink href={nav.backHref || "/nurse-portal/assessments"} />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <button 
-        onClick={() => router.back()}
-        className="flex items-center gap-2 text-gray-500 hover:text-teal-600 transition-colors mb-4"
-      >
-        <ArrowRight size={18} />
-        <span>بازگشت به لیست آزمون‌ها</span>
-      </button>
+      <div className="flex flex-col gap-2">
+        <SmartBackLink href={nav.backHref || "/nurse-portal/assessments"} label="بازگشت به لیست ارزیابی‌ها" className="w-fit" />
+        <Breadcrumbs items={nav.breadcrumbs} />
+      </div>
 
       <AssessmentTaker 
         form={form} 

@@ -1,17 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { assessmentReportService } from '@/services/assessment-report.service';
 import { UserExamResultDto, ExamAnalyticsDto, QuestionAnalysisDto } from '@/types/assessment-report';
-import { ArrowLeft, User, BarChart2, CheckCircle, XCircle, HelpCircle, Download, ChevronDown, ChevronUp, Search, Eye } from 'lucide-react';
+import { User, BarChart2, CheckCircle, XCircle, HelpCircle, Download, ChevronDown, ChevronUp, Search, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { SmartBackLink } from '@/components/navigation/SmartBackLink';
+import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
+import { getPanelNavigation } from '@/components/navigation/panel-navigation';
 
 export default function ExamReportDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const examId = Number(params.examId);
+  const nav = getPanelNavigation("dashboard", `/dashboard/admin/assessments/reports/${examId}`);
 
   const [activeTab, setActiveTab] = useState<'users' | 'analytics'>('users');
   const [userResults, setUserResults] = useState<UserExamResultDto[]>([]);
@@ -90,17 +93,13 @@ export default function ExamReportDetailPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-start gap-4">
-          <button 
-            onClick={() => router.back()} 
-            className="rounded-full bg-slate-800 p-2 transition-colors hover:bg-slate-700"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-300" />
-          </button>
+          <SmartBackLink href={nav.backHref || "/dashboard/admin/assessments/reports"} className="rounded-full bg-slate-800 p-2 text-slate-300 hover:bg-slate-700 hover:text-white" iconClassName="w-5 h-5" label="" />
           <div>
             <h1 className="text-2xl font-bold text-white">
               {analytics ? analytics.title : 'گزارش جزئیات آزمون'}
             </h1>
             <div className="text-sm text-slate-400 mt-1">شناسه آزمون: {examId}</div>
+            <Breadcrumbs items={nav.breadcrumbs} className="mt-2 text-slate-400" />
           </div>
         </div>
         

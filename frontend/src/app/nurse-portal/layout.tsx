@@ -6,6 +6,8 @@ import { NotificationCenter } from "@/components/notifications/NotificationCente
 import { MedicationAlertBanner } from "@/components/portal/medication-alert-banner";
 import { CaregiverProfileGuard } from "@/components/caregiver-profile/CaregiverProfileGuard";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PanelPageNav } from "@/components/navigation/PanelPageNav";
+import { PublicSiteLink } from "@/components/navigation/PublicSiteLink";
 
 export const metadata: Metadata = {
   title: "پنل پرستار | سالمندیار",
@@ -35,12 +37,16 @@ export default function NursePortalLayout({
             </div>
             <span className="font-black text-gray-900 dark:text-white">سالمندیار</span>
           </div>
-          <NotificationCenter appearance="dashboard" />
+          <div className="flex items-center gap-2">
+            <PublicSiteLink className="h-10 w-10 rounded-xl px-0" />
+            <NotificationCenter appearance="dashboard" />
+          </div>
         </div>
         
         <main className="w-full max-w-md mx-auto md:max-w-none md:mx-0 md:px-8 md:py-8 min-h-screen transition-all duration-300 relative">
           {/* Desktop Notification Center */}
-          <div className="mb-6 hidden md:flex md:justify-end">
+          <div className="mb-6 hidden md:flex md:items-center md:justify-end md:gap-3">
+            <PublicSiteLink />
             <NotificationCenter appearance="dashboard" />
           </div>
 
@@ -51,6 +57,8 @@ export default function NursePortalLayout({
           <div className="mb-6">
             <MedicationAlertBanner />
           </div>
+
+          <PanelPageNav panel="nurse" />
       
           {children}
         </main>

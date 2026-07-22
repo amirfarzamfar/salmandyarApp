@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./portal.css";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { PanelPageNav } from "@/components/navigation/PanelPageNav";
+import { PortalSectionNav } from "@/components/portal/portal-section-nav";
 
 export const metadata: Metadata = {
   title: "پروفایل سلامت | سالمندیار",
@@ -18,6 +20,8 @@ export default function PortalLayout({
     <ProtectedRoute allowedRoles={portalRoles}>
       <div className="min-h-screen bg-medical-50 text-gray-800 font-sans selection:bg-medical-200 selection:text-medical-900 pb-20 md:pb-0">
         <main className="max-w-md mx-auto md:max-w-7xl md:px-6 md:py-8 min-h-screen">
+          <PanelPageNav panel="portal" />
+          <PortalSectionNav />
           {children}
         </main>
       

@@ -3,12 +3,10 @@
 import { useEffect, useState } from 'react';
 import { assessmentService } from '@/services/assessment.service';
 import { AssessmentForm, AssessmentType } from '@/types/assessment';
-import { ClipboardCheck, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ClipboardCheck, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 export default function PatientAssessmentsPage() {
-  const router = useRouter();
   const [forms, setForms] = useState<AssessmentForm[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,17 +29,9 @@ export default function PatientAssessmentsPage() {
 
   return (
     <div className="space-y-8 pb-24">
-      <header className="flex items-center gap-4">
-        <button 
-          onClick={() => router.back()}
-          className="w-10 h-10 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-teal-600 transition-colors"
-        >
-          <ArrowRight size={20} />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">ارزیابی‌های سلامت</h1>
-          <p className="text-gray-500 text-sm mt-1">لیست پرسشنامه‌های فعال برای شما</p>
-        </div>
+      <header>
+        <h1 className="text-2xl font-bold text-gray-800">ارزیابی‌های سلامت</h1>
+        <p className="text-gray-500 text-sm mt-1">لیست پرسشنامه‌های فعال برای شما</p>
       </header>
 
       {loading ? (

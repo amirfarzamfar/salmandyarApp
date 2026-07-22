@@ -13,9 +13,14 @@ import { patientService } from "@/services/patient.service";
 import { Patient } from "@/types/patient";
 import { toast } from "react-hot-toast";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { getPanelNavigation } from "@/components/navigation/panel-navigation";
+import { usePathname } from "next/navigation";
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const pathname = usePathname();
+  const nav = getPanelNavigation("nurse", pathname);
   const [activeTab, setActiveTab] = useState<'vitals' | 'reports' | 'services' | 'meds'>('vitals');
   const [patient, setPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,6 +84,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
               <span>•</span>
               <span>{patient.currentStatus}</span>
             </div>
+            <Breadcrumbs items={nav.breadcrumbs} className="mt-2" />
           </div>
         </div>
         <div className="flex gap-2">

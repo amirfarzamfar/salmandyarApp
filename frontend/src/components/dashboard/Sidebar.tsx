@@ -104,7 +104,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           {navigation.map((item) => {
             const hasSubItems = item.subItems && item.subItems.length > 0;
             const normalizedHref = item.href.split('?')[0];
-            const isSubItemActive = hasSubItems && item.subItems?.some(sub => pathname === sub.href);
+            const isSubItemActive = hasSubItems && item.subItems?.some((sub) => {
+              const normalizedSubHref = sub.href.split('?')[0];
+              return pathname === normalizedSubHref || pathname.startsWith(`${normalizedSubHref}/`);
+            });
             const isActive = !hasSubItems && (pathname === normalizedHref || pathname.startsWith(`${normalizedHref}/`));
             const isOpen = openSubMenus[item.name] || isSubItemActive;
 
@@ -152,7 +155,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                   {hasSubItems && isOpen && (
                       <div className="mt-1 space-y-1 pr-11">
                           {item.subItems?.map(sub => {
-                              const isSubActive = pathname === sub.href;
+                              const normalizedSubHref = sub.href.split('?')[0];
+                              const isSubActive = pathname === normalizedSubHref || pathname.startsWith(`${normalizedSubHref}/`);
                               return (
                                 <Link
                                     key={sub.name}

@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { assessmentReportService } from '@/services/assessment-report.service';
 import { UserAttemptDetailDto } from '@/types/assessment-report';
-import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Clock } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { SmartBackLink } from '@/components/navigation/SmartBackLink';
+import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
+import { getPanelNavigation } from '@/components/navigation/panel-navigation';
 
 export default function UserAttemptDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const submissionId = Number(params.submissionId);
+  const nav = getPanelNavigation("dashboard", "/dashboard/admin/assessments/reports/attempt/detail");
 
   const [detail, setDetail] = useState<UserAttemptDetailDto | null>(null);
   const [loading, setLoading] = useState(true);
@@ -46,17 +49,13 @@ export default function UserAttemptDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <button 
-          onClick={() => router.back()} 
-          className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 text-slate-300" />
-        </button>
+        <SmartBackLink href={nav.backHref || "/dashboard/admin/assessments/reports"} className="rounded-full bg-slate-800 p-2 text-slate-300 hover:bg-slate-700 hover:text-white" iconClassName="w-5 h-5" label="" />
         <div>
           <h1 className="text-2xl font-bold text-white">جزئیات پاسخ‌نامه کاربر</h1>
           <div className="text-sm text-slate-400 mt-1">
             {detail.userFullName} - {detail.examTitle}
           </div>
+          <Breadcrumbs items={nav.breadcrumbs} className="mt-2 text-slate-400" />
         </div>
       </div>
 

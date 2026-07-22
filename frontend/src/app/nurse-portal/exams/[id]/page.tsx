@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, usePathname } from "next/navigation";
 import { assessmentService } from "@/services/assessment.service";
 import { AssessmentForm, SubmitAssessmentDto } from "@/types/assessment";
 import AssessmentTaker from "@/components/assessments/AssessmentTaker";
@@ -9,10 +9,14 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
+import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { getPanelNavigation } from "@/components/navigation/panel-navigation";
 
 export default function TakeExamPage() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
+  const nav = getPanelNavigation("nurse", pathname);
   const [form, setForm] = useState<AssessmentForm | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -79,6 +83,7 @@ export default function TakeExamPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{form.title}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">لطفاً به تمام سوالات با دقت پاسخ دهید</p>
+          <Breadcrumbs items={nav.breadcrumbs} className="mt-2" />
         </div>
       </div>
 
