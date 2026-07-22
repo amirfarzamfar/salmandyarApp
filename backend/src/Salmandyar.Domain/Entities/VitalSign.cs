@@ -1,3 +1,5 @@
+using Salmandyar.Domain.Enums;
+
 namespace Salmandyar.Domain.Entities;
 
 public class VitalSign
@@ -32,5 +34,6 @@ public class VitalSign
     public double BodyTemperature { get; set; }
     public int OxygenSaturation { get; set; } // SpO2
     public int? BloodSugar { get; set; } // mg/dL
+    public BloodSugarMeasurementType? BloodSugarMeasurementType { get; set; }
     public int? GlasgowComaScale { get; set; } // GCS
 }

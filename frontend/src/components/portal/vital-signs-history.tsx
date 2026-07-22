@@ -15,6 +15,7 @@ import { VitalHistoryNote } from "@/components/vitals/vital-history-note";
 import { getVitalAlertsForHistory, getVitalDisplayStatus, getVitalStatusMeta } from "@/utils/vital-alerts";
 import { getVitalAcknowledgementErrorMessage } from "@/utils/vital-acknowledgement";
 import { toast } from "react-hot-toast";
+import { evaluateBloodSugar } from "@/utils/blood-sugar";
 
 interface VitalSignsHistoryProps {
   patientId: number;
@@ -231,6 +232,7 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
         {visibleVitals.map((vital, index) => {
           const alerts = getVitalAlertsForHistory(filteredVitals, index);
           const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
+          const bloodSugarEvaluation = evaluateBloodSugar(vital.bloodSugar, vital.bloodSugarMeasurementType);
           const isHighlighted = highlightedVitalId === vital.id;
           const canAcknowledge = isHighlighted && alerts.length > 0 && !vital.patientAcknowledgedAt;
 
@@ -307,6 +309,16 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
                   <span className="block text-sm font-bold text-gray-800 leading-none mb-1">
                     {vital.bloodSugar == null ? "ثبت نشده" : `${vital.bloodSugar} mg/dL`}
                   </span>
+                  {vital.bloodSugarMeasurementType && (
+                    <span className="block text-[10px] text-gray-500 mb-1">
+                      {vital.bloodSugarMeasurementType === "fasting" ? "ناشتا" : "تصادفی"}
+                    </span>
+                  )}
+                  {bloodSugarEvaluation && (
+                    <span className={cn("inline-flex rounded-full border px-2 py-0.5 text-[10px] font-bold", bloodSugarEvaluation.statusMeta.badgeClassName)}>
+                      {bloodSugarEvaluation.statusMeta.label}
+                    </span>
+                  )}
                   <span className="text-[10px] text-gray-500">قند خون</span>
                 </div>
               </div>
@@ -369,6 +381,7 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
             {visibleVitals.map((vital, index) => {
               const alerts = getVitalAlertsForHistory(filteredVitals, index);
               const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
+              const bloodSugarEvaluation = evaluateBloodSugar(vital.bloodSugar, vital.bloodSugarMeasurementType);
               const isHighlighted = highlightedVitalId === vital.id;
               const canAcknowledge = isHighlighted && alerts.length > 0 && !vital.patientAcknowledgedAt;
 
@@ -421,8 +434,24 @@ export function VitalSignsHistory({ patientId, highlightedVitalId = null }: Vita
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-2">
                     <Droplet size={16} className="text-amber-500" />
-                    <span className="font-bold text-gray-800">{vital.bloodSugar == null ? "ثبت نشده" : vital.bloodSugar}</span>
-                    <span className="text-xs text-gray-400">mg/dL</span>
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-gray-800">{vital.bloodSugar == null ? "ثبت نشده" : vital.bloodSugar}</span>
+                        <span className="text-xs text-gray-400">mg/dL</span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-1">
+                        {vital.bloodSugarMeasurementType && (
+                          <span className="text-[11px] text-gray-500">
+                            {vital.bloodSugarMeasurementType === "fasting" ? "ناشتا" : "تصادفی"}
+                          </span>
+                        )}
+                        {bloodSugarEvaluation && (
+                          <span className={cn("rounded-full border px-2 py-0.5 text-[11px] font-bold", bloodSugarEvaluation.statusMeta.badgeClassName)}>
+                            {bloodSugarEvaluation.statusMeta.label}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">

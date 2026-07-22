@@ -123,6 +123,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
                 v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
                 v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
 
+        builder.Entity<VitalSign>()
+            .Property(v => v.BloodSugarMeasurementType)
+            .HasConversion<string>();
+
         builder.Entity<PatientSelfServiceAccessPolicy>()
             .Property(v => v.AccessStartAtUtc)
             .HasConversion(

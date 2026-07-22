@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import { PatientList, VitalSign, NursingReport, CareService, Medication, MedicationSchedule, CreateMedicationSchedule, AddVitalSignResult } from '@/types/patient';
+import { PatientList, VitalSign, NursingReport, CareService, Medication, MedicationSchedule, CreateMedicationSchedule, AddVitalSignResult, BloodSugarMeasurementType } from '@/types/patient';
 import { SubmitNursingReportDto } from '@/types/report';
 
 export interface CreateVitalSignRequest {
@@ -11,6 +11,7 @@ export interface CreateVitalSignRequest {
   bodyTemperature: number;
   oxygenSaturation: number;
   bloodSugar?: number | null;
+  bloodSugarMeasurementType?: BloodSugarMeasurementType | null;
   glasgowComaScale?: number;
   note?: string;
   delayReason?: string;

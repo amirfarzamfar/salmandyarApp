@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Activity, Clock, AlertCircle, X } from 'lucide-react';
 import { evaluateVitalAlerts, getVitalAlertsForHistory, getVitalDisplayStatus, getVitalStatusMeta } from '@/utils/vital-alerts';
 import { VitalHistoryNote } from '@/components/vitals/vital-history-note';
+import { evaluateBloodSugar } from '@/utils/blood-sugar';
 import {
   createHubConnection,
   isRealtimeEnabled,
@@ -259,14 +260,16 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 animate-fade-in">
-           <div className="max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <VitalSignForm 
-                patientId={patientId} 
-                expectedTime={expectedTime}
-                onSuccess={() => { setShowForm(false); fetchVitals(); }} 
-                onCancel={() => setShowForm(false)} 
-              />
+        <div className="fixed inset-0 bg-black/50 z-50 overflow-y-auto animate-fade-in">
+           <div className="flex min-h-full justify-center p-4">
+             <div className="max-w-2xl w-full my-auto">
+                <VitalSignForm 
+                  patientId={patientId} 
+                  expectedTime={expectedTime}
+                  onSuccess={() => { setShowForm(false); fetchVitals(); }} 
+                  onCancel={() => setShowForm(false)} 
+                />
+            </div>
           </div>
         </div>
       )}
@@ -325,6 +328,7 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
                 const compliance = getComplianceStatus(v, prev);
                 const alertsForRow = getVitalAlertsForHistory(vitalsDesc, index);
                 const statusMeta = getVitalStatusMeta(getVitalDisplayStatus(alertsForRow));
+                const bloodSugarEvaluation = evaluateBloodSugar(v.bloodSugar, v.bloodSugarMeasurementType);
                 
                 return (
                 <Fragment key={v.id}>
@@ -344,7 +348,25 @@ export default function VitalSignsTab({ patientId, careLevel = CareLevel.Level2 
                   <td className="px-4 py-3">
                      <span className={`${v.oxygenSaturation < 95 ? 'text-red-600 font-bold' : ''}`}>{v.oxygenSaturation}%</span>
                   </td>
-                  <td className="px-4 py-3">{v.bloodSugar == null ? 'ثبت نشده' : v.bloodSugar}</td>
+                  <td className="px-4 py-3">
+                    {v.bloodSugar == null ? 'ثبت نشده' : (
+                      <div className="flex flex-col gap-1">
+                        <span className="font-medium text-gray-800">{v.bloodSugar} mg/dL</span>
+                        <div className="flex flex-wrap items-center gap-1">
+                          {v.bloodSugarMeasurementType && (
+                            <span className="text-[11px] text-gray-500">
+                              {v.bloodSugarMeasurementType === 'fasting' ? 'ناشتا' : 'تصادفی'}
+                            </span>
+                          )}
+                          {bloodSugarEvaluation && (
+                            <span className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-[11px] font-bold ${bloodSugarEvaluation.statusMeta.badgeClassName}`}>
+                              {bloodSugarEvaluation.statusMeta.label}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3">{v.glasgowComaScale || '-'}</td>
                   <td className="px-4 py-3 text-gray-600">{v.recorderName}</td>
                   <td className="px-4 py-3">

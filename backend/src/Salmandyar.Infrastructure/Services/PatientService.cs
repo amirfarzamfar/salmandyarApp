@@ -285,6 +285,7 @@ public class PatientService : IPatientService
                 v.BodyTemperature,
                 v.OxygenSaturation,
                 v.BloodSugar,
+                ToApiBloodSugarMeasurementType(v.BloodSugarMeasurementType),
                 v.GlasgowComaScale,
                 v.PatientAcknowledgedAt,
                 v.PatientAcknowledgedBy != null ? $"{v.PatientAcknowledgedBy.FirstName} {v.PatientAcknowledgedBy.LastName}" : null,
@@ -299,6 +300,17 @@ public class PatientService : IPatientService
             recorderId,
             dto.CareRecipientId,
             PatientSelfServiceFeatures.VitalSigns);
+
+        var bloodSugarMeasurementType = ParseBloodSugarMeasurementType(dto.BloodSugarMeasurementType);
+        if (dto.BloodSugar.HasValue && !bloodSugarMeasurementType.HasValue)
+        {
+            throw new ArgumentException("برای ثبت قند خون، نوع اندازه‌گیری الزامی است.");
+        }
+
+        if (!dto.BloodSugar.HasValue && !string.IsNullOrWhiteSpace(dto.BloodSugarMeasurementType))
+        {
+            throw new ArgumentException("نوع اندازه‌گیری قند خون فقط هنگام ثبت مقدار قند خون قابل ارسال است.");
+        }
 
         // Calculate MAP
         var map = (double)(dto.SystolicBloodPressure + 2 * dto.DiastolicBloodPressure) / 3;
@@ -331,6 +343,7 @@ public class PatientService : IPatientService
             BodyTemperature = dto.BodyTemperature,
             OxygenSaturation = dto.OxygenSaturation,
             BloodSugar = dto.BloodSugar,
+            BloodSugarMeasurementType = bloodSugarMeasurementType,
             GlasgowComaScale = dto.GlasgowComaScale
         };
 
@@ -522,6 +535,31 @@ public class PatientService : IPatientService
             recipients,
             alerts
         );
+    }
+
+    private static BloodSugarMeasurementType? ParseBloodSugarMeasurementType(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return value.Trim().ToLowerInvariant() switch
+        {
+            "fasting" => BloodSugarMeasurementType.Fasting,
+            "random" => BloodSugarMeasurementType.Random,
+            _ => throw new ArgumentException("نوع اندازه‌گیری قند خون نامعتبر است.")
+        };
+    }
+
+    private static string? ToApiBloodSugarMeasurementType(BloodSugarMeasurementType? value)
+    {
+        return value switch
+        {
+            BloodSugarMeasurementType.Fasting => "fasting",
+            BloodSugarMeasurementType.Random => "random",
+            _ => null
+        };
     }
 
     public async Task<VitalSignAcknowledgementResultDto> AcknowledgeVitalSignAsync(int patientId, int vitalSignId, string userId, AcknowledgeVitalSignDto dto)

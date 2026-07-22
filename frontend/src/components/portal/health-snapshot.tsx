@@ -10,6 +10,7 @@ import { formatDistanceToNow } from "date-fns";
 import { faIR } from "date-fns/locale";
 import { toast } from "react-hot-toast";
 import { evaluateVitalAlerts, getVitalDisplayStatus, getVitalStatusMeta } from "@/utils/vital-alerts";
+import { evaluateBloodSugar } from "@/utils/blood-sugar";
 import { VitalSign, VitalSignAlert } from "@/types/patient";
 import { getVitalAcknowledgementErrorMessage, normalizePatientAcknowledgementNote } from "@/utils/vital-acknowledgement";
 
@@ -39,9 +40,10 @@ interface VitalCardProps {
   trend: string;
   data: Array<{ value: number | null }>;
   statusClassName: string;
+  subtitle?: string;
 }
 
-const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusClassName }: VitalCardProps) => {
+const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusClassName, subtitle }: VitalCardProps) => {
   const textColor = color.replace("bg-", "text-");
 
   return (
@@ -58,6 +60,7 @@ const VitalCard = ({ title, value, unit, icon: Icon, color, trend, data, statusC
         
         <div className="space-y-0.5 md:space-y-1">
           <span className="text-xs md:text-sm font-medium text-gray-500 block">{title}</span>
+          {subtitle ? <span className="text-[10px] md:text-xs text-gray-400 block">{subtitle}</span> : null}
           <div className="flex items-baseline gap-1">
             <span className="text-2xl md:text-3xl font-bold text-gray-800 tracking-tight">{value}</span>
             <span className="text-xs md:text-sm text-gray-400 font-medium">{unit}</span>
@@ -183,6 +186,7 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
   const pulseAlerts = filterAlerts((alert) => alert.code.startsWith("PR") || alert.code.startsWith("PULSE"));
   const oxygenAlerts = filterAlerts((alert) => alert.code.startsWith("SPO2"));
   const temperatureAlerts = filterAlerts((alert) => alert.code.startsWith("TEMP"));
+  const bloodSugarEvaluation = evaluateBloodSugar(latestVital?.bloodSugar, latestVital?.bloodSugarMeasurementType);
   const lastUpdate = latestVital
     ? formatDistanceToNow(new Date(latestVital.recordedAt), { addSuffix: true, locale: faIR })
     : "نامشخص";
@@ -336,8 +340,9 @@ export function HealthSnapshot({ patientId }: HealthSnapshotProps) {
           unit="mg/dL" 
           icon={Droplet} 
           color="bg-amber-500" 
-          statusClassName={getVitalStatusMeta(getVitalDisplayStatus([])).badgeClassName}
-          trend={latestVital?.bloodSugar == null ? "ثبت نشده" : "ثبت شده"}
+          subtitle={bloodSugarEvaluation?.measurementLabel}
+          statusClassName={latestVital?.bloodSugar == null ? "bg-gray-100 text-gray-500 border-gray-200" : bloodSugarEvaluation?.statusMeta.badgeClassName ?? "bg-gray-100 text-gray-500 border-gray-200"}
+          trend={latestVital?.bloodSugar == null ? "ثبت نشده" : bloodSugarEvaluation?.statusMeta.label ?? "ثبت شده"}
           data={getChartData(sortedVitals, "bloodSugar")}
         />
       </div>

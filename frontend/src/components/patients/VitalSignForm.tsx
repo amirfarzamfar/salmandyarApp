@@ -7,6 +7,7 @@ import { vitalSignSchema, VitalSignFormData, getVitalWarnings } from './VitalSig
 import { AlertTriangle, Clock, Save, X } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { patientService } from '@/services/patient.service';
+import { evaluateBloodSugar, getBloodSugarMeasurementTypeLabel } from '@/utils/blood-sugar';
 import DatePicker from "react-multi-date-picker";
 import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
@@ -39,6 +40,8 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
     respiratoryRate,
     bodyTemperature,
     oxygenSaturation,
+    bloodSugar,
+    bloodSugarMeasurementType,
     glasgowComaScale,
     measuredAt,
   } = watchedValues;
@@ -49,6 +52,8 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
       diastolicBloodPressure,
       bodyTemperature,
       oxygenSaturation,
+      bloodSugar,
+      bloodSugarMeasurementType,
     });
 
     if (expectedTime && measuredAt) {
@@ -68,9 +73,16 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
     diastolicBloodPressure,
     bodyTemperature,
     oxygenSaturation,
+    bloodSugar,
+    bloodSugarMeasurementType,
     measuredAt,
     expectedTime,
   ]);
+
+  const bloodSugarEvaluation = useMemo(
+    () => evaluateBloodSugar(bloodSugar, bloodSugarMeasurementType),
+    [bloodSugar, bloodSugarMeasurementType]
+  );
 
   // Calculate MAP dynamically
   const sbp = systolicBloodPressure || 0;
@@ -141,7 +153,7 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
+    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 relative">
       <div className="flex justify-between items-center mb-6 border-b pb-4">
         <h3 className="text-lg font-bold text-gray-900">ثبت علائم حیاتی جدید</h3>
         {showCloseButton !== false && (
@@ -173,6 +185,7 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
             name="measuredAt"
             render={({ field: { onChange, value } }) => (
               <DatePicker
+                portal
                 value={value ? new Date(value) : new Date()}
                 onChange={(date: any) => {
                   if (date && date.isValid) {
@@ -210,7 +223,7 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
         {/* Vitals Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* BP */}
-          <div className="col-span-2 grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
+          <div className="col-span-1 md:col-span-2 grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-lg">
              <div>
                <label className="block text-sm font-medium text-gray-700">فشار سیستول (mmHg)</label>
                <input type="number" {...register('systolicBloodPressure', { valueAsNumber: true })} className="mt-1 w-full rounded-lg border-gray-300" />
@@ -252,10 +265,48 @@ export default function VitalSignForm({ patientId, expectedTime, onSuccess, onCa
              {errors.oxygenSaturation && <p className="text-red-500 text-xs">{errors.oxygenSaturation.message}</p>}
           </div>
 
-          <div>
-             <label className="block text-sm font-medium text-gray-700">قند خون (mg/dL)</label>
-             <input type="number" {...register('bloodSugar', { valueAsNumber: true })} className="mt-1 w-full rounded-lg border-gray-300" />
-             {errors.bloodSugar && <p className="text-red-500 text-xs">{errors.bloodSugar.message}</p>}
+          <div className="md:col-span-2 rounded-lg border border-amber-100 bg-amber-50/60 p-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div>
+                 <label className="block text-sm font-medium text-gray-700">قند خون (mg/dL)</label>
+                 <input type="number" {...register('bloodSugar', { valueAsNumber: true })} className="mt-1 w-full rounded-lg border-gray-300" />
+                 {errors.bloodSugar && <p className="text-red-500 text-xs mt-1">{errors.bloodSugar.message}</p>}
+               </div>
+               <div>
+                 <label className="block text-sm font-medium text-gray-700">نوع اندازه‌گیری قند خون</label>
+                 <select {...register('bloodSugarMeasurementType')} className="mt-1 w-full rounded-lg border-gray-300 bg-white">
+                   <option value="">انتخاب کنید</option>
+                   <option value="fasting">{getBloodSugarMeasurementTypeLabel('fasting')}</option>
+                   <option value="random">{getBloodSugarMeasurementTypeLabel('random')}</option>
+                 </select>
+                 {errors.bloodSugarMeasurementType && <p className="text-red-500 text-xs mt-1">{errors.bloodSugarMeasurementType.message}</p>}
+               </div>
+             </div>
+
+             {bloodSugar != null && !bloodSugarMeasurementType && (
+               <div className="mt-3 rounded-lg border border-amber-200 bg-white/70 px-3 py-2 text-sm text-amber-700">
+                 برای نمایش وضعیت لحظه‌ای قند خون، نوع اندازه‌گیری را انتخاب کنید.
+               </div>
+             )}
+
+             {bloodSugarEvaluation && (
+               <div className={`mt-3 rounded-lg border px-3 py-3 ${bloodSugarEvaluation.statusMeta.cardClassName}`}>
+                 <div className="flex flex-wrap items-center justify-between gap-2">
+                   <div className="text-sm font-bold text-gray-900">
+                     وضعیت لحظه‌ای قند خون {bloodSugarEvaluation.measurementLabel}
+                   </div>
+                   <span className={`rounded-full border px-2 py-1 text-xs font-bold ${bloodSugarEvaluation.statusMeta.badgeClassName}`}>
+                     {bloodSugarEvaluation.statusMeta.label}
+                   </span>
+                 </div>
+                 <div className="mt-1 text-sm text-gray-700">{bloodSugarEvaluation.message}</div>
+                 {bloodSugarEvaluation.isCritical && (
+                   <div className={`mt-2 text-sm font-bold ${bloodSugarEvaluation.statusMeta.accentClassName}`}>
+                     هشدار فوری: مقدار قند خون در محدوده خطرناک قرار دارد.
+                   </div>
+                 )}
+               </div>
+             )}
           </div>
           
           <div>

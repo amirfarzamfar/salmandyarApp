@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { getVitalAlertsForHistory, getVitalDisplayStatus, getVitalStatusMeta } from "@/utils/vital-alerts";
 import { VitalHistoryNote } from "@/components/vitals/vital-history-note";
+import { evaluateBloodSugar } from "@/utils/blood-sugar";
 
 interface Props {
   vitals: VitalSign[];
@@ -43,6 +44,7 @@ export function NurseVitalSignsList({ vitals, careLevel }: Props) {
         const ComplianceIcon = compliance.icon;
         const alerts = getVitalAlertsForHistory(vitals, index);
         const vitalStatusMeta = getVitalStatusMeta(getVitalDisplayStatus(alerts));
+        const bloodSugarEvaluation = evaluateBloodSugar(vital.bloodSugar, vital.bloodSugarMeasurementType);
 
         return (
           <motion.div
@@ -110,7 +112,15 @@ export function NurseVitalSignsList({ vitals, careLevel }: Props) {
                 unit="%" 
                 alert={vital.oxygenSaturation < 95}
               />
-              <VitalItem label="قند خون" value={vital.bloodSugar == null ? 'ثبت نشده' : vital.bloodSugar.toString()} unit="mg/dL" />
+              <VitalItem
+                label="قند خون"
+                value={vital.bloodSugar == null ? 'ثبت نشده' : vital.bloodSugar.toString()}
+                unit="mg/dL"
+                caption={vital.bloodSugarMeasurementType === 'fasting' ? 'ناشتا' : vital.bloodSugarMeasurementType === 'random' ? 'تصادفی' : undefined}
+                badgeLabel={bloodSugarEvaluation?.statusMeta.label}
+                badgeClassName={bloodSugarEvaluation?.statusMeta.badgeClassName}
+                alert={bloodSugarEvaluation?.status === 'critical'}
+              />
               <VitalItem label="هوشیاری" value={vital.glasgowComaScale?.toString() || '-'} unit="GCS" />
             </div>
 
@@ -137,7 +147,23 @@ export function NurseVitalSignsList({ vitals, careLevel }: Props) {
   );
 }
 
-function VitalItem({ label, value, unit, alert }: { label: string, value: string, unit: string, alert?: boolean }) {
+function VitalItem({
+  label,
+  value,
+  unit,
+  alert,
+  caption,
+  badgeLabel,
+  badgeClassName,
+}: {
+  label: string;
+  value: string;
+  unit: string;
+  alert?: boolean;
+  caption?: string;
+  badgeLabel?: string;
+  badgeClassName?: string;
+}) {
   return (
     <div className={cn(
       "p-2 rounded-xl border flex flex-col items-center justify-center text-center transition-colors",
@@ -150,6 +176,16 @@ function VitalItem({ label, value, unit, alert }: { label: string, value: string
         <span className="text-sm font-black tracking-tight">{value}</span>
         <span className="text-[9px] opacity-70">{unit}</span>
       </div>
+      {(caption || badgeLabel) && (
+        <div className="mt-1 flex flex-wrap items-center justify-center gap-1">
+          {caption ? <span className="text-[9px] text-gray-500 dark:text-gray-400">{caption}</span> : null}
+          {badgeLabel && badgeClassName ? (
+            <span className={cn("rounded-full border px-1.5 py-0.5 text-[9px] font-bold", badgeClassName)}>
+              {badgeLabel}
+            </span>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

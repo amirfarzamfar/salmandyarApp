@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { evaluateBloodSugar } from '@/utils/blood-sugar';
 
 const numberFromForm = <TSchema extends z.ZodTypeAny>(schema: TSchema) =>
   z.preprocess((value) => {
@@ -43,6 +44,7 @@ export const vitalSignSchema = z.object({
   bodyTemperature: requiredNumber('دمای بدن الزامی است', 34, 'حداقل ۳۴', 43, 'حداکثر ۴۳'),
   oxygenSaturation: requiredNumber('اشباع اکسیژن الزامی است', 50, 'حداقل ۵۰', 100, 'حداکثر ۱۰۰'),
   bloodSugar: optionalNumber(0, 'حداقل ۰', 1000, 'حداکثر ۱۰۰۰'),
+  bloodSugarMeasurementType: z.enum(['fasting', 'random']).optional(),
   glasgowComaScale: optionalNumber(3, 'حداقل ۳', 15, 'حداکثر ۱۵'),
   note: z.string().max(200, 'حداکثر ۲۰۰ کاراکتر').optional(),
   delayReason: z.string().optional(),
@@ -57,6 +59,15 @@ export const vitalSignSchema = z.object({
 }, {
   message: "برای ثبت با تاخیر بیش از ۱ ساعت، ذکر دلیل الزامی است",
   path: ["delayReason"],
+}).refine((data) => {
+  if (data.bloodSugar == null) {
+    return !data.bloodSugarMeasurementType;
+  }
+
+  return !!data.bloodSugarMeasurementType;
+}, {
+  message: "برای ثبت قند خون، نوع اندازه‌گیری را مشخص کنید",
+  path: ["bloodSugarMeasurementType"],
 });
 
 export type VitalSignFormData = z.infer<typeof vitalSignSchema>;
@@ -68,5 +79,15 @@ export const getVitalWarnings = (data: Partial<VitalSignFormData>) => {
   if (data.diastolicBloodPressure && (data.diastolicBloodPressure < 60 || data.diastolicBloodPressure > 100)) warnings.push('فشار خون دیاستولیک غیرطبیعی است');
   if (data.bodyTemperature && (data.bodyTemperature < 36 || data.bodyTemperature > 38)) warnings.push('دمای بدن غیرطبیعی است');
   if (data.oxygenSaturation && data.oxygenSaturation < 93) warnings.push('سطح اکسیژن پایین است');
+  if (data.bloodSugar != null) {
+    if (!data.bloodSugarMeasurementType) {
+      warnings.push('برای تفسیر قند خون، نوع اندازه‌گیری را انتخاب کنید');
+    } else {
+      const bloodSugarEvaluation = evaluateBloodSugar(data.bloodSugar, data.bloodSugarMeasurementType);
+      if (bloodSugarEvaluation && bloodSugarEvaluation.status !== 'normal') {
+        warnings.push(bloodSugarEvaluation.title);
+      }
+    }
+  }
   return warnings;
 };

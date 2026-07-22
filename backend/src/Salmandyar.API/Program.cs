@@ -124,6 +124,42 @@ app.UseExceptionHandler(exceptionHandlerApp =>
         if (exception != null)
         {
             logger.LogError(exception, "Unhandled exception occurred while processing request {Path}", context.Request.Path);
+
+            // #region debug-point blood-sugar-save-error:unhandled-ex
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using var client = new HttpClient();
+                    var payload = new
+                    {
+                        sessionId = "blood-sugar-save-error",
+                        runId = "pre-fix",
+                        hypothesisId = "H0",
+                        location = "GlobalExceptionHandler",
+                        msg = "[DEBUG] Unhandled exception",
+                        data = new
+                        {
+                            Path = context.Request.Path.Value,
+                            Method = context.Request.Method,
+                            exception = new
+                            {
+                                Type = exception.GetType().FullName,
+                                exception.Message,
+                                InnerExceptionMessage = exception.InnerException?.Message,
+                                InnerExceptionType = exception.InnerException?.GetType().FullName,
+                                exception.StackTrace
+                            }
+                        },
+                        ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                    };
+                    await client.PostAsJsonAsync("http://127.0.0.1:7777/event", payload);
+                }
+                catch
+                {
+                }
+            });
+            // #endregion
         }
 
         context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;

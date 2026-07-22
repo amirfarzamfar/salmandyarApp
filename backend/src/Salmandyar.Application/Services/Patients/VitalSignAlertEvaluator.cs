@@ -1,5 +1,6 @@
 using Salmandyar.Application.Services.Patients.Dtos;
 using Salmandyar.Domain.Entities;
+using Salmandyar.Domain.Enums;
 using System.Linq;
 
 namespace Salmandyar.Application.Services.Patients;
@@ -66,6 +67,8 @@ public static class VitalSignAlertEvaluator
             warningHigh: 100, criticalHigh: 101,
             unit: "%",
             title: "اشباع اکسیژن پایین");
+
+        AddBloodSugarAlerts(alerts, v.BloodSugar, v.BloodSugarMeasurementType);
 
         if (v.GlasgowComaScale.HasValue)
         {
@@ -187,5 +190,61 @@ public static class VitalSignAlertEvaluator
         {
             alerts.Add(new VitalSignAlertDto($"{codePrefix}_HIGH", VitalAlertSeverity.Warning, title, $"{title}: {value}{unit}"));
         }
+    }
+
+    private static void AddBloodSugarAlerts(
+        List<VitalSignAlertDto> alerts,
+        int? bloodSugar,
+        BloodSugarMeasurementType? measurementType)
+    {
+        if (!bloodSugar.HasValue || !measurementType.HasValue)
+        {
+            return;
+        }
+
+        var value = bloodSugar.Value;
+        var measurementLabel = measurementType == BloodSugarMeasurementType.Fasting ? "ناشتا" : "تصادفی";
+
+        if (value <= 54)
+        {
+            alerts.Add(new VitalSignAlertDto("BS_LOW", VitalAlertSeverity.Critical, "افت خطرناک قند خون", $"قند خون {measurementLabel}: {value} mg/dL"));
+            return;
+        }
+
+        if (value < 70)
+        {
+            alerts.Add(new VitalSignAlertDto("BS_LOW", VitalAlertSeverity.Warning, "قند خون پایین است", $"قند خون {measurementLabel}: {value} mg/dL"));
+            return;
+        }
+
+        if (measurementType == BloodSugarMeasurementType.Fasting)
+        {
+            if (value <= 99)
+            {
+                return;
+            }
+
+            if (value <= 125)
+            {
+                alerts.Add(new VitalSignAlertDto("BS_HIGH", VitalAlertSeverity.Warning, "قند خون ناشتا بالاتر از محدوده نرمال", $"قند خون ناشتا: {value} mg/dL"));
+                return;
+            }
+
+            alerts.Add(new VitalSignAlertDto("BS_HIGH", VitalAlertSeverity.Critical, "قند خون ناشتا در محدوده خطرناک است", $"قند خون ناشتا: {value} mg/dL"));
+            return;
+        }
+
+        if (value <= 140)
+        {
+            return;
+        }
+
+        if (value <= 199)
+        {
+            alerts.Add(new VitalSignAlertDto("BS_HIGH", VitalAlertSeverity.Warning, "قند خون تصادفی بالاتر از محدوده نرمال", $"قند خون تصادفی: {value} mg/dL"));
+            return;
+        }
+
+        alerts.Add(new VitalSignAlertDto("BS_HIGH", VitalAlertSeverity.Critical, "قند خون تصادفی در محدوده خطرناک است", $"قند خون تصادفی: {value} mg/dL"));
     }
 }

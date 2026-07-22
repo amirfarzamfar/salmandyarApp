@@ -230,20 +230,22 @@ export function VitalsManager({ patientId, careLevel = CareLevel.Level2 }: Props
       {/* Add Modal */}
       <AnimatePresence>
         {isAdding && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in overflow-y-auto pb-24 md:pb-4">
-            <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                className="w-full max-w-lg my-auto"
-            >
-                <NurseVitalSignsForm 
-                    patientId={patientId}
-                    expectedTime={nextDue || new Date()}
-                    onSuccess={() => { setIsAdding(false); fetchVitals(); }}
-                    onCancel={() => setIsAdding(false)}
-                />
-            </motion.div>
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] overflow-y-auto animate-fade-in">
+            <div className="flex min-h-full justify-center p-4 pb-24 md:pb-4">
+              <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="w-full max-w-lg my-auto"
+              >
+                  <NurseVitalSignsForm 
+                      patientId={patientId}
+                      expectedTime={nextDue || new Date()}
+                      onSuccess={() => { setIsAdding(false); fetchVitals(); }}
+                      onCancel={() => setIsAdding(false)}
+                  />
+              </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>

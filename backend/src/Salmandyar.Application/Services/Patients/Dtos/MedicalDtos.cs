@@ -18,6 +18,7 @@ public record VitalSignDto(
     double BodyTemperature,
     int OxygenSaturation,
     int? BloodSugar,
+    string? BloodSugarMeasurementType,
     int? GlasgowComaScale,
     DateTime? PatientAcknowledgedAt,
     string? PatientAcknowledgedByName,
@@ -36,6 +37,7 @@ public record CreateVitalSignDto(
     double BodyTemperature,
     int OxygenSaturation,
     int? BloodSugar,
+    string? BloodSugarMeasurementType,
     int? GlasgowComaScale
 );
 

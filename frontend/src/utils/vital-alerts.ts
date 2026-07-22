@@ -1,4 +1,5 @@
 import { VitalSign, VitalAlertSeverity, VitalSignAlert } from '@/types/patient';
+import { evaluateBloodSugar } from '@/utils/blood-sugar';
 
 export type VitalDisplayStatus = 'normal' | 'warning' | 'critical';
 
@@ -44,6 +45,11 @@ export function evaluateVitalAlerts(vitalsDesc: VitalSign[]): VitalSignAlert[] {
   addThreshold(alerts, 'RR', v0.respiratoryRate, 8, 10, 24, 30, 'تنفس غیرطبیعی', 'rpm');
   addThreshold(alerts, 'TEMP', Math.round(v0.bodyTemperature * 10) / 10, 34, 35, 38.5, 39.5, 'دمای بدن غیرطبیعی', '°C');
   addThreshold(alerts, 'SPO2', v0.oxygenSaturation, 88, 92, 100, 101, 'اشباع اکسیژن پایین', '%');
+
+  const bloodSugarEvaluation = evaluateBloodSugar(v0.bloodSugar, v0.bloodSugarMeasurementType);
+  if (bloodSugarEvaluation?.alert) {
+    alerts.push(bloodSugarEvaluation.alert);
+  }
 
   if (typeof v0.glasgowComaScale === 'number') {
     if (v0.glasgowComaScale <= 8) {

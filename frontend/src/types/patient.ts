@@ -49,11 +49,14 @@ export interface VitalSign {
   bodyTemperature: number;
   oxygenSaturation: number;
   bloodSugar?: number | null;
+  bloodSugarMeasurementType?: BloodSugarMeasurementType | null;
   glasgowComaScale?: number;
   patientAcknowledgedAt?: string | null;
   patientAcknowledgedByName?: string | null;
   patientAcknowledgementNote?: string | null;
 }
+
+export type BloodSugarMeasurementType = 'fasting' | 'random';
 
 export type VitalAlertSeverity = 'Warning' | 'Critical';
 

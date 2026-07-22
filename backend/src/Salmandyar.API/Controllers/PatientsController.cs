@@ -19,15 +19,18 @@ public class PatientsController : ControllerBase
     private readonly IPatientService _patientService;
     private readonly IHubContext<ServiceHub> _hubContext;
     private readonly IPatientSelfServiceAccessService _patientSelfServiceAccessService;
+    private readonly ILogger<PatientsController> _logger;
 
     public PatientsController(
         IPatientService patientService,
         IHubContext<ServiceHub> hubContext,
-        IPatientSelfServiceAccessService patientSelfServiceAccessService)
+        IPatientSelfServiceAccessService patientSelfServiceAccessService,
+        ILogger<PatientsController> logger)
     {
         _patientService = patientService;
         _hubContext = hubContext;
         _patientSelfServiceAccessService = patientSelfServiceAccessService;
+        _logger = logger;
     }
 
     private string? GetCaregiverIdIfRestricted()
@@ -160,6 +163,71 @@ public class PatientsController : ControllerBase
         catch (PatientSelfServiceAccessDeniedException ex)
         {
             return StatusCode(StatusCodes.Status403Forbidden, new { error = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+        catch (DbUpdateException ex)
+        {
+            var errorId = Guid.NewGuid().ToString("N");
+            _logger.LogError(ex, "DbUpdateException while saving vital sign. ErrorId={ErrorId}", errorId);
+
+            // #region debug-point blood-sugar-save-error:db-update-ex
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    using var client = new HttpClient();
+                    var payload = new
+                    {
+                        sessionId = "blood-sugar-save-error",
+                        runId = "pre-fix",
+                        hypothesisId = "H1",
+                        location = "PatientsController:AddVitalSign",
+                        msg = "[DEBUG] DbUpdateException while saving vital sign",
+                        data = new
+                        {
+                            RoutePatientId = id,
+                            dto.CareRecipientId,
+                            RecorderUserId = userId,
+                            dto,
+                            exception = new
+                            {
+                                ex.Message,
+                                InnerExceptionMessage = ex.InnerException?.Message,
+                                InnerExceptionType = ex.InnerException?.GetType().FullName,
+                                ex.StackTrace
+                            }
+                        },
+                        ts = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
+                    };
+                    await client.PostAsJsonAsync("http://127.0.0.1:7777/event", payload);
+                }
+                catch
+                {
+                }
+            });
+            // #endregion
+
+            var isDevelopment = string.Equals(
+                Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"),
+                "Development",
+                StringComparison.OrdinalIgnoreCase);
+
+            return StatusCode(500, new
+            {
+                error = "خطا در ذخیره علائم حیاتی. لطفاً از اعمال شدن Migrationهای پایگاه داده اطمینان حاصل کنید.",
+                errorId,
+                details = isDevelopment
+                    ? new
+                    {
+                        ex.Message,
+                        InnerExceptionMessage = ex.InnerException?.Message,
+                        InnerExceptionType = ex.InnerException?.GetType().FullName
+                    }
+                    : null
+            });
         }
 
         // #region debug-point A:vital-broadcast

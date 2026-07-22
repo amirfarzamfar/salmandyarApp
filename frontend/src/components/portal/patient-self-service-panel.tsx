@@ -128,59 +128,65 @@ export function PatientSelfServicePanel({
       <LowStockNotificationBanner appearance="portal" />
 
       {activeModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="relative max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] bg-white p-4 md:p-6">
-            <button
-              type="button"
-              onClick={closeModal}
-              className="absolute left-4 top-4 rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200"
-            >
-              <X className="h-5 w-5" />
-            </button>
+        <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm overflow-y-auto">
+          <div className="flex min-h-full justify-center p-4">
+            <div className="relative w-full max-w-5xl rounded-[2rem] bg-white p-4 md:p-6 my-auto">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="absolute left-4 top-4 z-10 rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
 
-            {activeModal === 'vitals' ? (
-              <VitalSignForm patientId={patientId} onSuccess={handleSuccess} onCancel={closeModal} showCloseButton={false} />
-            ) : (
-              <div className="pt-8">
-                <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                  <div className="text-sm font-bold text-slate-700">برای افزودن داروی جدید، مانند پنل پرستار/ادمین از گزینه زیر استفاده کنید.</div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (kardexFeature && !kardexFeature.canSubmitNow) {
-                        toast.error(kardexFeature.message || 'امکان ثبت کاردکس برای شما فعال نیست.');
-                        return;
-                      }
-                      setShowMedicationWizard(true);
-                    }}
-                    className="rounded-2xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700"
-                  >
-                    افزودن داروی جدید
-                  </button>
+              {activeModal === 'vitals' ? (
+                <VitalSignForm patientId={patientId} onSuccess={handleSuccess} onCancel={closeModal} showCloseButton={false} />
+              ) : (
+                <div className="pt-8">
+                  <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="text-sm font-bold text-slate-700">برای افزودن داروی جدید، مانند پنل پرستار/ادمین از گزینه زیر استفاده کنید.</div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (kardexFeature && !kardexFeature.canSubmitNow) {
+                          toast.error(kardexFeature.message || 'امکان ثبت کاردکس برای شما فعال نیست.');
+                          return;
+                        }
+                        setShowMedicationWizard(true);
+                      }}
+                      className="rounded-2xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700"
+                    >
+                      افزودن داروی جدید
+                    </button>
+                  </div>
+                  <KardexTimeline patientId={patientId} />
+                  <div className="mt-8 border-t border-slate-200 pt-6">
+                    <PatientMedicationList
+                      patientId={patientId}
+                      allowEdit={Boolean(kardexFeature?.canSubmitNow)}
+                      allowDelete={false}
+                      allowInventoryManagement={false}
+                    />
+                  </div>
                 </div>
-                <KardexTimeline patientId={patientId} />
-                <div className="mt-8 border-t border-slate-200 pt-6">
-                  <PatientMedicationList
-                    patientId={patientId}
-                    allowEdit={Boolean(kardexFeature?.canSubmitNow)}
-                    allowDelete={false}
-                    allowInventoryManagement={false}
-                  />
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
 
       {showMedicationWizard && (
-        <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/60 p-4 py-6 backdrop-blur-sm">
-          <MedicationWizard
-            patientId={patientId}
-            onSuccess={handleMedicationCreated}
-            onCancel={() => setShowMedicationWizard(false)}
-            onSubmit={handleCreateMedication}
-          />
+        <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm overflow-y-auto">
+          <div className="flex min-h-full justify-center p-4">
+            <div className="w-full max-w-5xl my-auto">
+              <MedicationWizard
+                patientId={patientId}
+                onSuccess={handleMedicationCreated}
+                onCancel={() => setShowMedicationWizard(false)}
+                onSubmit={handleCreateMedication}
+              />
+            </div>
+          </div>
         </div>
       )}
     </>

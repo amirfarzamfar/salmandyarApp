@@ -16,6 +16,7 @@ import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import TimePicker from "react-multi-date-picker/plugins/time_picker";
 import { cn } from "@/lib/utils";
+import { evaluateBloodSugar, getBloodSugarMeasurementTypeLabel } from "@/utils/blood-sugar";
 
 interface Props {
   patientId: number;
@@ -48,6 +49,8 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
     respiratoryRate,
     bodyTemperature,
     oxygenSaturation,
+    bloodSugar,
+    bloodSugarMeasurementType,
     glasgowComaScale
   } = watchedValues;
 
@@ -57,6 +60,8 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
       diastolicBloodPressure,
       bodyTemperature,
       oxygenSaturation,
+      bloodSugar,
+      bloodSugarMeasurementType,
     });
 
     if (expectedTime && measuredAt) {
@@ -77,8 +82,15 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
     diastolicBloodPressure,
     bodyTemperature,
     oxygenSaturation,
+    bloodSugar,
+    bloodSugarMeasurementType,
     expectedTime
   ]);
+
+  const bloodSugarEvaluation = useMemo(
+    () => evaluateBloodSugar(bloodSugar, bloodSugarMeasurementType),
+    [bloodSugar, bloodSugarMeasurementType]
+  );
 
   const onSubmit = async (data: VitalSignFormData) => {
     if (warnings.length > 0) {
@@ -122,8 +134,8 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
   };
 
   return (
-    <PortalCard className="bg-white dark:bg-gray-800 border-none shadow-soft-xl relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-medical-400 to-medical-600" />
+    <PortalCard className="bg-white dark:bg-gray-800 border-none shadow-soft-xl relative">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-medical-400 to-medical-600 rounded-t-[inherit]" />
       
       <div className="flex justify-between items-center mb-6 pt-2">
         <div>
@@ -147,6 +159,7 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
             name="measuredAt"
             render={({ field: { onChange, value } }) => (
               <DatePicker
+                portal
                 value={value ? new Date(value) : new Date()}
                 onChange={(date: any) => {
                   if (date && date.isValid) {
@@ -168,7 +181,7 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
         </div>
 
         {/* Inputs Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <VitalInput
                 label="فشار سیستول"
                 icon={Activity}
@@ -226,6 +239,27 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
                 {...register("bloodSugar", { valueAsNumber: true })}
                 error={errors.bloodSugar?.message}
             />
+            <div className={cn(
+                "bg-neutral-warm-50/50 dark:bg-gray-800 rounded-[1.5rem] p-4 border transition-all",
+                errors.bloodSugarMeasurementType
+                  ? "border-rose-200 bg-rose-50/50"
+                  : "border-gray-100 dark:border-gray-700"
+            )}>
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">
+                نوع اندازه‌گیری قند خون
+              </label>
+              <select
+                {...register("bloodSugarMeasurementType")}
+                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-3 text-sm font-bold text-gray-800 outline-none focus:ring-2 focus:ring-medical-200 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+              >
+                <option value="">انتخاب کنید</option>
+                <option value="fasting">{getBloodSugarMeasurementTypeLabel("fasting")}</option>
+                <option value="random">{getBloodSugarMeasurementTypeLabel("random")}</option>
+              </select>
+              {errors.bloodSugarMeasurementType && (
+                <div className="mt-2 text-[10px] font-bold text-rose-500">{errors.bloodSugarMeasurementType.message}</div>
+              )}
+            </div>
             <VitalInput
                 label="سطح هوشیاری"
                 icon={Activity}
@@ -235,6 +269,33 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
                 error={errors.glasgowComaScale?.message}
             />
         </div>
+
+        {bloodSugar != null && !bloodSugarMeasurementType && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            برای محاسبه وضعیت لحظه‌ای قند خون، نوع اندازه‌گیری را انتخاب کنید.
+          </div>
+        )}
+
+        {bloodSugarEvaluation && (
+          <div className={cn("rounded-2xl border px-4 py-3", bloodSugarEvaluation.statusMeta.cardClassName)}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-sm font-black text-gray-800 dark:text-gray-100">
+                وضعیت لحظه‌ای قند خون {bloodSugarEvaluation.measurementLabel}
+              </div>
+              <div className={cn("rounded-full border px-2 py-1 text-[11px] font-black", bloodSugarEvaluation.statusMeta.badgeClassName)}>
+                {bloodSugarEvaluation.statusMeta.label}
+              </div>
+            </div>
+            <div className="mt-2 text-xs font-medium text-gray-700 dark:text-gray-300">
+              {bloodSugarEvaluation.message}
+            </div>
+            {bloodSugarEvaluation.isCritical && (
+              <div className={cn("mt-2 text-xs font-black", bloodSugarEvaluation.statusMeta.accentClassName)}>
+                هشدار فوری: مقدار قند خون در محدوده خطرناک قرار دارد.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Delay Reason */}
         {watchedValues.measuredAt && (Date.now() - new Date(watchedValues.measuredAt).getTime() > 3600000) && (
