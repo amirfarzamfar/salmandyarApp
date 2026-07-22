@@ -19,12 +19,29 @@ public class AssessmentService : IAssessmentService
 
     public async Task<AssessmentFormDto> CreateFormAsync(CreateAssessmentFormDto dto)
     {
+        var targetTypes = NormalizeTargetTypes(dto.Type, dto.TargetTypes);
+        var serviceDefinitionId = dto.Workflow == AssessmentFormWorkflow.HomeCareRequest
+            ? dto.ServiceDefinitionId
+            : null;
+
         var form = new AssessmentForm
         {
+            Code = string.IsNullOrWhiteSpace(dto.Code)
+                ? ($"form-{Guid.NewGuid():N}")[..13]
+                : dto.Code.Trim(),
             Title = dto.Title,
             Description = dto.Description,
-            Type = dto.Type,
+            Type = targetTypes[0],
+            TargetTypesJson = SerializeTargetTypes(targetTypes),
+            Workflow = dto.Workflow,
             IsActive = true,
+            Version = dto.Version <= 0 ? 1 : dto.Version,
+            IsDefault = dto.IsDefault,
+            ServiceDefinitionId = serviceDefinitionId,
+            IntroTitle = dto.IntroTitle,
+            IntroDescription = dto.IntroDescription,
+            EstimatedDurationMinutes = dto.EstimatedDurationMinutes,
+            LayoutJson = dto.LayoutJson,
             Questions = dto.Questions.Select((q, index) => new AssessmentQuestion
             {
                 Text = q.Question,
@@ -34,6 +51,21 @@ public class AssessmentService : IAssessmentService
                 Order = q.Order == 0 ? index : q.Order,
                 QuestionKey = string.IsNullOrEmpty(q.QuestionKey) ? Guid.NewGuid().ToString() : q.QuestionKey,
                 NextQuestionKey = q.NextQuestionKey,
+                PageKey = q.PageKey,
+                PageTitle = q.PageTitle,
+                GroupKey = q.GroupKey,
+                GroupTitle = q.GroupTitle,
+                IsRequired = q.IsRequired,
+                Placeholder = q.Placeholder,
+                Description = q.Description,
+                VisibilityConditionJson = q.VisibilityConditionJson,
+                RequiredConditionJson = q.RequiredConditionJson,
+                ValidationJson = q.ValidationJson,
+                MinValue = q.MinValue,
+                MaxValue = q.MaxValue,
+                MinFiles = q.MinFiles,
+                MaxFiles = q.MaxFiles,
+                AllowMultipleFiles = q.AllowMultipleFiles,
                 Options = q.Options.Select((o, oIndex) => new AssessmentOption
                 {
                     Text = o.Text,
@@ -46,6 +78,7 @@ public class AssessmentService : IAssessmentService
 
         _context.AssessmentForms.Add(form);
         await _context.SaveChangesAsync();
+        await SyncDefaultHomeCareFormAsync(form);
 
         return MapToDto(form);
     }
@@ -81,9 +114,25 @@ public class AssessmentService : IAssessmentService
 
         if (form == null) throw new Exception("Form not found");
 
+        var targetTypes = NormalizeTargetTypes(dto.Type, dto.TargetTypes);
+        var serviceDefinitionId = dto.Workflow == AssessmentFormWorkflow.HomeCareRequest
+            ? dto.ServiceDefinitionId
+            : null;
+
         form.Title = dto.Title;
         form.Description = dto.Description;
-        form.Type = dto.Type;
+        form.Type = targetTypes[0];
+        form.Code = string.IsNullOrWhiteSpace(dto.Code) ? form.Code : dto.Code.Trim();
+        form.TargetTypesJson = SerializeTargetTypes(targetTypes);
+        form.Workflow = dto.Workflow;
+        form.Version = dto.Version <= 0 ? form.Version : dto.Version;
+        form.IsDefault = dto.IsDefault;
+        form.ServiceDefinitionId = serviceDefinitionId;
+        form.IntroTitle = dto.IntroTitle;
+        form.IntroDescription = dto.IntroDescription;
+        form.EstimatedDurationMinutes = dto.EstimatedDurationMinutes;
+        form.LayoutJson = dto.LayoutJson;
+        form.UpdatedAt = DateTime.UtcNow;
 
         // Naive update: remove all questions and re-add them. 
         // In a real production app, we should check diffs to preserve IDs for existing questions/options.
@@ -100,6 +149,21 @@ public class AssessmentService : IAssessmentService
             Order = q.Order == 0 ? index : q.Order,
             QuestionKey = string.IsNullOrEmpty(q.QuestionKey) ? Guid.NewGuid().ToString() : q.QuestionKey,
             NextQuestionKey = q.NextQuestionKey,
+            PageKey = q.PageKey,
+            PageTitle = q.PageTitle,
+            GroupKey = q.GroupKey,
+            GroupTitle = q.GroupTitle,
+            IsRequired = q.IsRequired,
+            Placeholder = q.Placeholder,
+            Description = q.Description,
+            VisibilityConditionJson = q.VisibilityConditionJson,
+            RequiredConditionJson = q.RequiredConditionJson,
+            ValidationJson = q.ValidationJson,
+            MinValue = q.MinValue,
+            MaxValue = q.MaxValue,
+            MinFiles = q.MinFiles,
+            MaxFiles = q.MaxFiles,
+            AllowMultipleFiles = q.AllowMultipleFiles,
             Options = q.Options.Select((o, oIndex) => new AssessmentOption
             {
                 Text = o.Text,
@@ -110,6 +174,7 @@ public class AssessmentService : IAssessmentService
         }).ToList();
 
         await _context.SaveChangesAsync();
+        await SyncDefaultHomeCareFormAsync(form);
         return MapToDto(form);
     }
 
@@ -135,12 +200,14 @@ public class AssessmentService : IAssessmentService
 
     public async Task<AssessmentFormDto?> GetActiveFormAsync(AssessmentType type)
     {
-        var form = await _context.AssessmentForms
+        var forms = await _context.AssessmentForms
             .Include(f => f.Questions)
                 .ThenInclude(q => q.Options)
-            .Where(f => f.Type == type && f.IsActive)
+            .Where(f => f.IsActive)
             .OrderByDescending(f => f.CreatedAt)
-            .FirstOrDefaultAsync();
+            .ToListAsync();
+
+        var form = forms.FirstOrDefault(f => MatchesTargetType(f, type));
 
         if (form == null) return null;
 
@@ -152,11 +219,11 @@ public class AssessmentService : IAssessmentService
         var forms = await _context.AssessmentForms
             .Include(f => f.Questions)
                 .ThenInclude(q => q.Options)
-            .Where(f => f.Type == type && f.IsActive)
+            .Where(f => f.IsActive)
             .OrderByDescending(f => f.CreatedAt)
             .ToListAsync();
 
-        return forms.Select(MapToDto).ToList();
+        return forms.Where(f => MatchesTargetType(f, type)).Select(MapToDto).ToList();
     }
 
     public async Task<UserProfileDto> SubmitAssessmentAsync(string userId, SubmitAssessmentDto dto)
@@ -170,21 +237,49 @@ public class AssessmentService : IAssessmentService
 
         // Check for existing submission
         var existingSubmission = await _context.AssessmentSubmissions
-            .AnyAsync(s => s.UserId == userId && s.FormId == dto.FormId);
+            .Where(s => s.UserId == userId && s.FormId == dto.FormId && s.Status == AssessmentSubmissionStatus.Submitted)
+            .AnyAsync();
             
-        if (existingSubmission)
+        if (existingSubmission && !dto.SaveAsDraft)
         {
             throw new InvalidOperationException("User has already submitted this assessment.");
         }
 
-        var submission = new AssessmentSubmission
+        AssessmentSubmission submission;
+        if (dto.SubmissionId.HasValue)
         {
-            FormId = dto.FormId,
-            UserId = userId,
-            CareRecipientId = dto.CareRecipientId,
-            SubmittedAt = DateTime.UtcNow,
-            Answers = new List<QuestionAnswer>()
-        };
+            submission = await _context.AssessmentSubmissions
+                .Include(s => s.Answers)
+                .FirstOrDefaultAsync(s => s.Id == dto.SubmissionId.Value && s.UserId == userId)
+                ?? throw new InvalidOperationException("پیش‌نویس فرم یافت نشد.");
+
+            _context.QuestionAnswers.RemoveRange(submission.Answers);
+            submission.Answers.Clear();
+            submission.CareRecipientId = dto.CareRecipientId;
+            submission.DraftKey = dto.DraftKey;
+            submission.SummaryJson = dto.SummaryJson;
+            submission.LastSavedAt = DateTime.UtcNow;
+            submission.Status = dto.SaveAsDraft ? AssessmentSubmissionStatus.Draft : AssessmentSubmissionStatus.Submitted;
+            if (!dto.SaveAsDraft)
+            {
+                submission.SubmittedAt = DateTime.UtcNow;
+            }
+        }
+        else
+        {
+            submission = new AssessmentSubmission
+            {
+                FormId = dto.FormId,
+                UserId = userId,
+                CareRecipientId = dto.CareRecipientId,
+                DraftKey = dto.DraftKey,
+                SummaryJson = dto.SummaryJson,
+                SubmittedAt = DateTime.UtcNow,
+                LastSavedAt = DateTime.UtcNow,
+                Status = dto.SaveAsDraft ? AssessmentSubmissionStatus.Draft : AssessmentSubmissionStatus.Submitted,
+                Answers = new List<QuestionAnswer>()
+            };
+        }
 
         // Process Answers and Calculate Profile
         var profile = new UserProfileDto
@@ -205,7 +300,10 @@ public class AssessmentService : IAssessmentService
                 QuestionId = question.Id,
                 SelectedOptionId = answerDto.SelectedOptionId,
                 TextResponse = answerDto.TextResponse,
-                BooleanResponse = answerDto.BooleanResponse
+                BooleanResponse = answerDto.BooleanResponse,
+                NumberResponse = answerDto.NumberResponse,
+                DateResponse = answerDto.DateResponse,
+                JsonResponse = answerDto.JsonResponse
             };
 
             submission.Answers.Add(answer);
@@ -220,6 +318,10 @@ public class AssessmentService : IAssessmentService
             else if (question.Type == QuestionType.TrueFalse && answerDto.BooleanResponse.HasValue)
             {
                 points = answerDto.BooleanResponse.Value ? 1 : 0; // Simplified
+            }
+            else if ((question.Type == QuestionType.Number || question.Type == QuestionType.Slider || question.Type == QuestionType.Rating) && answerDto.NumberResponse.HasValue)
+            {
+                points = (int)Math.Round(answerDto.NumberResponse.Value);
             }
 
             int weightedScore = points * question.Weight;
@@ -245,7 +347,10 @@ public class AssessmentService : IAssessmentService
         submission.TotalScore = totalScore;
         submission.AnalysisResultJson = JsonSerializer.Serialize(profile);
 
-        _context.AssessmentSubmissions.Add(submission);
+        if (submission.Id == 0)
+        {
+            _context.AssessmentSubmissions.Add(submission);
+        }
         await _context.SaveChangesAsync();
 
         return profile;
@@ -321,7 +426,7 @@ public class AssessmentService : IAssessmentService
         var publicForms = await _context.AssessmentForms
             .Include(f => f.Questions)
                 .ThenInclude(q => q.Options)
-            .Where(f => f.IsActive && f.Type == roleType && !submittedFormIds.Contains(f.Id))
+            .Where(f => f.IsActive && !submittedFormIds.Contains(f.Id))
             .ToListAsync();
 
         // 3. Get assigned assessments specifically for this user that are not completed
@@ -334,24 +439,128 @@ public class AssessmentService : IAssessmentService
         var assignedForms = await _context.AssessmentForms
             .Include(f => f.Questions)
                 .ThenInclude(q => q.Options)
-            .Where(f => assignedFormIds.Contains(f.Id) && f.IsActive && f.Type == roleType && !submittedFormIds.Contains(f.Id))
+            .Where(f => assignedFormIds.Contains(f.Id) && f.IsActive && !submittedFormIds.Contains(f.Id))
             .ToListAsync();
 
         // Merge and return unique list
-        var allForms = publicForms.UnionBy(assignedForms, f => f.Id).ToList();
+        var allForms = publicForms
+            .Concat(assignedForms)
+            .Where(f => MatchesTargetType(f, roleType))
+            .DistinctBy(f => f.Id)
+            .ToList();
 
         return allForms.Select(MapToDto).ToList();
     }
 
+    private async Task SyncDefaultHomeCareFormAsync(AssessmentForm form)
+    {
+        if (form.Workflow != AssessmentFormWorkflow.HomeCareRequest || !form.ServiceDefinitionId.HasValue)
+        {
+            return;
+        }
+
+        var relatedForms = await _context.AssessmentForms
+            .Where(f => f.Workflow == AssessmentFormWorkflow.HomeCareRequest && f.ServiceDefinitionId == form.ServiceDefinitionId)
+            .ToListAsync();
+
+        if (form.IsDefault)
+        {
+            foreach (var relatedForm in relatedForms.Where(f => f.Id != form.Id && f.IsDefault))
+            {
+                relatedForm.IsDefault = false;
+            }
+
+            var service = await _context.ServiceDefinitions.FindAsync(form.ServiceDefinitionId.Value);
+            if (service != null)
+            {
+                service.DefaultFormId = form.Id;
+                service.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+        else
+        {
+            var service = await _context.ServiceDefinitions.FindAsync(form.ServiceDefinitionId.Value);
+            if (service?.DefaultFormId == form.Id)
+            {
+                service.DefaultFormId = relatedForms
+                    .Where(f => f.Id != form.Id && f.IsDefault)
+                    .OrderByDescending(f => f.UpdatedAt ?? f.CreatedAt)
+                    .Select(f => (int?)f.Id)
+                    .FirstOrDefault();
+                service.UpdatedAt = DateTime.UtcNow;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+    }
+
+    private static List<AssessmentType> NormalizeTargetTypes(AssessmentType type, IReadOnlyCollection<AssessmentType>? targetTypes)
+    {
+        var normalized = (targetTypes ?? Array.Empty<AssessmentType>())
+            .Distinct()
+            .ToList();
+
+        if (normalized.Count == 0)
+        {
+            normalized.Add(type);
+        }
+
+        return normalized;
+    }
+
+    private static string SerializeTargetTypes(IReadOnlyCollection<AssessmentType> targetTypes)
+    {
+        return JsonSerializer.Serialize(targetTypes.Distinct().Select(t => (int)t));
+    }
+
+    private static List<AssessmentType> ParseTargetTypes(AssessmentForm form)
+    {
+        if (string.IsNullOrWhiteSpace(form.TargetTypesJson))
+        {
+            return new List<AssessmentType> { form.Type };
+        }
+
+        try
+        {
+            var rawValues = JsonSerializer.Deserialize<List<int>>(form.TargetTypesJson) ?? new List<int>();
+            var parsed = rawValues
+                .Distinct()
+                .Select(value => (AssessmentType)value)
+                .ToList();
+
+            return parsed.Count > 0 ? parsed : new List<AssessmentType> { form.Type };
+        }
+        catch
+        {
+            return new List<AssessmentType> { form.Type };
+        }
+    }
+
+    private static bool MatchesTargetType(AssessmentForm form, AssessmentType type)
+    {
+        return ParseTargetTypes(form).Contains(type);
+    }
+
     private AssessmentFormDto MapToDto(AssessmentForm form)
     {
+        var targetTypes = ParseTargetTypes(form);
         return new AssessmentFormDto
         {
             Id = form.Id,
+            Code = form.Code,
             Title = form.Title,
             Description = form.Description,
             Type = form.Type,
+            TargetTypes = targetTypes,
             IsActive = form.IsActive,
+            Workflow = form.Workflow,
+            Version = form.Version,
+            IsDefault = form.IsDefault,
+            ServiceDefinitionId = form.ServiceDefinitionId,
+            IntroTitle = form.IntroTitle,
+            IntroDescription = form.IntroDescription,
+            EstimatedDurationMinutes = form.EstimatedDurationMinutes,
+            LayoutJson = form.LayoutJson,
             Questions = form.Questions.OrderBy(q => q.Order).Select(q => new QuestionDto
             {
                 QuestionId = q.Id,
@@ -362,6 +571,21 @@ public class AssessmentService : IAssessmentService
                 Order = q.Order,
                 QuestionKey = q.QuestionKey,
                 NextQuestionKey = q.NextQuestionKey,
+                PageKey = q.PageKey,
+                PageTitle = q.PageTitle,
+                GroupKey = q.GroupKey,
+                GroupTitle = q.GroupTitle,
+                IsRequired = q.IsRequired,
+                Placeholder = q.Placeholder,
+                Description = q.Description,
+                VisibilityConditionJson = q.VisibilityConditionJson,
+                RequiredConditionJson = q.RequiredConditionJson,
+                ValidationJson = q.ValidationJson,
+                MinValue = q.MinValue,
+                MaxValue = q.MaxValue,
+                MinFiles = q.MinFiles,
+                MaxFiles = q.MaxFiles,
+                AllowMultipleFiles = q.AllowMultipleFiles,
                 Options = q.Options.OrderBy(o => o.Order).Select(o => new OptionDto
                 {
                     Id = o.Id,

@@ -15,17 +15,21 @@ export enum CareServiceStatus {
 
 export interface ServiceDefinition {
   id: number;
+  code: string;
   title: string;
   category: ServiceCategory;
   description: string;
   isActive: boolean;
+  defaultFormId?: number;
 }
 
 export interface CreateServiceDefinition {
+  code: string;
   title: string;
   category: ServiceCategory;
   description: string;
   isActive: boolean;
+  defaultFormId?: number;
 }
 
 export interface UpdateServiceDefinition extends CreateServiceDefinition {}

@@ -8,6 +8,7 @@ const items = [
   { label: "خانه", href: "/portal" },
   { label: "پروفایل", href: "/portal/profile" },
   { label: "آزمون‌ها", href: "/portal/assessments" },
+  { label: "خدمات منزل", href: "/portal/home-care" },
 ];
 
 export function PortalSectionNav() {
@@ -38,4 +39,3 @@ export function PortalSectionNav() {
     </nav>
   );
 }
-

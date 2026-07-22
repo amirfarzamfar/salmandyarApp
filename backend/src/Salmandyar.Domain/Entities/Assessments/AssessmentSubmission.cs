@@ -1,3 +1,5 @@
+using Salmandyar.Domain.Enums;
+
 namespace Salmandyar.Domain.Entities.Assessments;
 
 public class AssessmentSubmission
@@ -13,7 +15,11 @@ public class AssessmentSubmission
     public int? CareRecipientId { get; set; } // If this assessment is FOR a patient
     public virtual CareRecipient? CareRecipient { get; set; }
 
+    public AssessmentSubmissionStatus Status { get; set; } = AssessmentSubmissionStatus.Submitted;
+    public string? DraftKey { get; set; }
+    public string? SummaryJson { get; set; }
     public DateTime SubmittedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? LastSavedAt { get; set; }
     
     // Calculated Result
     public double TotalScore { get; set; }

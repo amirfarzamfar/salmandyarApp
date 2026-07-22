@@ -7,6 +7,7 @@ import { CreateAssessmentFormDto, QuestionType } from '@/types/assessment';
 import { toast } from 'react-hot-toast';
 import AssessmentFormBuilder from '@/components/admin/assessments/AssessmentFormBuilder';
 import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 export default function EditAssessmentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -28,7 +29,10 @@ export default function EditAssessmentPage({ params }: { params: Promise<{ id: s
       router.push('/dashboard/admin/assessments');
     } catch (error) {
       console.error('Error updating form:', error);
-      toast.error('خطا در ویرایش آزمون');
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.error || JSON.stringify(error.response?.data?.errors || {}) || error.message
+        : 'خطا در ویرایش آزمون';
+      toast.error(typeof message === 'string' ? message : 'خطا در ویرایش آزمون');
     } finally {
       setSaving(false);
     }
@@ -43,19 +47,46 @@ export default function EditAssessmentPage({ params }: { params: Promise<{ id: s
   // Ensure options is always an array, even if empty.
   
   const initialData: CreateAssessmentFormDto = {
+      code: form.code,
       title: form.title,
       description: form.description,
       type: form.type,
+      targetTypes: form.targetTypes?.length ? form.targetTypes : [form.type],
+      workflow: form.workflow,
+      version: form.version,
+      isDefault: form.isDefault,
+      serviceDefinitionId: form.serviceDefinitionId,
+      introTitle: form.introTitle,
+      introDescription: form.introDescription,
+      estimatedDurationMinutes: form.estimatedDurationMinutes,
+      layoutJson: form.layoutJson,
       questions: form.questions.map(q => ({
           question: q.question,
           type: Number(q.type),
           weight: q.weight,
           tags: q.tags || [], // Ensure tags is an array
           order: q.order || 0,
+          questionKey: q.questionKey,
+          nextQuestionKey: q.nextQuestionKey,
+          pageKey: q.pageKey,
+          pageTitle: q.pageTitle,
+          groupKey: q.groupKey,
+          groupTitle: q.groupTitle,
+          isRequired: q.isRequired,
+          placeholder: q.placeholder,
+          description: q.description,
+          visibilityConditionJson: q.visibilityConditionJson,
+          validationJson: q.validationJson,
+          minValue: q.minValue,
+          maxValue: q.maxValue,
+          minFiles: q.minFiles,
+          maxFiles: q.maxFiles,
+          allowMultipleFiles: q.allowMultipleFiles,
           options: (q.options || []).map(o => ({ // Ensure options is an array
               text: o.text,
               scoreValue: o.value,
-              order: o.order || 0
+              order: o.order || 0,
+              nextQuestionKey: o.nextQuestionKey
           }))
       }))
   };

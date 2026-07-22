@@ -21,10 +21,12 @@ public class ServiceCatalogService : IServiceCatalogService
             .OrderBy(s => s.Title)
             .Select(s => new ServiceDefinitionDto(
                 s.Id,
+                s.Code,
                 s.Title,
                 s.Category,
                 s.Description,
-                s.IsActive
+                s.IsActive,
+                s.DefaultFormId
             ))
             .ToListAsync();
     }
@@ -36,10 +38,12 @@ public class ServiceCatalogService : IServiceCatalogService
 
         return new ServiceDefinitionDto(
             s.Id,
+            s.Code,
             s.Title,
             s.Category,
             s.Description,
-            s.IsActive
+            s.IsActive,
+            s.DefaultFormId
         );
     }
 
@@ -47,10 +51,12 @@ public class ServiceCatalogService : IServiceCatalogService
     {
         var entity = new ServiceDefinition
         {
+            Code = string.IsNullOrWhiteSpace(dto.Code) ? Guid.NewGuid().ToString("N")[..8].ToUpperInvariant() : dto.Code.Trim().ToUpperInvariant(),
             Title = dto.Title,
             Category = dto.Category,
             Description = dto.Description,
             IsActive = dto.IsActive,
+            DefaultFormId = dto.DefaultFormId,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -64,9 +70,11 @@ public class ServiceCatalogService : IServiceCatalogService
         if (entity == null) throw new Exception("Service not found");
 
         entity.Title = dto.Title;
+        entity.Code = string.IsNullOrWhiteSpace(dto.Code) ? entity.Code : dto.Code.Trim().ToUpperInvariant();
         entity.Category = dto.Category;
         entity.Description = dto.Description;
         entity.IsActive = dto.IsActive;
+        entity.DefaultFormId = dto.DefaultFormId;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();

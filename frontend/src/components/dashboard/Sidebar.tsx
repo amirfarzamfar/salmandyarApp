@@ -3,13 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X, ShieldCheck, MessageSquareMore } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 
 const navigation = [
   { name: 'داشبورد', href: '/dashboard', icon: LayoutDashboard },
   { name: 'مدیریت بیماران', href: '/dashboard/patients', icon: Users },
   { name: 'مدیریت خدمات', href: '/dashboard/services', icon: ClipboardList },
+  { name: 'درخواست‌های Home Care', href: '/dashboard/admin/home-care-requests', icon: MessageSquareMore },
   { name: 'مدیریت کاربران', href: '/dashboard/admin/users', icon: Users },
   { name: 'دسترسی ثبت اطلاعات', href: '/dashboard/admin/users?selfService=1', icon: ShieldCheck },
   { name: 'مدیریت شیفت‌ها', href: '/dashboard/admin/shifts', icon: Clock },

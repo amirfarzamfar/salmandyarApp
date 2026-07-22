@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.Assessments;
+using Salmandyar.Domain.Entities.HomeCare;
 using Salmandyar.Domain.Entities.UserEvaluations;
 using Salmandyar.Domain.Entities.Medications;
 using Salmandyar.Domain.Entities.PatientProfile;
@@ -67,6 +68,15 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<Allergy> Allergies { get; set; }
     public DbSet<ElderlyAssessment> ElderlyAssessments { get; set; }
     public DbSet<UploadedDocument> UploadedDocuments { get; set; }
+
+    // Home Care Request Module
+    public DbSet<HomeCareRequest> HomeCareRequests { get; set; }
+    public DbSet<HomeCareRequestAttachment> HomeCareRequestAttachments { get; set; }
+    public DbSet<HomeCareRequestTimelineEvent> HomeCareRequestTimelineEvents { get; set; }
+    public DbSet<HomeCareConversation> HomeCareConversations { get; set; }
+    public DbSet<HomeCareConversationParticipant> HomeCareConversationParticipants { get; set; }
+    public DbSet<HomeCareMessage> HomeCareMessages { get; set; }
+    public DbSet<HomeCareMessageAttachment> HomeCareMessageAttachments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -286,6 +296,16 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasForeignKey(s => s.ServiceDefinitionId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Entity<ServiceDefinition>()
+            .HasIndex(s => s.Code)
+            .IsUnique();
+
+        builder.Entity<ServiceDefinition>()
+            .HasOne(s => s.DefaultForm)
+            .WithMany()
+            .HasForeignKey(s => s.DefaultFormId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Entity<NursingReport>()
             .HasOne(r => r.Author)
             .WithMany()
@@ -422,6 +442,23 @@ public class ApplicationDbContext : IdentityDbContext<User>
                 v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
             );
 
+        builder.Entity<AssessmentForm>()
+            .Property(f => f.Workflow)
+            .HasConversion<string>();
+
+        builder.Entity<AssessmentForm>()
+            .HasIndex(f => f.Code)
+            .IsUnique();
+
+        builder.Entity<AssessmentForm>()
+            .HasIndex(f => new { f.Workflow, f.Type, f.IsActive });
+
+        builder.Entity<AssessmentForm>()
+            .HasOne(f => f.ServiceDefinition)
+            .WithMany()
+            .HasForeignKey(f => f.ServiceDefinitionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.Entity<AssessmentQuestion>()
             .HasOne(q => q.Form)
             .WithMany(f => f.Questions)
@@ -436,14 +473,157 @@ public class ApplicationDbContext : IdentityDbContext<User>
 
         builder.Entity<AssessmentSubmission>()
             .HasOne(s => s.Form)
-            .WithMany()
+            .WithMany(f => f.Submissions)
             .HasForeignKey(s => s.FormId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<AssessmentSubmission>()
+            .Property(s => s.Status)
+            .HasConversion<string>();
 
         builder.Entity<QuestionAnswer>()
             .HasOne(a => a.Submission)
             .WithMany(s => s.Answers)
             .HasForeignKey(a => a.SubmissionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Home Care Request Module Configurations
+        builder.Entity<HomeCareRequest>().ToTable("HomeCareRequests");
+        builder.Entity<HomeCareRequestAttachment>().ToTable("HomeCareRequestAttachments");
+        builder.Entity<HomeCareRequestTimelineEvent>().ToTable("HomeCareRequestTimelineEvents");
+        builder.Entity<HomeCareConversation>().ToTable("HomeCareConversations");
+        builder.Entity<HomeCareConversationParticipant>().ToTable("HomeCareConversationParticipants");
+        builder.Entity<HomeCareMessage>().ToTable("HomeCareMessages");
+        builder.Entity<HomeCareMessageAttachment>().ToTable("HomeCareMessageAttachments");
+
+        builder.Entity<HomeCareRequest>()
+            .Property(r => r.Status)
+            .HasConversion<string>();
+
+        builder.Entity<HomeCareRequest>()
+            .Property(r => r.Priority)
+            .HasConversion<string>();
+
+        builder.Entity<HomeCareRequest>()
+            .Property(r => r.PreferredContactMethod)
+            .HasConversion<string>();
+
+        builder.Entity<HomeCareRequest>()
+            .HasIndex(r => r.TrackingCode)
+            .IsUnique();
+
+        builder.Entity<HomeCareRequest>()
+            .HasOne(r => r.ServiceDefinition)
+            .WithMany()
+            .HasForeignKey(r => r.ServiceDefinitionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HomeCareRequest>()
+            .HasOne(r => r.Form)
+            .WithMany()
+            .HasForeignKey(r => r.FormId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HomeCareRequest>()
+            .HasOne(r => r.Submission)
+            .WithMany()
+            .HasForeignKey(r => r.SubmissionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HomeCareRequest>()
+            .HasOne(r => r.RequesterUser)
+            .WithMany()
+            .HasForeignKey(r => r.RequesterUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HomeCareRequest>()
+            .HasOne(r => r.AssignedSupervisor)
+            .WithMany()
+            .HasForeignKey(r => r.AssignedSupervisorId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<HomeCareRequest>()
+            .HasOne(r => r.AssignedCaregiver)
+            .WithMany()
+            .HasForeignKey(r => r.AssignedCaregiverId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<HomeCareRequest>()
+            .HasOne(r => r.CareRecipient)
+            .WithMany()
+            .HasForeignKey(r => r.CareRecipientId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<HomeCareRequestAttachment>()
+            .HasOne(a => a.Request)
+            .WithMany(r => r.Attachments)
+            .HasForeignKey(a => a.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<HomeCareRequestAttachment>()
+            .HasOne(a => a.UploadedByUser)
+            .WithMany()
+            .HasForeignKey(a => a.UploadedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HomeCareRequestTimelineEvent>()
+            .Property(e => e.EventType)
+            .HasConversion<string>();
+
+        builder.Entity<HomeCareRequestTimelineEvent>()
+            .HasOne(e => e.Request)
+            .WithMany(r => r.TimelineEvents)
+            .HasForeignKey(e => e.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<HomeCareRequestTimelineEvent>()
+            .HasOne(e => e.ActorUser)
+            .WithMany()
+            .HasForeignKey(e => e.ActorUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<HomeCareConversation>()
+            .HasOne(c => c.Request)
+            .WithMany(r => r.Conversations)
+            .HasForeignKey(c => c.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<HomeCareConversationParticipant>()
+            .HasOne(p => p.Conversation)
+            .WithMany(c => c.Participants)
+            .HasForeignKey(p => p.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<HomeCareConversationParticipant>()
+            .HasOne(p => p.User)
+            .WithMany()
+            .HasForeignKey(p => p.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HomeCareConversationParticipant>()
+            .HasIndex(p => new { p.ConversationId, p.UserId })
+            .IsUnique();
+
+        builder.Entity<HomeCareMessage>()
+            .Property(m => m.MessageType)
+            .HasConversion<string>();
+
+        builder.Entity<HomeCareMessage>()
+            .HasOne(m => m.Conversation)
+            .WithMany(c => c.Messages)
+            .HasForeignKey(m => m.ConversationId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<HomeCareMessage>()
+            .HasOne(m => m.SenderUser)
+            .WithMany()
+            .HasForeignKey(m => m.SenderUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<HomeCareMessageAttachment>()
+            .HasOne(a => a.Message)
+            .WithMany(m => m.Attachments)
+            .HasForeignKey(a => a.MessageId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // User Evaluation Module Configurations

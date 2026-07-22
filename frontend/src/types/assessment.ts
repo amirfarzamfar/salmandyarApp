@@ -3,6 +3,23 @@ export enum QuestionType {
   TrueFalse = 1,
   ShortAnswer = 2,
   LongAnswer = 3,
+  Number = 4,
+  MultiSelect = 5,
+  Date = 6,
+  File = 7,
+  Image = 8,
+  Slider = 9,
+  Switch = 10,
+  Rating = 11,
+  Time = 12,
+}
+
+export enum AssessmentFormWorkflow {
+  Assessment = 0,
+  UserEvaluation = 1,
+  HomeCareRequest = 2,
+  Checklist = 3,
+  SatisfactionSurvey = 4,
 }
 
 export enum AssessmentType {
@@ -26,10 +43,20 @@ export enum AssessmentType {
 
 export interface AssessmentForm {
   id: number;
+  code: string;
   title: string;
   description: string;
   type: AssessmentType;
+  targetTypes: AssessmentType[];
   isActive: boolean;
+  workflow: AssessmentFormWorkflow;
+  version: number;
+  isDefault: boolean;
+  serviceDefinitionId?: number;
+  introTitle?: string;
+  introDescription?: string;
+  estimatedDurationMinutes: number;
+  layoutJson?: string;
   questions: Question[];
 }
 
@@ -43,6 +70,21 @@ export interface Question {
   order: number;
   questionKey?: string;
   nextQuestionKey?: string;
+  pageKey?: string;
+  pageTitle?: string;
+  groupKey?: string;
+  groupTitle?: string;
+  isRequired: boolean;
+  placeholder?: string;
+  description?: string;
+  visibilityConditionJson?: string;
+  requiredConditionJson?: string;
+  validationJson?: string;
+  minValue?: number;
+  maxValue?: number;
+  minFiles?: number;
+  maxFiles?: number;
+  allowMultipleFiles?: boolean;
 }
 
 export interface Option {
@@ -54,9 +96,19 @@ export interface Option {
 }
 
 export interface CreateAssessmentFormDto {
+  code?: string;
   title: string;
   description: string;
   type: AssessmentType;
+  targetTypes: AssessmentType[];
+  workflow?: AssessmentFormWorkflow;
+  version?: number;
+  isDefault?: boolean;
+  serviceDefinitionId?: number;
+  introTitle?: string;
+  introDescription?: string;
+  estimatedDurationMinutes?: number;
+  layoutJson?: string;
   questions: CreateQuestionDto[];
 }
 
@@ -69,6 +121,21 @@ export interface CreateQuestionDto {
   order: number;
   questionKey?: string;
   nextQuestionKey?: string;
+  pageKey?: string;
+  pageTitle?: string;
+  groupKey?: string;
+  groupTitle?: string;
+  isRequired?: boolean;
+  placeholder?: string;
+  description?: string;
+  visibilityConditionJson?: string;
+  requiredConditionJson?: string;
+  validationJson?: string;
+  minValue?: number;
+  maxValue?: number;
+  minFiles?: number;
+  maxFiles?: number;
+  allowMultipleFiles?: boolean;
 }
 
 export interface CreateOptionDto {
@@ -93,6 +160,10 @@ export interface MatchCandidate {
 export interface SubmitAssessmentDto {
   formId: number;
   careRecipientId?: string;
+  submissionId?: number;
+  saveAsDraft?: boolean;
+  draftKey?: string;
+  summaryJson?: string;
   answers: AssessmentAnswerDto[];
 }
 
@@ -101,6 +172,9 @@ export interface AssessmentAnswerDto {
   selectedOptionId?: number;
   textResponse?: string;
   booleanResponse?: boolean;
+  numberResponse?: number;
+  dateResponse?: string;
+  jsonResponse?: string;
 }
 
 export interface UserProfileDto {

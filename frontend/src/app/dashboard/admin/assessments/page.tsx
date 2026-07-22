@@ -8,6 +8,16 @@ import { toast } from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { useState } from 'react';
 import { AssignExamToUsersModal } from '@/components/admin/assessments/AssignExamToUsersModal';
+import { AssessmentForm, AssessmentFormWorkflow, AssessmentType } from '@/types/assessment';
+import { roleTranslations } from '@/utils/role-translation';
+
+const workflowLabels: Record<number, string> = {
+  [AssessmentFormWorkflow.Assessment]: 'آزمون / ارزیابی',
+  [AssessmentFormWorkflow.UserEvaluation]: 'ارزیابی کاربر',
+  [AssessmentFormWorkflow.HomeCareRequest]: 'درخواست خدمت در منزل',
+  [AssessmentFormWorkflow.Checklist]: 'چک‌لیست',
+  [AssessmentFormWorkflow.SatisfactionSurvey]: 'نظرسنجی رضایت',
+};
 
 export default function AssessmentsListPage() {
   const queryClient = useQueryClient();
@@ -88,7 +98,7 @@ export default function AssessmentsListPage() {
           </div>
       ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {forms?.map((form: any) => (
+            {forms?.map((form: AssessmentForm) => (
                 <div key={form.id} className="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-teal-500/50 transition-all group relative">
                     <div className="flex justify-between items-start mb-4">
                         <div className={`p-3 rounded-lg transition-colors ${
@@ -115,7 +125,15 @@ export default function AssessmentsListPage() {
                     
                     <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-700 pt-4 mb-4">
                         <span>{form.questions?.length || 0} سوال</span>
-                        <span>{form.type === 0 ? 'ارزیابی پرستار' : 'ارزیابی سالمند'}</span>
+                        <span>{workflowLabels[form.workflow] || 'بدون workflow'}</span>
+                    </div>
+
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      {(form.targetTypes?.length ? form.targetTypes : [form.type]).map((type) => (
+                        <span key={`${form.id}-${type}`} className="rounded-full bg-slate-700 px-2.5 py-1 text-[11px] text-slate-200">
+                          {roleTranslations[AssessmentType[type]] || AssessmentType[type]}
+                        </span>
+                      ))}
                     </div>
 
                     <div className="flex flex-wrap gap-2">

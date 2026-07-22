@@ -18,4 +18,7 @@ public class QuestionAnswer
     
     // For True/False (could use SelectedOption or a boolean field, keeping generic)
     public bool? BooleanResponse { get; set; }
+    public decimal? NumberResponse { get; set; }
+    public DateTime? DateResponse { get; set; }
+    public string? JsonResponse { get; set; }
 }

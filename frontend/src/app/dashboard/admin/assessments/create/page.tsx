@@ -6,6 +6,7 @@ import { assessmentService } from '@/services/assessment.service';
 import { CreateAssessmentFormDto } from '@/types/assessment';
 import { toast } from 'react-hot-toast';
 import AssessmentFormBuilder from '@/components/admin/assessments/AssessmentFormBuilder';
+import axios from 'axios';
 
 export default function CreateAssessmentPage() {
   const router = useRouter();
@@ -19,7 +20,10 @@ export default function CreateAssessmentPage() {
       router.push('/dashboard/admin/assessments');
     } catch (error) {
       console.error(error);
-      toast.error('خطا در ایجاد آزمون');
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.error || JSON.stringify(error.response?.data?.errors || {}) || error.message
+        : 'خطا در ایجاد آزمون';
+      toast.error(typeof message === 'string' ? message : 'خطا در ایجاد آزمون');
     } finally {
       setLoading(false);
     }

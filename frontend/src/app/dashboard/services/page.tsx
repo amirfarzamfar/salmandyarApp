@@ -7,6 +7,8 @@ import { Plus, Search, Edit, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { serviceFormSchema, ServiceFormValues } from '@/components/services/ServiceFormSchema';
+import { assessmentService } from '@/services/assessment.service';
+import { AssessmentForm, AssessmentFormWorkflow } from '@/types/assessment';
 
 export default function ServicesPage() {
   const [services, setServices] = useState<ServiceDefinition[]>([]);
@@ -14,6 +16,7 @@ export default function ServicesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [forms, setForms] = useState<AssessmentForm[]>([]);
 
   const {
     register,
@@ -24,15 +27,18 @@ export default function ServicesPage() {
   } = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: {
+      code: '',
       title: '',
       category: ServiceCategory.Nursing,
       description: '',
       isActive: true,
+      defaultFormId: undefined,
     },
   });
 
   useEffect(() => {
     fetchServices();
+    fetchForms();
   }, []);
 
   const fetchServices = async () => {
@@ -43,6 +49,15 @@ export default function ServicesPage() {
       console.error('Error fetching services:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchForms = async () => {
+    try {
+      const data = await assessmentService.getAllForms();
+      setForms(data.filter((form) => form.workflow === AssessmentFormWorkflow.HomeCareRequest));
+    } catch (error) {
+      console.error('Error fetching forms:', error);
     }
   };
 
@@ -64,10 +79,12 @@ export default function ServicesPage() {
 
   const handleEdit = (service: ServiceDefinition) => {
     setEditingId(service.id);
+    setValue('code', service.code);
     setValue('title', service.title);
     setValue('category', service.category);
     setValue('description', service.description);
     setValue('isActive', service.isActive);
+    setValue('defaultFormId', service.defaultFormId ?? undefined);
     setIsModalOpen(true);
   };
 
@@ -133,8 +150,10 @@ export default function ServicesPage() {
           <table className="w-full text-right">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-900">کد</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-900">نام خدمت</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-900">دسته‌بندی</th>
+                <th className="px-6 py-4 text-sm font-semibold text-gray-900">فرم پیش‌فرض</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-900">وضعیت</th>
                 <th className="px-6 py-4 text-sm font-semibold text-gray-900">عملیات</th>
               </tr>
@@ -155,11 +174,15 @@ export default function ServicesPage() {
               ) : (
                 filteredServices.map((service) => (
                   <tr key={service.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-medium text-gray-500">{service.code}</td>
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">{service.title}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {getCategoryLabel(service.category)}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {forms.find((form) => form.id === service.defaultFormId)?.title ?? 'بدون فرم'}
                   </td>
                   <td className="px-6 py-4 text-sm">
                     {service.isActive ? (
@@ -218,6 +241,16 @@ export default function ServicesPage() {
             
             <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">کد خدمت</label>
+                <input
+                  {...register('code')}
+                  type="text"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
+                />
+                {errors.code && <p className="mt-1 text-xs text-red-500">{errors.code.message}</p>}
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">نام خدمت</label>
                 <input
                   {...register('title')}
@@ -242,6 +275,21 @@ export default function ServicesPage() {
                       <option value={ServiceCategory.Other}>سایر</option>
                     </select>
                     {errors.category && <p className="mt-1 text-xs text-red-500">{errors.category.message}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">فرم پیش‌فرض</label>
+                    <select
+                      {...register('defaultFormId', { setValueAs: (value) => value === '' ? undefined : Number(value) })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"
+                    >
+                      <option value="">بدون فرم</option>
+                      {forms.map((form) => (
+                        <option key={form.id} value={form.id}>
+                          {form.title} - v{form.version}
+                        </option>
+                      ))}
+                    </select>
                   </div>
 
                 </div>
