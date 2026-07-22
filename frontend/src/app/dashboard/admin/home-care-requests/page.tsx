@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { homeCareService } from '@/services/home-care.service';
 import { HomeCareRequestDetails, HomeCareRequestListItem, HomeCareRequestStatus } from '@/types/home-care';
+import { ServiceCategory } from '@/types/service';
 import { Loader2, MessageSquareMore, PhoneCall, ShieldCheck } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
@@ -19,6 +20,15 @@ const statusOptions = [
   { value: HomeCareRequestStatus.Cancelled, label: 'لغو درخواست' },
 ];
 
+const serviceCategoryLabels: Record<ServiceCategory, string> = {
+  [ServiceCategory.Nursing]: 'پرستاری',
+  [ServiceCategory.Medical]: 'پزشکی',
+  [ServiceCategory.Rehabilitation]: 'توانبخشی',
+  [ServiceCategory.PersonalCare]: 'مراقبت شخصی',
+  [ServiceCategory.Emergency]: 'اورژانس',
+  [ServiceCategory.Other]: 'سایر',
+};
+
 export default function HomeCareRequestsAdminPage() {
   const [requests, setRequests] = useState<HomeCareRequestListItem[]>([]);
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
@@ -32,6 +42,15 @@ export default function HomeCareRequestsAdminPage() {
     unreadMessages: requests.reduce((sum, request) => sum + request.unreadMessages, 0),
     openCases: requests.filter((request) => ![HomeCareRequestStatus.Completed, HomeCareRequestStatus.Cancelled].includes(request.status)).length,
   }), [requests]);
+  const groupedRequests = useMemo(() => {
+    const groups = new Map<ServiceCategory, HomeCareRequestListItem[]>();
+    requests.forEach((request) => {
+      const current = groups.get(request.serviceCategory) ?? [];
+      current.push(request);
+      groups.set(request.serviceCategory, current);
+    });
+    return Array.from(groups.entries());
+  }, [requests]);
 
   useEffect(() => {
     const loadRequests = async () => {
@@ -110,27 +129,41 @@ export default function HomeCareRequestsAdminPage() {
           <h2 className="mb-4 text-lg font-black text-gray-900">صف درخواست‌ها</h2>
           {loading ? (
             <div className="py-12 text-center text-gray-500">در حال بارگذاری...</div>
+          ) : requests.length === 0 ? (
+            <div className="py-12 text-center text-gray-500">هنوز درخواستی ثبت نشده است.</div>
           ) : (
-            <div className="space-y-3">
-              {requests.map((request) => (
-                <button
-                  key={request.id}
-                  type="button"
-                  onClick={() => setSelectedRequestId(request.id)}
-                  className={`w-full rounded-3xl border p-4 text-right transition ${selectedRequestId === request.id ? 'border-teal-300 bg-teal-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-sm font-black text-gray-900">{request.trackingCode}</div>
-                      <div className="mt-1 text-xs text-gray-500">{request.serviceTitle}</div>
-                    </div>
-                    {request.unreadMessages > 0 && (
-                      <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">
-                        {request.unreadMessages} پیام
-                      </span>
-                    )}
+            <div className="space-y-5">
+              {groupedRequests.map(([category, categoryRequests]) => (
+                <div key={category} className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                      {serviceCategoryLabels[category]}
+                    </span>
+                    <span className="text-xs text-gray-500">{categoryRequests.length} پرونده</span>
                   </div>
-                </button>
+                  <div className="space-y-3">
+                    {categoryRequests.map((request) => (
+                      <button
+                        key={request.id}
+                        type="button"
+                        onClick={() => setSelectedRequestId(request.id)}
+                        className={`w-full rounded-3xl border p-4 text-right transition ${selectedRequestId === request.id ? 'border-teal-300 bg-teal-50' : 'border-gray-100 bg-gray-50 hover:border-gray-200'}`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-black text-gray-900">{request.trackingCode}</div>
+                            <div className="mt-1 text-xs text-gray-500">{request.serviceTitle}</div>
+                          </div>
+                          {request.unreadMessages > 0 && (
+                            <span className="rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">
+                              {request.unreadMessages} پیام
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -149,6 +182,9 @@ export default function HomeCareRequestsAdminPage() {
                 <div>
                   <h2 className="text-xl font-black text-gray-900">{selectedRequest.trackingCode}</h2>
                   <p className="mt-1 text-sm text-gray-500">{selectedRequest.serviceTitle}</p>
+                  <div className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                    {serviceCategoryLabels[selectedRequest.serviceCategory]}
+                  </div>
                 </div>
                 <select
                   value={selectedRequest.status}

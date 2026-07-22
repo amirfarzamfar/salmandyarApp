@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
 import DatePicker from 'react-multi-date-picker';
 import DateObject from 'react-date-object';
 import persian from 'react-date-object/calendars/persian';
@@ -11,7 +12,7 @@ import { homeCareService } from '@/services/home-care.service';
 import { serviceCatalogService } from '@/services/service-catalog.service';
 import { AssessmentAnswerDto, AssessmentForm, Question, QuestionType } from '@/types/assessment';
 import { HomeCareContactMethod, SaveHomeCareDraftDto } from '@/types/home-care';
-import { ServiceDefinition } from '@/types/service';
+import { ServiceCategory, ServiceDefinition } from '@/types/service';
 import { ArrowLeft, ArrowRight, ChevronLeft, FileUp, Loader2, Save, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
@@ -24,6 +25,15 @@ interface QuestionPage {
   description?: string;
   questions: Question[];
 }
+
+const serviceCategoryLabels: Record<ServiceCategory, string> = {
+  [ServiceCategory.Nursing]: 'پرستاری',
+  [ServiceCategory.Medical]: 'پزشکی',
+  [ServiceCategory.Rehabilitation]: 'توانبخشی',
+  [ServiceCategory.PersonalCare]: 'مراقبت شخصی',
+  [ServiceCategory.Emergency]: 'اورژانس',
+  [ServiceCategory.Other]: 'سایر',
+};
 
 const CONTACT_METHOD_VALUES: Record<string, HomeCareContactMethod> = {
   تماس: HomeCareContactMethod.PhoneCall,
@@ -55,7 +65,7 @@ export default function HomeCareRequestWizardPage() {
     const loadServices = async () => {
       try {
         const data = await serviceCatalogService.getAll();
-        setServices(data.filter((service) => service.isActive));
+        setServices(data.filter((service) => service.isActive && !!service.defaultFormId));
       } catch (error) {
         console.error(error);
         toast.error('دریافت لیست خدمات با مشکل مواجه شد');
@@ -102,6 +112,15 @@ export default function HomeCareRequestWizardPage() {
   }, [pages, form?.questions, answers]);
 
   const currentPage = visiblePages[currentPageIndex];
+  const groupedServices = useMemo(() => {
+    const groups = new Map<ServiceCategory, ServiceDefinition[]>();
+    services.forEach((service) => {
+      const current = groups.get(service.category) ?? [];
+      current.push(service);
+      groups.set(service.category, current);
+    });
+    return Array.from(groups.entries());
+  }, [services]);
 
   const loadForm = async (service: ServiceDefinition) => {
     if (!service.defaultFormId) {
@@ -127,7 +146,12 @@ export default function HomeCareRequestWizardPage() {
       setFileAnswers({});
     } catch (error) {
       console.error(error);
-      toast.error('دریافت فرم سرویس با مشکل مواجه شد');
+      const message = axios.isAxiosError(error)
+        ? error.response?.status === 403
+          ? 'شما به این فرم دسترسی ندارید یا فرم برای نقش فعلی فعال نیست.'
+          : error.response?.data?.error || error.message
+        : 'دریافت فرم سرویس با مشکل مواجه شد';
+      toast.error(message);
       setForm(null);
     } finally {
       setLoadingForm(false);
@@ -401,26 +425,45 @@ export default function HomeCareRequestWizardPage() {
       </div>
 
       {!selectedService && (
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <section className="space-y-6">
           {loadingServices ? (
-            <div className="col-span-full py-16 text-center text-gray-500">در حال بارگذاری خدمات...</div>
+            <div className="py-16 text-center text-gray-500">در حال بارگذاری خدمات...</div>
+          ) : services.length === 0 ? (
+            <div className="rounded-3xl border border-dashed border-amber-200 bg-amber-50 px-6 py-12 text-center text-amber-800">
+              هنوز خدمت فعالی که فرم پیش‌فرض Home Care داشته باشد تعریف نشده است.
+            </div>
           ) : (
-            services.map((service) => (
-              <button
-                key={service.id}
-                type="button"
-                onClick={() => void loadForm(service)}
-                className="rounded-3xl border border-gray-100 bg-white p-6 text-right shadow-sm transition hover:-translate-y-1 hover:border-teal-200 hover:shadow-md"
-              >
-                <div className="mb-4 inline-flex rounded-2xl bg-teal-50 p-3 text-teal-700">
-                  <Sparkles className="h-5 w-5" />
+            groupedServices.map(([category, categoryServices]) => (
+              <div key={category} className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                    {serviceCategoryLabels[category]}
+                  </span>
+                  <span className="text-sm text-gray-500">{categoryServices.length} خدمت فعال با فرم آماده</span>
                 </div>
-                <h2 className="text-lg font-black text-gray-900">{service.title}</h2>
-                <p className="mt-2 line-clamp-3 text-sm leading-7 text-gray-500">{service.description || 'توضیحی برای این سرویس ثبت نشده است.'}</p>
-                <div className="mt-5 text-xs font-bold text-teal-700">
-                  {service.defaultFormId ? 'دارای فرم پیش‌فرض' : 'نیازمند اتصال فرم توسط ادمین'}
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {categoryServices.map((service) => (
+                    <button
+                      key={service.id}
+                      type="button"
+                      onClick={() => void loadForm(service)}
+                      className="rounded-3xl border border-gray-100 bg-white p-6 text-right shadow-sm transition hover:-translate-y-1 hover:border-teal-200 hover:shadow-md"
+                    >
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div className="inline-flex rounded-2xl bg-teal-50 p-3 text-teal-700">
+                          <Sparkles className="h-5 w-5" />
+                        </div>
+                        <span className="rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-700">
+                          {serviceCategoryLabels[service.category]}
+                        </span>
+                      </div>
+                      <h2 className="text-lg font-black text-gray-900">{service.title}</h2>
+                      <p className="mt-2 line-clamp-3 text-sm leading-7 text-gray-500">{service.description || 'توضیحی برای این سرویس ثبت نشده است.'}</p>
+                      <div className="mt-5 text-xs font-bold text-teal-700">فرم هوشمند این خدمت آماده ثبت درخواست است</div>
+                    </button>
+                  ))}
                 </div>
-              </button>
+              </div>
             ))
           )}
         </section>
@@ -432,6 +475,9 @@ export default function HomeCareRequestWizardPage() {
             <div>
               <p className="text-sm text-gray-500">سرویس انتخاب‌شده</p>
               <h2 className="text-xl font-black text-gray-900">{selectedService.title}</h2>
+              <div className="mt-2 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                {serviceCategoryLabels[selectedService.category]}
+              </div>
               <p className="mt-1 text-sm text-gray-500">{selectedService.description}</p>
             </div>
             <button

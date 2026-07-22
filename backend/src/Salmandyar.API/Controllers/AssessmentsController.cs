@@ -5,6 +5,7 @@ using Salmandyar.Application.Services.Assessments;
 using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Enums;
 using System.Security.Claims;
+using System.Linq;
 
 namespace Salmandyar.API.Controllers;
 
@@ -36,11 +37,30 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpGet("forms/details/{id}")]
-    [Authorize(Roles = $"{Roles.SuperAdmin},{Roles.Admin},{Roles.Manager},{Roles.Supervisor}")]
+    [Authorize]
     public async Task<IActionResult> GetFormById(int id)
     {
         var form = await _assessmentService.GetFormByIdAsync(id);
         if (form == null) return NotFound();
+
+        if (CanManageForms())
+        {
+            return Ok(form);
+        }
+
+        var currentTypes = GetCurrentAssessmentTypes().ToHashSet();
+        var isPatientFacingHomeCareUser = currentTypes.Contains(AssessmentType.Patient)
+            || currentTypes.Contains(AssessmentType.Elderly)
+            || currentTypes.Contains(AssessmentType.PatientFamily);
+
+        var matchesTargetType = form.TargetTypes.Any(currentTypes.Contains);
+        var canAccessHomeCareWizard = form.Workflow == AssessmentFormWorkflow.HomeCareRequest && isPatientFacingHomeCareUser;
+
+        if (!form.IsActive || (!matchesTargetType && !canAccessHomeCareWizard))
+        {
+            return Forbid();
+        }
+
         return Ok(form);
     }
 
@@ -135,5 +155,26 @@ public class AssessmentsController : ControllerBase
 
         var forms = await _assessmentService.GetAvailableAssessmentsForUserAsync(userId, type);
         return Ok(forms);
+    }
+
+    private bool CanManageForms()
+    {
+        return User.IsInRole(Roles.SuperAdmin)
+            || User.IsInRole(Roles.Admin)
+            || User.IsInRole(Roles.Manager)
+            || User.IsInRole(Roles.Supervisor);
+    }
+
+    private IEnumerable<AssessmentType> GetCurrentAssessmentTypes()
+    {
+        if (User.IsInRole(Roles.Manager)) yield return AssessmentType.Manager;
+        if (User.IsInRole(Roles.Supervisor)) yield return AssessmentType.Supervisor;
+        if (User.IsInRole(Roles.Nurse)) yield return AssessmentType.Nurse;
+        if (User.IsInRole(Roles.AssistantNurse)) yield return AssessmentType.AssistantNurse;
+        if (User.IsInRole(Roles.Physiotherapist)) yield return AssessmentType.Physiotherapist;
+        if (User.IsInRole(Roles.ElderlyCareAssistant)) yield return AssessmentType.ElderlyCareAssistant;
+        if (User.IsInRole(Roles.Elderly)) yield return AssessmentType.Elderly;
+        if (User.IsInRole(Roles.Patient)) yield return AssessmentType.Patient;
+        if (User.IsInRole(Roles.PatientFamily)) yield return AssessmentType.PatientFamily;
     }
 }

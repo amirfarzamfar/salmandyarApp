@@ -1,4 +1,5 @@
 import { AssessmentAnswerDto, AssessmentForm } from '@/types/assessment';
+import { ServiceCategory } from '@/types/service';
 
 export enum HomeCareRequestStatus {
   Draft = 0,
@@ -68,6 +69,7 @@ export interface HomeCareRequestListItem {
   id: string;
   trackingCode: string;
   serviceTitle: string;
+  serviceCategory: ServiceCategory;
   status: HomeCareRequestStatus;
   contactName: string;
   contactMobile: string;
@@ -127,6 +129,7 @@ export interface HomeCareRequestDetails {
   trackingCode: string;
   serviceDefinitionId: number;
   serviceTitle: string;
+  serviceCategory: ServiceCategory;
   formId: number;
   submissionId: number;
   status: HomeCareRequestStatus;

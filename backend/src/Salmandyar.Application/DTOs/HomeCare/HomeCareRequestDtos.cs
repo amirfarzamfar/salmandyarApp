@@ -1,4 +1,5 @@
 using Salmandyar.Application.DTOs.Assessments;
+using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Enums;
 
 namespace Salmandyar.Application.DTOs.HomeCare;
@@ -95,6 +96,7 @@ public class HomeCareRequestListItemDto
     public Guid Id { get; set; }
     public string TrackingCode { get; set; } = string.Empty;
     public string ServiceTitle { get; set; } = string.Empty;
+    public ServiceCategory ServiceCategory { get; set; }
     public HomeCareRequestStatus Status { get; set; }
     public string ContactName { get; set; } = string.Empty;
     public string ContactMobile { get; set; } = string.Empty;
@@ -109,6 +111,7 @@ public class HomeCareRequestDetailsDto
     public string TrackingCode { get; set; } = string.Empty;
     public int ServiceDefinitionId { get; set; }
     public string ServiceTitle { get; set; } = string.Empty;
+    public ServiceCategory ServiceCategory { get; set; }
     public int FormId { get; set; }
     public int SubmissionId { get; set; }
     public HomeCareRequestStatus Status { get; set; }

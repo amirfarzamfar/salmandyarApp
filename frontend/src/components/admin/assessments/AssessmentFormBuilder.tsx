@@ -81,7 +81,7 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
     const loadServices = async () => {
       try {
         const data = await serviceCatalogService.getAll();
-        setServices(data);
+        setServices(data.filter((service) => service.isActive));
       } catch (error) {
         console.error(error);
       }
