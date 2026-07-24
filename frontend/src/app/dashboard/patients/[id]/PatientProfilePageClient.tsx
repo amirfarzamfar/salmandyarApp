@@ -125,7 +125,12 @@ export default function PatientProfilePageClient() {
 
         <div className="p-6">
           {activeTab === 'overview' && <OverviewTab patient={patient} />}
-          {activeTab === 'profile' && <PatientProfileTab userId={patient.userId} />}
+          {activeTab === 'profile' && (
+            <PatientProfileTab
+              userId={patient.userId}
+              editHref={patient.userId ? `/dashboard/patients/${patient.id}/profile-wizard?userId=${patient.userId}` : undefined}
+            />
+          )}
           {activeTab === 'vitals' && <VitalSignsTab patientId={patient.id} careLevel={patient.careLevel} />}
           {activeTab === 'medications' && <MedicationsTab patientId={patient.id} highlightedDoseId={Number.isFinite(highlightedDoseId) ? highlightedDoseId : null} />}
           {activeTab === 'services' && <CareServicesTab patientId={patient.id} />}

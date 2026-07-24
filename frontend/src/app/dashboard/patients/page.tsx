@@ -219,57 +219,61 @@ export default function PatientsPage() {
       </div>
 
       <Dialog open={!!editingPatient} onOpenChange={(open) => { if (!open) closeEdit(); }}>
-        <DialogContent className="w-[95vw] max-w-xl rounded-2xl bg-white p-0 overflow-hidden">
-          <div className="p-6 border-b border-gray-100">
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-xl flex-col gap-0 overflow-hidden rounded-3xl bg-white p-0 sm:w-full sm:max-h-[90vh]">
+          <div className="shrink-0 border-b border-gray-100 px-4 py-4 sm:px-6 sm:py-5">
             <DialogTitle className="text-lg font-black text-gray-900">تنظیمات ادمین بیمار</DialogTitle>
             <DialogDescription className="mt-1 text-sm text-gray-500">
               تشخیص، سطح مراقبت و نیازهای ویژه را مشخص کنید.
             </DialogDescription>
           </div>
 
-          <div className="p-6 space-y-4">
-            <div className="space-y-1">
-              <label className="text-sm font-bold text-gray-700">تشخیص</label>
-              <input
-                type="text"
-                value={editPrimaryDiagnosis}
-                onChange={(e) => setEditPrimaryDiagnosis(e.target.value)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500"
-                placeholder="مثلاً: سکته مغزی"
-              />
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+            <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">تشخیص</label>
+                <input
+                  type="text"
+                  value={editPrimaryDiagnosis}
+                  onChange={(e) => setEditPrimaryDiagnosis(e.target.value)}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-teal-500"
+                  placeholder="مثلاً: سکته مغزی"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-sm font-bold text-gray-700">سطح مراقبت</label>
+                <select
+                  value={editCareLevel}
+                  onChange={(e) => setEditCareLevel(Number(e.target.value))}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none transition focus:ring-2 focus:ring-teal-500"
+                >
+                  <option value={CareLevel.Level1}>{careLevelLabel(CareLevel.Level1)}</option>
+                  <option value={CareLevel.Level2}>{careLevelLabel(CareLevel.Level2)}</option>
+                  <option value={CareLevel.Level3}>{careLevelLabel(CareLevel.Level3)}</option>
+                  <option value={CareLevel.Level4}>{careLevelLabel(CareLevel.Level4)}</option>
+                  <option value={CareLevel.Level5}>{careLevelLabel(CareLevel.Level5)}</option>
+                </select>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-bold text-gray-700">سطح مراقبت</label>
-              <select
-                value={editCareLevel}
-                onChange={(e) => setEditCareLevel(Number(e.target.value))}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500"
-              >
-                <option value={CareLevel.Level1}>{careLevelLabel(CareLevel.Level1)}</option>
-                <option value={CareLevel.Level2}>{careLevelLabel(CareLevel.Level2)}</option>
-                <option value={CareLevel.Level3}>{careLevelLabel(CareLevel.Level3)}</option>
-                <option value={CareLevel.Level4}>{careLevelLabel(CareLevel.Level4)}</option>
-                <option value={CareLevel.Level5}>{careLevelLabel(CareLevel.Level5)}</option>
-              </select>
-            </div>
-
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-sm font-bold text-gray-700">نیازهای ویژه</label>
               <textarea
                 value={editSpecialNeeds}
                 onChange={(e) => setEditSpecialNeeds(e.target.value)}
-                className="w-full min-h-24 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-teal-500"
+                className="min-h-28 w-full resize-y rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm leading-6 outline-none transition focus:ring-2 focus:ring-teal-500"
                 placeholder="نکات مهم مراقبتی که توسط ادمین تعیین می‌شود..."
               />
             </div>
+            </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+          <div className="shrink-0 flex flex-col-reverse gap-3 border-t border-gray-100 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6 sm:py-5">
             <button
               type="button"
               onClick={closeEdit}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 hover:bg-gray-50"
+              className="min-h-11 w-full rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 transition hover:bg-gray-50 sm:w-auto"
               disabled={isSaving}
             >
               انصراف
@@ -277,7 +281,7 @@ export default function PatientsPage() {
             <button
               type="button"
               onClick={handleSaveAdminInfo}
-              className="rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white hover:bg-teal-700 disabled:opacity-60"
+              className="min-h-11 w-full rounded-xl bg-teal-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-700 disabled:opacity-60 sm:w-auto"
               disabled={isSaving}
             >
               {isSaving ? 'در حال ذخیره...' : 'ذخیره'}

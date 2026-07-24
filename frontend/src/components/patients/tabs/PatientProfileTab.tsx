@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 
 interface Props {
   userId?: string;
+  editHref?: string;
 }
 
 const maritalStatusLabels: Record<string, string> = {
@@ -91,11 +92,12 @@ const homeMedicalEquipmentLabels: Record<string, string> = {
 };
 const totalProfileSteps = 8;
 
-export default function PatientProfileTab({ userId }: Props) {
+export default function PatientProfileTab({ userId, editHref }: Props) {
   const { user } = useUser();
   const canEditProfile = ['Admin', 'SuperAdmin', 'Manager', 'Supervisor', 'Nurse'].includes(user?.role || '');
   const isOwnProfile = !!user?.id && userId === user.id;
   const assessmentSectionTitle = user?.role === 'Patient' ? 'بیمار' : 'سالمند';
+  const resolvedEditHref = editHref ?? (userId ? `/portal/profile-wizard?userId=${userId}` : null);
 
   const { data: profile, isLoading: loading, error } = useQuery<PatientProfileDto>({
     queryKey: ['patientProfile', isOwnProfile ? 'me' : userId],
@@ -184,8 +186,8 @@ export default function PatientProfileTab({ userId }: Props) {
         <div>
           <div className="flex items-center gap-4 mb-2">
             <h3 className="text-lg font-bold text-gray-900">وضعیت تکمیل پرونده</h3>
-            {canEditProfile && userId && (
-              <Link href={`/portal/profile-wizard?userId=${userId}`}>
+            {canEditProfile && resolvedEditHref && (
+              <Link href={resolvedEditHref}>
                 <button className="flex items-center gap-1 text-sm bg-teal-50 text-teal-600 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors">
                   <Edit className="w-4 h-4" /> ویرایش
                 </button>

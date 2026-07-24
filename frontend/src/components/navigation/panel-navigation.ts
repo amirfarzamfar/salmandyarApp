@@ -30,6 +30,16 @@ function getDashboardNav(pathname: string): PanelNav {
     return { title: "مدیریت بیماران", description: "مدیریت پرونده‌ها، وضعیت بیماران و دسترسی سریع به جزئیات هر بیمار.", breadcrumbs: [...breadcrumbs, { label: "مدیریت بیماران" }], backHref: "/dashboard", show: true };
   }
 
+  if (/^\/dashboard\/patients\/[^/]+\/profile-wizard$/.test(pathname)) {
+    return {
+      title: "ویرایش پروفایل درمانی",
+      description: "مراحل پرونده درمانی بیمار را در این صفحه تکمیل یا ویرایش کنید.",
+      breadcrumbs: [...breadcrumbs, { label: "مدیریت بیماران", href: "/dashboard/patients" }, { label: "جزئیات بیمار" }, { label: "ویرایش پروفایل درمانی" }],
+      backHref: "/dashboard/patients",
+      show: false,
+    };
+  }
+
   if (pathname.startsWith("/dashboard/patients/")) {
     return {
       title: "جزئیات بیمار",
