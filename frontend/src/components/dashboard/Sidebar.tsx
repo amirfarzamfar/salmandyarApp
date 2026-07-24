@@ -39,7 +39,7 @@ const navigation = [
       ]
   },
   { name: 'مدیریت پرسنل', href: '/dashboard/personnel', icon: UserCog },
-  { name: 'گزارش‌ها', href: '/dashboard/reports', icon: FileText },
+  // { name: 'گزارش‌ها', href: '/dashboard/reports', icon: FileText },
   { 
     name: 'تنظیمات', 
     href: '#', 
