@@ -7,8 +7,7 @@ import { assessmentReportService } from '@/services/assessment-report.service';
 import { UserExamResultDto, ExamAnalyticsDto, QuestionAnalysisDto } from '@/types/assessment-report';
 import { User, BarChart2, CheckCircle, XCircle, HelpCircle, Download, ChevronDown, ChevronUp, Search, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { SmartBackLink } from '@/components/navigation/SmartBackLink';
-import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
+import { PageHeader } from '@/components/navigation/PageHeader';
 import { getPanelNavigation } from '@/components/navigation/panel-navigation';
 
 export default function ExamReportDetailPage() {
@@ -90,30 +89,24 @@ export default function ExamReportDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-start gap-4">
-          <SmartBackLink href={nav.backHref || "/dashboard/admin/assessments/reports"} className="rounded-full bg-slate-800 p-2 text-slate-300 hover:bg-slate-700 hover:text-white" iconClassName="w-5 h-5" label="" />
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              {analytics ? analytics.title : 'گزارش جزئیات آزمون'}
-            </h1>
-            <div className="text-sm text-slate-400 mt-1">شناسه آزمون: {examId}</div>
-            <Breadcrumbs items={nav.breadcrumbs} className="mt-2 text-slate-400" />
-          </div>
-        </div>
-        
-        {activeTab === 'users' && (
-          <button 
+      <PageHeader
+        title={analytics ? analytics.title : 'گزارش جزئیات آزمون'}
+        description={`شناسه آزمون: ${examId}`}
+        backHref={nav.backHref || "/dashboard/admin/assessments/reports"}
+        backLabel="بازگشت به گزارش آزمون‌ها"
+        breadcrumbs={nav.breadcrumbs}
+        theme="inverse"
+        actions={activeTab === 'users' ? (
+          <button
             onClick={exportUsersToCSV}
-            className="inline-flex w-full items-center justify-center rounded-md bg-teal-600 px-4 py-2 text-sm text-white transition-colors hover:bg-teal-700 disabled:opacity-60 sm:w-auto"
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-teal-600 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-700 disabled:opacity-60 sm:w-auto"
             disabled={loading || filteredUsers.length === 0}
           >
             <Download className="w-4 h-4 ml-2" />
             خروجی لیست کاربران
           </button>
-        )}
-      </div>
+        ) : null}
+      />
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2 border-b border-slate-700">

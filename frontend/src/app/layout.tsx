@@ -7,6 +7,7 @@ import { UserProvider } from "@/components/auth/UserContext";
 import { ToastProvider } from "@/components/ui/toast-provider";
 import { RealtimeNotificationListener } from "@/components/notifications/RealtimeNotificationListener";
 import IncompleteProfileModal from "@/components/profile-wizard/IncompleteProfileModal";
+import { NavigationHistoryTracker } from "@/components/navigation/NavigationHistoryTracker";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
           <QueryProvider >
             <UserProvider>
               <ToastProvider />
+              <NavigationHistoryTracker />
               <RealtimeNotificationListener />
               <IncompleteProfileModal />
               {children}

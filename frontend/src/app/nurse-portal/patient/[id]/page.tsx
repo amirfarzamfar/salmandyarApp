@@ -6,14 +6,14 @@ import { ReportWriter } from "@/components/nurse-portal/report-writer";
 import { ServiceTracker } from "@/components/nurse-portal/service-tracker";
 import { MedicationTracker } from "@/components/nurse-portal/medication-tracker";
 import { PortalButton } from "@/components/portal/ui/portal-button";
-import { ChevronRight, User, Phone, Activity, FileText, Calendar, AlertCircle, Loader2, Pill } from "lucide-react";
+import { User, Phone, Activity, FileText, Calendar, AlertCircle, Loader2, Pill } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { patientService } from "@/services/patient.service";
 import { Patient } from "@/types/patient";
 import { toast } from "react-hot-toast";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { PageHeader } from "@/components/navigation/PageHeader";
 import { getPanelNavigation } from "@/components/navigation/panel-navigation";
 import { usePathname } from "next/navigation";
 
@@ -69,31 +69,31 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="pb-32 px-4 md:px-0">
-      {/* Premium Header */}
-      <header className="flex items-center justify-between pt-6 mb-8">
-        <div className="flex items-center gap-4">
-          <Link href="/nurse-portal">
-            <div className="w-12 h-12 rounded-2xl bg-white dark:bg-gray-800 shadow-soft-md flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-medical-600 dark:hover:text-medical-400 transition-all active:scale-90 border border-gray-50 dark:border-gray-700">
-              <ChevronRight className="w-6 h-6" />
-            </div>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">{patient.firstName} {patient.lastName}</h1>
-            <div className="flex items-center gap-2 text-xs font-bold text-gray-400 mt-0.5">
-              <span className="bg-medical-50 dark:bg-medical-900/30 text-medical-600 dark:text-medical-400 px-2 py-0.5 rounded-lg">ID: {patient.id}</span>
-              <span>•</span>
-              <span>{patient.currentStatus}</span>
-            </div>
-            <Breadcrumbs items={nav.breadcrumbs} className="mt-2" />
+      <PageHeader
+        title={`${patient.firstName} ${patient.lastName}`}
+        description={patient.primaryDiagnosis}
+        backHref={nav.backHref || "/nurse-portal/patient-management"}
+        backLabel="بازگشت به مدیریت بیماران"
+        breadcrumbs={nav.breadcrumbs}
+        badge={
+          <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-gray-500 dark:text-gray-400">
+            <span className="rounded-lg bg-medical-50 px-2 py-1 text-medical-700 dark:bg-medical-900/30 dark:text-medical-300">ID: {patient.id}</span>
+            <span className="rounded-lg bg-white px-2 py-1 dark:bg-gray-800">{patient.currentStatus}</span>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <ThemeToggle />
-          <a href={`tel:${patient.id}`} className="w-12 h-12 rounded-2xl bg-calm-green-500 text-white shadow-glow-medical flex items-center justify-center active:scale-90 transition-transform">
-            <Phone className="w-5 h-5" />
-          </a>
-        </div>
-      </header>
+        }
+        actions={
+          <>
+            <ThemeToggle />
+            <a
+              href={`tel:${patient.id}`}
+              aria-label="تماس با بیمار"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-calm-green-500 text-white shadow-glow-medical transition-transform active:scale-95"
+            >
+              <Phone className="w-5 h-5" />
+            </a>
+          </>
+        }
+      />
 
       {/* Premium Info Summary Card */}
       <motion.div 

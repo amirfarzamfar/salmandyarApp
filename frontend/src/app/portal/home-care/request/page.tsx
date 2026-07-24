@@ -13,9 +13,9 @@ import { serviceCatalogService } from '@/services/service-catalog.service';
 import { AssessmentAnswerDto, AssessmentForm, Question, QuestionType } from '@/types/assessment';
 import { HomeCareContactMethod, SaveHomeCareDraftDto } from '@/types/home-care';
 import { ServiceCategory, ServiceDefinition } from '@/types/service';
-import { ArrowLeft, ArrowRight, ChevronLeft, FileUp, Loader2, Save, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, FileUp, Loader2, Save, Sparkles } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import Link from 'next/link';
+import { PageHeader } from '@/components/navigation/PageHeader';
 
 type FileAnswerState = Record<number, File[]>;
 
@@ -410,19 +410,13 @@ export default function HomeCareRequestWizardPage() {
 
   return (
     <div className="space-y-6 pb-24">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-teal-600">Smart Wizard</p>
-          <h1 className="text-2xl font-black text-gray-900">ثبت هوشمند درخواست خدمت در منزل</h1>
-          <p className="mt-2 text-sm leading-7 text-gray-500">
-            سرویس را انتخاب کنید، فرم داینامیک همان سرویس را مرحله‌به‌مرحله تکمیل کنید و پیش از ثبت نهایی خلاصه نیازهای بیمار را بررسی کنید.
-          </p>
-        </div>
-        <Link href="/portal/home-care" className="inline-flex items-center gap-2 rounded-2xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-700">
-          بازگشت
-          <ChevronLeft className="h-4 w-4" />
-        </Link>
-      </div>
+      <PageHeader
+        title="ثبت هوشمند درخواست خدمت در منزل"
+        description="سرویس را انتخاب کنید، فرم داینامیک همان سرویس را مرحله‌به‌مرحله تکمیل کنید و پیش از ثبت نهایی خلاصه نیازهای بیمار را بررسی کنید."
+        backHref="/portal/home-care"
+        backLabel="بازگشت به خدمات منزل"
+        badge={<p className="text-sm font-bold text-teal-600">Smart Wizard</p>}
+      />
 
       {!selectedService && (
         <section className="space-y-6">

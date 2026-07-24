@@ -5,11 +5,11 @@ import { useParams, useRouter, usePathname } from "next/navigation";
 import { assessmentService } from "@/services/assessment.service";
 import { AssessmentForm, SubmitAssessmentDto } from "@/types/assessment";
 import AssessmentTaker from "@/components/assessments/AssessmentTaker";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
-import { Breadcrumbs } from "@/components/navigation/Breadcrumbs";
+import { PageHeader } from "@/components/navigation/PageHeader";
 import { getPanelNavigation } from "@/components/navigation/panel-navigation";
 
 export default function TakeExamPage() {
@@ -74,18 +74,13 @@ export default function TakeExamPage() {
 
   return (
     <div className="container mx-auto p-4 md:p-8 max-w-4xl space-y-6">
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/nurse-portal/exams">
-          <Button variant="ghost" size="sm" className="rounded-full">
-            <ArrowRight className="h-5 w-5" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{form.title}</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">لطفاً به تمام سوالات با دقت پاسخ دهید</p>
-          <Breadcrumbs items={nav.breadcrumbs} className="mt-2" />
-        </div>
-      </div>
+      <PageHeader
+        title={form.title}
+        description="لطفاً به تمام سوالات با دقت پاسخ دهید."
+        backHref={nav.backHref || "/nurse-portal/exams"}
+        backLabel="بازگشت به آزمون‌ها"
+        breadcrumbs={nav.breadcrumbs}
+      />
 
       <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-6 md:p-8 shadow-xl shadow-blue-500/5">
         <AssessmentTaker 

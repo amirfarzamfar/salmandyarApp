@@ -1,16 +1,20 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { assessmentService } from '@/services/assessment.service';
 import { userEvaluationService } from '@/services/user-evaluation.service';
 import { AssessmentForm, SubmitAssessmentDto } from '@/types/assessment';
 import AssessmentTaker from '@/components/assessments/AssessmentTaker';
 import Swal from 'sweetalert2';
+import { PageHeader } from '@/components/navigation/PageHeader';
+import { getPanelNavigation } from '@/components/navigation/panel-navigation';
 
 function PatientAssessmentDetailContent() {
   const { id } = useParams();
   const router = useRouter();
+  const pathname = usePathname();
+  const nav = getPanelNavigation("portal", pathname);
   const searchParams = useSearchParams();
   const source = searchParams.get('source');
   const [form, setForm] = useState<AssessmentForm | null>(null);
@@ -77,6 +81,13 @@ function PatientAssessmentDetailContent() {
 
   return (
     <div className="space-y-6">
+      <PageHeader
+        title={form.title}
+        description="پاسخ‌های خود را تکمیل کنید و در پایان نتیجه را ثبت کنید."
+        backHref={nav.backHref || "/portal/assessments"}
+        backLabel="بازگشت به آزمون‌ها"
+        breadcrumbs={nav.breadcrumbs}
+      />
       <AssessmentTaker 
         form={form} 
         onSubmit={handleSubmit} 

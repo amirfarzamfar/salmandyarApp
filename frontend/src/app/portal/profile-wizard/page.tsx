@@ -9,7 +9,7 @@ import ProfileWizardProgress from '@/components/profile-wizard/ProfileWizardProg
 import { Loader2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { toast } from 'react-hot-toast';
-import { SmartBackLink } from '@/components/navigation/SmartBackLink';
+import { PageHeader } from '@/components/navigation/PageHeader';
 
 // #region debug-point A:wizard-state
 const reportProfileWizardDebug = (hypothesisId: string, msg: string, data?: unknown) =>
@@ -227,16 +227,14 @@ function WizardContent() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 px-3 py-4 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 sm:px-6 sm:py-6 lg:px-8 lg:py-8" dir="rtl">
       <div className="mx-auto max-w-4xl">
-        <div className="mb-3 flex justify-start sm:mb-4">
-          <SmartBackLink href={adminUserId ? '/dashboard/admin/users' : '/portal/profile'} label={adminUserId ? 'بازگشت به مدیریت کاربران' : 'بازگشت به پروفایل'} />
-        </div>
         <div className="mb-4 rounded-3xl border border-blue-100 bg-white/90 p-4 text-center shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/80 sm:mb-6 sm:p-6">
-          <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-white sm:text-3xl">
-            {adminUserId ? 'ویرایش پروفایل درمانی' : 'تکمیل پروفایل درمانی'}
-          </h1>
-          <p className="mx-auto max-w-2xl text-sm leading-7 text-gray-600 dark:text-gray-400 sm:text-base">
-            برای دریافت خدمات بهتر، لطفاً اطلاعات زیر را با دقت تکمیل کنید.
-          </p>
+          <PageHeader
+            title={adminUserId ? 'ویرایش پروفایل درمانی' : 'تکمیل پروفایل درمانی'}
+            description="برای دریافت خدمات بهتر، لطفاً اطلاعات زیر را با دقت تکمیل کنید."
+            backHref={adminUserId ? '/dashboard/admin/users' : '/portal/profile'}
+            backLabel={adminUserId ? 'بازگشت به مدیریت کاربران' : 'بازگشت به پروفایل'}
+            className="mb-0"
+          />
         </div>
 
         <div className="mb-4 rounded-3xl border border-gray-100 bg-white/90 p-4 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/80 sm:mb-6 sm:p-5">

@@ -7,8 +7,7 @@ import { userEvaluationService } from '@/services/user-evaluation.service';
 import { AssessmentForm, SubmitAssessmentDto } from '@/types/assessment';
 import AssessmentTaker from '@/components/assessments/AssessmentTaker';
 import Swal from 'sweetalert2';
-import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
-import { SmartBackLink } from '@/components/navigation/SmartBackLink';
+import { PageHeader } from '@/components/navigation/PageHeader';
 import { getPanelNavigation } from '@/components/navigation/panel-navigation';
 
 function NurseAssessmentDetailContent() {
@@ -81,8 +80,13 @@ function NurseAssessmentDetailContent() {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">آزمون مورد نظر یافت نشد.</p>
-        <div className="mt-4 flex justify-center">
-          <SmartBackLink href={nav.backHref || "/nurse-portal/assessments"} />
+        <div className="mt-4">
+          <PageHeader
+            title="آزمون یافت نشد"
+            backHref={nav.backHref || "/nurse-portal/assessments"}
+            backLabel="بازگشت"
+            className="mb-0"
+          />
         </div>
       </div>
     );
@@ -90,10 +94,13 @@ function NurseAssessmentDetailContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <SmartBackLink href={nav.backHref || "/nurse-portal/assessments"} label="بازگشت به لیست ارزیابی‌ها" className="w-fit" />
-        <Breadcrumbs items={nav.breadcrumbs} />
-      </div>
+      <PageHeader
+        title={form.title}
+        description="فرم ارزیابی را تکمیل و نتیجه را در همین صفحه ثبت کنید."
+        backHref={nav.backHref || "/nurse-portal/assessments"}
+        backLabel="بازگشت به لیست ارزیابی‌ها"
+        breadcrumbs={nav.breadcrumbs}
+      />
 
       <AssessmentTaker 
         form={form} 

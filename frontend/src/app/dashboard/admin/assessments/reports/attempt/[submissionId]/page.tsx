@@ -6,8 +6,7 @@ import { assessmentReportService } from '@/services/assessment-report.service';
 import { UserAttemptDetailDto } from '@/types/assessment-report';
 import { CheckCircle, XCircle, AlertCircle, Clock } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { SmartBackLink } from '@/components/navigation/SmartBackLink';
-import { Breadcrumbs } from '@/components/navigation/Breadcrumbs';
+import { PageHeader } from '@/components/navigation/PageHeader';
 import { getPanelNavigation } from '@/components/navigation/panel-navigation';
 
 export default function UserAttemptDetailPage() {
@@ -47,17 +46,14 @@ export default function UserAttemptDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <SmartBackLink href={nav.backHref || "/dashboard/admin/assessments/reports"} className="rounded-full bg-slate-800 p-2 text-slate-300 hover:bg-slate-700 hover:text-white" iconClassName="w-5 h-5" label="" />
-        <div>
-          <h1 className="text-2xl font-bold text-white">جزئیات پاسخ‌نامه کاربر</h1>
-          <div className="text-sm text-slate-400 mt-1">
-            {detail.userFullName} - {detail.examTitle}
-          </div>
-          <Breadcrumbs items={nav.breadcrumbs} className="mt-2 text-slate-400" />
-        </div>
-      </div>
+      <PageHeader
+        title="جزئیات پاسخ‌نامه کاربر"
+        description={`${detail.userFullName} - ${detail.examTitle}`}
+        backHref={nav.backHref || "/dashboard/admin/assessments/reports"}
+        backLabel="بازگشت به گزارش آزمون‌ها"
+        breadcrumbs={nav.breadcrumbs}
+        theme="inverse"
+      />
 
       {/* Summary Card */}
       <div className="bg-slate-800 rounded-lg shadow border border-slate-700 p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
