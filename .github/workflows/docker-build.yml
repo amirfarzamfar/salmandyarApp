@@ -29,6 +29,7 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}
 
 
+      # Backend
       - name: Build Backend
         run: |
           docker build \
@@ -40,3 +41,18 @@ jobs:
       - name: Push Backend
         run: |
           docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/salmandyar-backend:latest
+
+
+
+      # Frontend
+      - name: Build Frontend
+        run: |
+          docker build \
+            -t ghcr.io/${{ secrets.GHCR_USERNAME }}/salmandyar-frontend:latest \
+            -f frontend/Dockerfile \
+            frontend
+
+
+      - name: Push Frontend
+        run: |
+          docker push ghcr.io/${{ secrets.GHCR_USERNAME }}/salmandyar-frontend:latest
