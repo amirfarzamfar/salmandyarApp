@@ -6,6 +6,7 @@ on:
       - main
 
 jobs:
+
   build:
 
     runs-on: ubuntu-latest
@@ -33,7 +34,7 @@ jobs:
           docker build \
             -t ghcr.io/${{ secrets.GHCR_USERNAME }}/salmandyar-backend:latest \
             -f backend/src/Salmandyar.API/Dockerfile \
-            .
+            backend
 
 
       - name: Push Backend
