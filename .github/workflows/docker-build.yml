@@ -30,10 +30,11 @@ jobs:
 
 
     - name: Build Backend
-      run: |
-        docker build \
-        -t ghcr.io/${{ secrets.GHCR_USERNAME }}/salmandyar-backend:latest \
-        ./backend
+  run: |
+    docker build \
+    -t ghcr.io/${{ secrets.GHCR_USERNAME }}/salmandyar-backend:latest \
+    -f backend/src/Salmandyar.API/Dockerfile \
+    .
 
 
     - name: Push Backend
