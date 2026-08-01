@@ -117,6 +117,7 @@ interface ChartDatum {
   name: string;
   value: number;
   color: string;
+  [key: string]: string | number;
 }
 
 interface MonthlyTrendDatum {
@@ -324,7 +325,8 @@ export default function DashboardPage() {
         }
 
         const parsed = safeParseDate(visitDate);
-        return Boolean(parsed) && parsed.getTime() < dashboardNow.getTime();
+
+        return parsed != null && parsed.getTime() < dashboardNow.getTime();
       }),
     [dashboardNow, requests],
   );
