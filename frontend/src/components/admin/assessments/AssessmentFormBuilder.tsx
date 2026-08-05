@@ -35,6 +35,7 @@ const workflowLabels: Record<number, string> = {
   [AssessmentFormWorkflow.HomeCareRequest]: 'درخواست خدمت در منزل',
   [AssessmentFormWorkflow.Checklist]: 'چک‌لیست',
   [AssessmentFormWorkflow.SatisfactionSurvey]: 'نظرسنجی رضایت',
+  [AssessmentFormWorkflow.GuestServiceRequest]: 'درخواست بدون ثبت‌نام (لندینگ)',
 };
 
 export default function AssessmentFormBuilder({ initialData, onSubmit, loading, title, allowedTypes }: AssessmentFormBuilderProps) {

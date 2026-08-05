@@ -105,6 +105,21 @@ internal static class NotificationEventCatalog
         },
         new()
         {
+            EventKey = NotificationEventKeys.GuestServiceRequestCreated,
+            DisplayName = "ثبت درخواست بدون ثبت‌نام",
+            Description = "ارسال پیام تایید ثبت درخواست به متقاضی (بدون ثبت‌نام)",
+            IsEnabled = true,
+            SendInApp = false,
+            SendSms = true,
+            SendEmail = false,
+            InAppTitleTemplate = string.Empty,
+            InAppBodyTemplate = string.Empty,
+            SmsTemplate = "{Message}",
+            EmailSubjectTemplate = "{Title}",
+            EmailBodyTemplate = "{Message}"
+        },
+        new()
+        {
             EventKey = NotificationEventKeys.OtpLogin,
             DisplayName = "ورود با رمز یکبار مصرف",
             Description = "ارسال OTP ورود",

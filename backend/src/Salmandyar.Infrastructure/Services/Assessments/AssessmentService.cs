@@ -226,6 +226,37 @@ public class AssessmentService : IAssessmentService
         return forms.Where(f => MatchesTargetType(f, type)).Select(MapToDto).ToList();
     }
 
+    public async Task<AssessmentFormDto?> GetActivePublicFormByWorkflowAsync(AssessmentFormWorkflow workflow, int? serviceDefinitionId = null, string? code = null)
+    {
+        var query = _context.AssessmentForms
+            .Include(f => f.Questions)
+                .ThenInclude(q => q.Options)
+            .Where(f => f.IsActive && f.Workflow == workflow);
+
+        if (serviceDefinitionId.HasValue)
+        {
+            query = query.Where(f => f.ServiceDefinitionId == serviceDefinitionId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(code))
+        {
+            query = query.Where(f => f.Code == code.Trim());
+        }
+
+        var candidates = await query
+            .OrderByDescending(f => f.IsDefault)
+            .ThenByDescending(f => f.UpdatedAt ?? f.CreatedAt)
+            .ToListAsync();
+
+        var form = candidates.FirstOrDefault();
+        if (form == null)
+        {
+            return null;
+        }
+
+        return MapToDto(form);
+    }
+
     public async Task<UserProfileDto> SubmitAssessmentAsync(string userId, SubmitAssessmentDto dto)
     {
         var form = await _context.AssessmentForms

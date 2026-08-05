@@ -104,6 +104,16 @@ function getDashboardNav(pathname: string): PanelNav {
       };
     }
 
+    if (pathname.startsWith("/dashboard/admin/guest-requests")) {
+      return {
+        title: "درخواست‌های بدون ثبت‌نام",
+        description: "درخواست‌های ثبت‌شده از لندینگ را بررسی، پیگیری و تبدیل به بیمار کنید.",
+        breadcrumbs: [...base, { label: "درخواست‌های بدون ثبت‌نام" }],
+        backHref: "/dashboard",
+        show: true,
+      };
+    }
+
     if (pathname.startsWith("/dashboard/admin/medication-administration")) {
       return { title: "پایش مصرف دارو", breadcrumbs: [...base, { label: "پایش مصرف دارو" }], backHref: "/dashboard", show: true };
     }

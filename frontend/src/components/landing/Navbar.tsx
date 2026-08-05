@@ -73,6 +73,7 @@ export default function Navbar() {
             </Link>
             <div className="hidden md:block md:mr-10">
               <div className="flex items-baseline space-x-4">
+                <Link href="#guest-request" className="text-gray-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">ثبت سریع</Link>
                 <Link href="#services" className="text-gray-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">خدمات ما</Link>
                 <Link href="#process" className="text-gray-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">نحوه کار</Link>
                 <Link href="#about" className="text-gray-600 hover:text-teal-600 px-3 py-2 rounded-md text-sm font-medium">درباره ما</Link>
@@ -103,6 +104,7 @@ export default function Navbar() {
       {isOpen && (
         <div className="md:hidden bg-white border-t">
           <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3">
+            <Link href="#guest-request" className="text-gray-600 hover:text-teal-600 block px-3 py-2 rounded-md text-base font-medium">ثبت سریع</Link>
             <Link href="#services" className="text-gray-600 hover:text-teal-600 block px-3 py-2 rounded-md text-base font-medium">خدمات ما</Link>
             <Link href="#process" className="text-gray-600 hover:text-teal-600 block px-3 py-2 rounded-md text-base font-medium">نحوه کار</Link>
             <Link href="#about" className="text-gray-600 hover:text-teal-600 block px-3 py-2 rounded-md text-base font-medium">درباره ما</Link>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "../portal/portal.css"; // Reuse the premium portal theme
 import { NurseBottomNav } from "@/components/nurse-portal/bottom-nav";
 import { NurseSidebar } from "@/components/nurse-portal/sidebar";
+import { NurseMobileDrawer } from "@/components/nurse-portal/mobile-drawer";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
 import { MedicationAlertBanner } from "@/components/portal/medication-alert-banner";
 import { CaregiverProfileGuard } from "@/components/caregiver-profile/CaregiverProfileGuard";
@@ -26,9 +27,10 @@ export default function NursePortalLayout({
       <div className="min-h-screen bg-neutral-warm-50 dark:bg-gray-950 text-gray-800 dark:text-gray-100 font-sans selection:bg-medical-200 selection:text-medical-900 pb-24 md:pb-0 md:pr-64">
         {/* Desktop Sidebar */}
         <NurseSidebar />
+        <NurseMobileDrawer />
 
         {/* Mobile Top Header */}
-        <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
+        <div className="md:hidden flex items-center justify-between pl-4 pr-20 py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-medical-500 to-medical-600 flex items-center justify-center text-white shadow-glow-medical">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">

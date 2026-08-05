@@ -13,6 +13,7 @@ public interface IAssessmentService
     Task ToggleFormActivationAsync(int id);
     Task<AssessmentFormDto?> GetActiveFormAsync(AssessmentType type);
     Task<List<AssessmentFormDto>> GetActiveFormsByTypeAsync(AssessmentType type);
+    Task<AssessmentFormDto?> GetActivePublicFormByWorkflowAsync(AssessmentFormWorkflow workflow, int? serviceDefinitionId = null, string? code = null);
     Task<UserProfileDto> SubmitAssessmentAsync(string userId, SubmitAssessmentDto dto);
     Task<UserProfileDto?> GetUserProfileAsync(string userId);
     Task<List<AssessmentFormDto>> GetAvailableAssessmentsForUserAsync(string userId, AssessmentType roleType);

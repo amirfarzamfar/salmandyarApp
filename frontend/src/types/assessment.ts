@@ -20,6 +20,7 @@ export enum AssessmentFormWorkflow {
   HomeCareRequest = 2,
   Checklist = 3,
   SatisfactionSurvey = 4,
+  GuestServiceRequest = 5,
 }
 
 export enum AssessmentType {

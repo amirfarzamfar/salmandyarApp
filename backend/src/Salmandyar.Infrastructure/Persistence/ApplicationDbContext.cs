@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Salmandyar.Domain.Entities;
 using Salmandyar.Domain.Entities.Assessments;
+using Salmandyar.Domain.Entities.GuestRequests;
 using Salmandyar.Domain.Entities.HomeCare;
 using Salmandyar.Domain.Entities.UserEvaluations;
 using Salmandyar.Domain.Entities.Medications;
@@ -77,6 +78,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<HomeCareConversationParticipant> HomeCareConversationParticipants { get; set; }
     public DbSet<HomeCareMessage> HomeCareMessages { get; set; }
     public DbSet<HomeCareMessageAttachment> HomeCareMessageAttachments { get; set; }
+
+    // Guest Service Request Module
+    public DbSet<GuestServiceRequest> GuestServiceRequests { get; set; }
+    public DbSet<GuestServiceRequestTimelineEvent> GuestServiceRequestTimelineEvents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -625,6 +630,70 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany(m => m.Attachments)
             .HasForeignKey(a => a.MessageId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Guest Service Request Module Configurations
+        builder.Entity<GuestServiceRequest>().ToTable("GuestServiceRequests");
+        builder.Entity<GuestServiceRequestTimelineEvent>().ToTable("GuestServiceRequestTimelineEvents");
+
+        builder.Entity<GuestServiceRequest>()
+            .Property(r => r.Status)
+            .HasConversion<string>();
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => r.TrackingCode)
+            .IsUnique();
+
+        builder.Entity<GuestServiceRequest>()
+            .HasOne(r => r.Form)
+            .WithMany()
+            .HasForeignKey(r => r.FormId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasOne(r => r.Submission)
+            .WithMany()
+            .HasForeignKey(r => r.SubmissionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasOne(r => r.ServiceDefinition)
+            .WithMany()
+            .HasForeignKey(r => r.ServiceDefinitionId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasOne(r => r.AssignedSupervisor)
+            .WithMany()
+            .HasForeignKey(r => r.AssignedSupervisorId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasOne(r => r.AssignedCaregiver)
+            .WithMany()
+            .HasForeignKey(r => r.AssignedCaregiverId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasOne(r => r.ConvertedCareRecipient)
+            .WithMany()
+            .HasForeignKey(r => r.ConvertedCareRecipientId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GuestServiceRequestTimelineEvent>()
+            .Property(e => e.EventType)
+            .HasConversion<string>();
+
+        builder.Entity<GuestServiceRequestTimelineEvent>()
+            .HasOne(e => e.Request)
+            .WithMany(r => r.TimelineEvents)
+            .HasForeignKey(e => e.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<GuestServiceRequestTimelineEvent>()
+            .HasOne(e => e.ActorUser)
+            .WithMany()
+            .HasForeignKey(e => e.ActorUserId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // User Evaluation Module Configurations
         builder.Entity<UserEvaluationForm>().ToTable("UserEvaluationForms");

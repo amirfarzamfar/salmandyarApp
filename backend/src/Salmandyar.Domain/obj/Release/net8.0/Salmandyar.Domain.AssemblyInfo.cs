@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Salmandyar.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+141ce6d2ed9712448e0bc3ed43dcc10d071414f7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0c3175202aaefce581ebcfc8befb33c946c5c8aa")]
 [assembly: System.Reflection.AssemblyProductAttribute("Salmandyar.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Salmandyar.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

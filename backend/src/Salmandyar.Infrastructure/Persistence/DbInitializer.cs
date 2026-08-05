@@ -342,6 +342,147 @@ public static class DbInitializer
             }
         }
 
+        if (seedServiceDefinitions && !context.AssessmentForms.Any(f => f.Workflow == AssessmentFormWorkflow.GuestServiceRequest))
+        {
+            var guestRequestForm = new AssessmentForm
+            {
+                Code = "guest-service-request-v1",
+                Title = "ویزارد ثبت درخواست بدون ثبت‌نام",
+                Description = "ثبت سریع درخواست خدمت بدون نیاز به ساخت حساب کاربری",
+                Type = AssessmentType.PatientFamily,
+                TargetTypesJson = "[17,18]",
+                Workflow = AssessmentFormWorkflow.GuestServiceRequest,
+                Version = 1,
+                IsActive = true,
+                IsDefault = true,
+                IntroTitle = "ثبت درخواست بدون ثبت‌نام",
+                IntroDescription = "چند سؤال کوتاه و ضروری؛ در کمتر از یک دقیقه.",
+                EstimatedDurationMinutes = 1,
+                Questions = new List<AssessmentQuestion>
+                {
+                    new()
+                    {
+                        Order = 0,
+                        QuestionKey = "service_type",
+                        PageKey = "service",
+                        PageTitle = "نوع خدمت",
+                        Text = "نوع خدمت موردنظر چیست؟",
+                        Type = QuestionType.MultipleChoice,
+                        IsRequired = true,
+                        Tags = new List<string> { "service_type" },
+                        Options = BuildOptions("پرستار", "مراقب سالمند", "مراقب کودک", "تزریقات", "پانسمان", "سرم", "مراقبت بعد از جراحی", "ویزیت", "سایر")
+                    },
+                    new()
+                    {
+                        Order = 1,
+                        QuestionKey = "recipient_relationship",
+                        PageKey = "recipient",
+                        PageTitle = "برای چه کسی",
+                        Text = "خدمت برای چه کسی است؟",
+                        Type = QuestionType.MultipleChoice,
+                        IsRequired = true,
+                        Options = BuildOptions("خودم", "پدر", "مادر", "همسر", "فرزند", "سایر")
+                    },
+                    new()
+                    {
+                        Order = 2,
+                        QuestionKey = "recipient_status",
+                        PageKey = "recipient",
+                        PageTitle = "وضعیت کلی",
+                        Text = "وضعیت کلی فرد چگونه است؟",
+                        Type = QuestionType.MultipleChoice,
+                        IsRequired = true,
+                        Options = BuildOptions("خوب", "نیاز به کمک در راه رفتن", "بستری در منزل", "مراقبت ویژه")
+                    },
+                    new()
+                    {
+                        Order = 3,
+                        QuestionKey = "urgency",
+                        PageKey = "priority",
+                        PageTitle = "فوریت",
+                        Text = "میزان فوریت چقدر است؟",
+                        Type = QuestionType.MultipleChoice,
+                        IsRequired = true,
+                        Tags = new List<string> { "urgency" },
+                        Options = BuildOptions("همین امروز", "تا فردا", "این هفته", "زمان دلخواه")
+                    },
+                    new()
+                    {
+                        Order = 4,
+                        QuestionKey = "duration",
+                        PageKey = "priority",
+                        PageTitle = "مدت خدمت",
+                        Text = "مدت تقریبی خدمت چقدر است؟",
+                        Type = QuestionType.MultipleChoice,
+                        IsRequired = true,
+                        Options = BuildOptions("یک بار", "چند روز", "یک هفته", "بلندمدت")
+                    },
+                    new()
+                    {
+                        Order = 5,
+                        QuestionKey = "city",
+                        PageKey = "location",
+                        PageTitle = "شهر",
+                        Text = "شهر یا محل ارائه خدمت را وارد کنید",
+                        Type = QuestionType.ShortAnswer,
+                        IsRequired = true,
+                        Tags = new List<string> { "city" },
+                        Placeholder = "مثال: تهران، کرج..."
+                    },
+                    new()
+                    {
+                        Order = 6,
+                        QuestionKey = "short_description",
+                        PageKey = "details",
+                        PageTitle = "توضیحات",
+                        Text = "توضیح کوتاه (اختیاری)",
+                        Type = QuestionType.LongAnswer,
+                        IsRequired = false,
+                        Placeholder = "اگر نکته‌ای هست، کوتاه بنویسید..."
+                    },
+                    new()
+                    {
+                        Order = 7,
+                        QuestionKey = "contact_first_name",
+                        PageKey = "contact",
+                        PageTitle = "اطلاعات تماس",
+                        Text = "نام",
+                        Type = QuestionType.ShortAnswer,
+                        IsRequired = true,
+                        Tags = new List<string> { "contact_first_name" },
+                        Placeholder = "نام"
+                    },
+                    new()
+                    {
+                        Order = 8,
+                        QuestionKey = "contact_last_name",
+                        PageKey = "contact",
+                        PageTitle = "اطلاعات تماس",
+                        Text = "نام خانوادگی",
+                        Type = QuestionType.ShortAnswer,
+                        IsRequired = true,
+                        Tags = new List<string> { "contact_last_name" },
+                        Placeholder = "نام خانوادگی"
+                    },
+                    new()
+                    {
+                        Order = 9,
+                        QuestionKey = "contact_mobile",
+                        PageKey = "contact",
+                        PageTitle = "اطلاعات تماس",
+                        Text = "شماره موبایل",
+                        Type = QuestionType.ShortAnswer,
+                        IsRequired = true,
+                        Tags = new List<string> { "contact_mobile" },
+                        Placeholder = "مثال: 0912xxxxxxx"
+                    }
+                }
+            };
+
+            context.AssessmentForms.Add(guestRequestForm);
+            await context.SaveChangesAsync();
+        }
+
         if (!seedSampleData)
         {
             return;

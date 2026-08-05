@@ -1306,8 +1306,8 @@ public class MedicationService : IMedicationService
                     nextStatus: DoseStatus.Missed,
                     updatedByUserId: null);
 
-                await AddDoseHistoryAsync(dose, previousStatus, "AutoMarkedMissed", "System", MedicationAdministrationSourceType.System, "عدم ثبت در بازه مجاز", null);
-                AddDoseAuditLog(dose.Id, "System", "MedicationDose:AutoMarkedMissed", new
+                await AddDoseHistoryAsync(dose, previousStatus, "AutoMarkedMissed", null, MedicationAdministrationSourceType.System, "عدم ثبت در بازه مجاز", null);
+                AddDoseAuditLog(dose.Id, null, "MedicationDose:AutoMarkedMissed", new
                 {
                     allowedUntil = graceTime
                 });

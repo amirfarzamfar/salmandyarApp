@@ -987,6 +987,123 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("CaregiverProfileDocuments", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssignedCaregiverId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AssignedSupervisorId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("City")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContactMobile")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContactName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("ConvertedCareRecipientId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("FormId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ServiceDefinitionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ServiceType")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SubmissionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TrackingCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Urgency")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedCaregiverId");
+
+                    b.HasIndex("AssignedSupervisorId");
+
+                    b.HasIndex("ConvertedCareRecipientId");
+
+                    b.HasIndex("FormId");
+
+                    b.HasIndex("ServiceDefinitionId");
+
+                    b.HasIndex("SubmissionId");
+
+                    b.HasIndex("TrackingCode")
+                        .IsUnique();
+
+                    b.ToTable("GuestServiceRequests", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequestTimelineEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActorUserId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("MetadataJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("RequestId");
+
+                    b.ToTable("GuestServiceRequestTimelineEvents", (string)null);
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.HomeCare.HomeCareConversation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3384,6 +3501,71 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("CaregiverProfile");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "AssignedCaregiver")
+                        .WithMany()
+                        .HasForeignKey("AssignedCaregiverId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "AssignedSupervisor")
+                        .WithMany()
+                        .HasForeignKey("AssignedSupervisorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "ConvertedCareRecipient")
+                        .WithMany()
+                        .HasForeignKey("ConvertedCareRecipientId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentForm", "Form")
+                        .WithMany()
+                        .HasForeignKey("FormId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.ServiceDefinition", "ServiceDefinition")
+                        .WithMany()
+                        .HasForeignKey("ServiceDefinitionId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentSubmission", "Submission")
+                        .WithMany()
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("AssignedCaregiver");
+
+                    b.Navigation("AssignedSupervisor");
+
+                    b.Navigation("ConvertedCareRecipient");
+
+                    b.Navigation("Form");
+
+                    b.Navigation("ServiceDefinition");
+
+                    b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequestTimelineEvent", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "ActorUser")
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", "Request")
+                        .WithMany("TimelineEvents")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActorUser");
+
+                    b.Navigation("Request");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.HomeCare.HomeCareConversation", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.HomeCare.HomeCareRequest", "Request")
@@ -4037,6 +4219,11 @@ namespace Salmandyar.Infrastructure.Migrations
             modelBuilder.Entity("Salmandyar.Domain.Entities.CaregiverProfile", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", b =>
+                {
+                    b.Navigation("TimelineEvents");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.HomeCare.HomeCareConversation", b =>

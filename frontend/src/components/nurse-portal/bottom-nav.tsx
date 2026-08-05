@@ -1,27 +1,22 @@
 "use client";
 
-import { LayoutDashboard, FileText, Calendar, BriefcaseBusiness, ClipboardCheck, GraduationCap } from "lucide-react";
+import { LayoutDashboard, Activity } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export function NurseBottomNav() {
   const pathname = usePathname();
-  const isDashboard = pathname === "/nurse-portal" || pathname.startsWith("/nurse-portal/patient") || pathname.startsWith("/nurse-portal/patient-management") || pathname.startsWith("/nurse-portal/profile");
-  const isAssessments = pathname === "/nurse-portal/assessments" || pathname.startsWith("/nurse-portal/assessments/");
-  const isExams = pathname === "/nurse-portal/exams" || pathname.startsWith("/nurse-portal/exams/");
-  const isReports = pathname === "/nurse-portal/reports" || pathname.startsWith("/nurse-portal/reports/");
-  const isServices = pathname === "/nurse-portal/services" || pathname.startsWith("/nurse-portal/services/");
-  const isEmployment = pathname === "/nurse-portal/employment-profile" || pathname.startsWith("/nurse-portal/employment-profile/");
+  const isMyPatients =
+    pathname.startsWith("/nurse-portal/patient-management") ||
+    pathname.startsWith("/nurse-portal/patient/") ||
+    pathname.startsWith("/nurse-portal/vital-signs");
+  const isDashboard = (pathname === "/nurse-portal" || pathname.startsWith("/nurse-portal/")) && !isMyPatients;
 
   return (
-    <nav className="fixed bottom-4 left-4 right-4 bg-white/80 backdrop-blur-2xl border border-white/40 py-4 px-4 md:hidden z-40 shadow-soft-lg rounded-3xl">
-      <div className="flex justify-between items-center max-w-md mx-auto overflow-x-auto scrollbar-hide gap-2">
+    <nav className="fixed left-4 right-4 md:hidden z-40 shadow-soft-lg rounded-3xl bg-white/80 backdrop-blur-2xl border border-white/40 px-6 py-4 bottom-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="flex items-center justify-between max-w-md mx-auto gap-6">
         <NavItem icon={LayoutDashboard} label="داشبورد" href="/nurse-portal" active={isDashboard} />
-        <NavItem icon={ClipboardCheck} label="ارزیابی‌ها" href="/nurse-portal/assessments" active={isAssessments} />
-        <NavItem icon={GraduationCap} label="آزمون‌ها" href="/nurse-portal/exams" active={isExams} />
-        <NavItem icon={FileText} label="گزارش‌ها" href="/nurse-portal/reports" active={isReports} />
-        <NavItem icon={Calendar} label="خدمات" href="/nurse-portal/services" active={isServices} />
-        <NavItem icon={BriefcaseBusiness} label="استخدامی" href="/nurse-portal/employment-profile" active={isEmployment} />
+        <NavItem icon={Activity} label="بیماران من" href="/nurse-portal/patient-management" active={isMyPatients} />
       </div>
     </nav>
   );

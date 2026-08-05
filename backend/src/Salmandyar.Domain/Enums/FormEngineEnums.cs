@@ -6,7 +6,8 @@ public enum AssessmentFormWorkflow
     UserEvaluation = 1,
     HomeCareRequest = 2,
     Checklist = 3,
-    SatisfactionSurvey = 4
+    SatisfactionSurvey = 4,
+    GuestServiceRequest = 5
 }
 
 public enum AssessmentSubmissionStatus
@@ -70,4 +71,25 @@ public enum HomeCareMessageType
     File = 2,
     Voice = 3,
     System = 4
+}
+
+public enum GuestServiceRequestStatus
+{
+    New = 0,
+    UnderReview = 1,
+    Contacted = 2,
+    ConvertedToPatient = 3,
+    Assigned = 4,
+    Completed = 5,
+    Cancelled = 6
+}
+
+public enum GuestServiceRequestTimelineEventType
+{
+    RequestCreated = 0,
+    StatusChanged = 1,
+    NoteAdded = 2,
+    SmsSent = 3,
+    ConvertedToPatient = 4,
+    CaregiverAssigned = 5
 }
