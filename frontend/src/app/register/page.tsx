@@ -13,6 +13,7 @@ import { resolveRoleHomePath } from '@/utils/role-routing';
 import { persistAuthSession } from '@/lib/auth-session';
 import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
 import { useUser } from '@/components/auth/UserContext';
+import { AuthBrandLink } from '@/components/auth/AuthBrandLink';
 
 const roles = [
   // { value: 'Manager', label: 'مدیر' },
@@ -99,6 +100,9 @@ export default function RegisterPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 font-[family-name:var(--font-vazirmatn)]" dir="rtl">
       <div className="max-w-2xl w-full space-y-8 bg-white dark:bg-gray-800 p-10 rounded-2xl shadow-xl dark:shadow-none dark:border dark:border-gray-700">
         <div className="text-center">
+          <div className="mb-6 flex justify-center">
+            <AuthBrandLink />
+          </div>
           <div className="mx-auto h-16 w-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center mb-4">
             <UserPlus className="h-8 w-8 text-teal-600 dark:text-teal-400" />
           </div>

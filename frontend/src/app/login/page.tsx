@@ -14,6 +14,7 @@ import type { AuthResponse } from '@/types/auth';
 import { resolveRoleHomePath } from '@/utils/role-routing';
 import { persistAuthSession } from '@/lib/auth-session';
 import { GuestOnlyRoute } from '@/components/auth/GuestOnlyRoute';
+import { AuthBrandLink } from '@/components/auth/AuthBrandLink';
 
 const schema = z.object({
   identifier: z.string().min(1, 'لطفا شماره موبایل یا ایمیل خود را وارد کنید'),
@@ -144,6 +145,9 @@ function LoginPageContent() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 font-[family-name:var(--font-vazirmatn)]" dir="rtl">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
         <div className="text-center">
+          <div className="mb-6 flex justify-center">
+            <AuthBrandLink />
+          </div>
           <div className="mx-auto h-16 w-16 bg-teal-100 rounded-full flex items-center justify-center mb-4">
             <LogIn className="h-8 w-8 text-teal-600" />
           </div>
