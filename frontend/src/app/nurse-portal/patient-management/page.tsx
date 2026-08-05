@@ -8,12 +8,16 @@ import { Search, User, ChevronLeft, Plus, Clock, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { NurseVitalSignsForm } from "@/components/nurse-portal/vital-signs-form";
+import { PatientSelector } from "@/components/nurse-portal/PatientSelector";
+import { useSearchParams } from "next/navigation";
 
 export default function PatientManagementDashboard() {
+  const searchParams = useSearchParams();
   const [patients, setPatients] = useState<PatientList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPatientForAdd, setSelectedPatientForAdd] = useState<PatientList | null>(null);
+  const [isPatientSelectorOpen, setIsPatientSelectorOpen] = useState(searchParams.get("openVitals") === "1");
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -151,6 +155,16 @@ export default function PatientManagementDashboard() {
           </div>
         )}
       </AnimatePresence>
+
+      <PatientSelector
+        isOpen={isPatientSelectorOpen}
+        onClose={() => setIsPatientSelectorOpen(false)}
+        subtitle="برای ثبت علائم، بیمار را انتخاب کنید"
+        onSelect={(patient) => {
+          setIsPatientSelectorOpen(false);
+          setSelectedPatientForAdd(patient);
+        }}
+      />
     </div>
   );
 }

@@ -33,9 +33,7 @@ export default function NursePortalLayout({
         <div className="md:hidden flex items-center justify-between pl-4 pr-20 py-4 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-medical-500 to-medical-600 flex items-center justify-center text-white shadow-glow-medical">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
+              <span className="text-sm font-black leading-none">س</span>
             </div>
             <span className="font-black text-gray-900 dark:text-white">سالمندیار</span>
           </div>

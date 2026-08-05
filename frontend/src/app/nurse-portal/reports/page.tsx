@@ -9,12 +9,14 @@ import { NursingReport } from "@/types/patient";
 import { toast } from "react-hot-toast";
 import { PatientSelector } from "@/components/nurse-portal/PatientSelector";
 import { ReportWriter } from "@/components/nurse-portal/report-writer";
+import { useSearchParams } from "next/navigation";
 
 export default function NurseReportsPage() {
+  const searchParams = useSearchParams();
   const [reports, setReports] = useState<NursingReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isPatientSelectorOpen, setIsPatientSelectorOpen] = useState(false);
+  const [isPatientSelectorOpen, setIsPatientSelectorOpen] = useState(searchParams.get("new") === "1");
   const [selectedPatientForReport, setSelectedPatientForReport] = useState<number | null>(null);
   const [viewingReport, setViewingReport] = useState<NursingReport | null>(null);
 
@@ -187,9 +189,10 @@ export default function NurseReportsPage() {
       <PatientSelector
         isOpen={isPatientSelectorOpen}
         onClose={() => setIsPatientSelectorOpen(false)}
-        onSelect={(patientId) => {
+        subtitle="برای ثبت سریع گزارش، بیمار را انتخاب کنید"
+        onSelect={(patient) => {
           setIsPatientSelectorOpen(false);
-          setSelectedPatientForReport(patientId);
+          setSelectedPatientForReport(patient.id);
         }}
       />
 

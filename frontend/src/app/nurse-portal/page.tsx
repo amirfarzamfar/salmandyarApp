@@ -367,9 +367,10 @@ export default function NursePortalPage() {
       <PatientSelector
         isOpen={isPatientSelectorOpen}
         onClose={() => setIsPatientSelectorOpen(false)}
-        onSelect={(id) => {
+        subtitle="برای ثبت گزارش، بیمار را انتخاب کنید"
+        onSelect={(patient) => {
           setIsPatientSelectorOpen(false);
-          setSelectedPatientForReport(id);
+          setSelectedPatientForReport(patient.id);
         }}
       />
 

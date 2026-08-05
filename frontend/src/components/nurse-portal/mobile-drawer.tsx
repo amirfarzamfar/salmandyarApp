@@ -107,9 +107,7 @@ export function NurseMobileDrawer() {
           <div className="flex items-center justify-between pb-4 pt-2 border-b border-gray-100 dark:border-gray-800">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-medical-500 to-medical-600 flex items-center justify-center text-white shadow-glow-medical">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
+                <span className="text-base font-black leading-none">س</span>
               </div>
               <div>
                 <div className="text-lg font-black text-gray-900 dark:text-white tracking-tight">سالمندیار</div>

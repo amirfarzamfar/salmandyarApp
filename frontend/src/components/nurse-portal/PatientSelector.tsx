@@ -10,10 +10,11 @@ import { PortalCard } from "@/components/portal/ui/portal-card";
 interface PatientSelectorProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (patientId: number) => void;
+  onSelect: (patient: PatientList) => void;
+  subtitle?: string;
 }
 
-export function PatientSelector({ isOpen, onClose, onSelect }: PatientSelectorProps) {
+export function PatientSelector({ isOpen, onClose, onSelect, subtitle }: PatientSelectorProps) {
   const [patients, setPatients] = useState<PatientList[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,7 +56,7 @@ export function PatientSelector({ isOpen, onClose, onSelect }: PatientSelectorPr
             <div className="p-4 border-b dark:border-gray-800 flex items-center justify-between bg-white dark:bg-gray-900 z-20">
               <div>
                 <h2 className="font-black text-gray-800 dark:text-gray-100">انتخاب بیمار</h2>
-                <p className="text-[10px] text-gray-400 font-bold">برای ثبت گزارش، بیمار را انتخاب کنید</p>
+                <p className="text-[10px] text-gray-400 font-bold">{subtitle ?? "برای ثبت گزارش، بیمار را انتخاب کنید"}</p>
               </div>
               <button 
                 onClick={onClose}
@@ -90,7 +91,7 @@ export function PatientSelector({ isOpen, onClose, onSelect }: PatientSelectorPr
                 filteredPatients.map(patient => (
                   <div 
                     key={patient.id}
-                    onClick={() => onSelect(patient.id)}
+                    onClick={() => onSelect(patient)}
                     className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 active:scale-95 transition-all cursor-pointer hover:border-teal-500/50 hover:shadow-lg"
                   >
                     <div className="w-12 h-12 rounded-xl bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500">
