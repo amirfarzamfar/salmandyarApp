@@ -196,6 +196,7 @@ export default function GuestRequestWizard({ onCompleted }: { onCompleted?: () =
     if (!form) return;
 
     setSubmitting(true);
+    const traceId = `guest-request-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     try {
       const payload = {
         formId: form.id,
@@ -205,11 +206,20 @@ export default function GuestRequestWizard({ onCompleted }: { onCompleted?: () =
         }),
         answers: Object.values(answers),
       };
+      // #region debug-point A:guest-request-submit-start
+      fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"guest-request-submit-error",runId:"pre",hypothesisId:"A",location:"GuestRequestWizard.tsx:handleSubmit",msg:"[DEBUG] guest request submit start",data:{traceId,formId:form.id,formCode:form.code,answersCount:Object.values(answers).length,keys:Object.values(answers).slice(0,6).map(a=>({qid:a.questionId,hasText:!!a.textResponse,hasNumber:a.numberResponse!==undefined,hasDate:!!a.dateResponse,hasOption:a.selectedOptionId!==undefined,hasBool:a.booleanResponse!==undefined}))},ts:Date.now()})}).catch(()=>{});
+      // #endregion
       const result = await guestRequestsService.submit(payload);
+      // #region debug-point B:guest-request-submit-success
+      fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"guest-request-submit-error",runId:"pre",hypothesisId:"B",location:"GuestRequestWizard.tsx:handleSubmit",msg:"[DEBUG] guest request submit success",data:{traceId,trackingCode:(result as any)?.trackingCode,receivedKeys:result?Object.keys(result as any):[]},ts:Date.now()})}).catch(()=>{});
+      // #endregion
       setTrackingCode(result.trackingCode);
       setMode('success');
       clearDraft();
     } catch (error: any) {
+      // #region debug-point C:guest-request-submit-catch
+      fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"guest-request-submit-error",runId:"pre",hypothesisId:"C",location:"GuestRequestWizard.tsx:handleSubmit",msg:"[DEBUG] guest request submit failed",data:{traceId,errorName:error?.name,errorMessage:error?.message,status:error?.response?.status,statusText:error?.response?.statusText,url:error?.config?.url,method:error?.config?.method,baseURL:error?.config?.baseURL,responseType:typeof error?.response?.data,resp:error?.response?.data},ts:Date.now()})}).catch(()=>{});
+      // #endregion
       console.error(error);
       const serverData = error?.response?.data;
       const message =

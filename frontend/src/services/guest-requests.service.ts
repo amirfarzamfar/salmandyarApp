@@ -12,8 +12,22 @@ import {
 
 export const guestRequestsService = {
   submit: async (data: CreateGuestServiceRequestDto) => {
-    const response = await api.post<GuestServiceRequestDetails>('/public/guest-requests', data);
-    return response.data;
+    const traceId = `guest-request-api-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    // #region debug-point D:guest-request-api-start
+    fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"guest-request-submit-error",runId:"pre",hypothesisId:"D",location:"guest-requests.service.ts:submit",msg:"[DEBUG] POST /public/guest-requests start",data:{traceId,url:"/public/guest-requests",formId:(data as any)?.formId,answersCount:Array.isArray((data as any)?.answers)?(data as any).answers.length:undefined,hasSummaryJson:typeof (data as any)?.summaryJson==="string",summaryLen:typeof (data as any)?.summaryJson==="string"?(data as any).summaryJson.length:undefined},ts:Date.now()})}).catch(()=>{});
+    // #endregion
+    try {
+      const response = await api.post<GuestServiceRequestDetails>('/public/guest-requests', data);
+      // #region debug-point E:guest-request-api-success
+      fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"guest-request-submit-error",runId:"pre",hypothesisId:"E",location:"guest-requests.service.ts:submit",msg:"[DEBUG] POST /public/guest-requests success",data:{traceId,status:(response as any)?.status,trackingCode:(response as any)?.data?.trackingCode},ts:Date.now()})}).catch(()=>{});
+      // #endregion
+      return response.data;
+    } catch (error: any) {
+      // #region debug-point E:guest-request-api-error
+      fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"guest-request-submit-error",runId:"pre",hypothesisId:"E",location:"guest-requests.service.ts:submit",msg:"[DEBUG] POST /public/guest-requests error",data:{traceId,errorName:error?.name,errorMessage:error?.message,status:error?.response?.status,url:error?.config?.url,method:error?.config?.method,baseURL:error?.config?.baseURL,resp:error?.response?.data},ts:Date.now()})}).catch(()=>{});
+      // #endregion
+      throw error;
+    }
   },
 
   getAll: async () => {
@@ -51,4 +65,3 @@ export const guestRequestsService = {
     return response.data;
   },
 };
-

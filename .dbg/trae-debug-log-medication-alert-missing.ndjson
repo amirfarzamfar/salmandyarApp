@@ -1474,3 +1474,5 @@
 {"sessionId": "medication-alert-missing", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:start", "data": {"hasToken": true}, "ts": 1784579545262}
 {"sessionId": "medication-alert-missing", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 18}, "ts": 1784579545273}
 {"sessionId": "medication-alert-missing", "runId": "pre-fix", "hypothesisId": "B", "location": "NotificationCenter:dashboard", "msg": "[DEBUG] fetchUnreadCount:success", "data": {"count": 18}, "ts": 1784579545282}
+{"sessionId": "medication-alert-missing", "runId": "pre-fix", "hypothesisId": "A", "location": "RealtimeNotificationListener", "msg": "[DEBUG] isRealtimeEnabled", "data": {"value": true, "path": "/", "apiBaseUrl": null, "signalRTransport": null}, "ts": 1785933016280}
+{"sessionId": "medication-alert-missing", "runId": "pre-fix", "hypothesisId": "A", "location": "RealtimeNotificationListener", "msg": "[DEBUG] token-check", "data": {"hasToken": false}, "ts": 1785933016289}

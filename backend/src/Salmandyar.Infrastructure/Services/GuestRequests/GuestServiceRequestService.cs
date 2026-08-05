@@ -361,40 +361,51 @@ public class GuestServiceRequestService : IGuestServiceRequestService
     {
         try
         {
-            await _notificationService.SendSmsAsync(
-                request.ContactMobile,
-                message,
-                new NotificationSendContext
+            try
+            {
+                await _notificationService.SendSmsAsync(
+                    request.ContactMobile,
+                    message,
+                    new NotificationSendContext
+                    {
+                        EventKey = NotificationEventKeys.GuestServiceRequestCreated,
+                        ReferenceId = request.Id.ToString()
+                    });
+
+                request.TimelineEvents.Add(new GuestServiceRequestTimelineEvent
                 {
-                    EventKey = NotificationEventKeys.GuestServiceRequestCreated,
-                    ReferenceId = request.Id.ToString()
+                    RequestId = request.Id,
+                    EventType = GuestServiceRequestTimelineEventType.SmsSent,
+                    Title = "ارسال پیامک تایید",
+                    Description = message,
+                    ActorUserId = null,
+                    OccurredAt = DateTime.UtcNow
                 });
-
-            request.TimelineEvents.Add(new GuestServiceRequestTimelineEvent
+            }
+            catch (Exception ex)
             {
-                RequestId = request.Id,
-                EventType = GuestServiceRequestTimelineEventType.SmsSent,
-                Title = "ارسال پیامک تایید",
-                Description = message,
-                ActorUserId = null,
-                OccurredAt = DateTime.UtcNow
-            });
+                request.TimelineEvents.Add(new GuestServiceRequestTimelineEvent
+                {
+                    RequestId = request.Id,
+                    EventType = GuestServiceRequestTimelineEventType.SmsSent,
+                    Title = "عدم موفقیت در ارسال پیامک",
+                    Description = ex.Message,
+                    ActorUserId = null,
+                    OccurredAt = DateTime.UtcNow
+                });
+            }
+
+            request.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
         }
-        catch (Exception ex)
+        catch (DbUpdateConcurrencyException)
         {
-            request.TimelineEvents.Add(new GuestServiceRequestTimelineEvent
-            {
-                RequestId = request.Id,
-                EventType = GuestServiceRequestTimelineEventType.SmsSent,
-                Title = "عدم موفقیت در ارسال پیامک",
-                Description = ex.Message,
-                ActorUserId = null,
-                OccurredAt = DateTime.UtcNow
-            });
+            _context.ChangeTracker.Clear();
         }
-
-        request.UpdatedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
+        catch
+        {
+            _context.ChangeTracker.Clear();
+        }
     }
 
     private static List<QuestionAnswer> CreateAnswers(AssessmentForm form, IEnumerable<SubmitAnswerDto> answers)
