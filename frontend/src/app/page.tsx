@@ -4,6 +4,7 @@ import GuestRequestSection from '@/components/landing/GuestRequestSection';
 import ServicesSection from '@/components/landing/ServicesSection';
 import FeaturesSection from '@/components/landing/FeaturesSection';
 import ProcessSection from '@/components/landing/ProcessSection';
+import RecentArticlesSection from '@/components/landing/RecentArticlesSection';
 import Footer from '@/components/landing/Footer';
 
 export default function Home() {
@@ -14,6 +15,7 @@ export default function Home() {
         <HeroSection />
         <GuestRequestSection />
         <ServicesSection />
+        <RecentArticlesSection />
         <FeaturesSection />
         <ProcessSection />
       </main>

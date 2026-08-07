@@ -3,7 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList, ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X, ShieldCheck, MessageSquareMore, Sparkles } from 'lucide-react';
+import {
+  LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList,
+  ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X,
+  ShieldCheck, MessageSquareMore, Sparkles, BookOpen, Stethoscope, MapPin,
+  GraduationCap, Calculator, UserPen, Tag, Layers, Plus
+} from 'lucide-react';
 import { authService } from '@/services/auth.service';
 
 const navigation = [
@@ -17,38 +22,54 @@ const navigation = [
   { name: 'مدیریت شیفت‌ها', href: '/dashboard/admin/shifts', icon: Clock },
   { name: 'پایش مصرف دارو', href: '/dashboard/admin/medication-administration', icon: BarChart2 },
   { name: 'پیکربندی گزارشات', href: '/dashboard/admin/report-config', icon: Settings },
-  { 
-    name: 'مدیریت آزمون‌ها', 
-    href: '#', 
+  {
+    name: 'مدیریت آزمون‌ها',
+    href: '#',
     icon: ClipboardList,
     subItems: [
-        { name: 'لیست آزمون‌ها', href: '/dashboard/admin/assessments', icon: List },
-        { name: 'مدیریت آزمون کاربران', href: '/dashboard/admin/assessments/user-assignments', icon: UserCheck },
-        { name: 'ایجاد آزمون', href: '/dashboard/admin/assessments/create', icon: FileText },
-        { name: 'تطبیق هوشمند', href: '/dashboard/admin/matching', icon: Brain },
-        { name: 'گزارش آزمون‌ها', href: '/dashboard/admin/assessments/reports', icon: BarChart2 }
+      { name: 'لیست آزمون‌ها', href: '/dashboard/admin/assessments', icon: List },
+      { name: 'مدیریت آزمون کاربران', href: '/dashboard/admin/assessments/user-assignments', icon: UserCheck },
+      { name: 'ایجاد آزمون', href: '/dashboard/admin/assessments/create', icon: FileText },
+      { name: 'تطبیق هوشمند', href: '/dashboard/admin/matching', icon: Brain },
+      { name: 'گزارش آزمون‌ها', href: '/dashboard/admin/assessments/reports', icon: BarChart2 }
     ]
   },
   {
-      name: 'مدیریت ارزیابی کاربران',
-      href: '/dashboard/admin/user-evaluations',
-      icon: UserCheck,
-      subItems: [
-          { name: 'لیست فرم‌های ارزیابی', href: '/dashboard/admin/user-evaluations', icon: List },
-          { name: 'مدیریت ارزیابی کاربران', href: '/dashboard/admin/user-evaluations/user-assignments', icon: UserCheck },
-          { name: 'ایجاد فرم ارزیابی', href: '/dashboard/admin/user-evaluations/create', icon: FileText }
-      ]
+    name: 'مدیریت ارزیابی کاربران',
+    href: '/dashboard/admin/user-evaluations',
+    icon: UserCheck,
+    subItems: [
+      { name: 'لیست فرم‌های ارزیابی', href: '/dashboard/admin/user-evaluations', icon: List },
+      { name: 'مدیریت ارزیابی کاربران', href: '/dashboard/admin/user-evaluations/user-assignments', icon: UserCheck },
+      { name: 'ایجاد فرم ارزیابی', href: '/dashboard/admin/user-evaluations/create', icon: FileText }
+    ]
   },
   { name: 'مدیریت پرسنل', href: '/dashboard/personnel', icon: UserCog },
+  {
+    name: 'مدیریت محتوا (CMS)',
+    href: '#',
+    icon: BookOpen,
+    subItems: [
+      { name: 'مقالات', href: '/dashboard/admin/content/articles', icon: FileText },
+      { name: 'نوشتن مقاله جدید', href: '/dashboard/admin/content/articles/create', icon: Plus },
+      { name: 'بیماری‌ها', href: '/dashboard/admin/content/diseases', icon: Stethoscope },
+      { name: 'شهرها', href: '/dashboard/admin/content/cities', icon: MapPin },
+      { name: 'راهنماها', href: '/dashboard/admin/content/guides', icon: GraduationCap },
+      { name: 'ابزارهای سلامت', href: '/dashboard/admin/content/tools', icon: Calculator },
+      { name: 'نویسندگان و پزشکان', href: '/dashboard/admin/content/authors', icon: UserPen },
+      { name: 'لندینگ خدمات (SEO)', href: '/dashboard/admin/content/services', icon: Layers },
+      { name: 'دسته‌بندی‌ها و تگ‌ها', href: '/dashboard/admin/content/taxonomy', icon: Tag },
+    ]
+  },
   // { name: 'گزارش‌ها', href: '/dashboard/reports', icon: FileText },
-  { 
-    name: 'تنظیمات', 
-    href: '#', 
+  {
+    name: 'تنظیمات',
+    href: '#',
     icon: Settings,
     subItems: [
-        { name: 'تنظیمات پیام', href: '/dashboard/admin/settings/notifications', icon: Bell },
-        { name: 'ورود با رمز یکبار مصرف', href: '/dashboard/admin/settings/auth-otp', icon: ShieldCheck },
-        { name: 'تنظیم پیام هشدار دارو', href: '/dashboard/admin/settings/medication-alerts', icon: Bell }
+      { name: 'تنظیمات پیام', href: '/dashboard/admin/settings/notifications', icon: Bell },
+      { name: 'ورود با رمز یکبار مصرف', href: '/dashboard/admin/settings/auth-otp', icon: ShieldCheck },
+      { name: 'تنظیم پیام هشدار دارو', href: '/dashboard/admin/settings/medication-alerts', icon: Bell }
     ]
   },
 ];

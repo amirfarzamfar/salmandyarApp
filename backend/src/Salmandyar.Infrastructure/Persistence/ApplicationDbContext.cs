@@ -7,6 +7,7 @@ using Salmandyar.Domain.Entities.HomeCare;
 using Salmandyar.Domain.Entities.UserEvaluations;
 using Salmandyar.Domain.Entities.Medications;
 using Salmandyar.Domain.Entities.PatientProfile;
+using Salmandyar.Domain.Entities.Content;
 
 namespace Salmandyar.Infrastructure.Persistence;
 
@@ -82,6 +83,27 @@ public class ApplicationDbContext : IdentityDbContext<User>
     // Guest Service Request Module
     public DbSet<GuestServiceRequest> GuestServiceRequests { get; set; }
     public DbSet<GuestServiceRequestTimelineEvent> GuestServiceRequestTimelineEvents { get; set; }
+
+    // Content Platform Module (SEO / Article / Blog / Medical Content)
+    public DbSet<Author> Authors { get; set; }
+    public DbSet<ContentCategory> ContentCategories { get; set; }
+    public DbSet<ContentTag> ContentTags { get; set; }
+    public DbSet<Article> Articles { get; set; }
+    public DbSet<ArticleTag> ArticleTags { get; set; }
+    public DbSet<ArticleMedicalReview> ArticleMedicalReviews { get; set; }
+    public DbSet<ArticleSource> ArticleSources { get; set; }
+    public DbSet<FAQ> FAQs { get; set; }
+    public DbSet<InternalLink> InternalLinks { get; set; }
+    public DbSet<Disease> Diseases { get; set; }
+    public DbSet<Guide> Guides { get; set; }
+    public DbSet<HealthTool> HealthTools { get; set; }
+    public DbSet<City> Cities { get; set; }
+    public DbSet<CityService> CityServices { get; set; }
+    public DbSet<ServiceSeoProfile> ServiceSeoProfiles { get; set; }
+    public DbSet<ServiceBenefit> ServiceBenefits { get; set; }
+    public DbSet<ServiceTargetPatient> ServiceTargetPatients { get; set; }
+    public DbSet<ServiceCoverageArea> ServiceCoverageAreas { get; set; }
+    public DbSet<ServiceTestimonial> ServiceTestimonials { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -934,5 +956,247 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasIndex(d => new { d.PatientProfileId, d.DocumentType })
             .IsUnique()
             .HasFilter("\"DocumentType\" IS NOT NULL");
+
+        // ============================================================
+        // Content Platform Module (SEO / Medical Content) Configurations
+        // ============================================================
+
+        // Authors Table
+        builder.Entity<Author>().ToTable("Authors");
+        builder.Entity<Author>()
+            .HasIndex(a => a.Slug)
+            .IsUnique()
+            .HasFilter("\"Slug\" IS NOT NULL");
+        builder.Entity<Author>()
+            .HasIndex(a => a.UserId)
+            .IsUnique()
+            .HasFilter("\"UserId\" IS NOT NULL");
+
+        // Content Categories (Hierarchical)
+        builder.Entity<ContentCategory>().ToTable("ContentCategories");
+        builder.Entity<ContentCategory>()
+            .HasIndex(c => c.Slug)
+            .IsUnique();
+        builder.Entity<ContentCategory>()
+            .HasOne(c => c.Parent)
+            .WithMany(c => c.Children)
+            .HasForeignKey(c => c.ParentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Content Tags
+        builder.Entity<ContentTag>().ToTable("ContentTags");
+        builder.Entity<ContentTag>()
+            .HasIndex(t => t.Slug)
+            .IsUnique();
+
+        // Articles
+        builder.Entity<Article>().ToTable("Articles");
+        builder.Entity<Article>()
+            .Property(a => a.Status)
+            .HasConversion<string>();
+        builder.Entity<Article>()
+            .HasIndex(a => a.Slug)
+            .IsUnique();
+        builder.Entity<Article>()
+            .HasIndex(a => new { a.Status, a.PublishedAt });
+        builder.Entity<Article>()
+            .HasIndex(a => a.CategoryId);
+        builder.Entity<Article>()
+            .HasOne(a => a.Author)
+            .WithMany(a => a.AuthoredArticles)
+            .HasForeignKey(a => a.AuthorId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<Article>()
+            .HasOne(a => a.Category)
+            .WithMany(c => c.Articles)
+            .HasForeignKey(a => a.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<Article>()
+            .HasOne(a => a.RelatedService)
+            .WithMany()
+            .HasForeignKey(a => a.ServiceDefinitionId)
+            .OnDelete(DeleteBehavior.SetNull);
+        builder.Entity<Article>()
+            .HasOne(a => a.RelatedDisease)
+            .WithMany(d => d.RelatedArticles)
+            .HasForeignKey(a => a.DiseaseId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // ArticleTags (Many-to-Many join)
+        builder.Entity<ArticleTag>().ToTable("ArticleTags");
+        builder.Entity<ArticleTag>()
+            .HasKey(at => new { at.ArticleId, at.ContentTagId });
+        builder.Entity<ArticleTag>()
+            .HasOne(at => at.Article)
+            .WithMany(a => a.ArticleTags)
+            .HasForeignKey(at => at.ArticleId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<ArticleTag>()
+            .HasOne(at => at.ContentTag)
+            .WithMany(t => t.ArticleTags)
+            .HasForeignKey(at => at.ContentTagId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Article Medical Reviews (E-E-A-T)
+        builder.Entity<ArticleMedicalReview>().ToTable("ArticleMedicalReviews");
+        builder.Entity<ArticleMedicalReview>()
+            .HasOne(r => r.Article)
+            .WithMany(a => a.MedicalReviews)
+            .HasForeignKey(r => r.ArticleId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<ArticleMedicalReview>()
+            .HasOne(r => r.MedicalReviewer)
+            .WithMany(a => a.MedicalReviews)
+            .HasForeignKey(r => r.MedicalReviewerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Article Sources (Citations)
+        builder.Entity<ArticleSource>().ToTable("ArticleSources");
+        builder.Entity<ArticleSource>()
+            .HasOne(s => s.Article)
+            .WithMany(a => a.Sources)
+            .HasForeignKey(s => s.ArticleId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // FAQ
+        builder.Entity<FAQ>().ToTable("FAQs");
+        builder.Entity<FAQ>()
+            .Property(f => f.EntityType)
+            .HasConversion<string>();
+        builder.Entity<FAQ>()
+            .HasIndex(f => new { f.EntityType, f.EntityId });
+
+        // Internal Links
+        builder.Entity<InternalLink>().ToTable("InternalLinks");
+        builder.Entity<InternalLink>()
+            .Property(l => l.SourceType)
+            .HasConversion<string>();
+        builder.Entity<InternalLink>()
+            .Property(l => l.TargetType)
+            .HasConversion<string>();
+        builder.Entity<InternalLink>()
+            .HasOne(l => l.SourceArticle)
+            .WithMany(a => a.InternalLinksFrom)
+            .HasForeignKey(l => l.SourceArticleId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<InternalLink>()
+            .HasOne(l => l.TargetArticle)
+            .WithMany(a => a.InternalLinksTo)
+            .HasForeignKey(l => l.TargetArticleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Diseases / Medical Conditions
+        builder.Entity<Disease>().ToTable("Diseases");
+        builder.Entity<Disease>()
+            .HasIndex(d => d.Slug)
+            .IsUnique();
+        builder.Entity<Disease>()
+            .HasIndex(d => d.Icd10Code)
+            .HasFilter("\"Icd10Code\" IS NOT NULL");
+        builder.Entity<Disease>()
+            .HasOne(d => d.MedicalReviewer)
+            .WithMany()
+            .HasForeignKey(d => d.MedicalReviewerId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Guides (How-to / Care Guides)
+        builder.Entity<Guide>().ToTable("Guides");
+        builder.Entity<Guide>()
+            .HasIndex(g => g.Slug)
+            .IsUnique();
+        builder.Entity<Guide>()
+            .HasOne(g => g.Category)
+            .WithMany()
+            .HasForeignKey(g => g.CategoryId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.Entity<Guide>()
+            .HasOne(g => g.Author)
+            .WithMany()
+            .HasForeignKey(g => g.AuthorId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Health Tools
+        builder.Entity<HealthTool>().ToTable("HealthTools");
+        builder.Entity<HealthTool>()
+            .Property(t => t.ToolType)
+            .HasConversion<string>();
+        builder.Entity<HealthTool>()
+            .HasIndex(t => t.Slug)
+            .IsUnique();
+
+        // Cities (Local SEO Pages)
+        builder.Entity<City>().ToTable("Cities");
+        builder.Entity<City>()
+            .HasIndex(c => c.Slug)
+            .IsUnique();
+        builder.Entity<City>()
+            .HasIndex(c => new { c.Province, c.Name });
+
+        // City Services (Which services are available in each city)
+        builder.Entity<CityService>().ToTable("CityServices");
+        builder.Entity<CityService>()
+            .HasIndex(cs => new { cs.CityId, cs.ServiceDefinitionId })
+            .IsUnique();
+        builder.Entity<CityService>()
+            .HasOne(cs => cs.City)
+            .WithMany(c => c.CityServices)
+            .HasForeignKey(cs => cs.CityId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<CityService>()
+            .HasOne(cs => cs.ServiceDefinition)
+            .WithMany()
+            .HasForeignKey(cs => cs.ServiceDefinitionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Service SEO Profiles (Landing Page data for services)
+        builder.Entity<ServiceSeoProfile>().ToTable("ServiceSeoProfiles");
+        builder.Entity<ServiceSeoProfile>()
+            .HasIndex(s => s.Slug)
+            .IsUnique();
+        builder.Entity<ServiceSeoProfile>()
+            .HasIndex(s => s.ServiceDefinitionId)
+            .IsUnique();
+        builder.Entity<ServiceSeoProfile>()
+            .HasOne(s => s.ServiceDefinition)
+            .WithOne()
+            .HasForeignKey<ServiceSeoProfile>(s => s.ServiceDefinitionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Service Benefits
+        builder.Entity<ServiceBenefit>().ToTable("ServiceBenefits");
+        builder.Entity<ServiceBenefit>()
+            .HasOne(b => b.ServiceSeoProfile)
+            .WithMany(s => s.Benefits)
+            .HasForeignKey(b => b.ServiceSeoProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Service Target Patients
+        builder.Entity<ServiceTargetPatient>().ToTable("ServiceTargetPatients");
+        builder.Entity<ServiceTargetPatient>()
+            .HasOne(tp => tp.ServiceSeoProfile)
+            .WithMany(s => s.TargetPatients)
+            .HasForeignKey(tp => tp.ServiceSeoProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Service Coverage Areas
+        builder.Entity<ServiceCoverageArea>().ToTable("ServiceCoverageAreas");
+        builder.Entity<ServiceCoverageArea>()
+            .HasOne(ca => ca.ServiceSeoProfile)
+            .WithMany(s => s.CoverageAreas)
+            .HasForeignKey(ca => ca.ServiceSeoProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.Entity<ServiceCoverageArea>()
+            .HasOne(ca => ca.City)
+            .WithMany()
+            .HasForeignKey(ca => ca.CityId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Service Testimonials
+        builder.Entity<ServiceTestimonial>().ToTable("ServiceTestimonials");
+        builder.Entity<ServiceTestimonial>()
+            .HasOne(t => t.ServiceSeoProfile)
+            .WithMany(s => s.Testimonials)
+            .HasForeignKey(t => t.ServiceSeoProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
