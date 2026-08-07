@@ -173,21 +173,23 @@ public class PublicContentController : ControllerBase
     }
 
     [HttpGet("articles/{slug}")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetArticleBySlug(string slug)
-    {
-        var article = await _db.Articles
-            .AsNoTracking()
-            .Where(a => a.Status == ArticleStatus.Published && a.Slug == slug)
-            .Include(a => a.Author)
-            .Include(a => a.Category)
-            .Include(a => a.RelatedDisease)
-            .Include(a => a.RelatedService)
-            .Include(a => a.ArticleTags).ThenInclude(t => t.ContentTag)
-            .Include(a => a.MedicalReviews).ThenInclude(m => m.MedicalReviewer)
-            .Include(a => a.Sources)
-            .FirstOrDefaultAsync();
+[ProducesResponseType(StatusCodes.Status200OK)]
+[ProducesResponseType(StatusCodes.Status404NotFound)]
+public async Task<IActionResult> GetArticleBySlug(string slug)
+{
+    var article = await _db.Articles
+        .AsNoTracking()
+        .AsSplitQuery()
+        .Where(a => a.Status == ArticleStatus.Published && a.Slug == slug)
+        .Include(a => a.Author)
+        .Include(a => a.Category)
+        .Include(a => a.RelatedDisease)
+        .Include(a => a.RelatedService)
+        .Include(a => a.ArticleTags).ThenInclude(t => t.ContentTag)
+        .Include(a => a.MedicalReviews).ThenInclude(m => m.MedicalReviewer)
+        .Include(a => a.Sources)
+        .FirstOrDefaultAsync();
+
 
         if (article == null) return NotFound($"Article with slug '{slug}' not found.");
 

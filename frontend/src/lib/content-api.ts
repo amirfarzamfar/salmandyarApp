@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { getApiOrigin } from '@/lib/network';
 import * as mock from '@/lib/data/content-data';
 import type {
@@ -12,6 +13,7 @@ import type {
   ServiceSeoProfile,
   FAQItem,
 } from '@/lib/types/content';
+
 
 const API_PREFIX = '/api/public/content';
 
@@ -28,7 +30,7 @@ async function safeFetch<T>(
 ): Promise<T> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 4000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
     const res = await fetch(apiUrl(path), {
       ...init,
       signal: controller.signal,
@@ -36,8 +38,8 @@ async function safeFetch<T>(
         'Content-Type': 'application/json',
         ...(init?.headers || {}),
       },
-      cache: 'no-store',
-      next: { revalidate: 60 },
+      // cache: 'no-store',
+      next: { revalidate: 3600 },
     });
     clearTimeout(timeout);
     if (!res.ok) {

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Salmandyar.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cba7f4989f44a22e3347445b6f9ab7bf2c00674a")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7e20368035530ce62edbc24c7bb4d5b0fa82e019")]
 [assembly: System.Reflection.AssemblyProductAttribute("Salmandyar.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Salmandyar.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
