@@ -64,66 +64,73 @@ export default async function CitiesListPage() {
               ).length;
 
               return (
-                <Link
+                <div
                   key={city.id}
-                  href={`/cities/${city.slug}`}
                   className="group bg-white rounded-3xl overflow-hidden border border-gray-100 hover:border-teal-200 hover:shadow-xl hover:shadow-gray-100 transition-all duration-300"
                 >
-                  <div className="relative h-44 sm:h-48 bg-gradient-to-br from-teal-500 via-blue-500 to-indigo-600 overflow-hidden">
-                    {city.coverImageUrl && (
-                      <img
-                        src={city.coverImageUrl}
-                        alt={city.name}
-                        className="w-full h-full object-cover opacity-50 group-hover:opacity-70 group-hover:scale-105 transition-all duration-700"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                    <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                      <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center mb-3">
-                        <Building2 size={28} className="text-white" />
-                      </div>
-                      <h2 className="text-3xl font-black text-white mb-0.5 group-hover:translate-y-[-2px] transition-transform">
-                        {city.name}
-                      </h2>
-                      {city.province && (
-                        <p className="text-sm text-white/80">استان {city.province}</p>
+                  <Link
+                    href={`/cities/${city.slug}`}
+                    className="block"
+                  >
+                    <div className="relative h-44 sm:h-48 bg-gradient-to-br from-teal-500 via-blue-500 to-indigo-600 overflow-hidden cursor-pointer">
+                      {city.coverImageUrl && (
+                        <img
+                          src={city.coverImageUrl}
+                          alt={city.name}
+                          className="w-full h-full object-cover opacity-50 group-hover:opacity-70 group-hover:scale-105 transition-all duration-700"
+                        />
                       )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                      <div className="absolute inset-0 p-6 flex flex-col justify-end">
+                        <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-md border border-white/30 flex items-center justify-center mb-3">
+                          <Building2 size={28} className="text-white" />
+                        </div>
+                        <h2 className="text-3xl font-black text-white mb-0.5 group-hover:translate-y-[-2px] transition-transform">
+                          {city.name}
+                        </h2>
+                        {city.province && (
+                          <p className="text-sm text-white/80">استان {city.province}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                   <div className="p-6">
-                    <p className="text-sm text-gray-600 leading-relaxed mb-5 line-clamp-2 min-h-[48px]">
-                      {city.shortDescription || city.aboutRegion}
-                    </p>
-                    <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
-                      <div className="flex items-center gap-2 text-gray-600 p-3 rounded-xl bg-gray-50">
-                        <MapPin size={16} className="text-teal-600 shrink-0" />
-                        <span className="font-bold">{areasCount || 0}+</span>
-                        <span className="text-xs text-gray-500">منطقه</span>
+                    <Link href={`/cities/${city.slug}`} className="block">
+                      <p className="text-sm text-gray-600 leading-relaxed mb-5 line-clamp-2 min-h-[48px]">
+                        {city.shortDescription || city.aboutRegion}
+                      </p>
+                      <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
+                        <div className="flex items-center gap-2 text-gray-600 p-3 rounded-xl bg-gray-50">
+                          <MapPin size={16} className="text-teal-600 shrink-0" />
+                          <span className="font-bold">{areasCount || 0}+</span>
+                          <span className="text-xs text-gray-500">منطقه</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-gray-600 p-3 rounded-xl bg-gray-50">
+                          <ShieldCheck size={16} className="text-teal-600 shrink-0" />
+                          <span className="font-bold">{relatedServices || serviceSeoProfiles.length}+</span>
+                          <span className="text-xs text-gray-500">خدمت</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-600 p-3 rounded-xl bg-gray-50">
-                        <ShieldCheck size={16} className="text-teal-600 shrink-0" />
-                        <span className="font-bold">{relatedServices || serviceSeoProfiles.length}+</span>
-                        <span className="text-xs text-gray-500">خدمت</span>
-                      </div>
-                    </div>
+                    </Link>
                     {city.phoneNumber && (
                       <a
                         href={`tel:${city.phoneNumber.replace(/\D/g, '')}`}
-                        onClick={e => e.stopPropagation()}
                         className="flex items-center justify-center gap-2 h-11 rounded-xl bg-gray-50 border border-gray-200 text-gray-800 font-bold text-sm mb-3 hover:bg-teal-50 hover:border-teal-200 hover:text-teal-700 transition"
                       >
                         <Phone size={16} />
                         {city.phoneNumber}
                       </a>
                     )}
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-gray-500">مراجعه سریع</span>
-                      <span className="flex items-center gap-1 text-sm font-bold text-teal-600 group-hover:-translate-x-1 transition-transform">
-                        مشاهده خدمات <ChevronLeft size={16} />
-                      </span>
-                    </div>
+                    <Link href={`/cities/${city.slug}`} className="block">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-500">مراجعه سریع</span>
+                        <span className="flex items-center gap-1 text-sm font-bold text-teal-600 group-hover:-translate-x-1 transition-transform">
+                          مشاهده خدمات <ChevronLeft size={16} />
+                        </span>
+                      </div>
+                    </Link>
                   </div>
-                </Link>
+                </div>
               );
             })}
           </div>
