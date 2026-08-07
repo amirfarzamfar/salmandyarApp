@@ -23,9 +23,10 @@ interface Props {
   expectedTime?: Date;
   onSuccess: () => void;
   onCancel: () => void;
+  hideHeader?: boolean;
 }
 
-export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCancel }: Props) {
+export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCancel, hideHeader = false }: Props) {
   const { register, handleSubmit, watch, control, formState: { errors, isSubmitting } } = useForm<VitalSignFormData>({
     resolver: zodResolver(vitalSignSchema),
     defaultValues: {
@@ -134,22 +135,27 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
   };
 
   return (
-    <PortalCard className="bg-white dark:bg-gray-800 border-none shadow-soft-xl relative">
+    <PortalCard className={cn(
+      "bg-white dark:bg-gray-800 border-none shadow-soft-xl relative",
+      hideHeader ? "" : ""
+    )}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-medical-400 to-medical-600 rounded-t-[inherit]" />
       
-      <div className="flex justify-between items-center mb-6 pt-2">
-        <div>
-          <h3 className="text-lg font-black text-gray-800 dark:text-gray-100">ثبت علائم حیاتی</h3>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">مقادیر دقیق دستگاه را وارد کنید</p>
+      {!hideHeader && (
+        <div className="flex justify-between items-center mb-6 pt-2">
+          <div>
+            <h3 className="text-lg font-black text-gray-800 dark:text-gray-100">ثبت علائم حیاتی</h3>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">مقادیر دقیق دستگاه را وارد کنید</p>
+          </div>
+          <button onClick={onCancel} className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
+            <X className="w-4 h-4" />
+          </button>
         </div>
-        <button onClick={onCancel} className="w-8 h-8 rounded-full bg-gray-50 dark:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+      )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className={cn("space-y-5", hideHeader ? "pt-3" : "")}>
         {/* Time Picker */}
-        <div className="bg-gray-50 dark:bg-gray-900/30 p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
+        <div className="bg-gray-50 dark:bg-gray-900/30 p-3 md:p-4 rounded-2xl border border-gray-100 dark:border-gray-800">
            <label className="flex items-center gap-2 text-xs font-bold text-gray-500 mb-2">
              <Clock size={14} />
              زمان اندازه‌گیری
@@ -173,7 +179,7 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
                   <TimePicker key="time-picker" position="bottom" />
                 ]}
                 calendarPosition="bottom-right"
-                inputClass="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-center font-black text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all"
+                inputClass="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-3 md:px-4 py-2.5 md:py-3 text-center font-black text-gray-800 dark:text-gray-100 focus:ring-2 focus:ring-medical-500 focus:border-transparent transition-all"
                 containerStyle={{ width: "100%" }}
               />
             )}
@@ -181,7 +187,7 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
         </div>
 
         {/* Inputs Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
             <VitalInput
                 label="فشار سیستول"
                 icon={Activity}
@@ -317,7 +323,7 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 rounded-xl p-4"
+                    className="bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30 rounded-xl p-3 md:p-4"
                 >
                     <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold text-sm mb-2">
                         <AlertTriangle size={16} />
@@ -335,18 +341,18 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
             )}
         </AnimatePresence>
 
-        <div className="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
+        <div className={cn("flex gap-2 md:gap-3 pt-4 border-t border-gray-100 dark:border-gray-800", hideHeader ? "" : "")}>
             <button 
                 type="button"
                 onClick={onCancel}
-                className="flex-1 py-4 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                className="flex-1 py-3 md:py-4 bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-300 rounded-2xl font-bold text-sm hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
             >
                 انصراف
             </button>
             <PortalButton 
                 type="submit"
                 disabled={isSubmitting}
-                className="flex-[2]"
+                className="flex-[2] py-3 md:py-4"
             >
                 {isSubmitting ? (
                 <>
@@ -369,7 +375,7 @@ export function NurseVitalSignsForm({ patientId, expectedTime, onSuccess, onCanc
 // Reusable Input Component with forwardRef
 const VitalInput = React.forwardRef<HTMLInputElement, any>(({ label, icon: Icon, unit, color, error, ...props }, ref) => (
   <div className={cn(
-      "bg-neutral-warm-50/50 dark:bg-gray-800 rounded-[1.5rem] p-4 border transition-all group relative",
+      "bg-neutral-warm-50/50 dark:bg-gray-800 rounded-[1.5rem] p-3 md:p-4 border transition-all group relative",
       error ? "border-rose-200 bg-rose-50/50" : "border-gray-100 dark:border-gray-700 focus-within:ring-2 focus-within:ring-medical-200 focus-within:border-medical-300"
   )}>
     <div className="flex items-center gap-2 mb-2">
@@ -382,7 +388,7 @@ const VitalInput = React.forwardRef<HTMLInputElement, any>(({ label, icon: Icon,
       <input
         ref={ref}
         type="number"
-        className="w-full bg-transparent text-2xl font-black text-gray-800 dark:text-gray-100 placeholder-gray-200 focus:outline-none"
+        className="w-full bg-transparent text-xl md:text-2xl font-black text-gray-800 dark:text-gray-100 placeholder-gray-200 focus:outline-none"
         placeholder="--"
         {...props}
       />

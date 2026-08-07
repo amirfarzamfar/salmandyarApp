@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { nursePortalService } from "@/services/nurse-portal.service";
 import { PatientList } from "@/types/patient";
 import { PortalCard } from "@/components/portal/ui/portal-card";
-import { Search, User, ChevronLeft, Plus, Clock, Loader2 } from "lucide-react";
+import { Search, User, ChevronLeft, Plus, Clock, Loader2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { NurseVitalSignsForm } from "@/components/nurse-portal/vital-signs-form";
@@ -128,30 +128,39 @@ export default function PatientManagementDashboard() {
 
       <AnimatePresence>
         {selectedPatientForAdd && (
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-lg bg-white dark:bg-gray-900 rounded-2xl shadow-soft-lg p-5 space-y-4"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-black text-gray-900 dark:text-gray-100">
-                  ثبت علائم برای {selectedPatientForAdd.firstName} {selectedPatientForAdd.lastName}
-                </h3>
-                <button
-                  onClick={() => setSelectedPatientForAdd(null)}
-                  className="w-8 h-8 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 flex items-center justify-center"
-                >
-                  <ChevronLeft className="w-4 h-4 rotate-180" />
-                </button>
-              </div>
-              <NurseVitalSignsForm
-                patientId={selectedPatientForAdd.id}
-                onSuccess={() => setSelectedPatientForAdd(null)}
-                onCancel={() => setSelectedPatientForAdd(null)}
-              />
-            </motion.div>
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 overflow-y-auto">
+            <div className="flex min-h-full items-start sm:items-center justify-center p-4 pb-28 sm:pb-4 pt-8 sm:pt-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                className="w-full max-w-lg my-0 sm:my-auto"
+              >
+                <div className="w-full bg-white dark:bg-gray-900 rounded-2xl shadow-soft-lg overflow-hidden">
+                  <div className="flex items-center justify-between px-5 pt-5 pb-3 md:px-5 md:pt-5 md:pb-3 gap-3">
+                    <h3 className="text-base md:text-lg font-black text-gray-900 dark:text-gray-100 leading-tight">
+                      ثبت علائم برای <span className="text-medical-600">{selectedPatientForAdd.firstName} {selectedPatientForAdd.lastName}</span>
+                    </h3>
+                    <button
+                      onClick={() => setSelectedPatientForAdd(null)}
+                      aria-label="بستن فرم ثبت علائم"
+                      className="shrink-0 w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="px-3 md:px-5 pb-5 md:pb-5">
+                    <NurseVitalSignsForm
+                      hideHeader
+                      patientId={selectedPatientForAdd.id}
+                      onSuccess={() => setSelectedPatientForAdd(null)}
+                      onCancel={() => setSelectedPatientForAdd(null)}
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </div>
         )}
       </AnimatePresence>

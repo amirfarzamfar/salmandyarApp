@@ -231,12 +231,13 @@ export function VitalsManager({ patientId, careLevel = CareLevel.Level2 }: Props
       <AnimatePresence>
         {isAdding && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] overflow-y-auto animate-fade-in">
-            <div className="flex min-h-full justify-center p-4 pb-24 md:pb-4">
+            <div className="flex min-h-full items-start sm:items-center justify-center p-4 pb-28 md:pb-4 pt-8 sm:pt-4">
               <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="w-full max-w-lg my-auto"
+                  initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                  className="w-full max-w-lg my-0 sm:my-auto"
               >
                   <NurseVitalSignsForm 
                       patientId={patientId}
