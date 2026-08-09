@@ -1,0 +1,87 @@
+{
+  "name": "سالمندیار | پلتفرم جامع خدمات پرستاری و مراقبت در منزل",
+  "short_name": "سالمندیار",
+  "description": "پلتفرم رسمی سالمندیار - ارائه خدمات پرستاری سالمند، کودک و بیمار در منزل، پانسمان، تزریقات، ICU در منزل با کادر مجرب، دارای مجوز وزارت بهداشت و پشتیبانی ۲۴ ساعته",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e",
+  "dir": "rtl",
+  "lang": "fa-IR",
+  "categories": ["health", "medical", "lifestyle", "productivity"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192-maskable.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "داشبورد",
+      "short_name": "داشبورد",
+      "description": "ورود به داشبورد شخصی",
+      "url": "/dashboard",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "ابزارهای سلامت",
+      "short_name": "ابزارها",
+      "description": "دسترسی سریع به ابزارهای سلامت",
+      "url": "/tools",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "مقالات",
+      "short_name": "مقالات",
+      "description": "مطالعه مقالات سلامت",
+      "url": "/articles",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "خدمات",
+      "short_name": "خدمات",
+      "description": "مشاهده خدمات پرستاری",
+      "url": "/services",
+      "icons": [{ "src": "/icons/icon-192x192.svg", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/og-default.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "صفحه اصلی سالمندیار"
+    }
+  ]
+}

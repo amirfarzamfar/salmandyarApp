@@ -9,6 +9,8 @@ import { RealtimeNotificationListener } from "@/components/notifications/Realtim
 import IncompleteProfileModal from "@/components/profile-wizard/IncompleteProfileModal";
 import { NavigationHistoryTracker } from "@/components/navigation/NavigationHistoryTracker";
 import { OrganizationSchema, WebApplicationSchema } from "@/lib/seo/structured-data";
+import { PWAProvider } from "@/providers/pwa-provider";
+import { PWAInstallPrompt, OfflineBanner } from "@/components/pwa/PWAInstallPrompt";
 
 const vazirmatn = Vazirmatn({
   subsets: ["arabic", "latin"],
@@ -20,6 +22,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://salmandyar.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  manifest: "/manifest.json",
   title: {
     default: "سالمندیار | پلتفرم جامع خدمات پرستاری و مراقبت در منزل",
     template: "%s | سالمندیار",
@@ -38,6 +41,11 @@ export const metadata: Metadata = {
     "فیزیوتراپی در منزل",
   ],
   applicationName: "سالمندیار",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "سالمندیار",
+  },
   authors: [{ name: "تیم سالمندیار", url: "/about" }],
   creator: "سالمندیار",
   publisher: "سالمندیار",
@@ -53,6 +61,17 @@ export const metadata: Metadata = {
       "en-US": "/en",
       "de-DE": "/de",
     },
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icons/icon-192x192.svg", sizes: "192x192", type: "image/svg+xml" },
+      { url: "/icons/icon-512x512.svg", sizes: "512x512", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.svg", sizes: "180x180", type: "image/svg+xml" },
+    ],
+    shortcut: ["/favicon.ico"],
   },
   openGraph: {
     type: "website",
@@ -89,15 +108,25 @@ export const metadata: Metadata = {
     },
   },
   category: "health",
+  other: {
+    "msapplication-TileColor": "#0f766e",
+    "msapplication-tap-highlight": "no",
+    "mobile-web-app-capable": "yes",
+  },
 };
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: light)", color: "#0f766e" },
     { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
   ],
   width: "device-width",
   initialScale: 1,
+  maximumScale: 5,
+  minimumScale: 1,
+  userScalable: true,
+  viewportFit: "cover",
+  colorScheme: "light dark",
 };
 
 export default function RootLayout({
@@ -119,15 +148,19 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <QueryProvider >
-            <UserProvider>
-              <ToastProvider />
-              <NavigationHistoryTracker />
-              <RealtimeNotificationListener />
-              <IncompleteProfileModal />
-              {children}
-            </UserProvider>
-          </QueryProvider>
+          <PWAProvider>
+            <QueryProvider >
+              <UserProvider>
+                <ToastProvider />
+                <OfflineBanner />
+                <NavigationHistoryTracker />
+                <RealtimeNotificationListener />
+                <IncompleteProfileModal />
+                {children}
+                <PWAInstallPrompt />
+              </UserProvider>
+            </QueryProvider>
+          </PWAProvider>
         </ThemeProvider>
       </body>
     </html>
