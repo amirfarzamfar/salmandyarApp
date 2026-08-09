@@ -26,6 +26,7 @@ import GcsCalculatorTool from '@/components/tools/GcsCalculatorTool';
 import DripRateCalculatorTool from '@/components/tools/DripRateCalculatorTool';
 import BradenScaleTool from '@/components/tools/BradenScaleTool';
 import DailyCareChecklistTool from '@/components/tools/DailyCareChecklistTool';
+import DrugDosageCalculatorTool from '@/components/tools/DrugDosageCalculatorTool';
 import type { HealthTool, FAQItem } from '@/lib/types/content';
 import { listTools, getToolBySlug, listArticles, listServicesWithSeo, getFeaturedTools } from '@/lib/content-api';
 
@@ -41,23 +42,29 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const tool = await getToolBySlug(slug);
   if (!tool) return {};
+  const extraKeywords = [tool.primaryKeyword || '', ...(tool.secondaryKeywords || [])].filter(Boolean);
+  const finalKeywords = [tool.name, tool.shortDescription || '', ...extraKeywords].filter(Boolean);
+  const canonical = tool.canonicalUrl || `/tools/${tool.slug}`;
+  const ogImage = tool.ogImageUrl || tool.coverImageUrl;
+  const twImage = tool.twitterImageUrl || tool.coverImageUrl;
+
   return {
     title: tool.metaTitle || `${tool.name} | ابزار رایگان سالمندیار`,
     description: tool.metaDescription || tool.shortDescription,
-    keywords: [tool.name, tool.shortDescription || ''].filter(Boolean),
-    alternates: { canonical: `/tools/${tool.slug}` },
+    keywords: finalKeywords,
+    alternates: { canonical },
     openGraph: {
       title: tool.metaTitle,
       description: tool.metaDescription || tool.shortDescription,
       type: 'website',
-      url: `/tools/${tool.slug}`,
-      images: tool.coverImageUrl ? [tool.coverImageUrl] : undefined,
+      url: canonical,
+      images: ogImage ? [ogImage] : undefined,
     },
     twitter: {
       card: 'summary_large_image',
       title: tool.metaTitle,
-      description: tool.metaDescription,
-      images: tool.coverImageUrl ? [tool.coverImageUrl] : undefined,
+      description: tool.metaDescription || tool.shortDescription,
+      images: twImage ? [twImage] : undefined,
     },
   };
 }
@@ -97,6 +104,7 @@ function ToolIcon({ type }: { type: string }) {
 function renderTool(slug: string) {
   switch (slug) {
     case 'bmi-calculator': return <BmiCalculatorTool />;
+    case 'drug-dosage-calculator': return <DrugDosageCalculatorTool />;
     case 'gcs-calculator': return <GcsCalculatorTool />;
     case 'drip-rate-calculator': return <DripRateCalculatorTool />;
     case 'braden-scale-pressure-ulcer-risk': return <BradenScaleTool />;

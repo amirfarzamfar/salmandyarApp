@@ -283,8 +283,16 @@ export interface HealthTool {
   disclaimers?: string;
   usageCount?: number;
   coverImageUrl?: string;
+  ogImageUrl?: string;
+  twitterImageUrl?: string;
   metaTitle?: string;
   metaDescription?: string;
+  canonicalUrl?: string;
+  primaryKeyword?: string;
+  secondaryKeywords?: string[];
+  isFeatured?: boolean;
+  displayOrder?: number;
+  faqs?: FAQItem[];
 }
 
 export interface BreadcrumbItem {

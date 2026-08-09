@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, CheckSquare, Brain, Sparkles, ShieldCheck, Users, ArrowLeft, FileText } from 'lucide-react';
+import { Calculator, CheckSquare, Brain, Sparkles, ShieldCheck, Users, ArrowLeft, FileText, Pill, Activity, Clock, Zap, Award, ChevronLeft, TrendingUp } from 'lucide-react';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import Breadcrumb from '@/components/seo/Breadcrumb';
@@ -9,31 +9,52 @@ import { listTools, getFeaturedTools, listArticles, listServicesWithSeo } from '
 
 export const metadata: Metadata = {
   title: 'ابزارهای سلامت رایگان | سالمندیار',
-  description: 'مجموعه‌ای از ابزارهای رایگان و کاربردی سلامت برای سالمندان و خانواده‌ها: محاسبه BMI، GCS، قطره سرم، ریسک زخم بستر و چک لیست مراقبت.',
-  keywords: ['ابزار سلامت', 'ماشین حساب BMI', 'محاسبه GCS', 'قطره سرم', 'برادن اسکیل', 'چک لیست مراقبت'],
+  description: 'مجموعه‌ای از ابزارهای رایگان و کاربردی سلامت برای سالمندان، خانواده و پرستاران: محاسبه BMI، محاسبات دارویی، GCS، قطره سرم، ریسک زخم بستر برادن و چک لیست مراقبت روزانه.',
+  keywords: [
+    'ابزار سلامت',
+    'ماشین حساب BMI',
+    'محاسبه دوز دارو',
+    'ماشین حساب دارویی',
+    'محاسبه GCS',
+    'قطره سرم',
+    'برادن اسکیل',
+    'چک لیست مراقبت',
+    'محاسبه هپارین',
+    'محاسبه دوپامین',
+    'ابزار پرستاری',
+    'ابزار سالمندی',
+    'ماشین حساب قطره سرم',
+    'محاسبات ICU',
+  ],
   alternates: { canonical: '/tools' },
   openGraph: {
-    title: 'ابزارهای سلامت رایگان سالمندیار',
-    description: 'ابزارهای رایگان پزشکی برای محاسبه سریع و چک لیست مراقبت روزانه.',
+    title: 'ابزارهای سلامت رایگان سالمندیار | ۶+ ابزار پزشکی',
+    description: 'ابزارهای رایگان پزشکی و پرستاری برای محاسبه سریع BMI، دوز دارو، GCS، قطره سرم و چک لیست مراقبت روزانه بیمار و سالمند.',
     type: 'website',
     url: '/tools',
   },
 };
 
-const styleByType: Record<HealthTool['toolType'], { from: string; to: string; icon: any; label: string; dot: string }> = {
+const styleByType: Record<HealthTool['toolType'], { from: string; to: string; icon: any; label: string; dot: string; ring: string; shadow: string; badge: string }> = {
   Calculator: {
-    from: 'from-blue-400',
+    from: 'from-blue-500',
     to: 'to-cyan-600',
     icon: Calculator,
     label: 'ماشین حساب پزشکی',
     dot: 'bg-cyan-500',
+    ring: 'ring-cyan-500/20',
+    shadow: 'shadow-cyan-500/10',
+    badge: 'bg-cyan-50 text-cyan-700 border-cyan-200',
   },
   Checklist: {
-    from: 'from-emerald-400',
+    from: 'from-emerald-500',
     to: 'to-green-600',
     icon: CheckSquare,
     label: 'چک لیست عملی',
     dot: 'bg-emerald-500',
+    ring: 'ring-emerald-500/20',
+    shadow: 'shadow-emerald-500/10',
+    badge: 'bg-emerald-50 text-emerald-700 border-emerald-200',
   },
   Assessment: {
     from: 'from-fuchsia-500',
@@ -41,21 +62,42 @@ const styleByType: Record<HealthTool['toolType'], { from: string; to: string; ic
     icon: Brain,
     label: 'ارزیابی بالینی',
     dot: 'bg-fuchsia-500',
+    ring: 'ring-fuchsia-500/20',
+    shadow: 'shadow-fuchsia-500/10',
+    badge: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200',
   },
   Converter: {
-    from: 'from-indigo-400',
+    from: 'from-indigo-500',
     to: 'to-blue-600',
     icon: Calculator,
     label: 'مبدل واحد',
     dot: 'bg-indigo-500',
+    ring: 'ring-indigo-500/20',
+    shadow: 'shadow-indigo-500/10',
+    badge: 'bg-indigo-50 text-indigo-700 border-indigo-200',
   },
   Tracker: {
-    from: 'from-rose-400',
+    from: 'from-rose-500',
     to: 'to-red-600',
-    icon: Brain,
+    icon: Activity,
     label: 'ردیاب سلامت',
     dot: 'bg-rose-500',
+    ring: 'ring-rose-500/20',
+    shadow: 'shadow-rose-500/10',
+    badge: 'bg-rose-50 text-rose-700 border-rose-200',
   },
+};
+
+const DEFAULT_STYLE = styleByType.Calculator;
+
+// Icon override for specific slugs (better UX than default per type)
+const iconBySlug: Record<string, any> = {
+  'bmi-calculator': TrendingUp,
+  'drug-dosage-calculator': Pill,
+  'gcs-calculator': Brain,
+  'drip-rate-calculator': Activity,
+  'braden-scale-pressure-ulcer-risk': ShieldCheck,
+  'daily-care-checklist': CheckSquare,
 };
 
 export default async function ToolsListPage() {
@@ -108,48 +150,98 @@ export default async function ToolsListPage() {
           </section>
 
           <section className="mb-14">
+            <div className="flex items-end justify-between mb-6 gap-4 flex-wrap">
+              <div>
+                <h2 className="font-black text-2xl sm:text-3xl text-gray-900 mb-1.5 flex items-center gap-2.5">
+                  <Award size={26} className="text-purple-600" />
+                  همه ابزارهای سلامت
+                </h2>
+                <p className="text-sm text-gray-500 font-medium">{tools.length} ابزار فعال · همه رایگان و بدون ثبت نام</p>
+              </div>
+              <div className="hidden sm:flex items-center gap-1.5 text-xs font-bold text-gray-500">
+                <Clock size={14} /> میانگین زمان استفاده: کمتر از ۲ دقیقه
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
               {tools.map(tool => {
-                const style = styleByType[tool.toolType];
-                const Icon = style.icon;
+                const style = styleByType[tool.toolType] || DEFAULT_STYLE;
+                const SpecificIcon = iconBySlug[tool.slug];
+                const Icon = SpecificIcon || style.icon;
+                const isFeatured = !!tool.isFeatured;
+                const tags = tool.secondaryKeywords?.slice(0, 2) || [];
+
                 return (
                   <Link
                     key={tool.id}
                     href={`/tools/${tool.slug}`}
-                    className="group relative bg-white rounded-3xl p-6 sm:p-7 border-2 border-gray-100 hover:border-transparent hover:shadow-2xl hover:shadow-gray-200/60 transition-all duration-500 overflow-hidden"
+                    className="group relative bg-white rounded-3xl p-6 sm:p-7 border-2 hover:border-transparent transition-all duration-500 overflow-hidden"
+                    style={{ borderColor: isFeatured ? 'transparent' : undefined }}
                   >
-                    <div
-                      className={`absolute inset-x-0 top-0 h-40 bg-gradient-to-br ${style.from} ${style.to} opacity-[0.08] group-hover:opacity-[0.12] transition`}
-                    />
+                    {/* Featured Gradient Border Effect */}
+                    {isFeatured && (
+                      <div className="absolute inset-0 p-[2px] rounded-3xl pointer-events-none opacity-90 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-amber-400 via-orange-500 to-rose-500" />
+                      </div>
+                    )}
+
+                    {/* Card Background Overlay */}
+                    <div className={`absolute inset-x-0 top-0 h-44 bg-gradient-to-br ${style.from} ${style.to} opacity-[0.08] group-hover:opacity-[0.14] transition duration-500`} />
+
                     <div className="relative">
                       <div className="flex items-start justify-between gap-4 mb-5">
-                        <div
-                          className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${style.from} ${style.to} text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-500`}
-                        >
-                          <Icon size={30} />
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${style.from} ${style.to} text-white flex items-center justify-center shadow-xl ${style.shadow} group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-500 ring-8 ${style.ring}`}>
+                          <Icon size={30} strokeWidth={2.25} />
                         </div>
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-50 text-gray-700 text-[11px] font-bold border border-gray-100`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-                          {style.label}
-                        </span>
+                        <div className="flex flex-col gap-2 items-end">
+                          {isFeatured && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-l from-amber-500 to-orange-500 text-white text-[10px] font-black shadow-lg shadow-orange-500/20">
+                              <Zap size={12} fill="currentColor" /> ویژه
+                            </span>
+                          )}
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold border ${style.badge}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
+                            {style.label}
+                          </span>
+                        </div>
                       </div>
-                      <h3 className="font-black text-xl sm:text-2xl text-gray-900 group-hover:text-gray-900 mb-2.5 leading-tight">
+
+                      <h3 className="font-black text-xl sm:text-2xl text-gray-900 mb-2.5 leading-tight group-hover:text-slate-900">
                         {tool.name}
                       </h3>
-                      <p className="text-sm text-gray-600 leading-relaxed mb-4 line-clamp-2">
+
+                      <p className="text-sm text-gray-600 leading-relaxed mb-4 min-h-[48px] line-clamp-2">
                         {tool.description || tool.shortDescription}
                       </p>
+
+                      {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {tags.map((tag, i) => (
+                            <span key={i} className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-gray-50 text-gray-600 border border-gray-100 hover:bg-gray-100 transition">
+                              #{tag.replace(/\s+/g, '')}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
                       {tool.howToUse && (
-                        <p className="text-xs text-gray-500 leading-relaxed mb-5 bg-gray-50 p-3 rounded-2xl border border-gray-100">
+                        <p className="text-xs text-gray-500 leading-relaxed mb-5 bg-gray-50/80 p-3.5 rounded-2xl border border-gray-100 line-clamp-3">
+                          <span className="font-bold text-gray-700 block mb-1 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                            <FileText size={12} /> راهنمای استفاده
+                          </span>
                           {tool.howToUse}
                         </p>
                       )}
-                      <div className="flex items-center justify-between pt-4 border-t border-gray-50">
-                        <span className="text-[11px] font-bold text-gray-500">بدون ثبت نام · رایگان</span>
-                        <span className="inline-flex items-center gap-1 font-black text-sm text-slate-800 group-hover:-translate-x-1 transition-transform">
-                          استفاده کنید <ArrowLeft size={15} />
+
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-100 group-hover:border-gray-200 transition">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">رایگان</span>
+                          <span className="w-1 h-1 rounded-full bg-gray-200" />
+                          <span className="text-[10px] font-black text-gray-400 uppercase tracking-wider">بدون ثبت نام</span>
+                        </div>
+                        <span className={`inline-flex items-center gap-1.5 font-black text-sm bg-gradient-to-l ${style.from} ${style.to} bg-clip-text text-transparent group-hover:-translate-x-1.5 group-hover:gap-2 transition-all duration-300`}>
+                          استفاده کنید
+                          <ChevronLeft size={15} strokeWidth={2.5} />
                         </span>
                       </div>
                     </div>

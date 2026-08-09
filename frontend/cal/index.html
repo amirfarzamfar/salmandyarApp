@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاسبات دارویی - نرم‌افزار پرستاری</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <i class="fas fa-calculator"></i>
+                <h1>محاسبات دارویی</h1>
+                <p>نرم‌افزار تخصصی محاسبات دارویی برای پرستاران</p>
+            </div>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="heparin">
+                <i class="fas fa-syringe"></i>
+                هپارین/انسولین
+            </button>
+            <button class="tab-btn" data-tab="dopamine">
+                <i class="fas fa-heartbeat"></i>
+                دوپامین/دبوتامین
+            </button>
+            <button class="tab-btn" data-tab="epinephrine">
+                <i class="fas fa-bolt"></i>
+                اپی نفرین/نوراپی نفرین
+            </button>
+            <button class="tab-btn" data-tab="nitroglycerin">
+                <i class="fas fa-heart"></i>
+                نیتروگلیسیرین
+            </button>
+            <button class="tab-btn" data-tab="amiodarone">
+                <i class="fas fa-pills"></i>
+                آمیودارون/لیدوکایین
+            </button>
+            <button class="tab-btn" data-tab="pantoprazole">
+                <i class="fas fa-capsules"></i>
+                پنتاپرازول
+            </button>
+            <button class="tab-btn" data-tab="midazolam">
+                <i class="fas fa-syringe"></i>
+                میدازولام
+            </button>
+            <button class="tab-btn" data-tab="fentanyl">
+                <i class="fas fa-heart"></i>
+                فنتانیل
+            </button>
+            <button class="tab-btn" data-tab="octreotide">
+                <i class="fas fa-prescription-bottle"></i>
+                اکتروتاید
+            </button>
+            <button class="tab-btn" data-tab="general-calc">
+                <i class="fas fa-calculator"></i>
+                محاسبات دارویی
+            </button>
+            <button class="tab-btn" data-tab="percentage-calc">
+                <i class="fas fa-flask"></i>
+                داروهای درصدی
+            </button>
+            <button class="tab-btn" data-tab="serum-drops">
+                <i class="fas fa-tint"></i>
+                قطرات سرم
+            </button>
+            <button class="tab-btn" data-tab="converter">
+                <i class="fas fa-exchange-alt"></i>
+                تبدیل واحد
+            </button>
+        </nav>
+
+        <main class="main-content">
+            <!-- هپارین/انسولین -->
+            <div class="tab-content active" id="heparin">
+                <div class="card">
+                    <h2><i class="fas fa-syringe"></i> محاسبه دوز هپارین/انسولین</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس واحد/ساعت</p>
+
+                    <div class="form-group">
+                        <label for="heparin-dose">دوز تجویز شده (واحد/ساعت):</label>
+                        <input type="number" id="heparin-dose" placeholder="مثال: 400">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="heparin-drug-total">مقدار کل دارو (واحد):</label>
+                        <input type="number" id="heparin-drug-total" placeholder="مثال: 10000 (2 × 5000)">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="heparin-volume">حجم کل محلول (میلی‌لیتر):</label>
+                        <input type="number" id="heparin-volume" placeholder="مثال: 50">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateHeparin()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="heparin-result"></div>
+                </div>
+            </div>
+
+            <!-- دوپامین/دبوتامین -->
+            <div class="tab-content" id="dopamine">
+                <div class="card">
+                    <h2><i class="fas fa-heartbeat"></i> محاسبه دوز دوپامین/دبوتامین/میلرینون</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس میکروگرم/کیلوگرم/دقیقه</p>
+
+                    <div class="form-group">
+                        <label for="dopamine-dose">دوز تجویز شده (میکروگرم/کیلوگرم/دقیقه):</label>
+                        <input type="number" id="dopamine-dose" placeholder="مثال: 5">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dopamine-weight">وزن بیمار (کیلوگرم):</label>
+                        <input type="number" id="dopamine-weight" placeholder="مثال: 70">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dopamine-drug-total">مقدار کل دارو (میلی‌گرم):</label>
+                        <input type="number" id="dopamine-drug-total" placeholder="مثال: 10000 (40 در 250)">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dopamine-volume">حجم کل محلول (میلی‌لیتر):</label>
+                        <input type="number" id="dopamine-volume" placeholder="مثال: 250">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateDopamine()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="dopamine-result"></div>
+                </div>
+            </div>
+
+            <!-- اپی نفرین/نوراپی نفرین -->
+            <div class="tab-content" id="epinephrine">
+                <div class="card">
+                    <h2><i class="fas fa-bolt"></i> محاسبه دوز اپی نفرین/نوراپی نفرین</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس میکروگرم/دقیقه</p>
+
+                    <div class="form-group">
+                        <label for="epi-dose">دوز تجویز شده (میکروگرم/دقیقه):</label>
+                        <input type="number" id="epi-dose" placeholder="مثال: 0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="epi-drug-total">مقدار کل دارو (میلی‌گرم):</label>
+                        <input type="number" id="epi-drug-total" placeholder="مثال: 250 (1 در 250)">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="epi-volume">حجم کل محلول (میلی‌لیتر):</label>
+                        <input type="number" id="epi-volume" placeholder="مثال: 250">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateEpinephrine()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="epi-result"></div>
+                </div>
+            </div>
+
+            <!-- نیتروگلیسیرین -->
+            <div class="tab-content" id="nitroglycerin">
+                <div class="card">
+                    <h2><i class="fas fa-heart"></i> محاسبه دوز نیتروگلیسیرین</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس میکروگرم/دقیقه</p>
+
+                    <div class="form-group">
+                        <label for="nitro-dose">دوز تجویز شده (میکروگرم/دقیقه):</label>
+                        <input type="number" id="nitro-dose" placeholder="مثال: 10">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nitro-drug-total">مقدار کل دارو (میلی‌گرم):</label>
+                        <input type="number" id="nitro-drug-total" placeholder="مثال: 1250 (5 در 250)">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="nitro-volume">حجم کل محلول (میلی‌لیتر):</label>
+                        <input type="number" id="nitro-volume" placeholder="مثال: 250">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateNitroglycerin()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="nitro-result"></div>
+                </div>
+            </div>
+
+            <!-- آمیودارون/لیدوکایین -->
+            <div class="tab-content" id="amiodarone">
+                <div class="card">
+                    <h2><i class="fas fa-pills"></i> محاسبه دوز آمیودارون/لیدوکایین</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس میلی‌گرم/دقیقه</p>
+
+                    <div class="form-group">
+                        <label for="amio-dose">دوز تجویز شده (میلی‌گرم/دقیقه):</label>
+                        <input type="number" id="amio-dose" placeholder="مثال: 1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amio-drug-total">مقدار کل دارو (میلی‌گرم):</label>
+                        <input type="number" id="amio-drug-total" placeholder="مثال: 150 (1.5 در 100)">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="amio-volume">حجم کل محلول (میلی‌لیتر):</label>
+                        <input type="number" id="amio-volume" placeholder="مثال: 100">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateAmiodarone()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="amio-result"></div>
+                </div>
+            </div>
+
+            <!-- پنتاپرازول -->
+            <div class="tab-content" id="pantoprazole">
+                <div class="card">
+                    <h2><i class="fas fa-capsules"></i> محاسبه دوز پنتاپرازول</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس میلی‌گرم/ساعت</p>
+
+                    <div class="form-group">
+                        <label for="pantoprazole-dose">دوز تجویز شده (میلی‌گرم/ساعت):</label>
+                        <input type="number" id="pantoprazole-dose" placeholder="مثال: 8" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pantoprazole-drug-total">مقدار کل داروی کشیده شده (میلی‌گرم):</label>
+                        <input type="number" id="pantoprazole-drug-total" placeholder="مثال: 80 (2 × 40 mg)" step="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pantoprazole-volume">حجم کل محلول (میلی‌لیتر):</label>
+                        <input type="number" id="pantoprazole-volume" placeholder="مثال: 50" step="1">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculatePantoprazole()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="pantoprazole-result"></div>
+                </div>
+            </div>
+
+            <!-- میدازولام -->
+            <div class="tab-content" id="midazolam">
+                <div class="card">
+                    <h2><i class="fas fa-syringe"></i> محاسبه دوز میدازولام</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس میلی‌گرم/ساعت یا میکروگرم/ساعت</p>
+
+                    <div class="form-group">
+                        <label for="midazolam-dose-type">نوع دوز:</label>
+                        <select id="midazolam-dose-type" onchange="toggleMidazolamDoseType()">
+                            <option value="mg-per-hr">میلی‌گرم/ساعت</option>
+                            <option value="ug-per-hr">میکروگرم/ساعت</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label id="midazolam-dose-label" for="midazolam-dose">دوز تجویز شده
+                            (میلی‌گرم/ساعت):</label>
+                        <input type="number" id="midazolam-dose" placeholder="مثال: 5" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label id="midazolam-drug-total-label" for="midazolam-drug-total">مقدار کل دارو
+                            (میلی‌گرم):</label>
+                        <input type="number" id="midazolam-drug-total" placeholder="مثال: 50" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label id="midazolam-volume-label" for="midazolam-volume">حجم کل محلول
+                            (میلی‌لیتر):</label>
+                        <input type="number" id="midazolam-volume" placeholder="مثال: 50" step="1">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateMidazolam()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="midazolam-result"></div>
+                </div>
+            </div>
+
+            <!-- فنتانیل -->
+            <div class="tab-content" id="fentanyl">
+                <div class="card">
+                    <h2><i class="fas fa-heart"></i> محاسبه دوز فنتانیل</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس میکروگرم/ساعت</p>
+
+                    <div class="form-group">
+                        <label for="fentanyl-dose">دوز تجویز شده (میکروگرم/ساعت):</label>
+                        <input type="number" id="fentanyl-dose" placeholder="مثال: 50" step="0.1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fentanyl-drug-total">مقدار کل دارو (میکروگرم):</label>
+                        <input type="number" id="fentanyl-drug-total" placeholder="مثال: 500 (1 آمپول)" step="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fentanyl-volume">حجم کل محلول (میلی‌لیتر):</label>
+                        <input type="number" id="fentanyl-volume" placeholder="مثال: 50" step="1">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateFentanyl()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="fentanyl-result"></div>
+                </div>
+            </div>
+
+            <!-- اکتروتاید -->
+            <div class="tab-content" id="octreotide">
+                <div class="card">
+                    <h2><i class="fas fa-prescription-bottle"></i> محاسبه دوز اکتروتاید</h2>
+                    <p class="description">محاسبه سرعت انفوزیون بر اساس میکروگرم/ساعت</p>
+
+                    <div class="form-group">
+                        <label for="octreotide-dose">دوز تجویز شده (میکروگرم/ساعت):</label>
+                        <input type="number" id="octreotide-dose" placeholder="مثال: 25">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="octreotide-drug-total">مقدار کل دارو (میکروگرم):</label>
+                        <input type="number" id="octreotide-drug-total" placeholder="مثال: 500" step="1">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="octreotide-volume">حجم کل محلول (میلی‌لیتر):</label>
+                        <input type="number" id="octreotide-volume" placeholder="مثال: 20" step="1">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateOctreotide()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="octreotide-result"></div>
+                </div>
+            </div>
+
+            <!-- محاسبات دارویی -->
+            <div class="tab-content" id="general-calc">
+                <div class="card">
+                    <div class="box-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-calculator" style="font-size: 2rem; color: #667eea;"></i>
+                        <h2 class="box-title" style="margin: 0;">محاسبات دارویی</h2>
+                    </div>
+                    <div class="box-content">
+                        <div class="form-group">
+                            <label for="drugDose">دوز دارو (موجود در آمپول/ویال):</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" id="drugDose" placeholder="دوز دارو">
+                                <select id="drugDoseUnit" style="width: 100px;">
+                                    <option value="mg">mg</option>
+                                    <option value="mcg">mcg</option>
+                                    <option value="U">U</option>
+                                    <option value="g">g</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="syringeVolume">حجم سرنگ یا میکروست (میلی‌لیتر):</label>
+                            <input type="number" id="syringeVolume" placeholder="حجم سرنگ / میکروست">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prescribedDose">دوز تجویزی:</label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="number" id="prescribedDose" placeholder="دوز تجویزی">
+                                <select id="prescribedDoseUnit" onchange="toggleWeightInput()">
+                                    <option value="mg/h">mg/h</option>
+                                    <option value="mg/min">mg/min</option>
+                                    <option value="mg/kg/h">mg/kg/h</option>
+                                    <option value="mg/kg/min">mg/kg/min</option>
+                                    <option value="mcg/kg/min">mcg/kg/min</option>
+                                    <option value="mcg/kg/h">mcg/kg/h</option>
+                                    <option value="mcg/min">mcg/min</option>
+                                    <option value="mcg/h">mcg/h</option>
+                                    <option value="U/h">U/h</option>
+                                    <option value="U/kg/h">U/kg/h</option>
+                                    <option value="U/kg/min">U/kg/min</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="weightInput" style="display: none;">
+                            <label for="weight">وزن بیمار (کیلوگرم):</label>
+                            <input type="number" id="weight" placeholder="وزن بیمار">
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-weight: bold;">روش تزریق:</label>
+                            <div class="radio-group"
+                                style="display: flex; gap: 20px; align-items: center; margin-top: 10px;">
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                    <input type="radio" name="infusionMethod" value="pump" checked> پمپ
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                                    <input type="radio" name="infusionMethod" value="microset"> میکروست
+                                </label>
+                            </div>
+                        </div>
+
+                        <button class="calculate-btn" onclick="calculateGeneralDrug()">
+                            <i class="fas fa-calculator"></i> محاسبه دارو
+                        </button>
+
+                        <div class="result" id="drugResult"></div>
+
+                        <div style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
+                            <p style="font-weight: bold; margin-bottom: 20px; text-align: center; color: #555;">
+                                در صورت نیاز به چاپ لیبل دارویی، بخش‌های زیر را تکمیل کنید
+                            </p>
+                            <div class="form-group">
+                                <label for="drugName">نام دارو:</label>
+                                <input type="text" id="drugName" placeholder="مثلاً: دوپامین">
+                            </div>
+                            <div class="form-group">
+                                <label for="nurseName">نام پرستار:</label>
+                                <input type="text" id="nurseName" placeholder="نام خود را وارد کنید">
+                            </div>
+                            <div class="form-group">
+                                <label for="patientName">نام بیمار:</label>
+                                <input type="text" id="patientName" placeholder="نام بیمار را وارد کنید">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- محاسبات داروهای درصدی -->
+            <div class="tab-content" id="percentage-calc">
+                <div class="card">
+                    <div class="box-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-flask" style="font-size: 2rem; color: #667eea;"></i>
+                        <h2 class="box-title" style="margin: 0;">محاسبات داروهای درصدی</h2>
+                    </div>
+                    <p class="description">محاسبه حجم مورد نیاز بر اساس درصد دارو</p>
+
+                    <div class="form-group">
+                        <label for="drugPercentage">درصد دارو:</label>
+                        <input type="number" id="drugPercentage" placeholder="مثال: 1 برای ۱٪">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="requiredDose">دوز مورد نیاز:</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="number" id="requiredDose" placeholder="دوز مورد نیاز">
+                            <select id="requiredDoseUnit">
+                                <option value="mg">میلی‌گرم (mg)</option>
+                                <option value="g">گرم (g)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculatePercentageDrug()">
+                        <i class="fas fa-calculator"></i> محاسبه میلی‌لیتر مورد نیاز
+                    </button>
+
+                    <div class="result" id="percentageDrugResult"></div>
+                </div>
+            </div>
+
+            <!-- قطرات سرم -->
+            <div class="tab-content" id="serum-drops">
+                <div class="card">
+                    <div class="box-header" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-tint" style="font-size: 2rem; color: #667eea;"></i>
+                        <h2 class="box-title" style="margin: 0;">محاسبه قطرات سرم</h2>
+                    </div>
+                    <p class="description">محاسبه تعداد قطرات در دقیقه (ست سرم ۱۵ قطره)</p>
+
+                    <div class="form-group">
+                        <label for="serum-volume">حجم سرم (میلی‌لیتر):</label>
+                        <input type="number" id="serum-volume" placeholder="مثال: 500">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="serum-hours">مدت زمان انفوزیون (ساعت):</label>
+                        <input type="number" id="serum-hours" placeholder="مثال: 8">
+                    </div>
+
+                    <button class="calculate-btn" onclick="calculateSerumDrops()">
+                        <i class="fas fa-calculator"></i> محاسبه
+                    </button>
+
+                    <div class="result" id="serum-result"></div>
+                </div>
+            </div>
+
+            <!-- تبدیل واحد -->
+            <div class="tab-content" id="converter">
+                <div class="card">
+                    <h2><i class="fas fa-exchange-alt"></i> تبدیل واحد</h2>
+                    <p class="description">تبدیل واحدهای مختلف دارویی به یکدیگر</p>
+
+                    <div class="form-group">
+                        <label for="converter-value">مقدار:</label>
+                        <input type="number" id="converter-value" placeholder="مثال: 1000">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="converter-from">از واحد:</label>
+                        <select id="converter-from">
+                            <option value="mg">میلی‌گرم (mg)</option>
+                            <option value="g">گرم (g)</option>
+                            <option value="kg">کیلوگرم (kg)</option>
+                            <option value="mcg">میکروگرم (mcg)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="converter-to">به واحد:</label>
+                        <select id="converter-to">
+                            <option value="mcg">میکروگرم (mcg)</option>
+                            <option value="mg">میلی‌گرم (mg)</option>
+                            <option value="g">گرم (g)</option>
+                            <option value="kg">کیلوگرم (kg)</option>
+                        </select>
+                    </div>
+
+                    <button class="calculate-btn" onclick="convertUnits()">
+                        <i class="fas fa-exchange-alt"></i> تبدیل
+                    </button>
+
+                    <div class="result" id="converter-result"></div>
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2024 نرم‌افزار محاسبات دارویی - طراحی شده برای پرستاران</p>
+            <p>بر اساس محتوای <a href="https://farzamnet.ir/" target="_blank">فرزام نت</a></p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // جلوگیری از Right-Click
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // جلوگیری از کیبورد Developer Tools
+        document.addEventListener('keydown', function (e) {
+            // F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+I
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+Shift+J
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 74) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+U
+            if (e.ctrlKey && e.keyCode === 85) {
+                e.preventDefault();
+                return false;
+            }
+            // Ctrl+S
+            if (e.ctrlKey && e.keyCode === 83) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // محدود کردن Copy-Paste
+        document.addEventListener('copy', function (e) {
+            e.clipboardData.setData('text/plain', '');
+            e.preventDefault();
+        });
+
+        document.addEventListener('cut', function (e) {
+            e.clipboardData.setData('text/plain', '');
+            e.preventDefault();
+        });
+
+        // نمایش پیام وقتی کسی سعی کند Developer Tools باز کند
+        (function () {
+            let devtools = { open: false };
+            const element = new Image();
+            Object.defineProperty(element, 'id', {
+                get: function () {
+                    devtools.open = true;
+                    console.clear();
+                    console.log('%c محتوا محافظت شده است!', 'color: red; font-size: 50px; font-weight: bold;');
+                }
+            });
+            setInterval(function () {
+                devtools.open = false;
+                console.log(element);
+            }, 1000);
+        })();
+    </script>
+</body>
+
+</html>

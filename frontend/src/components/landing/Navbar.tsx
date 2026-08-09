@@ -2,13 +2,34 @@
 
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
-import { Menu, X, Phone, ChevronDown, Clock, Stethoscope, HeartPulse, BookOpen, Wrench, MapPin, Home, UserRound } from 'lucide-react';
+import {
+  Menu, X, Phone, ChevronDown, ChevronLeft, Clock, Stethoscope, HeartPulse, BookOpen,
+  Wrench, MapPin, Home, UserRound, Sparkles, Zap,
+  Calculator, CheckSquare, Brain, ShieldCheck, Activity, Pill, TrendingUp,
+} from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '@/components/auth/UserContext';
 import { resolveRoleHomePath } from '@/utils/role-routing';
 import { getMegamenu, listTools, type MegamenuResponse } from '@/lib/content-api';
 import * as mock from '@/lib/data/content-data';
+
+const TOOL_ICON_BY_SLUG: Record<string, any> = {
+  'bmi-calculator': TrendingUp,
+  'drug-dosage-calculator': Pill,
+  'gcs-calculator': Brain,
+  'drip-rate-calculator': Activity,
+  'braden-scale-pressure-ulcer-risk': ShieldCheck,
+  'daily-care-checklist': CheckSquare,
+};
+
+const TOOL_COLORS: Record<string, { bg: string; text: string; ring: string }> = {
+  Calculator: { bg: 'from-blue-500 to-cyan-600', text: 'text-cyan-700', ring: 'ring-cyan-500/20' },
+  Checklist: { bg: 'from-emerald-500 to-green-600', text: 'text-emerald-700', ring: 'ring-emerald-500/20' },
+  Assessment: { bg: 'from-fuchsia-500 to-purple-600', text: 'text-fuchsia-700', ring: 'ring-fuchsia-500/20' },
+  Converter: { bg: 'from-indigo-500 to-blue-600', text: 'text-indigo-700', ring: 'ring-indigo-500/20' },
+  Tracker: { bg: 'from-rose-500 to-red-600', text: 'text-rose-700', ring: 'ring-rose-500/20' },
+};
 
 function createFallbackMegamenu(): MegamenuResponse {
   return {
@@ -54,7 +75,16 @@ export default function Navbar() {
   }, []);
 
   const fallbackMega = useMemo(() => createFallbackMegamenu(), []);
-  const fallbackTools = useMemo(() => (mock.healthTools as any[]).slice(0, 5), []);
+  const fallbackTools = useMemo(() => (
+    (mock.healthTools as any[])
+      .slice()
+      .sort((a: any, b: any) => {
+        const oa = (a.isFeatured ? 0 : 1) * 1000 + (a.displayOrder ?? 999);
+        const ob = (b.isFeatured ? 0 : 1) * 1000 + (b.displayOrder ?? 999);
+        return oa - ob;
+      })
+      .slice(0, 8)
+  ), []);
 
   const { data: menuData } = useQuery<MegamenuResponse>({
     queryKey: ['megamenu'],
@@ -66,7 +96,7 @@ export default function Navbar() {
 
   const { data: topTools = fallbackTools } = useQuery({
     queryKey: ['topTools'],
-    queryFn: () => listTools().then(list => (list as any[]).slice(0, 5)),
+    queryFn: () => listTools().then(list => (list as any[]).slice(0, 8)),
     initialData: fallbackTools,
     staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
@@ -248,36 +278,112 @@ export default function Navbar() {
                   <button
                     onMouseEnter={() => setActiveMega('tools')}
                     onClick={() => setActiveMega(activeMega === 'tools' ? null : 'tools')}
-                    className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition ${activeMega === 'tools' ? 'text-teal-600 bg-teal-50' : 'text-gray-700 hover:text-teal-600 hover:bg-gray-50'}`}
+                    className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition ${activeMega === 'tools' ? 'text-purple-700 bg-purple-50' : 'text-gray-700 hover:text-purple-700 hover:bg-purple-50/50'}`}
                   >
-                    <Wrench size={16} className="opacity-70" />
+                    <Wrench size={16} className="opacity-80" />
                     ابزارهای سلامت
                     <ChevronDown size={14} className={`transition ${activeMega === 'tools' ? 'rotate-180' : ''}`} />
                   </button>
                   {activeMega === 'tools' && (
                     <div
                       onMouseEnter={() => setActiveMega('tools')}
-                      className="absolute top-full right-0 mt-2 w-[500px] bg-white rounded-2xl shadow-2xl border border-gray-100 p-6 animate-in fade-in slide-in-from-top-2 duration-200"
+                      className="absolute top-full right-0 mt-2 w-[720px] max-w-[calc(100vw-2rem)] bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
                     >
-                      <div className="grid grid-cols-2 gap-3">
-                        {topTools.map((tool) => (
-                          <Link
-                            key={tool.id}
-                            href={`/tools/${tool.slug}`}
-                            className="group p-3 rounded-xl border border-gray-100 hover:border-teal-200 hover:bg-teal-50/40 transition"
-                          >
-                            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-100 to-orange-50 flex items-center justify-center text-orange-600 mb-2 group-hover:scale-110 transition">
-                              <Wrench size={18} />
+                      {/* Header */}
+                      <div className="relative bg-gradient-to-l from-purple-600 via-purple-500 to-pink-500 text-white px-7 py-5 overflow-hidden">
+                        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+                        <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-cyan-300/20 blur-3xl" />
+                        <div className="relative flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur border border-white/20 flex items-center justify-center">
+                              <Sparkles size={22} />
                             </div>
-                            <h4 className="font-bold text-sm text-gray-900 mb-1 group-hover:text-orange-600 transition">{tool.name}</h4>
-                            <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{tool.shortDescription}</p>
+                            <div>
+                              <h3 className="font-black text-lg leading-tight flex items-center gap-2">
+                                ابزارهای سلامت رایگان
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-yellow-400/90 text-yellow-950">
+                                  <Zap size={10} fill="currentColor" /> {topTools.length}+ ابزار فعال
+                                </span>
+                              </h3>
+                              <p className="text-white/85 text-xs sm:text-sm font-medium mt-0.5">محاسبات پزشکی و پرستاری · بدون ثبت نام · نتایج فوری</p>
+                            </div>
+                          </div>
+                          <Link href="/tools" className="shrink-0 h-9 px-4 rounded-xl bg-white/15 backdrop-blur border border-white/25 hover:bg-white/25 text-white text-xs font-black transition flex items-center gap-1.5">
+                            مشاهده همه ابزارها <ChevronLeft size={14} />
                           </Link>
-                        ))}
+                        </div>
                       </div>
-                      <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-                        <Link href="/tools" className="text-sm font-bold text-teal-600 hover:text-teal-700">
-                          همه ابزارهای رایگان ←
-                        </Link>
+
+                      <div className="p-5 sm:p-6 grid grid-cols-5 gap-5">
+                        {/* FEATURED TOOLS (left column - 3 of 5 cols) */}
+                        <div className="col-span-5 sm:col-span-3 space-y-2.5">
+                          <h4 className="text-[11px] font-black uppercase tracking-wider text-purple-700 mb-3 flex items-center gap-1.5 px-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" /> ابزارهای ویژه پرکاربرد
+                          </h4>
+                          {topTools.filter((t: any) => !!t.isFeatured).slice(0, 2).map((tool: any) => {
+                            const Icon = TOOL_ICON_BY_SLUG[tool.slug] || Calculator;
+                            const color = TOOL_COLORS[tool.toolType as keyof typeof TOOL_COLORS] || TOOL_COLORS.Calculator;
+                            return (
+                              <Link
+                                key={tool.id}
+                                href={`/tools/${tool.slug}`}
+                                className="group block p-4 rounded-2xl bg-gradient-to-br from-slate-50 via-white to-white border-2 border-gray-100 hover:border-transparent hover:shadow-xl hover:shadow-gray-200/40 transition-all duration-300 relative overflow-hidden"
+                              >
+                                <div className={`absolute inset-0 opacity-0 group-hover:opacity-[0.07] transition bg-gradient-to-br ${color.bg}`} />
+                                <div className="relative flex items-start gap-3.5">
+                                  <div className={`w-13 h-13 shrink-0 w-[52px] h-[52px] rounded-2xl bg-gradient-to-br ${color.bg} text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-[-2deg] transition-all duration-300 ring-8 ${color.ring}`}>
+                                    <Icon size={24} strokeWidth={2.3} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2 mb-1">
+                                      <h5 className="font-black text-base text-gray-900 group-hover:text-slate-900 leading-tight">{tool.name}</h5>
+                                      <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-lg bg-gradient-to-l from-orange-500 to-amber-500 text-white shadow shadow-orange-500/20">
+                                        <Zap size={9} fill="currentColor" /> ویژه
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-gray-600 leading-relaxed line-clamp-2 mb-2">
+                                      {tool.shortDescription || tool.description}
+                                    </p>
+                                    <div className={`inline-flex items-center gap-1 text-xs font-black ${color.text} group-hover:-translate-x-1 transition-transform`}>
+                                      شروع محاسبه <ChevronLeft size={13} strokeWidth={2.5} />
+                                    </div>
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+
+                        {/* COMPACT TOOLS LIST (right column - 2 of 5 cols) */}
+                        <div className="col-span-5 sm:col-span-2">
+                          <h4 className="text-[11px] font-black uppercase tracking-wider text-indigo-700 mb-3 flex items-center gap-1.5 px-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> لیست کامل ابزارها
+                          </h4>
+                          <div className="space-y-1.5">
+                            {topTools.map((tool: any) => {
+                              const Icon = TOOL_ICON_BY_SLUG[tool.slug] || Calculator;
+                              const color = TOOL_COLORS[tool.toolType as keyof typeof TOOL_COLORS] || TOOL_COLORS.Calculator;
+                              return (
+                                <Link
+                                  key={tool.id}
+                                  href={`/tools/${tool.slug}`}
+                                  className="group flex items-center gap-2.5 p-2.5 rounded-xl hover:bg-gray-50 transition"
+                                >
+                                  <div className={`w-9 h-9 shrink-0 rounded-xl bg-gradient-to-br ${color.bg} text-white flex items-center justify-center shadow group-hover:scale-110 transition-transform`}>
+                                    <Icon size={17} strokeWidth={2.3} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="block font-bold text-sm text-gray-900 group-hover:text-slate-900 truncate leading-tight">{tool.name}</span>
+                                    <span className="block text-[11px] text-gray-500 truncate leading-tight mt-0.5">
+                                      {tool.shortDescription?.slice(0, 40) || 'ابزار پزشکی رایگان'}
+                                    </span>
+                                  </div>
+                                  <ChevronLeft size={14} className="text-gray-300 group-hover:text-gray-600 group-hover:-translate-x-0.5 shrink-0 transition" />
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}

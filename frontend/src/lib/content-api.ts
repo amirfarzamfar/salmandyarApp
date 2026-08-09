@@ -240,13 +240,26 @@ export async function getGuideBySlug(slug: string): Promise<Guide | null> {
 }
 
 export async function listTools(): Promise<HealthTool[]> {
-  const fallback = mock.healthTools as HealthTool[];
+  const fallback = (mock.healthTools as HealthTool[])
+    .slice()
+    .sort((a, b) => {
+      const orderA = (a.isFeatured ? 0 : 1) * 1000 + (a.displayOrder ?? 999);
+      const orderB = (b.isFeatured ? 0 : 1) * 1000 + (b.displayOrder ?? 999);
+      return orderA - orderB;
+    });
   return safeFetch<HealthTool[]>('/tools', fallback);
 }
 
 export async function getFeaturedTools(count = 4): Promise<HealthTool[]> {
   const qs = new URLSearchParams({ count: String(count) });
-  const fallback = (mock.healthTools as HealthTool[]).slice(0, count);
+  const fallback = (mock.healthTools as HealthTool[])
+    .filter((t: any) => t.isFeatured !== false)
+    .sort((a, b) => {
+      const orderA = (a.displayOrder ?? 999);
+      const orderB = (b.displayOrder ?? 999);
+      return orderA - orderB;
+    })
+    .slice(0, count);
   return safeFetch<HealthTool[]>(`/tools/featured?${qs.toString()}`, fallback);
 }
 
