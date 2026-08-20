@@ -127,9 +127,9 @@ export default async function ServiceLandingPage({ params }: { params: Promise<{
                     <HandHeart size={20} />
                     {service.primaryCtaText || 'درخواست فوری خدمات'}
                   </Link>
-                  <a href="tel:02112345678" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white border-2 border-teal-200 text-teal-700 font-black hover:border-teal-500 hover:bg-teal-50 transition-all text-lg shadow-sm">
+                  <a href="tel:09128718237" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white border-2 border-teal-200 text-teal-700 font-black hover:border-teal-500 hover:bg-teal-50 transition-all text-lg shadow-sm">
                     <Phone size={20} />
-                    تماس فوری ۰۲۱-۱۲۳۴۵۶۷۸
+                    تماس فوری ۰۹۱۲۸۷۱۸۲۳۷
                   </a>
                 </div>
 
@@ -375,7 +375,7 @@ export default async function ServiceLandingPage({ params }: { params: Promise<{
                     <HandHeart size={20} />
                     {service.primaryCtaText || 'درخواست فوری خدمات'}
                   </Link>
-                  <a href="tel:02112345678" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-teal-500/30 border-2 border-teal-400/40 text-white font-black hover:bg-teal-500/50 transition-all text-lg backdrop-blur">
+                  <a href="tel:09128718237" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-teal-500/30 border-2 border-teal-400/40 text-white font-black hover:bg-teal-500/50 transition-all text-lg backdrop-blur">
                     <Phone size={20} />
                     مشاوره رایگان تلفنی
                   </a>

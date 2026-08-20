@@ -336,10 +336,10 @@ export default async function ToolDetailPage({ params }: Params) {
                     درخواست مشاوره رایگان
                   </Link>
                   <a
-                    href="tel:02112345678"
+                    href="tel:09128718237"
                     className="block w-full h-12 rounded-xl bg-gray-50 text-gray-800 font-bold text-center leading-[3rem] border border-gray-200 hover:bg-gray-100 transition flex items-center justify-center gap-2"
                   >
-                    <Phone size={16} /> ۰۲۱-۱۲۳۴۵۶۷۸
+                    <Phone size={16} /> ۰۹۱۲۸۷۱۸۲۳۷
                   </a>
                 </div>
               </div>

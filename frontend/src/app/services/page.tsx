@@ -99,7 +99,7 @@ export default async function ServicesListPage() {
                   درخواست خدمات فوری
                   <ArrowLeft size={18} />
                 </Link>
-                <a href="tel:02112345678" className="px-8 py-4 rounded-2xl bg-white border-2 border-teal-200 text-teal-700 font-black hover:border-teal-500 hover:bg-teal-50 transition flex items-center gap-2">
+                <a href="tel:09128718237" className="px-8 py-4 rounded-2xl bg-white border-2 border-teal-200 text-teal-700 font-black hover:border-teal-500 hover:bg-teal-50 transition flex items-center gap-2">
                   <Phone size={18} />
                   تماس تلفنی فوری
                 </a>

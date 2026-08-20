@@ -228,7 +228,7 @@ export default async function AuthorsListPage() {
                     ارسال رزومه
                   </a>
                   <a
-                    href="tel:02112345678"
+                    href="tel:09128718237"
                     className="inline-flex items-center justify-center h-12 px-7 rounded-xl bg-gray-50 text-gray-800 font-bold border border-gray-200 hover:bg-gray-100 transition"
                   >
                     تماس با منابع انسانی

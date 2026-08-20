@@ -442,13 +442,13 @@ export default function Navbar() {
 
           {/* Actions */}
           <div className="hidden md:flex items-center md:ml-6 gap-3">
-            <a href="tel:02112345678" className="flex items-center gap-2 text-gray-700 ml-2 hover:text-teal-600 transition px-3 py-1.5 rounded-lg hover:bg-gray-50">
+            <a href="tel:09128718237" className="flex items-center gap-2 text-gray-700 ml-2 hover:text-teal-600 transition px-3 py-1.5 rounded-lg hover:bg-gray-50">
               <div className="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
                 <Phone size={16} className="text-teal-600" />
               </div>
               <div className="leading-tight">
                 <p className="text-xs text-gray-400">تماس با ما</p>
-                <p className="font-bold text-sm" dir="ltr">۰۲۱-۱۲۳۴۵۶۷۸</p>
+                <p className="font-bold text-sm" dir="ltr">۰۹۱۲۸۷۱۸۲۳۷</p>
               </div>
             </a>
             {renderDesktopActions()}
@@ -473,10 +473,10 @@ export default function Navbar() {
           <div className="px-4 py-4 space-y-1.5">
             <div className="p-3 rounded-xl bg-gradient-to-br from-teal-50 to-white border border-teal-100 mb-2">
               <p className="text-xs text-teal-600 font-bold mb-1">خدمات فوری</p>
-              <a href="tel:02112345678" className="flex items-center justify-between group">
+              <a href="tel:09128718237" className="flex items-center justify-between group">
                 <div>
                   <p className="text-xs text-gray-400">۲۴ ساعته پاسخگوی شما هستیم</p>
-                  <p className="font-bold text-xl text-teal-600" dir="ltr">۰۲۱-۱۲۳۴۵۶۷۸</p>
+                  <p className="font-bold text-xl text-teal-600" dir="ltr">۰۹۱۲۸۷۱۸۲۳۷</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/30 group-hover:scale-110 transition">
                   <Phone size={18} />

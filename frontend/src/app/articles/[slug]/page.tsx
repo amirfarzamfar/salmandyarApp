@@ -336,9 +336,9 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
                     <Link href="/guest-request" className="block w-full text-center py-3.5 rounded-xl bg-white text-teal-700 font-black mb-2 hover:shadow-xl transition">
                       درخواست خدمات
                     </Link>
-                    <a href="tel:02112345678" className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-teal-500/30 border border-teal-400/30 font-bold text-sm hover:bg-teal-500/50 transition">
+                    <a href="tel:09128718237" className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-teal-500/30 border border-teal-400/30 font-bold text-sm hover:bg-teal-500/50 transition">
                       <Phone size={16} />
-                      ۰۲۱-۱۲۳۴۵۶۷۸
+                      ۰۹۱۲۸۷۱۸۲۳۷
                     </a>
                   </div>
                 </div>

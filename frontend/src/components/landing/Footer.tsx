@@ -84,7 +84,7 @@ export default async function Footer() {
                 </div>
                 <div>
                   <p className="text-xs text-slate-400">تماس رایگان</p>
-                  <p className="font-black text-lg text-white" dir="ltr">۰۲۱-۱۲۳۴۵۶۷۸</p>
+                  <p className="font-black text-lg text-white" dir="ltr">۰۹۱۲۸۷۱۸۲۳۷</p>
                 </div>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed">

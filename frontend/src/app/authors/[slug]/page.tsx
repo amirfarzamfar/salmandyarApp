@@ -319,10 +319,10 @@ export default async function AuthorDetailPage({ params }: { params: Promise<{ s
                       <Phone size={16} /> درخواست فوری خدمات
                     </Link>
                     <a
-                      href="tel:02112345678"
+                      href="tel:09128718237"
                       className="w-full inline-flex items-center justify-center gap-2 h-12 rounded-2xl bg-white/15 backdrop-blur border border-white/30 text-white font-black hover:bg-white/25 transition"
                     >
-                      تماس تلفنی ۰۲۱-۱۲۳۴۵۶۷۸
+                      تماس تلفنی ۰۹۱۲۸۷۱۸۲۳۷
                     </a>
                   </div>
                 </section>

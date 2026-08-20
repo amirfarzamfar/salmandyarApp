@@ -153,11 +153,11 @@ export default async function CityDetailPage({ params }: Params) {
                       درخواست فوری پرستار در {c.name}
                     </Link>
                     <a
-                      href={`tel:${c.phoneNumber ? c.phoneNumber.replace(/\D/g, '') : '02112345678'}`}
+                      href={`tel:${c.phoneNumber ? c.phoneNumber.replace(/\D/g, '') : '09128718237'}`}
                       className="inline-flex items-center gap-2 h-13 px-7 rounded-2xl bg-white/15 backdrop-blur-md text-white font-black hover:bg-white/25 transition border border-white/30 text-lg py-3"
                     >
                       <Phone size={20} />
-                      {c.phoneNumber || '۰۲۱-۱۲۳۴۵۶۷۸'}
+                      {c.phoneNumber || '۰۹۱۲۸۷۱۸۲۳۷'}
                     </a>
                   </div>
                 </div>
@@ -350,11 +350,11 @@ export default async function CityDetailPage({ params }: Params) {
                         ثبت درخواست خدمات
                       </Link>
                       <a
-                        href={`tel:${c.phoneNumber ? c.phoneNumber.replace(/\D/g, '') : '02112345678'}`}
+                        href={`tel:${c.phoneNumber ? c.phoneNumber.replace(/\D/g, '') : '09128718237'}`}
                         className="inline-flex items-center justify-center gap-2 h-13 px-7 rounded-2xl bg-white/15 backdrop-blur-md text-white font-black hover:bg-white/25 transition border border-white/30 py-3"
                       >
                         <Phone size={18} />
-                        تماس فوری: {c.phoneNumber || '۰۲۱-۱۲۳۴۵۶۷۸'}
+                        تماس فوری: {c.phoneNumber || '۰۹۱۲۸۷۱۸۲۳۷'}
                       </a>
                     </div>
                   </div>
@@ -401,8 +401,8 @@ export default async function CityDetailPage({ params }: Params) {
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs text-gray-500 mb-0.5">شماره تماس {c.name}</div>
-                      <a href={`tel:${c.phoneNumber ? c.phoneNumber.replace(/\D/g, '') : '02112345678'}`} className="font-black text-gray-900 hover:text-teal-700 transition block truncate">
-                        {c.phoneNumber || '۰۲۱-۱۲۳۴۵۶۷۸'}
+                      <a href={`tel:${c.phoneNumber ? c.phoneNumber.replace(/\D/g, '') : '09128718237'}`} className="font-black text-gray-900 hover:text-teal-700 transition block truncate">
+                        {c.phoneNumber || '۰۹۱۲۸۷۱۸۲۳۷'}
                       </a>
                     </div>
                   </div>
@@ -424,7 +424,7 @@ export default async function CityDetailPage({ params }: Params) {
                     ثبت درخواست خدمت
                   </Link>
                   <a
-                    href={`tel:${c.phoneNumber ? c.phoneNumber.replace(/\D/g, '') : '02112345678'}`}
+                    href={`tel:${c.phoneNumber ? c.phoneNumber.replace(/\D/g, '') : '09128718237'}`}
                     className="block w-full h-12 rounded-xl bg-gray-50 text-gray-800 font-bold text-center leading-[3rem] border border-gray-200 hover:bg-gray-100 transition flex items-center justify-center gap-2"
                   >
                     <Phone size={16} />

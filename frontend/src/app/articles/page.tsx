@@ -237,8 +237,8 @@ export default async function ArticlesListPage() {
                   <p className="text-sm text-teal-100 mb-4 leading-relaxed">
                     کارشناسان پرستاری سالمندیار ۲۴ ساعته پاسخگوی سوالات شما هستند.
                   </p>
-                  <a href="tel:02112345678" className="block text-center py-3 rounded-xl bg-white text-teal-700 font-black hover:shadow-xl transition">
-                    ۰۲۱-۱۲۳۴۵۶۷۸
+                  <a href="tel:09128718237" className="block text-center py-3 rounded-xl bg-white text-teal-700 font-black hover:shadow-xl transition">
+                    ۰۹۱۲۸۷۱۸۲۳۷
                   </a>
                 </div>
               </div>

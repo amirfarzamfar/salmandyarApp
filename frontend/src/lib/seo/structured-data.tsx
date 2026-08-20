@@ -29,7 +29,7 @@ export function OrganizationSchema() {
     contactPoint: [
       {
         '@type': 'ContactPoint',
-        telephone: '+98-21-12345678',
+        telephone: '+98-912-8718237',
         contactType: 'customer support',
         availableLanguage: ['Persian'],
         areaServed: 'IR',
@@ -155,7 +155,7 @@ export function ServiceSchema({ service, faqs }: { service: ServiceSeoProfile; f
         addressCountry: 'IR',
         addressLocality: 'تهران',
       },
-      telephone: '+98-21-12345678',
+      telephone: '+98-912-8718237',
     },
     areaServed: (service.coverageAreas || []).map(c => ({
       '@type': 'City',
@@ -245,7 +245,7 @@ export function LocalBusinessSchema({ city }: { city: City }) {
     name: `سالمندیار ${city.name}`,
     image: city.coverImageUrl || `${SITE_URL}/og-default.png`,
     url: `${SITE_URL}/cities/${city.slug}`,
-    telephone: city.phoneNumber || '+98-21-12345678',
+    telephone: city.phoneNumber || '+98-912-8718237',
     priceRange: 'متوسط',
     address: {
       '@type': 'PostalAddress',

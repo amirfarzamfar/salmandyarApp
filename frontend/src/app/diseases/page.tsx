@@ -153,10 +153,10 @@ export default async function DiseasesListPage() {
                     درخواست مشاوره رایگان
                   </Link>
                   <a
-                    href="tel:02112345678"
+                    href="tel:09128718237"
                     className="inline-flex items-center justify-center h-12 px-6 rounded-xl bg-white/15 backdrop-blur text-white font-bold hover:bg-white/25 transition border border-white/20"
                   >
-                    تماس فوری: ۰۲۱-۱۲۳۴۵۶۷۸
+                    تماس فوری: ۰۹۱۲۸۷۱۸۲۳۷
                   </a>
                 </div>
               </div>

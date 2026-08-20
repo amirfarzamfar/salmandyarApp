@@ -149,7 +149,7 @@ export default async function CitiesListPage() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <a
-                    href="tel:02112345678"
+                    href="tel:09128718237"
                     className="inline-flex items-center justify-center h-12 px-6 rounded-xl bg-gradient-to-l from-teal-500 to-teal-600 text-white font-bold hover:shadow-lg hover:shadow-teal-500/20 transition gap-2"
                   >
                     <Phone size={18} /> تماس با پشتیبانی
