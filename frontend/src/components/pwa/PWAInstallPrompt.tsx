@@ -19,8 +19,8 @@ export function PWAInstallPrompt() {
   if (!showInstallPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 left-4 md:left-auto md:max-w-sm z-[100] animate-[slideUp_0.3s_ease-out] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] pb-[env(safe-area-inset-bottom)]">
-      <div className="relative bg-white rounded-2xl shadow-2xl shadow-gray-900/10 border border-gray-100 p-4 pr-12 overflow-hidden">
+    <div className="pointer-events-none fixed bottom-4 right-4 left-4 md:left-auto md:max-w-sm z-[100] animate-[slideUp_0.3s_ease-out] pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] pb-[env(safe-area-inset-bottom)]">
+      <div className="pointer-events-auto relative bg-white rounded-2xl shadow-2xl shadow-gray-900/10 border border-gray-100 p-4 pr-12 overflow-hidden">
         <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-gradient-to-br from-teal-400/20 to-emerald-400/10" />
 
         <button
@@ -102,10 +102,10 @@ export function OfflineBanner() {
 
   return (
     <div
-      className="fixed top-0 right-0 left-0 z-[90] bg-amber-50 border-b border-amber-200 text-amber-800 text-sm py-2 px-4 text-center flex items-center justify-center gap-2 pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] pt-[max(0.5rem,env(safe-area-inset-top))]"
+      className="pointer-events-none fixed top-0 right-0 left-0 z-[90] bg-amber-50 border-b border-amber-200 text-amber-800 text-sm py-2 px-4 text-center flex items-center justify-center gap-2 pr-[env(safe-area-inset-right)] pl-[env(safe-area-inset-left)] pt-[max(0.5rem,env(safe-area-inset-top))]"
       role="alert"
     >
-      <span className="inline-flex items-center gap-2">
+      <span className="pointer-events-auto inline-flex items-center gap-2">
         <span className="relative flex w-2 h-2">
           <span className="animate-ping absolute inline-flex w-full h-full rounded-full bg-amber-400 opacity-75" />
           <span className="relative inline-flex w-2 h-2 rounded-full bg-amber-500" />
