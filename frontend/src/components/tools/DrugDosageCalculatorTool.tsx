@@ -19,7 +19,7 @@ import {
   Scale,
 } from 'lucide-react';
 
-type TabId =
+export type DrugCalcTabId =
   | 'heparin'
   | 'dopamine'
   | 'epinephrine'
@@ -33,6 +33,20 @@ type TabId =
   | 'percentage'
   | 'drops'
   | 'converter';
+
+type TabId = DrugCalcTabId;
+
+export const DRUG_CALC_TAB_IDS: DrugCalcTabId[] = [
+  'heparin', 'dopamine', 'epinephrine', 'nitroglycerin', 'amiodarone',
+  'pantoprazole', 'midazolam', 'fentanyl', 'octreotide',
+  'general', 'percentage', 'drops', 'converter',
+];
+
+interface DrugDosageCalculatorToolProps {
+  activeTab?: DrugCalcTabId;
+  onActiveTabChange?: (tab: DrugCalcTabId) => void;
+  defaultTab?: DrugCalcTabId;
+}
 
 type Num = number | '';
 
@@ -80,8 +94,20 @@ const NInput = ({ value, set, placeholder, unit, min = 0 }: { value: Num; set: (
   </div>
 );
 
-export default function DrugDosageCalculatorTool() {
-  const [activeTab, setActiveTab] = useState<TabId>('heparin');
+export default function DrugDosageCalculatorTool({
+  activeTab: activeTabProp,
+  onActiveTabChange,
+  defaultTab = 'heparin',
+}: DrugDosageCalculatorToolProps = {}) {
+  const [activeTabInternal, setActiveTabInternal] = useState<TabId>(defaultTab);
+  const isControlled = activeTabProp !== undefined;
+  const activeTab = isControlled ? (activeTabProp as TabId) : activeTabInternal;
+
+  const setActiveTab = (next: TabId) => {
+    if (!isControlled) setActiveTabInternal(next);
+    if (onActiveTabChange) onActiveTabChange(next);
+  };
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [results, setResults] = useState<Record<string, any>>({});
 

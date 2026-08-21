@@ -310,3 +310,72 @@ export function WebApplicationSchema() {
   };
   return <Script id="schema-webapp" type="application/ld+json" strategy="afterInteractive">{toJsonLd(data)}</Script>;
 }
+
+export interface DrugCalcSchemaItem {
+  slug: string;
+  persianName: string;
+  englishName: string;
+  genericName?: string;
+  category: string;
+  seoDescription: string;
+  pagePath: string;
+  units: string[];
+  faqs: { question: string; answer: string }[];
+}
+
+export function DrugCalculatorsCollectionSchema({ items, pagePath }: { items: DrugCalcSchemaItem[]; pagePath: string }) {
+  if (!items || items.length === 0) return null;
+
+  const allFaqs = items.flatMap(it => it.faqs.map(f => ({ question: f.question, answer: f.answer })));
+
+  const faqData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: allFaqs.map(f => ({
+      '@type': 'Question',
+      name: f.question,
+      acceptedAnswer: { '@type': 'Answer', text: f.answer },
+    })),
+  };
+
+  const collectionSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: 'ماشین حساب محاسبات دارویی | ۱۳ ابزار پرستاری ICU',
+    description: 'مجموعه‌ای جامع از ماشین‌حساب‌های دارویی شامل دوپامین، هپارین، اپی نفرین، نیتروگلیسیرین، آمیودارون، فنتانیل، میدازولام، اکتریوتاید، قطره سرم، داروهای درصدی، مبدل واحد و ماشین حساب عمومی.',
+    url: `${SITE_URL}${pagePath}`,
+    hasPart: items.map(it => ({
+      '@type': 'MedicalWebPage' as const,
+      name: it.seoDescription.includes('محاسبه') ? it.persianName : `محاسبه ${it.persianName}`,
+      description: it.seoDescription,
+      url: `${SITE_URL}${pagePath}#${it.slug}`,
+      specialty: it.category,
+      mainEntity: {
+        '@type': 'Drug' as const,
+        name: it.persianName,
+        alternateName: it.englishName,
+        genericName: it.genericName,
+        drugClass: it.category,
+        availableStrength: it.units,
+      },
+    })),
+  };
+
+  const medicalOrgSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'MedicalOrganization',
+    name: 'سالمندیار | تیم پزشکی و پرستاری',
+    description: 'تیم پرستاری و پزشکی سالمندیار، تهیه‌کننده محتوای تأیید شده پزشکی و ابزارهای محاسبات دارویی.',
+    url: SITE_URL,
+    medicalSpecialty: ['Nursing', 'Critical Care Medicine', 'Emergency Medicine'],
+  };
+
+  return (
+    <>
+      <Script id="schema-drug-faq-collection" type="application/ld+json" strategy="afterInteractive">{toJsonLd(faqData)}</Script>
+      <Script id="schema-drug-calc-collection" type="application/ld+json" strategy="afterInteractive">{toJsonLd(collectionSchema)}</Script>
+      <Script id="schema-drug-medorg" type="application/ld+json" strategy="afterInteractive">{toJsonLd(medicalOrgSchema)}</Script>
+    </>
+  );
+}
+

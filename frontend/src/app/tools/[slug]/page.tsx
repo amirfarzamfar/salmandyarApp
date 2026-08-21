@@ -20,15 +20,18 @@ import {
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import Breadcrumb from '@/components/seo/Breadcrumb';
-import { FAQSchema } from '@/lib/seo/structured-data';
+import { FAQSchema, DrugCalculatorsCollectionSchema, type DrugCalcSchemaItem } from '@/lib/seo/structured-data';
 import BmiCalculatorTool from '@/components/tools/BmiCalculatorTool';
 import GcsCalculatorTool from '@/components/tools/GcsCalculatorTool';
 import DripRateCalculatorTool from '@/components/tools/DripRateCalculatorTool';
 import BradenScaleTool from '@/components/tools/BradenScaleTool';
 import DailyCareChecklistTool from '@/components/tools/DailyCareChecklistTool';
-import DrugDosageCalculatorTool from '@/components/tools/DrugDosageCalculatorTool';
+import DrugDosageCalculatorPageClient from '@/components/tools/DrugDosageCalculatorPageClient';
+import DrugCalculatorSidebarNav from '@/components/tools/DrugCalculatorSidebarNav';
+import DrugCalculatorBreadcrumb from '@/components/tools/DrugCalculatorBreadcrumb';
 import type { HealthTool, FAQItem } from '@/lib/types/content';
 import { listTools, getToolBySlug, listArticles, listServicesWithSeo, getFeaturedTools } from '@/lib/content-api';
+import { DRUG_TAB_ORDER, getDrugContent } from '@/lib/data/drug-content';
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -42,6 +45,52 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const tool = await getToolBySlug(slug);
   if (!tool) return {};
+
+  if (slug === 'drug-dosage-calculator') {
+    const allNames = DRUG_TAB_ORDER.map(t => getDrugContent(t).persianName);
+    const allTitles = allNames.join('، ');
+    const extraKeywords = [
+      ...allNames.flatMap(n => [`محاسبه ${n}`, `${n} ابزار`, `${n} فرمول`]),
+      ...DRUG_TAB_ORDER.flatMap(t => getDrugContent(t).units),
+    ].filter(Boolean);
+    const finalKeywords = [
+      'محاسبات دارویی',
+      'ماشین حساب دارویی',
+      'محاسبه دوز دارو',
+      'محاسبه انفوزیون',
+      'ابزار ICU',
+      'ابزار پرستاری',
+      'محاسبه دوپامین',
+      'محاسبه هپارین',
+      'محاسبه اپی نفرین',
+      'قطره سرم',
+      'سرعت پمپ انفوزیون',
+      'mcg/kg/min',
+      allTitles,
+      ...extraKeywords,
+    ];
+
+    return {
+      title: 'ماشین حساب محاسبات دارویی | ۱۳ ابزار پرستاری و ICU',
+      description: '۱۳ ماشین‌حساب دارویی اختصاصی برای دوپامین، هپارین، اپی نفرین، نیتروگلیسیرین، آمیودارون، پنتاپرازول، میدازولام، فنتانیل، اکتریوتاید، قطره سرم، داروهای درصدی، مبدل واحد و محاسبه عمومی. رایگان و بدون ثبت نام.',
+      keywords: finalKeywords,
+      alternates: { canonical: tool.canonicalUrl || '/tools/drug-dosage-calculator' },
+      openGraph: {
+        title: 'ماشین حساب محاسبات دارویی | ۱۳ ابزار اختصاصی ICU',
+        description: 'مجموعه‌ای ۱۳ تایی از ماشین‌حساب‌های پرکاربرد دارویی پرستاری و اورژانس شامل دوپامین، هپارین، اپی نفرین، فنتانیل، میدازولام، قطره سرم و مبدل واحد با توضیح فرمول و پاسخ سوالات متداول.',
+        type: 'website',
+        url: tool.canonicalUrl || '/tools/drug-dosage-calculator',
+        images: tool.ogImageUrl || tool.coverImageUrl ? [tool.ogImageUrl || tool.coverImageUrl || ''] : undefined,
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: 'ماشین حساب محاسبات دارویی | ۱۳ ابزار پرستاری',
+        description: '۱۳ ماشین‌حساب دارویی رایگان برای پرستاران ICU و اورژانس همراه با توضیح فرمول و سوالات متداول.',
+        images: tool.twitterImageUrl || tool.coverImageUrl ? [tool.twitterImageUrl || tool.coverImageUrl || ''] : undefined,
+      },
+    };
+  }
+
   const extraKeywords = [tool.primaryKeyword || '', ...(tool.secondaryKeywords || [])].filter(Boolean);
   const finalKeywords = [tool.name, tool.shortDescription || '', ...extraKeywords].filter(Boolean);
   const canonical = tool.canonicalUrl || `/tools/${tool.slug}`;
@@ -104,7 +153,7 @@ function ToolIcon({ type }: { type: string }) {
 function renderTool(slug: string) {
   switch (slug) {
     case 'bmi-calculator': return <BmiCalculatorTool />;
-    case 'drug-dosage-calculator': return <DrugDosageCalculatorTool />;
+    case 'drug-dosage-calculator': return <DrugDosageCalculatorPageClient />;
     case 'gcs-calculator': return <GcsCalculatorTool />;
     case 'drip-rate-calculator': return <DripRateCalculatorTool />;
     case 'braden-scale-pressure-ulcer-risk': return <BradenScaleTool />;
@@ -167,17 +216,47 @@ export default async function ToolDetailPage({ params }: Params) {
   const relatedArticles = articlesResult?.items || [];
   const relatedTools = (featuredResult || []).filter(ht => ht.slug !== t.slug);
 
+  const isDrugCalc = slug === 'drug-dosage-calculator';
+
+  const drugCalcSchemaItems: DrugCalcSchemaItem[] = isDrugCalc
+    ? DRUG_TAB_ORDER.map(tab => {
+        const c = getDrugContent(tab);
+        return {
+          slug: c.slug,
+          persianName: c.persianName,
+          englishName: c.englishName,
+          genericName: c.genericName,
+          category: c.category,
+          seoDescription: c.seoDescription,
+          pagePath: `/tools/drug-dosage-calculator#${tab}`,
+          units: c.units,
+          faqs: c.faqs.map(f => ({ question: f.question, answer: f.answer })),
+        };
+      })
+    : [];
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
-      <FAQSchema faqs={faqs} pageUrl={`/tools/${t.slug}`} />
+      {isDrugCalc ? (
+        <DrugCalculatorsCollectionSchema items={drugCalcSchemaItems} pagePath="/tools/drug-dosage-calculator" />
+      ) : (
+        <FAQSchema faqs={faqs} pageUrl={`/tools/${t.slug}`} />
+      )}
       <Navbar />
 
       <main className="pt-28 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <Breadcrumb items={[
-            { name: 'ابزارهای سلامت', href: '/tools' },
-            { name: t.name, href: `/tools/${t.slug}` },
-          ]} />
+          {isDrugCalc ? (
+            <DrugCalculatorBreadcrumb
+              basePageName={t.name}
+              basePageHref={`/tools/${t.slug}`}
+            />
+          ) : (
+            <Breadcrumb items={[
+              { name: 'ابزارهای سلامت', href: '/tools' },
+              { name: t.name, href: `/tools/${t.slug}` },
+            ]} />
+          )}
 
           <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-3xl overflow-hidden mb-10 shadow-2xl">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_bottom_right,white,transparent_60%)]" />
@@ -274,35 +353,38 @@ export default async function ToolDetailPage({ params }: Params) {
                 </section>
               )}
 
-              <section className="bg-white rounded-3xl p-7 sm:p-8 border border-gray-100 shadow-sm">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                    <FileText size={24} />
+              {!isDrugCalc && (
+                <section className="bg-white rounded-3xl p-7 sm:p-8 border border-gray-100 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                      <FileText size={24} />
+                    </div>
+                    <h2 className="text-2xl font-black text-gray-900">سوالات متداول درباره {t.name}</h2>
                   </div>
-                  <h2 className="text-2xl font-black text-gray-900">سوالات متداول درباره {t.name}</h2>
-                </div>
-                <div className="space-y-3">
-                  {faqs.sort((a, b) => a.displayOrder - b.displayOrder).map((faq, i) => (
-                    <details key={faq.id || i} className="group rounded-2xl bg-gray-50 border border-gray-100 p-5 open:bg-indigo-50/40 open:border-indigo-100 transition">
-                      <summary className="flex items-center justify-between cursor-pointer font-bold text-gray-900 list-none">
-                        <span className="flex items-center gap-3">
-                          <span className="w-8 h-8 shrink-0 rounded-full bg-white border border-gray-200 group-open:bg-indigo-500 group-open:border-indigo-500 text-gray-500 group-open:text-white flex items-center justify-center text-sm font-black transition">
-                            {faq.displayOrder || i + 1}
+                  <div className="space-y-3">
+                    {faqs.sort((a, b) => a.displayOrder - b.displayOrder).map((faq, i) => (
+                      <details key={faq.id || i} className="group rounded-2xl bg-gray-50 border border-gray-100 p-5 open:bg-indigo-50/40 open:border-indigo-100 transition">
+                        <summary className="flex items-center justify-between cursor-pointer font-bold text-gray-900 list-none">
+                          <span className="flex items-center gap-3">
+                            <span className="w-8 h-8 shrink-0 rounded-full bg-white border border-gray-200 group-open:bg-indigo-500 group-open:border-indigo-500 text-gray-500 group-open:text-white flex items-center justify-center text-sm font-black transition">
+                              {faq.displayOrder || i + 1}
+                            </span>
+                            <span className="leading-relaxed">{faq.question}</span>
                           </span>
-                          <span className="leading-relaxed">{faq.question}</span>
-                        </span>
-                        <ChevronLeft size={20} className="text-gray-400 group-open:-rotate-90 transition shrink-0" />
-                      </summary>
-                      <div className="pr-11 pt-4 mt-3 border-t border-gray-200/60">
-                        <p className="text-gray-700 leading-loose">{faq.answer}</p>
-                      </div>
-                    </details>
-                  ))}
-                </div>
-              </section>
+                          <ChevronLeft size={20} className="text-gray-400 group-open:-rotate-90 transition shrink-0" />
+                        </summary>
+                        <div className="pr-11 pt-4 mt-3 border-t border-gray-200/60">
+                          <p className="text-gray-700 leading-loose">{faq.answer}</p>
+                        </div>
+                      </details>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
 
             <div className="lg:col-span-4 space-y-5">
+              {isDrugCalc && <DrugCalculatorSidebarNav />}
               <div className="bg-white rounded-3xl p-6 border-2 border-purple-100 shadow-sm sticky top-28">
                 <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 -m-6 mb-5 p-6 rounded-t-3xl text-white">
                   <div className="flex items-center gap-2 text-xs font-bold opacity-90 mb-2">
