@@ -34,6 +34,8 @@ type TabId =
   | 'drops'
   | 'converter';
 
+type Num = number | '';
+
 const TAB_LIST: { id: TabId; label: string; icon: React.ReactNode; short: string }[] = [
   { id: 'heparin', label: 'هپارین / انسولین', icon: <Syringe size={16} />, short: 'واحد بر ساعت' },
   { id: 'dopamine', label: 'دوپامین / دبوتامین', icon: <Heart size={16} />, short: 'مک‌گرم/کگ/دقیقه' },
@@ -50,7 +52,33 @@ const TAB_LIST: { id: TabId; label: string; icon: React.ReactNode; short: string
   { id: 'converter', label: 'تبدیل واحدها', icon: <ArrowUpDown size={16} />, short: 'گرم ↔ میلی ↔ میکرو' },
 ];
 
-type Num = number | '';
+const PRESCRIBED_UNITS = [
+  'mg/hr', 'mg/min', 'mg/kg/hr', 'mg/kg/min',
+  'mcg/hr', 'mcg/min', 'mcg/kg/hr', 'mcg/kg/min',
+  'U/hr', 'U/min', 'U/kg/hr', 'U/kg/min',
+];
+
+const Field = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
+  <div className="space-y-2">
+    <label className="block text-sm font-bold text-gray-700">{label}</label>
+    {children}
+    {hint && <p className="text-[11px] text-gray-400 font-medium">{hint}</p>}
+  </div>
+);
+
+const NInput = ({ value, set, placeholder, unit, min = 0 }: { value: Num; set: (v: Num) => void; placeholder: string; unit?: string; min?: number }) => (
+  <div className="relative">
+    {unit && <span className="absolute top-1/2 right-4 -translate-y-1/2 text-gray-400 font-bold text-xs whitespace-nowrap">{unit}</span>}
+    <input
+      type="number"
+      placeholder={placeholder}
+      min={min}
+      value={value}
+      onChange={e => set(e.target.value === '' ? '' : Number(e.target.value))}
+      className={`w-full h-12 pl-4 rounded-2xl bg-gray-50 border-2 border-gray-100 focus:border-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-500/10 transition text-base font-bold ${unit ? 'pr-24' : 'pr-4'}`}
+    />
+  </div>
+);
 
 export default function DrugDosageCalculatorTool() {
   const [activeTab, setActiveTab] = useState<TabId>('heparin');
@@ -129,12 +157,6 @@ export default function DrugDosageCalculatorTool() {
   const [cVal, setCVal] = useState<Num>('');
   const [cFrom, setCFrom] = useState<'mcg' | 'mg' | 'g' | 'kg'>('mg');
   const [cTo, setCTo] = useState<'mcg' | 'mg' | 'g' | 'kg'>('mcg');
-
-  const PRESCRIBED_UNITS = [
-    'mg/hr', 'mg/min', 'mg/kg/hr', 'mg/kg/min',
-    'mcg/hr', 'mcg/min', 'mcg/kg/hr', 'mcg/kg/min',
-    'U/hr', 'U/min', 'U/kg/hr', 'U/kg/min',
-  ];
 
   const clearTab = (tab: TabId) => {
     const res = { ...results }; delete res[tab]; setResults(res);
@@ -437,28 +459,6 @@ export default function DrugDosageCalculatorTool() {
   const activeTabMeta = TAB_LIST.find(t => t.id === activeTab)!;
   const res = results[activeTab];
   const errMsg = errors[activeTab];
-
-  const Field = ({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) => (
-    <div className="space-y-2">
-      <label className="block text-sm font-bold text-gray-700">{label}</label>
-      {children}
-      {hint && <p className="text-[11px] text-gray-400 font-medium">{hint}</p>}
-    </div>
-  );
-
-  const NInput = ({ value, set, placeholder, unit, min = 0 }: { value: Num; set: (v: Num) => void; placeholder: string; unit?: string; min?: number }) => (
-    <div className="relative">
-      {unit && <span className="absolute top-1/2 right-4 -translate-y-1/2 text-gray-400 font-bold text-xs whitespace-nowrap">{unit}</span>}
-      <input
-        type="number"
-        placeholder={placeholder}
-        min={min}
-        value={value}
-        onChange={e => set(e.target.value === '' ? '' : Number(e.target.value))}
-        className={`w-full h-12 pr-${unit ? '24' : '4'} pl-4 rounded-2xl bg-gray-50 border-2 border-gray-100 focus:border-purple-500 focus:outline-none focus:ring-4 focus:ring-purple-500/10 transition text-base font-bold ${unit ? 'pr-24' : ''}`}
-      />
-    </div>
-  );
 
   return (
     <div>
