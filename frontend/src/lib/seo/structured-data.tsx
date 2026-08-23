@@ -1,5 +1,14 @@
 import Script from 'next/script';
-import type { Article, ServiceSeoProfile, FAQItem, Disease, City, Author, HealthTool } from '@/lib/types/content';
+import type {
+  Article,
+  ServiceSeoProfile,
+  FAQItem,
+  Disease,
+  City,
+  Author,
+  HealthTool,
+  ContentCategory,
+} from '@/lib/types/content';
 
 function toJsonLd(data: unknown): string {
   return JSON.stringify(data);
@@ -376,6 +385,104 @@ export function DrugCalculatorsCollectionSchema({ items, pagePath }: { items: Dr
       <Script id="schema-drug-calc-collection" type="application/ld+json" strategy="afterInteractive">{toJsonLd(collectionSchema)}</Script>
       <Script id="schema-drug-medorg" type="application/ld+json" strategy="afterInteractive">{toJsonLd(medicalOrgSchema)}</Script>
     </>
+  );
+}
+
+export function CollectionPageSchema({
+  category,
+  articles,
+  description,
+  pagePath,
+}: {
+  category: ContentCategory;
+  articles: Article[];
+  description?: string;
+  pagePath: string;
+}) {
+  const data: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'CollectionPage',
+    name: category.metaTitle || `مقالات ${category.name} | سالمندیار`,
+    description:
+      description || category.metaDescription || `مجموعه‌ای جامع از مقالات تخصصی درباره ${category.name} در مجله سلامت سالمندیار`,
+    url: `${SITE_URL}${pagePath}`,
+    inLanguage: 'fa-IR',
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'مجله سلامت سالمندیار',
+      url: `${SITE_URL}/articles`,
+    },
+    creator: {
+      '@type': 'Organization',
+      name: 'سالمندیار',
+    },
+  };
+
+  if (articles.length > 0) {
+    data.hasPart = articles.slice(0, 10).map(article => ({
+      '@type': article.isMedicalContent ? 'MedicalWebPage' : 'Article',
+      headline: article.title,
+      description: article.excerpt || article.shortAnswer,
+      url: `${SITE_URL}/articles/${article.slug}`,
+      image: article.featuredImageUrl ? [article.featuredImageUrl] : undefined,
+      datePublished: formatDate(article.publishedAt),
+      dateModified: formatDate(article.lastUpdatedAt || article.publishedAt),
+      author: article.author
+        ? {
+            '@type': 'Person',
+            name: article.author.fullName,
+          }
+        : undefined,
+      about: category.name,
+    }));
+    data.numberOfItems = articles.length;
+  }
+
+  return (
+    <Script
+      id={`schema-collectionpage-cat-${category.id}`}
+      type="application/ld+json"
+      strategy="afterInteractive"
+    >
+      {toJsonLd(data)}
+    </Script>
+  );
+}
+
+export function CategoryFAQSchema({
+  faqs,
+  categorySlug,
+  pagePath,
+}: {
+  faqs: FAQItem[];
+  categorySlug: string;
+  pagePath: string;
+}) {
+  if (!faqs || faqs.length === 0) return null;
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map(faq => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      url: `${SITE_URL}${pagePath}`,
+    },
+  };
+  return (
+    <Script
+      id={`schema-faq-category-${categorySlug}`}
+      type="application/ld+json"
+      strategy="afterInteractive"
+    >
+      {toJsonLd(data)}
+    </Script>
   );
 }
 
