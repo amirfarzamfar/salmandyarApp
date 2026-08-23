@@ -64,14 +64,19 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/icons/icon-192x192.svg", sizes: "192x192", type: "image/svg+xml" },
       { url: "/icons/icon-512x512.svg", sizes: "512x512", type: "image/svg+xml" },
     ],
     apple: [
       { url: "/icons/apple-touch-icon.svg", sizes: "180x180", type: "image/svg+xml" },
     ],
-    shortcut: ["/favicon.ico"],
+    shortcut: ["/favicon.svg"],
+    other: {
+      rel: "mask-icon",
+      url: "/favicon.svg",
+      color: "#0f766e",
+    },
   },
   openGraph: {
     type: "website",
@@ -82,9 +87,10 @@ export const metadata: Metadata = {
     description: "ارائه جامع‌ترین خدمات پرستاری و مراقبت در منزل با پرستاران مجرب و دارای مجوز وزارت بهداشت، در تمام شهرهای بزرگ کشور",
     images: [
       {
-        url: "/og-default.png",
+        url: "/opengraph-image.svg",
         width: 1200,
         height: 630,
+        type: "image/svg+xml",
         alt: "سالمندیار - پرستاری و مراقبت در منزل",
       },
     ],
@@ -94,7 +100,15 @@ export const metadata: Metadata = {
     title: "سالمندیار | پلتفرم پرستاری و مراقبت در منزل",
     description: "پرستار در منزل، پانسمان، تزریقات، ICU در منزل با پشتیبانی ۲۴ ساعته",
     creator: "@salmandyar",
-    images: ["/og-default.png"],
+    images: [
+      {
+        url: "/twitter-image.svg",
+        width: 1200,
+        height: 675,
+        type: "image/svg+xml",
+        alt: "سالمندیار - پرستاری و مراقبت در منزل",
+      },
+    ],
   },
   robots: {
     index: true,

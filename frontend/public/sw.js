@@ -1,7 +1,7 @@
 /* eslint-disable no-restricted-globals */
 /* global self, Response, Request, caches, fetch */
 
-const CACHE_VERSION = 'salmandyar-v1';
+const CACHE_VERSION = 'salmandyar-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const IMAGES_CACHE = `${CACHE_VERSION}-images`;
@@ -13,12 +13,14 @@ const CORE_STATIC_ASSETS = [
   '/',
   OFFLINE_FALLBACK_URL,
   '/manifest.json',
-  '/favicon.ico',
+  '/favicon.svg',
   '/icons/icon-192x192.svg',
   '/icons/icon-512x512.svg',
   '/icons/icon-192x192-maskable.svg',
   '/icons/icon-512x512-maskable.svg',
   '/icons/apple-touch-icon.svg',
+  '/opengraph-image.svg',
+  '/twitter-image.svg',
 ];
 
 const PROTECTED_PREFIXES = [

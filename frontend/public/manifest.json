@@ -77,9 +77,9 @@
   ],
   "screenshots": [
     {
-      "src": "/og-default.png",
+      "src": "/opengraph-image.svg",
       "sizes": "1200x630",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "form_factor": "wide",
       "label": "صفحه اصلی سالمندیار"
     }

@@ -880,9 +880,9 @@ export const healthTools: HealthTool[] = [
       'ابزار محاسبه ب ام آی',
       'تفسیر نتیجه BMI برای سالمندان',
     ],
-    coverImageUrl: '/og-default.png',
-    ogImageUrl: '/og-default.png',
-    twitterImageUrl: '/og-default.png',
+    coverImageUrl: '/opengraph-image.svg',
+    ogImageUrl: '/opengraph-image.svg',
+    twitterImageUrl: '/twitter-image.svg',
     howToUse:
       '۱) قد خود را به سانتی‌متر وارد کنید. ۲) وزن خود را به کیلوگرم وارد کنید. ۳) گروه سنی و جمعیتی (سالمند، زن یا مرد بزرگسال) را از منو انتخاب کنید. نتیجه بلافاصله با رنگ، تفسیر متنی و توصیه‌های عملی نمایش داده می‌شود.',
     interpretationGuide:
@@ -993,9 +993,9 @@ export const healthTools: HealthTool[] = [
       'سرعت انفوزیون',
       'محاسبه پمپ سرنگی',
     ],
-    coverImageUrl: '/og-default.png',
-    ogImageUrl: '/og-default.png',
-    twitterImageUrl: '/og-default.png',
+    coverImageUrl: '/opengraph-image.svg',
+    ogImageUrl: '/opengraph-image.svg',
+    twitterImageUrl: '/twitter-image.svg',
     howToUse:
       'از تب (Tab) مورد نظر خود را انتخاب کنید: هپارین/انسولین، دوپامین/دبوتامین، اپی نفرین، نیتروگلیسیرین، آمیودارون، پنتاپرازول، میدازولام، فنتانیل، اکتریوتاید، محاسبه عمومی دارو، داروهای درصدی، قطرات سرم یا تبدیل واحدها. سپس مقادیر خواسته‌شده (دوز، حجم، وزن بیمار و...) را با دقت وارد کنید و روی دکمه محاسبه کلیک کنید. نتیجه شامل سرعت تزریق نهایی، جزئیات ورودی‌ها و فرمول محاسبه به همراه تایید دستی شما نمایش داده می‌شود.',
     interpretationGuide:

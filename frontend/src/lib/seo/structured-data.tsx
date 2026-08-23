@@ -146,7 +146,7 @@ export function ServiceSchema({ service, faqs }: { service: ServiceSeoProfile; f
     provider: {
       '@type': 'LocalBusiness',
       name: 'سالمندیار',
-      image: `${SITE_URL}/og-default.png`,
+      image: `${SITE_URL}/opengraph-image.svg`,
       url: SITE_URL,
       priceRange: service.startingPrice ? `${service.startingPrice.toLocaleString('fa-IR')} تومان` : undefined,
       openingHours: has24Hour ? 'Mo-Su 00:00-24:00' : undefined,
@@ -243,7 +243,7 @@ export function LocalBusinessSchema({ city }: { city: City }) {
     '@context': 'https://schema.org',
     '@type': 'LocalBusiness',
     name: `سالمندیار ${city.name}`,
-    image: city.coverImageUrl || `${SITE_URL}/og-default.png`,
+    image: city.coverImageUrl || `${SITE_URL}/opengraph-image.svg`,
     url: `${SITE_URL}/cities/${city.slug}`,
     telephone: city.phoneNumber || '+98-912-8718237',
     priceRange: 'متوسط',
