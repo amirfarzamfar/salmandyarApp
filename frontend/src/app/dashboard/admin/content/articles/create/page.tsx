@@ -1,23 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
 import {
   Plus,
   Eye,
   ArrowLeft,
   Save,
-  Upload,
   FileText,
   Tag,
   UserCheck,
   BarChart3,
   ListTodo,
   Stethoscope,
-  Calendar,
-  Image as ImageIcon,
   AlertCircle,
   CheckCircle2,
   X,
@@ -25,6 +22,7 @@ import {
   Sparkles,
   Search as SearchIcon,
   Loader2,
+  Check,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Progress } from '@/components/ui/progress';
@@ -37,10 +35,17 @@ import {
   healthTools,
   authors as mockAuthors,
 } from '@/lib/data/content-data';
-import adminContentApi, { type CategoryItem, type TagItem, type AuthorStub } from '@/lib/content-admin-api';
+import adminContentApi, { type CategoryItem, type TagItem } from '@/lib/content-admin-api';
+import RichTextEditor from '@/components/admin/content/RichTextEditor';
+import PersianDatePicker from '@/components/admin/content/PersianDatePicker';
+import FeaturedImageUploader from '@/components/admin/content/FeaturedImageUploader';
 
 export default function CreateArticlePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editIdRaw = searchParams.get('edit');
+  const editId = editIdRaw ? Number(editIdRaw) : null;
+
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [excerpt, setExcerpt] = useState('');
@@ -49,16 +54,27 @@ export default function CreateArticlePage() {
   const [metaDescription, setMetaDescription] = useState('');
   const [focusKeyword, setFocusKeyword] = useState('');
   const [keywords, setKeywords] = useState<string[]>(['مراقبت در منزل', 'پرستاری', 'سلامت']);
-  const [status, setStatus] = useState('Draft');
+  const [status, setStatus] = useState<'Draft' | 'PendingReview' | 'Published' | 'Archived'>('Draft');
   const [categoryId, setCategoryId] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
-  const [publishedAt, setPublishedAt] = useState('');
+  const [publishedAtIso, setPublishedAtIso] = useState<string | null>(null);
   const [authorId, setAuthorId] = useState<string>('');
-  const [submitting, setSubmitting] = useState<'draft' | 'publish' | null>(null);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [saveLock, setSaveLock] = useState(false);
 
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [tags, setTags] = useState<TagItem[]>([]);
   const [lookupLoading, setLookupLoading] = useState({ cats: true, tags: true });
+  const [loadingArticle, setLoadingArticle] = useState(false);
+
+  const [medicalReviewerId, setMedicalReviewerId] = useState<string>('');
+  const [isMedicallyValidated, setIsMedicallyValidated] = useState(false);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState<string>('');
+  const [imageAlt, setImageAlt] = useState('');
+  const [diseaseId, setDiseaseId] = useState<string>('');
+  const [selectedServices, setSelectedServices] = useState<number[]>([]);
+  const [cityId, setCityId] = useState<string>('');
 
   useEffect(() => {
     let alive = true;
@@ -73,22 +89,54 @@ export default function CreateArticlePage() {
     return () => { alive = false; };
   }, []);
 
+  useEffect(() => {
+    if (!editId) return;
+    let alive = true;
+    setLoadingArticle(true);
+    const id = editId;
+    adminContentApi.getArticle(id)
+      .then((data: any) => {
+        if (!alive || !data) return;
+        setTitle(data.title ?? '');
+        setSlug(data.slug ?? '');
+        setExcerpt(data.excerpt ?? data.metaDescription ?? '');
+        setContent(data.content ?? '');
+        setMetaTitle(data.metaTitle ?? '');
+        setMetaDescription(data.metaDescription ?? data.excerpt ?? '');
+        setFocusKeyword(data.primaryKeyword ?? '');
+        try {
+          const kws = data.secondaryKeywordsJson
+            ? JSON.parse(data.secondaryKeywordsJson)
+            : [];
+          if (Array.isArray(kws) && kws.length) setKeywords(kws.filter(Boolean));
+        } catch { /* ignore */ }
+        setStatus((data.status as any) ?? 'Draft');
+        setCategoryId(String(data.categoryId ?? ''));
+        setAuthorId(String(data.authorId ?? ''));
+        if (data.publishedAt) {
+          setPublishedAtIso(new Date(data.publishedAt).toISOString());
+        }
+        setImageAlt(data.featuredImageAlt ?? '');
+        setFeaturedImageUrl(data.featuredImageUrl ?? '');
+        setDiseaseId(String(data.diseaseId ?? ''));
+        setIsMedicallyValidated(!!data.isFactChecked);
+        const tagIds = Array.isArray(data.Tags)
+          ? data.Tags.map((t: any) => Number(t.id)).filter(Boolean)
+          : [];
+        if (tagIds.length) setSelectedTags(tagIds);
+        toast.success('اطلاعات مقاله برای ویرایش بارگذاری شد');
+      })
+      .catch((err: any) => {
+        const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در بارگذاری مقاله';
+        toast.error(msg);
+      })
+      .finally(() => { if (alive) setLoadingArticle(false); });
+    return () => { alive = false; };
+  }, [editId]);
+
   const contentCategories = categories.length > 0 ? (categories as unknown as any[]) : mockCategories;
   const contentTags = tags.length > 0 ? (tags as unknown as any[]) : mockTags;
   const authors = mockAuthors;
-  const [medicalReviewerId, setMedicalReviewerId] = useState<string>('');
-  const [medicalReviewedAt, setMedicalReviewedAt] = useState('');
-  const [isMedicallyValidated, setIsMedicallyValidated] = useState(false);
-  const [featuredImageUrl, setFeaturedImageUrl] = useState('');
-  const [imageAlt, setImageAlt] = useState('');
-  const [diseaseId, setDiseaseId] = useState<string>('');
-  const [selectedServices, setSelectedServices] = useState<number[]>([]);
-  const [healthToolId, setHealthToolId] = useState<string>('');
-  const [cityId, setCityId] = useState<string>('');
-  const [faqs, setFaqs] = useState([
-    { id: 1, question: 'این مقاله برای چه کسانی مفید است؟', answer: '' },
-    { id: 2, question: 'عوارض جانبی این روش درمان چیست؟', answer: '' },
-  ]);
 
   const medicalReviewers = useMemo(
     () => authors.filter((a) => a.isMedicalReviewer),
@@ -96,11 +144,52 @@ export default function CreateArticlePage() {
   );
 
   const wordCount = useMemo(
-    () => content.trim().split(/\s+/).filter((w) => w.length).length,
+    () => content.replace(/<[^>]+>/g, ' ').trim().split(/\s+/).filter((w) => w.length).length,
     [content]
   );
   const estimatedReadTime = Math.max(1, Math.ceil(wordCount / 200));
-  const seoScore = 82;
+
+  const [seoScore, seoSuggestions] = useMemo(() => {
+    let score = 30;
+    const suggestions: { text: string; ok: boolean }[] = [];
+
+    const titleOk = title.trim().length >= 20 && title.trim().length <= 70;
+    if (titleOk) { score += 12; suggestions.push({ text: 'طول عنوان در محدوده ایده‌آل (۲۰ تا ۷۰ کاراکتر)', ok: true }); }
+    else suggestions.push({ text: title.trim().length < 20 ? 'عنوان کوتاه‌تر از حد ایده‌آل است' : 'عنوان طولانی‌تر از حد ایده‌آل است', ok: false });
+
+    const slugOk = slug.trim().length >= 5 && slug.trim().length <= 80;
+    if (slugOk) { score += 8; suggestions.push({ text: 'Slug مناسب و خوانا تعریف شده است', ok: true }); }
+    else suggestions.push({ text: 'Slug کوتاه یا طولانی است و بهینه نیست', ok: false });
+
+    const excerptOk = excerpt.trim().length >= 80 && excerpt.trim().length <= 160;
+    if (excerptOk) { score += 12; suggestions.push({ text: 'خلاصه در محدوده ایده‌آل متای توصیف است', ok: true }); }
+    else suggestions.push({ text: 'خلاصه بین ۸۰ تا ۱۶۰ کاراکتر باشد', ok: false });
+
+    const contentOk = wordCount >= 500;
+    if (contentOk) { score += wordCount >= 1500 ? 20 : 14; suggestions.push({ text: wordCount >= 1500 ? 'محتوا طولانی و جامع (مناسب سئو عمیق)' : 'طول محتوا قابل قبول است', ok: true }); }
+    else suggestions.push({ text: 'محتوا باید حداقل ۵۰۰ کلمه باشد', ok: false });
+
+    if (/<h2[^>]*>[\s\S]*?<\/h2>/i.test(content)) { score += 6; suggestions.push({ text: 'ساختار H2 در محتوا استفاده شده است', ok: true }); }
+    else suggestions.push({ text: 'حداقل یک عنوان H2 در محتوا قرار دهید', ok: false });
+
+    if (featuredImageUrl && imageAlt.trim().length >= 3) { score += 8; suggestions.push({ text: 'عکس شاخص با Alt مناسب تعریف شده', ok: true }); }
+    else suggestions.push({ text: 'عکس شاخص با Alt Text مناسب انتخاب کنید', ok: false });
+
+    if (focusKeyword.trim().length >= 3) { score += 6; suggestions.push({ text: 'کلمه کلیدی اصلی تعریف شده است', ok: true }); }
+    else suggestions.push({ text: 'کلمه کلیدی اصلی را مشخص کنید', ok: false });
+
+    if (keywords.length >= 3) { score += 4; suggestions.push({ text: 'کلمات کلیدی فرعی کافی تعریف شده‌اند', ok: true }); }
+    else suggestions.push({ text: 'حداقل ۳ کلمه کلیدی فرعی اضافه کنید', ok: false });
+
+    if (categoryId) { score += 4; suggestions.push({ text: 'دسته‌بندی مقاله مشخص است', ok: true }); }
+    else suggestions.push({ text: 'دسته‌بندی مقاله را انتخاب کنید', ok: false });
+
+    if (selectedTags.length >= 2) { score += 2; suggestions.push({ text: 'تگ‌های مرتبط تعریف شده‌اند', ok: true }); }
+    else suggestions.push({ text: 'حداقل ۲ تگ مرتبط اضافه کنید', ok: false });
+
+    score = Math.min(100, score);
+    return [score, suggestions] as const;
+  }, [title, slug, excerpt, wordCount, content, featuredImageUrl, imageAlt, focusKeyword, keywords.length, categoryId, selectedTags.length]);
 
   const excerptCount = excerpt.length;
   const metaTitleCount = metaTitle.length;
@@ -143,19 +232,6 @@ export default function CreateArticlePage() {
     );
   };
 
-  const addFAQ = () => {
-    setFaqs([...faqs, { id: Date.now(), question: '', answer: '' }]);
-    toast.success('سؤال جدید اضافه شد');
-  };
-
-  const updateFAQ = (id: number, field: 'question' | 'answer', value: string) => {
-    setFaqs(faqs.map((f) => (f.id === id ? { ...f, [field]: value } : f)));
-  };
-
-  const removeFAQ = (id: number) => {
-    setFaqs(faqs.filter((f) => f.id !== id));
-  };
-
   const resolvePayload = (articleStatus: 'Draft' | 'Published') => {
     const effectiveAuthorId = Number(authorId) || Number(mockAuthors[0]?.id) || 1;
     const effectiveCategoryId = Number(categoryId) || Number(contentCategories[0]?.id) || 1;
@@ -166,6 +242,7 @@ export default function CreateArticlePage() {
       .replace(/[^a-z0-9\-آ-ی]/g, '')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '') || `article-${Date.now()}`;
+    const finalStatus = articleStatus;
     return {
       title: title.trim(),
       slug: effectiveSlug,
@@ -176,11 +253,13 @@ export default function CreateArticlePage() {
       shortAnswer: excerpt || null,
       estimatedReadingTimeMinutes: estimatedReadTime,
       featuredImageUrl: featuredImageUrl || null,
+      featuredImageAlt: imageAlt || null,
       metaTitle: metaTitle || null,
       metaDescription: metaDescription || null,
       primaryKeyword: focusKeyword || null,
       secondaryKeywordsJson: keywords?.length ? JSON.stringify(keywords) : null,
-      status: articleStatus,
+      status: finalStatus,
+      publishedAt: publishedAtIso,
       diseaseId: Number(diseaseId) || 0,
       isFeatured: false,
       isMedicalContent: true,
@@ -190,21 +269,35 @@ export default function CreateArticlePage() {
     };
   };
 
+  const tryAcquireSaveLock = () => {
+    if (saveLock || submitting) return false;
+    setSaveLock(true);
+    setSubmitting(true);
+    return true;
+  };
+
+  const releaseSaveLock = () => {
+    setSaveLock(false);
+    setSubmitting(false);
+  };
+
   const handleSaveDraft = async () => {
-    if (!title.trim()) {
-      toast.error('عنوان مقاله الزامی است');
-      return;
-    }
-    setSubmitting('draft');
+    if (!tryAcquireSaveLock()) return;
     try {
+      if (!title.trim()) {
+        toast.error('عنوان مقاله الزامی است');
+        return;
+      }
       const payload = resolvePayload('Draft');
-      const res: any = await adminContentApi.createArticle(payload);
+      const res: any = editId
+        ? await adminContentApi.updateArticle(editId, payload)
+        : await adminContentApi.createArticle(payload);
       toast.success(res?.message || 'پیش‌نویس مقاله ذخیره شد');
       setTimeout(() => router.push('/dashboard/admin/content/articles'), 800);
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در ذخیره پیش‌نویس';
       toast.error(msg);
-    } finally { setSubmitting(null); }
+    } finally { releaseSaveLock(); }
   };
 
   const handlePreview = () => {
@@ -212,24 +305,26 @@ export default function CreateArticlePage() {
   };
 
   const handlePublish = async () => {
-    if (!title.trim()) {
-      toast.error('عنوان مقاله الزامی است');
-      return;
-    }
-    if (!categoryId && !contentCategories[0]) {
-      toast.error('انتخاب دسته‌بندی الزامی است');
-      return;
-    }
-    setSubmitting('publish');
+    if (!tryAcquireSaveLock()) return;
     try {
+      if (!title.trim()) {
+        toast.error('عنوان مقاله الزامی است');
+        return;
+      }
+      if (!categoryId && !contentCategories[0]) {
+        toast.error('انتخاب دسته‌بندی الزامی است');
+        return;
+      }
       const payload = resolvePayload('Published');
-      const res: any = await adminContentApi.createArticle(payload);
+      const res: any = editId
+        ? await adminContentApi.updateArticle(editId, payload)
+        : await adminContentApi.createArticle(payload);
       toast.success(res?.message || 'مقاله با موفقیت منتشر شد');
       setTimeout(() => router.push('/dashboard/admin/content/articles'), 800);
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در انتشار مقاله';
       toast.error(msg);
-    } finally { setSubmitting(null); }
+    } finally { releaseSaveLock(); }
   };
 
   return (
@@ -244,46 +339,73 @@ export default function CreateArticlePage() {
             بازگشت به لیست مقالات
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-gray-900">نوشتن مقاله جدید</h1>
+            <h1 className="text-2xl font-black text-gray-900">
+              {editId ? 'ویرایش مقاله' : 'نوشتن مقاله جدید'}
+            </h1>
             <p className="mt-2 text-sm text-gray-500">
-              اطلاعات اصلی مقاله را وارد کنید، سپس محتوا را بنویسید و تنظیمات انتشار را تکمیل نمایید.
+              اطلاعات اصلی مقاله را وارد کنید، سپس محتوا را با ویرایشگر حرفه‌ای بنویسید و تنظیمات انتشار را تکمیل نمایید.
             </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleSaveDraft} disabled={!!submitting}>
-            {submitting === 'draft' ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSaveDraft}
+            disabled={submitting || loadingArticle}
+          >
+            {submitting && !submitting ? null : submitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
             ذخیره پیش‌نویس
           </Button>
-          <Button variant="ghost" size="sm" onClick={handlePreview} disabled={!!submitting}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handlePreview}
+            disabled={submitting || loadingArticle}
+          >
             <Eye className="ml-2 h-4 w-4" />
             پیش‌نمایش
           </Button>
           <Button
             size="sm"
             onClick={handlePublish}
-            disabled={!!submitting}
+            disabled={submitting || loadingArticle}
             className="bg-gradient-to-l from-teal-600 to-emerald-500 hover:from-teal-700 hover:to-emerald-600 shadow-lg shadow-teal-600/20"
           >
-            {submitting === 'publish' ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="ml-2 h-4 w-4" />}
-            انتشار مقاله
+            {submitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="ml-2 h-4 w-4" />}
+            {editId ? 'ذخیره و به‌روزرسانی' : 'انتشار مقاله'}
           </Button>
         </div>
       </div>
+
+      {loadingArticle && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 flex flex-col items-center justify-center gap-2 shadow-sm">
+          <Loader2 className="h-8 w-8 text-teal-600 animate-spin" />
+          <div className="text-sm font-bold text-slate-600">در حال بارگذاری اطلاعات مقاله برای ویرایش...</div>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-12">
         <div className="lg:col-span-8 space-y-6">
           <Card title="اطلاعات اصلی" icon={<FileEdit className="h-4 w-4 text-teal-600" />}>
             <div className="space-y-5">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-slate-700 block">عنوان مقاله</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold text-slate-700 block">عنوان مقاله (H1)</label>
+                  <span className={`text-[11px] font-bold ${title.length > 70 ? 'text-rose-600' : 'text-slate-400'}`}>
+                    {title.length}/۷۰
+                  </span>
+                </div>
                 <input
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="مثلاً: مراقبت کامل از بیمار سکته مغزی در منزل"
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
+                  placeholder="مثلاً: مراقبت کامل از بیمار سکته مغزی در منزل - راهنمای علمی ۱۴۰۵"
+                  className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-base font-bold text-slate-800 outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
                 />
+                <p className="text-[11px] font-bold text-slate-400 leading-relaxed">
+                  این عنوان به صورت H1 در بالای صفحه نمایش داده می‌شود و نباید در محتوای مقاله تکرار شود.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -316,7 +438,7 @@ export default function CreateArticlePage() {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-bold text-slate-700">خلاصه کوتاه (Meta Description)</label>
+                  <label className="text-sm font-bold text-slate-700">خلاصه کوتاه مقاله</label>
                   <span
                     className={`text-xs font-bold ${
                       excerptCount > 160 ? 'text-rose-600' : 'text-slate-400'
@@ -338,16 +460,11 @@ export default function CreateArticlePage() {
 
           <Card title="متن کامل مقاله" icon={<FileText className="h-4 w-4 text-blue-600" />}>
             <div className="space-y-4">
-              <div className="flex items-center gap-2 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2 text-xs text-slate-500 font-bold">
-                <AlertCircle className="h-4 w-4 text-amber-500" />
-                پشتیبانی از Markdown / WYSIWYG در نسخه بعدی
-              </div>
-              <textarea
-                rows={18}
+              <RichTextEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder={`محتوای کامل مقاله را اینجا بنویسید...\n\nبرای شروع می‌توانید از ساختار زیر استفاده کنید:\n\n## مقدمه\n## بخش اول\n## بخش دوم\n## نتیجه`}
-                className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all font-sans leading-7"
+                onChange={setContent}
+                minHeight={460}
+                placeholder="محتوای کامل مقاله را اینجا بنویسید..."
               />
               <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5">
                 <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
@@ -356,9 +473,13 @@ export default function CreateArticlePage() {
                     تعداد کلمات: <span className="text-slate-700">{wordCount.toLocaleString('fa-IR')}</span>
                   </span>
                   <span className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
                     زمان تخمینی مطالعه: <span className="text-slate-700">{estimatedReadTime.toLocaleString('fa-IR')} دقیقه</span>
                   </span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400">
+                  <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                  H1 فقط در عنوان صفحه استفاده شده و داخل محتوا H2، H3 و H4 به کار رفته‌اند
                 </div>
               </div>
             </div>
@@ -377,9 +498,26 @@ export default function CreateArticlePage() {
                 <div className="flex-1 min-w-[180px]">
                   <Progress value={seoScore} className="h-2.5 bg-white border border-teal-100" />
                   <div className="mt-2 text-xs font-bold text-teal-700 text-left">
-                    وضعیت: عالی ✨
+                    وضعیت: {seoScore >= 85 ? 'عالی ✨' : seoScore >= 65 ? 'خوب 👍' : seoScore >= 45 ? 'متوسط 📊' : 'نیاز به بهبود ⚠️'}
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-1.5 rounded-2xl border border-slate-200 bg-white p-3">
+                <div className="text-xs font-black text-slate-700 mb-2 flex items-center gap-1">
+                  <ListTodo className="h-3.5 w-3.5 text-indigo-500" />
+                  پیشنهادهای هوشمند سئو
+                </div>
+                {seoSuggestions.map((s, i) => (
+                  <div key={i} className={`flex items-start gap-2 rounded-lg px-2.5 py-1.5 ${s.ok ? 'bg-emerald-50/60' : 'bg-amber-50/50'}`}>
+                    {s.ok
+                      ? <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+                      : <AlertCircle className="h-4 w-4 text-amber-500 flex-shrink-0 mt-0.5" />}
+                    <span className={`text-xs font-bold leading-relaxed ${s.ok ? 'text-emerald-700' : 'text-amber-700'}`}>
+                      {s.text}
+                    </span>
+                  </div>
+                ))}
               </div>
 
               <div className="space-y-2">
@@ -397,14 +535,14 @@ export default function CreateArticlePage() {
                   type="text"
                   value={metaTitle}
                   onChange={(e) => setMetaTitle(e.target.value)}
-                  placeholder={title || 'عنوان صفحه در نتایج گوگل...'}
+                  placeholder={title || 'عنوان صفحه در نتایج گوگل (اختیاری - به صورت خودکار از عنوان استفاده می‌شود)'}
                   className="w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
                 />
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="text-sm font-bold text-slate-700">متای توصیف</label>
+                  <label className="text-sm font-bold text-slate-700">متای توصیف (Meta Description)</label>
                   <span
                     className={`text-xs font-bold ${
                       excerptCount > 160 ? 'text-rose-600' : 'text-slate-400'
@@ -415,9 +553,9 @@ export default function CreateArticlePage() {
                 </div>
                 <textarea
                   rows={3}
-                  value={excerpt}
-                  onChange={(e) => setExcerpt(e.target.value)}
-                  placeholder="توضیح کوتاه برای نمایش در نتایج موتورهای جستجو..."
+                  value={metaDescription}
+                  onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="توضیح کوتاه برای نمایش در نتایج موتورهای جستجو (اختیاری - می‌تواند با خلاصه مقاله یکسان باشد)"
                   className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
                 />
               </div>
@@ -467,73 +605,16 @@ export default function CreateArticlePage() {
               </div>
             </div>
           </Card>
-
-          <Card
-            title="سؤالات متداول"
-            icon={<ListTodo className="h-4 w-4 text-violet-600" />}
-            action={
-              <Button variant="outline" size="sm" onClick={addFAQ}>
-                <Plus className="ml-2 h-4 w-4" />
-                افزودن سؤال
-              </Button>
-            }
-          >
-            <div className="space-y-4">
-              {faqs.length === 0 ? (
-                <div className="py-8 text-center rounded-2xl border-2 border-dashed border-slate-200">
-                  <ListTodo className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-slate-500">هنوز سؤالی اضافه نکرده‌اید</p>
-                  <p className="text-xs text-slate-400 mt-1">سؤالات متداول را برای سئوی بهتر اضافه کنید</p>
-                </div>
-              ) : (
-                faqs.map((faq, index) => (
-                  <div
-                    key={faq.id}
-                    className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 text-violet-700 border border-violet-200 px-2.5 py-0.5 text-xs font-bold">
-                        سؤال {index + 1}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeFAQ(faq.id)}
-                        className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      <input
-                        type="text"
-                        value={faq.question}
-                        onChange={(e) => updateFAQ(faq.id, 'question', e.target.value)}
-                        placeholder="متن سؤال..."
-                        className="w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 transition-all font-bold"
-                      />
-                      <textarea
-                        rows={3}
-                        value={faq.answer}
-                        onChange={(e) => updateFAQ(faq.id, 'answer', e.target.value)}
-                        placeholder="پاسخ سؤال..."
-                        className="w-full resize-none rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 transition-all"
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </Card>
         </div>
 
         <div className="lg:col-span-4 space-y-6">
-          <Card title="وضعیت انتشار" icon={<Calendar className="h-4 w-4 text-teal-600" />}>
+          <Card title="وضعیت انتشار" icon={<Sparkles className="h-4 w-4 text-teal-600" />}>
             <div className="space-y-4">
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600 block">وضعیت</label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
+                  onChange={(e) => setStatus(e.target.value as any)}
                   className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all font-bold"
                 >
                   <option value="Draft">پیش‌نویس</option>
@@ -544,11 +625,25 @@ export default function CreateArticlePage() {
               </div>
 
               <div className="space-y-2">
+                <PersianDatePicker
+                  label="تاریخ انتشار"
+                  value={publishedAtIso}
+                  onChange={(iso) => setPublishedAtIso(iso)}
+                  includeTime
+                  placeholder="1405/06/01 14:30"
+                />
+                <p className="text-[11px] font-bold text-slate-400 leading-relaxed">
+                  خالی بودن به معنی استفاده از زمان فعلی سرور هنگام انتشار است. تاریخ به صورت میلادی در پایگاه‌داده ذخیره می‌شود.
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600 block">دسته‌بندی اصلی</label>
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
                   className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
+                  disabled={lookupLoading.cats}
                 >
                   <option value="">انتخاب دسته‌بندی...</option>
                   {contentCategories.map((cat) => (
@@ -561,8 +656,13 @@ export default function CreateArticlePage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600 block">تگ‌ها</label>
-                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-2xl border border-gray-200 bg-white max-h-[180px] overflow-y-auto">
-                  {contentTags.length === 0 ? (
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-2xl border border-gray-200 bg-white max-h-[200px] overflow-y-auto">
+                  {lookupLoading.tags ? (
+                    <span className="text-xs text-slate-400 py-1 px-1 inline-flex items-center gap-1">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      در حال بارگذاری تگ‌ها...
+                    </span>
+                  ) : contentTags.length === 0 ? (
                     <span className="text-xs text-slate-400 py-1 px-1">تگی تعریف نشده</span>
                   ) : (
                     contentTags.map((tag) => {
@@ -584,16 +684,6 @@ export default function CreateArticlePage() {
                     })
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-600 block">تاریخ انتشار</label>
-                <input
-                  type="date"
-                  value={publishedAt}
-                  onChange={(e) => setPublishedAt(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
-                />
               </div>
             </div>
           </Card>
@@ -638,18 +728,6 @@ export default function CreateArticlePage() {
                 </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-600 block">
-                  تاریخ آخرین بروزرسانی پزشکی
-                </label>
-                <input
-                  type="date"
-                  value={medicalReviewedAt}
-                  onChange={(e) => setMedicalReviewedAt(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
-                />
-              </div>
-
               <label className="flex items-start gap-2.5 p-3 rounded-xl bg-emerald-50/50 border border-emerald-200 cursor-pointer hover:bg-emerald-50 transition-colors">
                 <input
                   type="checkbox"
@@ -660,66 +738,21 @@ export default function CreateArticlePage() {
                 <div>
                   <div className="text-sm font-black text-emerald-800">تأیید اعتبار پزشکی</div>
                   <div className="text-xs font-bold text-emerald-600/70 mt-0.5">
-                    محتوا توسط متخصص پزشکی بررسی و تأیید شده است.
+                    محتوا توسط متخصص پزشکی بررسی و تأیید شده است. (IsFactChecked)
                   </div>
                 </div>
               </label>
             </div>
           </Card>
 
-          <Card title="تصویر شاخص" icon={<ImageIcon className="h-4 w-4 text-rose-500" />}>
-            <div className="space-y-4">
-              {featuredImageUrl ? (
-                <div className="relative rounded-2xl overflow-hidden border border-slate-200 group">
-                  <div
-                    className="w-full aspect-video bg-cover bg-center"
-                    style={{ backgroundImage: `url(${featuredImageUrl})` }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setFeaturedImageUrl('')}
-                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ) : (
-                <label className="flex flex-col items-center justify-center w-full aspect-video rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 hover:border-teal-400 hover:bg-teal-50/50 cursor-pointer transition-all">
-                  <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center mb-3 shadow-sm">
-                    <Upload className="h-6 w-6 text-teal-500" />
-                  </div>
-                  <div className="text-sm font-black text-slate-700">آپلود تصویر</div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    نسبت ۱۶:۹، فرمت JPG/PNG، حداکثر ۲MB
-                  </div>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setFeaturedImageUrl(
-                          'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=medical%20article%20cover%20image%20elderly%20care%20warm%20healthcare%20professional&image_size=landscape_16_9'
-                        );
-                        toast.success('تصویر آپلود شد');
-                      }
-                    }}
-                  />
-                </label>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-600 block">Alt Text (توضیح تصویر)</label>
-                <input
-                  type="text"
-                  value={imageAlt}
-                  onChange={(e) => setImageAlt(e.target.value)}
-                  placeholder="توضیح کوتاه تصویر برای دسترسی‌پذیری و سئو..."
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
-                />
-              </div>
-            </div>
+          <Card title="تصویر شاخص و سئوی تصویر" icon={<FileText className="h-4 w-4 text-rose-500" />}>
+            <FeaturedImageUploader
+              imageUrl={featuredImageUrl || null}
+              imageAlt={imageAlt}
+              onImageChange={(url) => setFeaturedImageUrl(url || '')}
+              onAltChange={setImageAlt}
+              title="عکس شاخص مقاله"
+            />
           </Card>
 
           <Card title="ارتباط با سایر محتواها" icon={<SearchIcon className="h-4 w-4 text-indigo-500" />}>
@@ -742,7 +775,7 @@ export default function CreateArticlePage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-600 block">خدمات مرتبط</label>
-                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-2xl border border-gray-200 bg-white max-h-[140px] overflow-y-auto">
+                <div className="flex flex-wrap gap-1.5 p-2.5 rounded-2xl border border-gray-200 bg-white max-h-[160px] overflow-y-auto">
                   {serviceSeoProfiles.length === 0 ? (
                     <span className="text-xs text-slate-400 py-1 px-1">سرویسی تعریف نشده</span>
                   ) : (
@@ -765,22 +798,6 @@ export default function CreateArticlePage() {
                     })
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-600 block">ابزار سلامت مرتبط</label>
-                <select
-                  value={healthToolId}
-                  onChange={(e) => setHealthToolId(e.target.value)}
-                  className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all"
-                >
-                  <option value="">بدون ارتباط</option>
-                  {healthTools.map((t) => (
-                    <option key={t.id} value={String(t.id)}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div className="space-y-2">
@@ -818,8 +835,8 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-5">
-      <div className="flex items-center justify-between gap-3 flex-wrap border-b border-slate-100 pb-4 -mx-6 px-6 mt-[-2px]">
+    <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-5">
+      <div className="flex items-center justify-between gap-3 flex-wrap border-b border-slate-100 pb-4 -mx-5 px-5 mt-[-2px]">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center">
             {icon}

@@ -478,14 +478,13 @@ export default function ArticlesAdminPage() {
                             >
                               <Eye className="h-4 w-4" />
                             </Link>
-                            <button
-                              type="button"
+                            <Link
+                              href={`/dashboard/admin/content/articles/create?edit=${article.id}`}
                               title="ویرایش"
                               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
-                              onClick={() => toast.success('صفحه ویرایش در نسخه بعدی اضافه می‌شود')}
                             >
                               <Pencil className="h-4 w-4" />
-                            </button>
+                            </Link>
                             <button
                               type="button"
                               title={article.status === 'Published' ? 'لغو انتشار' : 'انتشار'}

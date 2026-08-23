@@ -87,6 +87,7 @@ export interface Article {
   excerpt?: string;
   estimatedReadingTimeMinutes?: number;
   featuredImageUrl?: string;
+  featuredImageAlt?: string;
   ogImageUrl?: string;
   twitterImageUrl?: string;
   imageGallery?: string[];

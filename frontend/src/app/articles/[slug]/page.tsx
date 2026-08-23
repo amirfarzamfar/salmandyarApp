@@ -8,6 +8,7 @@ import Breadcrumb from '@/components/seo/Breadcrumb';
 import { ArticleSchema, FAQSchema } from '@/lib/seo/structured-data';
 import { listArticles, getArticleBySlug, listServicesWithSeo } from '@/lib/content-api';
 import type { Article } from '@/lib/types/content';
+import DOMPurify from 'isomorphic-dompurify';
 
 function formatDate(date?: string | Date) {
   if (!date) return '';
@@ -152,7 +153,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               {/* Featured Image */}
               {art.featuredImageUrl && (
                 <div className="mb-8 rounded-3xl overflow-hidden border border-gray-100 shadow-lg">
-                  <img src={art.featuredImageUrl} alt={art.title} className="w-full aspect-[16/9] object-cover" />
+                  <img src={art.featuredImageUrl} alt={art.featuredImageAlt || art.title} className="w-full aspect-[16/9] object-cover" />
                 </div>
               )}
 
@@ -206,7 +207,7 @@ export default async function ArticleDetailPage({ params }: { params: Promise<{ 
               {/* Article Content */}
               <div
                 className="prose prose-lg max-w-none prose-headings:font-black prose-headings:text-gray-900 prose-h2:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-xl prose-a:text-teal-600 prose-a:no-underline hover:prose-a:underline prose-p:text-gray-700 prose-p:leading-loose prose-ul:list-disc prose-ul:pr-5 prose-ol:pr-5 prose-li:text-gray-700 prose-li:leading-loose prose-blockquote:border-r-4 prose-blockquote:border-teal-500 prose-blockquote:not-italic"
-                dangerouslySetInnerHTML={{ __html: art.content || '' }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(art.content || '', { ADD_ATTR: ['target', 'rel'], ADD_TAGS: ['iframe'] }) }}
               />
 
               {/* Medical Review E-E-A-T */}

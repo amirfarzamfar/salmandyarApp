@@ -34,6 +34,9 @@ public class Article
     [MaxLength(1000)]
     public string? FeaturedImageUrl { get; set; }
 
+    [MaxLength(300)]
+    public string? FeaturedImageAlt { get; set; }
+
     [MaxLength(1000)]
     public string? OgImageUrl { get; set; }
 

@@ -1028,6 +1028,10 @@ namespace Salmandyar.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("FeaturedImageAlt")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<string>("FeaturedImageUrl")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");

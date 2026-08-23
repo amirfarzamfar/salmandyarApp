@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Salmandyar.API.Services;
 using Salmandyar.Domain.Constants;
 using Salmandyar.Domain.Entities.Content;
 using Salmandyar.Infrastructure.Persistence;
@@ -13,10 +14,12 @@ namespace Salmandyar.API.Controllers;
 public class AdminContentController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
+    private readonly IHostEnvironment _env;
 
-    public AdminContentController(ApplicationDbContext db)
+    public AdminContentController(ApplicationDbContext db, IHostEnvironment env)
     {
         _db = db;
+        _env = env;
     }
 
     #region ContentCategory
@@ -224,6 +227,50 @@ public class AdminContentController : ControllerBase
 
     #endregion
 
+    #region ImageUpload
+
+    [HttpPost("upload-image")]
+    [RequestSizeLimit(ContentImageStorage.MaxImageUploadBytes)]
+    public async Task<IActionResult> UploadImage(IFormFile? file, [FromForm] string use = "featured")
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(new { message = "فایل تصویر ارسال نشده است" });
+
+        if (!ContentImageStorage.IsAllowedImage(file.FileName))
+            return BadRequest(new { message = "فرمت فایل مجاز نیست. فرمت‌های مجاز: JPG, PNG, WEBP, GIF, BMP" });
+
+        if (file.Length > ContentImageStorage.MaxImageUploadBytes)
+            return BadRequest(new { message = $"حجم فایل نباید بیشتر از {ContentImageStorage.MaxImageUploadBytes / 1024 / 1024} مگابایت باشد" });
+
+        try
+        {
+            StoredContentImage stored;
+            if (string.Equals(use, "inline", StringComparison.OrdinalIgnoreCase))
+                stored = await ContentImageStorage.SaveInlineImageAsync(file, _env);
+            else
+                stored = await ContentImageStorage.SaveFeaturedImageAsync(file, _env);
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+            var fullUrl = baseUrl + stored.RelativeUrl;
+
+            return Ok(new
+            {
+                url = stored.RelativeUrl,
+                fullUrl,
+                fileName = stored.FileName,
+                sizeBytes = stored.SizeBytes,
+                sizeKB = Math.Round(stored.SizeBytes / 1024.0, 1)
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError,
+                new { message = "خطا در ذخیره تصویر: " + ex.Message });
+        }
+    }
+
+    #endregion
+
     #region Articles
 
     [HttpGet("articles")]
@@ -251,7 +298,8 @@ public class AdminContentController : ControllerBase
             .Select(a => new
             {
                 a.Id, a.Title, a.Slug, a.Status, a.Excerpt,
-                a.FeaturedImageUrl, a.ViewCount, a.IsFeatured, a.IsMedicalContent, a.IsFactChecked,
+                a.FeaturedImageUrl, a.FeaturedImageAlt,
+                a.ViewCount, a.IsFeatured, a.IsMedicalContent, a.IsFactChecked,
                 a.EstimatedReadingTimeMinutes, a.CreatedAt, a.PublishedAt, a.UpdatedAt,
                 Author = a.Author == null ? null : new { a.Author.Id, a.Author.FirstName, a.Author.LastName, a.Author.Title },
                 Category = a.Category == null ? null : new { a.Category.Id, a.Category.Name, a.Category.Slug },
@@ -274,7 +322,8 @@ public class AdminContentController : ControllerBase
         return Ok(new
         {
             a.Id, a.Title, a.Slug, a.Content, a.Excerpt, a.ShortAnswer,
-            a.EstimatedReadingTimeMinutes, a.FeaturedImageUrl, a.OgImageUrl, a.TwitterImageUrl,
+            a.EstimatedReadingTimeMinutes, a.FeaturedImageUrl, a.FeaturedImageAlt,
+            a.OgImageUrl, a.TwitterImageUrl,
             a.MetaTitle, a.MetaDescription, a.PrimaryKeyword, a.SecondaryKeywordsJson, a.CanonicalUrl,
             a.Status, a.Version, a.PublishedAt, a.LastUpdatedAt,
             a.AuthorId, a.CategoryId, a.ServiceDefinitionId, a.DiseaseId,
@@ -305,6 +354,17 @@ public class AdminContentController : ControllerBase
         else if (dto.Status.ToLower() == "pending") status = ArticleStatus.PendingReview;
         else if (dto.Status.ToLower() == "archived") status = ArticleStatus.Archived;
 
+        DateTime? publishedAt = null;
+        if (status == ArticleStatus.Published)
+        {
+            if (dto.PublishedAt.HasValue)
+                publishedAt = dto.PublishedAt.Value.Kind == DateTimeKind.Unspecified
+                    ? DateTime.SpecifyKind(dto.PublishedAt.Value, DateTimeKind.Utc)
+                    : dto.PublishedAt.Value.ToUniversalTime();
+            else
+                publishedAt = DateTime.UtcNow;
+        }
+
         var article = new Article
         {
             Title = dto.Title.Trim(),
@@ -314,6 +374,7 @@ public class AdminContentController : ControllerBase
             ShortAnswer = string.IsNullOrWhiteSpace(dto.ShortAnswer) ? null : dto.ShortAnswer.Trim(),
             EstimatedReadingTimeMinutes = dto.EstimatedReadingTimeMinutes > 0 ? dto.EstimatedReadingTimeMinutes : null,
             FeaturedImageUrl = string.IsNullOrWhiteSpace(dto.FeaturedImageUrl) ? null : dto.FeaturedImageUrl.Trim(),
+            FeaturedImageAlt = string.IsNullOrWhiteSpace(dto.FeaturedImageAlt) ? null : dto.FeaturedImageAlt.Trim(),
             OgImageUrl = string.IsNullOrWhiteSpace(dto.OgImageUrl) ? null : dto.OgImageUrl.Trim(),
             MetaTitle = string.IsNullOrWhiteSpace(dto.MetaTitle) ? null : dto.MetaTitle.Trim(),
             MetaDescription = string.IsNullOrWhiteSpace(dto.MetaDescription) ? null : dto.MetaDescription.Trim(),
@@ -321,7 +382,7 @@ public class AdminContentController : ControllerBase
             SecondaryKeywordsJson = dto.SecondaryKeywordsJson,
             CanonicalUrl = string.IsNullOrWhiteSpace(dto.CanonicalUrl) ? null : dto.CanonicalUrl.Trim(),
             Status = status,
-            PublishedAt = status == ArticleStatus.Published ? (DateTime.UtcNow) : null,
+            PublishedAt = publishedAt,
             LastUpdatedAt = DateTime.UtcNow,
             AuthorId = dto.AuthorId,
             CategoryId = dto.CategoryId,
@@ -365,7 +426,17 @@ public class AdminContentController : ControllerBase
         if (dto.ShortAnswer != null) article.ShortAnswer = string.IsNullOrWhiteSpace(dto.ShortAnswer) ? null : dto.ShortAnswer.Trim();
         if (dto.EstimatedReadingTimeMinutes.HasValue)
             article.EstimatedReadingTimeMinutes = dto.EstimatedReadingTimeMinutes > 0 ? dto.EstimatedReadingTimeMinutes : null;
-        if (dto.FeaturedImageUrl != null) article.FeaturedImageUrl = string.IsNullOrWhiteSpace(dto.FeaturedImageUrl) ? null : dto.FeaturedImageUrl.Trim();
+        if (dto.FeaturedImageUrl != null)
+        {
+            var newUrl = string.IsNullOrWhiteSpace(dto.FeaturedImageUrl) ? null : dto.FeaturedImageUrl.Trim();
+            if (newUrl != article.FeaturedImageUrl && !string.IsNullOrWhiteSpace(article.FeaturedImageUrl))
+            {
+                _ = Task.Run(() => ContentImageStorage.TryDeleteImage(_env, article.FeaturedImageUrl));
+            }
+            article.FeaturedImageUrl = newUrl;
+        }
+        if (dto.FeaturedImageAlt != null)
+            article.FeaturedImageAlt = string.IsNullOrWhiteSpace(dto.FeaturedImageAlt) ? null : dto.FeaturedImageAlt.Trim();
         if (dto.OgImageUrl != null) article.OgImageUrl = string.IsNullOrWhiteSpace(dto.OgImageUrl) ? null : dto.OgImageUrl.Trim();
         if (dto.MetaTitle != null) article.MetaTitle = string.IsNullOrWhiteSpace(dto.MetaTitle) ? null : dto.MetaTitle.Trim();
         if (dto.MetaDescription != null) article.MetaDescription = string.IsNullOrWhiteSpace(dto.MetaDescription) ? null : dto.MetaDescription.Trim();
@@ -382,8 +453,15 @@ public class AdminContentController : ControllerBase
             if (st != article.Status)
             {
                 article.Status = st;
-                if (st == ArticleStatus.Published && article.PublishedAt == null) article.PublishedAt = DateTime.UtcNow;
+                if (st == ArticleStatus.Published && article.PublishedAt == null)
+                    article.PublishedAt = DateTime.UtcNow;
             }
+        }
+        if (dto.PublishedAt.HasValue)
+        {
+            article.PublishedAt = dto.PublishedAt.Value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(dto.PublishedAt.Value, DateTimeKind.Utc)
+                : dto.PublishedAt.Value.ToUniversalTime();
         }
         if (dto.AuthorId.HasValue && dto.AuthorId > 0) article.AuthorId = dto.AuthorId.Value;
         if (dto.CategoryId.HasValue && dto.CategoryId > 0) article.CategoryId = dto.CategoryId.Value;
@@ -448,10 +526,11 @@ public class AdminContentController : ControllerBase
         string Title, string Slug, int AuthorId, int CategoryId,
         string? Content = null, string? Excerpt = null, string? ShortAnswer = null,
         int EstimatedReadingTimeMinutes = 0,
-        string? FeaturedImageUrl = null, string? OgImageUrl = null,
+        string? FeaturedImageUrl = null, string? FeaturedImageAlt = null, string? OgImageUrl = null,
         string? MetaTitle = null, string? MetaDescription = null,
         string? PrimaryKeyword = null, string? SecondaryKeywordsJson = null,
         string? CanonicalUrl = null, string Status = "Draft",
+        DateTime? PublishedAt = null,
         int ServiceDefinitionId = 0, int DiseaseId = 0,
         bool IsFeatured = false, bool IsMedicalContent = true, bool IsFactChecked = false,
         bool AllowComments = true, List<int>? TagIds = null);
@@ -460,10 +539,11 @@ public class AdminContentController : ControllerBase
         string? Title = null, string? Slug = null, int? AuthorId = null, int? CategoryId = null,
         string? Content = null, string? Excerpt = null, string? ShortAnswer = null,
         int? EstimatedReadingTimeMinutes = null,
-        string? FeaturedImageUrl = null, string? OgImageUrl = null,
+        string? FeaturedImageUrl = null, string? FeaturedImageAlt = null, string? OgImageUrl = null,
         string? MetaTitle = null, string? MetaDescription = null,
         string? PrimaryKeyword = null, string? SecondaryKeywordsJson = null,
         string? CanonicalUrl = null, string? Status = null,
+        DateTime? PublishedAt = null,
         int? ServiceDefinitionId = null, int? DiseaseId = null,
         bool? IsFeatured = null, bool? IsMedicalContent = null, bool? IsFactChecked = null,
         bool? AllowComments = null, List<int>? TagIds = null);

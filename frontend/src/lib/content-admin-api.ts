@@ -82,15 +82,24 @@ export interface CreateArticlePayload {
   title: string; slug: string; authorId: number; categoryId: number;
   content?: string | null; excerpt?: string | null; shortAnswer?: string | null;
   estimatedReadingTimeMinutes?: number;
-  featuredImageUrl?: string | null; ogImageUrl?: string | null;
+  featuredImageUrl?: string | null; featuredImageAlt?: string | null; ogImageUrl?: string | null;
   metaTitle?: string | null; metaDescription?: string | null;
   primaryKeyword?: string | null; secondaryKeywordsJson?: string | null;
   canonicalUrl?: string | null; status?: 'Draft' | 'PendingReview' | 'Published' | 'Archived';
+  publishedAt?: string | null;
   serviceDefinitionId?: number; diseaseId?: number;
   isFeatured?: boolean; isMedicalContent?: boolean; isFactChecked?: boolean;
   allowComments?: boolean; tagIds?: number[];
 }
 export interface UpdateArticlePayload extends Partial<CreateArticlePayload> { }
+
+export interface UploadImageResult {
+  url: string;
+  fullUrl: string;
+  fileName: string;
+  sizeBytes: number;
+  sizeKB: number;
+}
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -160,6 +169,15 @@ export const adminContentApi = {
 
   unpublishArticle: (id: number) =>
     api.post(`/admin/content/articles/${id}/unpublish`).then(r => r.data),
+
+  uploadImage: (file: File, use: 'featured' | 'inline' = 'featured'): Promise<UploadImageResult> => {
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('use', use);
+    return api.post('/admin/content/upload-image', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }).then(r => r.data as UploadImageResult);
+  },
 };
 
 export default adminContentApi;

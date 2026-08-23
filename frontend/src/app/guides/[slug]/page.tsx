@@ -20,6 +20,7 @@ import Breadcrumb from '@/components/seo/Breadcrumb';
 import { FAQSchema, ArticleSchema } from '@/lib/seo/structured-data';
 import { listGuides, getGuideBySlug, listArticles, listServicesWithSeo } from '@/lib/content-api';
 import type { Guide, ContentTag } from '@/lib/types/content';
+import DOMPurify from 'isomorphic-dompurify';
 
 type Params = { params: { slug: string } };
 
@@ -230,7 +231,7 @@ export default async function GuideDetailPage({ params }: Params) {
                   <div
                     className="prose prose-slate max-w-none prose-lg prose-headings:font-black prose-h2:text-2xl prose-h2:mb-4 prose-h2:mt-8 prose-p:text-gray-700 prose-p:leading-loose prose-a:text-teal-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-ul:space-y-2 prose-ol:space-y-2"
                     dir="rtl"
-                    dangerouslySetInnerHTML={{ __html: g.content }}
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(g.content || '', { ADD_ATTR: ['target', 'rel'], ADD_TAGS: ['iframe'] }) }}
                   />
                 </section>
               )}
