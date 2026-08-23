@@ -5,6 +5,7 @@ import { Sparkles, ShieldCheck, Timer, ArrowLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/Button';
 import GuestRequestWizard from '@/components/requests/GuestRequestWizard';
+import { DemoEntryButton } from './DemoSection';
 
 export default function GuestRequestSection() {
   const [open, setOpen] = useState(false);
@@ -37,7 +38,7 @@ export default function GuestRequestSection() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-white/60 bg-white/70 p-5 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-7">
+          <div className="rounded-3xl border border-white/60 bg-white/70 p-5 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-7 space-y-4">
             <div className="space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -77,6 +78,10 @@ export default function GuestRequestSection() {
               <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
                 برای ثبت اولیه، فقط اطلاعاتی پرسیده می‌شود که برای اعزام صحیح نیرو ضروری است.
               </div>
+            </div>
+
+            <div className="border-t border-dashed border-teal-200/60 dark:border-teal-700/40 pt-4">
+              <DemoEntryButton />
             </div>
           </div>
         </div>
