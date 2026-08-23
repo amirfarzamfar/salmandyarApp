@@ -7,6 +7,10 @@ import { CaregiverSchedule } from "@/components/admin/assignments/caregiver-sche
 import { AssignmentWizard } from "@/components/admin/assignments/assignment-wizard";
 import { ShiftListView } from "@/components/admin/assignments/shift-list-view";
 import { ShiftAuditModal } from "@/components/admin/assignments/shift-audit-modal";
+import { AssignmentCloseDialog } from "@/components/admin/assignments/assignment-close-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+import { AssignmentDto, AssignmentStatus } from "@/types/assignment";
 import { Button } from "@/components/ui/Button";
 import { Plus, Filter, Clock, Calendar, List } from "lucide-react";
 import { startOfMonth, endOfMonth } from "date-fns";
@@ -15,15 +19,64 @@ import persian from "react-date-object/calendars/persian";
 import persian_fa from "react-date-object/locales/persian_fa";
 import { formatTehranDateValue } from "@/lib/tehran-date";
 
-import { AssignmentDto, AssignmentStatus } from "@/types/assignment";
-
 export default function ShiftManagementPage() {
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<"calendar" | "list">("list");
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState<AssignmentDto | null>(null);
-  
+
   const [auditAssignment, setAuditAssignment] = useState<AssignmentDto | null>(null);
   const [isAuditOpen, setIsAuditOpen] = useState(false);
+
+  const [closingAssignment, setClosingAssignment] = useState<AssignmentDto | null>(null);
+  const [isCloseDialogOpen, setIsCloseDialogOpen] = useState(false);
+
+  const reopenShiftMutation = useMutation({
+    mutationFn: async (assignment: AssignmentDto) => {
+      const reopenAudit = `\n\n=== باز شدن مجدد شیفت توسط ادمین ===\nزمان باز شدن: ${new Date().toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' })}\nاز وضعیت: ${
+        assignment.status === AssignmentStatus.Completed
+          ? 'Completed'
+          : assignment.status === AssignmentStatus.Cancelled
+            ? 'Cancelled'
+            : assignment.status === AssignmentStatus.Suspended
+              ? 'Suspended'
+              : 'Unknown'
+      } به: Active`;
+      try {
+        await assignmentService.update(assignment.id, {
+          patientId: assignment.patientId,
+          caregiverId: assignment.caregiverId,
+          assignmentType: assignment.assignmentType,
+          shiftSlot: assignment.shiftSlot,
+          startDate: assignment.startDate,
+          endDate: assignment.endDate,
+          isPrimaryCaregiver: assignment.isPrimaryCaregiver,
+          notes: `${assignment.notes ?? ''}${reopenAudit}`,
+        });
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.warn("Reopen note partial update failed", e);
+      }
+      await assignmentService.updateStatus(assignment.id, AssignmentStatus.Active);
+    },
+    onSuccess: () => {
+      toast.success("شیفت با موفقیت بازگردانی شد (وضعیت: فعال)");
+      void queryClient.invalidateQueries({ queryKey: ["assignments-paged"] });
+      void queryClient.invalidateQueries({ queryKey: ["assignments-calendar"] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error ?? "خطا در باز کردن مجدد شیفت");
+    },
+  });
+
+  const handleCloseShift = (a: AssignmentDto) => {
+    setClosingAssignment(a);
+    setIsCloseDialogOpen(true);
+  };
+  const handleReopenShift = (a: AssignmentDto) => {
+    if (!window.confirm(`آیا از باز کردن مجدد شیفت «${a.caregiverName} برای بیمار ${a.patientName}» اطمینان دارید؟`)) return;
+    void reopenShiftMutation.mutateAsync(a);
+  };
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
@@ -194,7 +247,7 @@ export default function ShiftManagementPage() {
       )}
 
       {viewMode === "list" ? (
-        <ShiftListView 
+        <ShiftListView
           search={filterSearch}
           patientId={filterPatientId}
           caregiverId={filterCaregiverId}
@@ -203,6 +256,9 @@ export default function ShiftManagementPage() {
           end={endDateFilter}
           onEdit={handleEdit}
           onViewHistory={handleViewHistory}
+          onCloseShift={handleCloseShift}
+          onReopenShift={handleReopenShift}
+          reopenIsLoading={reopenShiftMutation.isPending}
         />
       ) : (
         isLoadingCalendar ? (
@@ -210,10 +266,13 @@ export default function ShiftManagementPage() {
             <div className="animate-spin w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full" />
           </div>
         ) : (
-          <CaregiverSchedule 
-            assignments={calendarAssignments || []} 
+          <CaregiverSchedule
+            assignments={calendarAssignments || []}
             onEdit={handleEdit}
             currentDate={currentDate}
+            onCloseShift={handleCloseShift}
+            onReopenShift={handleReopenShift}
+            reopenIsLoading={reopenShiftMutation.isPending}
           />
         )
       )}
@@ -228,10 +287,22 @@ export default function ShiftManagementPage() {
         initialData={editingAssignment}
       />
 
-      <ShiftAuditModal 
+      <ShiftAuditModal
         isOpen={isAuditOpen}
         onClose={() => setIsAuditOpen(false)}
         assignment={auditAssignment}
+      />
+
+      <AssignmentCloseDialog
+        isOpen={isCloseDialogOpen}
+        assignment={closingAssignment}
+        onClose={() => {
+          setIsCloseDialogOpen(false);
+          setClosingAssignment(null);
+        }}
+        onSuccess={() => {
+          setClosingAssignment(null);
+        }}
       />
     </div>
   );
