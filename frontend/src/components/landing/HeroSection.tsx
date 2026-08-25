@@ -1,14 +1,24 @@
 'use client';
 
+import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useUser } from '@/components/auth/UserContext';
 import { resolveRoleHomePath } from '@/utils/role-routing';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import GuestRequestWizard from '@/components/requests/GuestRequestWizard';
+import { ArrowLeft, PlayCircle } from 'lucide-react';
 
 export default function HeroSection() {
   const { user, loading } = useUser();
   const panelHref = resolveRoleHomePath(user?.role);
+  const [guestRequestOpen, setGuestRequestOpen] = useState(false);
+
+  const scrollToDemo = () => {
+    const el = document.getElementById('patient-demo-section');
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <section className="relative bg-gradient-to-br from-teal-50 to-white pt-32 pb-20 overflow-hidden">
@@ -37,13 +47,31 @@ export default function HeroSection() {
                   <Button size="lg" className="w-full sm:w-auto">ورود به پنل کاربری</Button>
                 </Link>
               ) : (
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto justify-center gap-2"
+                  onClick={() => setGuestRequestOpen(true)}
+                >
+                  درخواست فوری پرستار
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto justify-center gap-2 border-teal-200 bg-white/60 backdrop-blur hover:bg-teal-50 hover:border-teal-300"
+                onClick={scrollToDemo}
+              >
+                پنل دمو سالمندیار
+                <PlayCircle className="h-4 w-4 text-teal-600" />
+              </Button>
+              {!loading && !user && (
                 <Link href="/register">
-                  <Button size="lg" className="w-full sm:w-auto">درخواست پرستار</Button>
+                  <Button variant="ghost" size="lg" className="w-full sm:w-auto text-teal-700 hover:bg-teal-100/60">
+                   ثبت‌نام و درخواست پرستار 
+                  </Button>
                 </Link>
               )}
-              <Link href="#services">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto">مشاهده خدمات</Button>
-              </Link>
             </div>
             
             <div className="mt-10 flex items-center gap-6">
@@ -141,6 +169,18 @@ export default function HeroSection() {
           </motion.div>
         </div>
       </div>
+
+      <Dialog open={guestRequestOpen} onOpenChange={setGuestRequestOpen}>
+        <DialogContent className="max-w-xl border-white/50 bg-white/80 backdrop-blur-xl sm:rounded-3xl">
+          <DialogHeader className="space-y-2 text-right">
+            <DialogTitle className="text-xl font-black text-slate-900">ثبت درخواست بدون ثبت‌نام</DialogTitle>
+            <DialogDescription className="text-sm text-slate-500">
+              پاسخ‌ها به‌صورت خودکار ذخیره می‌شوند و می‌توانید به مرحله قبل برگردید.
+            </DialogDescription>
+          </DialogHeader>
+          <GuestRequestWizard onCompleted={() => setGuestRequestOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
