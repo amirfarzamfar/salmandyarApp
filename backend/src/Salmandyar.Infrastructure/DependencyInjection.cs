@@ -38,6 +38,8 @@ using Salmandyar.Application.Services.HomeCare;
 using Salmandyar.Infrastructure.Services.HomeCare;
 using Salmandyar.Application.Services.GuestRequests;
 using Salmandyar.Infrastructure.Services.GuestRequests;
+using Salmandyar.Application.Services.PatientServices;
+using Salmandyar.Infrastructure.Services.PatientServices;
 
 namespace Salmandyar.Infrastructure;
 
@@ -134,6 +136,9 @@ public static class DependencyInjection
 
         // Medications
         services.AddScoped<IMedicationService, MedicationService>();
+
+        // Patient Service Management
+        services.AddScoped<IPatientServiceManagementService, PatientServiceManagementService>();
 
         // Background Services
         services.AddHostedService<Salmandyar.Infrastructure.BackgroundServices.ReminderBackgroundService>();

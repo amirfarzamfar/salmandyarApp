@@ -94,6 +94,16 @@ function getDashboardNav(pathname: string): PanelNav {
       return { title: "مدیریت شیفت‌ها", breadcrumbs: [...base, { label: "مدیریت شیفت‌ها" }], backHref: "/dashboard", show: true };
     }
 
+    if (pathname.startsWith("/dashboard/admin/patient-services")) {
+      return {
+        title: "مدیریت خدمات بیماران",
+        description: "ثبت، برنامه‌ریزی، تخصیص و پیگیری خدمات بیماران",
+        breadcrumbs: [...base, { label: "مدیریت خدمات بیماران" }],
+        backHref: "/dashboard",
+        show: true,
+      };
+    }
+
     if (pathname.startsWith("/dashboard/admin/home-care-requests")) {
       return {
         title: "درخواست‌های Home Care",

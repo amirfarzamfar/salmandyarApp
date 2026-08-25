@@ -55,6 +55,15 @@ public static class Permissions
         public const string ManageDefinitions = "services.manage_definitions";
         public const string ManageAssignments = "services.manage_assignments";
         public const string ManageTracking = "services.manage_tracking";
+        public const string PatientServicesView = "patient_services.view";
+        public const string PatientServicesCreate = "patient_services.create";
+        public const string PatientServicesEdit = "patient_services.edit";
+        public const string PatientServicesDelete = "patient_services.delete";
+        public const string PatientServicesAssign = "patient_services.assign";
+        public const string PatientServicesSchedule = "patient_services.schedule";
+        public const string PatientServicesStatus = "patient_services.status";
+        public const string PatientServicesNotifications = "patient_services.notifications";
+        public const string PatientServicesBulk = "patient_services.bulk";
     }
 
     public static class Reports
@@ -155,6 +164,15 @@ public static class Permissions
         new(Services.ManageDefinitions, "services", "خدمات و سرویس‌ها", "مدیریت تعاریف خدمات", "اجازه مدیریت تعریف سرویس‌ها را می‌دهد."),
         new(Services.ManageAssignments, "services", "خدمات و سرویس‌ها", "مدیریت تخصیص خدمات", "اجازه تخصیص و برنامه‌ریزی خدمات را می‌دهد."),
         new(Services.ManageTracking, "services", "خدمات و سرویس‌ها", "مدیریت رهگیری خدمات", "اجازه ثبت و رهگیری اجرای خدمات را می‌دهد."),
+        new(Services.PatientServicesView, "patient_services", "مدیریت خدمات بیماران", "مشاهده خدمات بیماران", "اجازه مشاهده لیست، جزئیات و آمار خدمات بیماران را می‌دهد."),
+        new(Services.PatientServicesCreate, "patient_services", "مدیریت خدمات بیماران", "ثبت خدمت جدید", "اجازه ثبت و برنامه‌ریزی خدمت جدید برای بیماران را می‌دهد."),
+        new(Services.PatientServicesEdit, "patient_services", "مدیریت خدمات بیماران", "ویرایش خدمات", "اجازه ویرایش اطلاعات ثبت‌شده خدمات را می‌دهد."),
+        new(Services.PatientServicesDelete, "patient_services", "مدیریت خدمات بیماران", "حذف خدمات", "اجازه حذف یا لغو خدمات ثبت‌شده را می‌دهد."),
+        new(Services.PatientServicesAssign, "patient_services", "مدیریت خدمات بیماران", "تخصیص خدمت‌دهنده", "اجازه تخصیص و تغییر پرستار/خدمت‌دهنده به خدمات را می‌دهد."),
+        new(Services.PatientServicesSchedule, "patient_services", "مدیریت خدمات بیماران", "برنامه‌ریزی خدمات", "اجازه برنامه‌ریزی تکرارشونده و زمان‌بندی خدمات را می‌دهد."),
+        new(Services.PatientServicesStatus, "patient_services", "مدیریت خدمات بیماران", "تغییر وضعیت خدمت", "اجازه تغییر وضعیت اجرایی خدمات (شروع، تکمیل، لغو و...) را می‌دهد."),
+        new(Services.PatientServicesNotifications, "patient_services", "مدیریت خدمات بیماران", "مدیریت اعلان‌های خدمت", "اجازه ارسال و مدیریت اعلان‌های مربوط به خدمات را می‌دهد."),
+        new(Services.PatientServicesBulk, "patient_services", "مدیریت خدمات بیماران", "عملیات گروهی خدمات", "اجازه انجام عملیات گروهی روی چند خدمت همزمان را می‌دهد."),
 
         new(Reports.View, "reports", "گزارش‌ها", "مشاهده گزارش‌ها", "اجازه مشاهده گزارش‌های مراقبتی و عملیاتی را می‌دهد."),
         new(Reports.CreateNursing, "reports", "گزارش‌ها", "ثبت گزارش پرستاری", "اجازه ایجاد گزارش پرستاری را می‌دهد."),

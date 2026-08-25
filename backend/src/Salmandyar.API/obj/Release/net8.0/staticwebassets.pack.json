@@ -177,6 +177,26 @@
       "PackagePath": "staticwebassets\\uploads\\caregiver-profiles\\a40b9659-94ef-4251-92fa-beb52b6a2568_WorkHistory_3c4ec302b24d41259bf06bc5441ebde9.jpg"
     },
     {
+      "Id": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\content\\featured\\1405\\06\\5e920452168647af81ba44ebdc81a83c_072023.webp",
+      "PackagePath": "staticwebassets\\uploads\\content\\featured\\1405\\06\\5e920452168647af81ba44ebdc81a83c_072023.webp"
+    },
+    {
+      "Id": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\content\\featured\\1405\\06\\b38f5bb83174467ca5f7269b36f31978_072047.webp",
+      "PackagePath": "staticwebassets\\uploads\\content\\featured\\1405\\06\\b38f5bb83174467ca5f7269b36f31978_072047.webp"
+    },
+    {
+      "Id": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\content\\featured\\1405\\06\\f709fe4bb3894f81a988db490cdae05e_072038.webp",
+      "PackagePath": "staticwebassets\\uploads\\content\\featured\\1405\\06\\f709fe4bb3894f81a988db490cdae05e_072038.webp"
+    },
+    {
+      "Id": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\content\\inline\\1405\\06\\2f55e92f2070441c8ee0d0276eb9ae1a_072257.webp",
+      "PackagePath": "staticwebassets\\uploads\\content\\inline\\1405\\06\\2f55e92f2070441c8ee0d0276eb9ae1a_072257.webp"
+    },
+    {
+      "Id": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\content\\inline\\1405\\06\\b73125e3ec1449b7932cfa92d29bb920_072110.webp",
+      "PackagePath": "staticwebassets\\uploads\\content\\inline\\1405\\06\\b73125e3ec1449b7932cfa92d29bb920_072110.webp"
+    },
+    {
       "Id": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_Insurance_48ffa61680ec4067bee83fdd55209384.pdf",
       "PackagePath": "staticwebassets\\uploads\\patient-profiles\\a8dbe0b9-791e-474b-8542-f65f7a3c09e0_Insurance_48ffa61680ec4067bee83fdd55209384.pdf"
     },

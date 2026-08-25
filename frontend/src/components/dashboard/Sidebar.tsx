@@ -7,7 +7,7 @@ import {
   LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList,
   ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X,
   ShieldCheck, MessageSquareMore, Sparkles, BookOpen, Stethoscope, MapPin,
-  GraduationCap, Calculator, UserPen, Tag, Layers, Plus
+  GraduationCap, Calculator, UserPen, Tag, Layers, Plus, HandHeart
 } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 
@@ -20,6 +20,7 @@ const navigation = [
   { name: 'مدیریت کاربران', href: '/dashboard/admin/users', icon: Users },
   { name: 'دسترسی ثبت اطلاعات', href: '/dashboard/admin/users?selfService=1', icon: ShieldCheck },
   { name: 'مدیریت شیفت‌ها', href: '/dashboard/admin/shifts', icon: Clock },
+  { name: 'مدیریت خدمات بیماران', href: '/dashboard/admin/patient-services', icon: HandHeart },
   { name: 'پایش مصرف دارو', href: '/dashboard/admin/medication-administration', icon: BarChart2 },
   { name: 'پیکربندی گزارشات', href: '/dashboard/admin/report-config', icon: Settings },
   {

@@ -653,22 +653,61 @@ namespace Salmandyar.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<DateTime?>("ActualEndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("ActualStartTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AssignedById")
+                        .HasColumnType("text");
+
+                    b.Property<int>("AssignmentStatus")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CareRecipientId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomServiceName")
+                        .HasColumnType("text");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int?>("DurationMinutes")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LocationAddress")
+                        .HasColumnType("text");
+
+                    b.Property<int>("LocationType")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Notes")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<DateTime?>("NotificationSentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("NotificationStatus")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ParentScheduleId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("PerformedAt")
                         .HasColumnType("timestamp with time zone");
@@ -676,11 +715,20 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<string>("PerformerId")
                         .HasColumnType("text");
 
-                    b.Property<int>("ServiceDefinitionId")
+                    b.Property<int>("Priority")
                         .HasColumnType("integer");
 
-                    b.Property<string>("ServiceType")
-                        .HasColumnType("text");
+                    b.Property<DateTime>("ScheduledDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeSpan?>("ScheduledEndTime")
+                        .HasColumnType("interval");
+
+                    b.Property<TimeSpan?>("ScheduledStartTime")
+                        .HasColumnType("interval");
+
+                    b.Property<int>("ServiceDefinitionId")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("StartTime")
                         .HasColumnType("timestamp with time zone");
@@ -691,13 +739,30 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("UpdatedById")
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedById");
 
                     b.HasIndex("CareRecipientId");
 
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ParentScheduleId");
+
                     b.HasIndex("PerformerId");
 
+                    b.HasIndex("ScheduledDate");
+
                     b.HasIndex("ServiceDefinitionId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.HasIndex("ScheduledDate", "Status");
 
                     b.ToTable("CareServices", (string)null);
                 });
@@ -4028,6 +4093,107 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("ReportItem", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceActivityLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActivityType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ActorName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ActorRole")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("ActorUserId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("CareServiceId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NewValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("OldValue")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("CareServiceId", "CreatedAtUtc");
+
+                    b.ToTable("ServiceActivityLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceAssignmentHistory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CareServiceId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ChangedById")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ChangedByName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("NewProviderId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("NewProviderName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PreviousProviderId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("PreviousProviderName")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChangedById");
+
+                    b.HasIndex("NewProviderId");
+
+                    b.HasIndex("PreviousProviderId");
+
+                    b.HasIndex("CareServiceId", "ChangedAtUtc");
+
+                    b.ToTable("ServiceAssignmentHistories", (string)null);
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceDefinition", b =>
                 {
                     b.Property<int>("Id")
@@ -4071,6 +4237,76 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.HasIndex("DefaultFormId");
 
                     b.ToTable("ServiceDefinitions", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceNotificationRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CareServiceId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Channel")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedById")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("FailedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RecipientDisplayName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("RecipientType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RecipientUserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("ScheduledSendAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("RecipientUserId");
+
+                    b.HasIndex("CareServiceId", "Status");
+
+                    b.ToTable("ServiceNotificationRecords", (string)null);
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceReminder", b =>
@@ -4141,6 +4377,94 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.HasIndex("TargetUserId");
 
                     b.ToTable("ServiceReminders", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceSchedule", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CareRecipientId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedById")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CustomServiceName")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("DayOfMonth")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LocationAddress")
+                        .HasColumnType("text");
+
+                    b.Property<int>("LocationType")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OccurrencesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RecurrenceInterval")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RecurrenceType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ServiceDefinitionId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<TimeSpan>("StartTime")
+                        .HasColumnType("interval");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedById")
+                        .HasColumnType("text");
+
+                    b.Property<string>("WeekDays")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CareRecipientId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("ServiceDefinitionId");
+
+                    b.HasIndex("UpdatedById");
+
+                    b.HasIndex("StartDate", "IsActive");
+
+                    b.ToTable("ServiceSchedules", (string)null);
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.User", b =>
@@ -4777,11 +5101,26 @@ namespace Salmandyar.Infrastructure.Migrations
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.CareService", b =>
                 {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "AssignedBy")
+                        .WithMany()
+                        .HasForeignKey("AssignedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
                         .WithMany("CareServices")
                         .HasForeignKey("CareRecipientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.ServiceSchedule", "ParentSchedule")
+                        .WithMany("GeneratedServices")
+                        .HasForeignKey("ParentScheduleId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Salmandyar.Domain.Entities.User", "Performer")
                         .WithMany()
@@ -4794,11 +5133,24 @@ namespace Salmandyar.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Salmandyar.Domain.Entities.User", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("AssignedBy");
+
                     b.Navigation("CareRecipient");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ParentSchedule");
 
                     b.Navigation("Performer");
 
                     b.Navigation("ServiceDefinition");
+
+                    b.Navigation("UpdatedBy");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.CaregiverProfile", b =>
@@ -5560,6 +5912,56 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("Parent");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceActivityLog", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "ActorUser")
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.CareService", "CareService")
+                        .WithMany("ActivityLogs")
+                        .HasForeignKey("CareServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActorUser");
+
+                    b.Navigation("CareService");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceAssignmentHistory", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.CareService", "CareService")
+                        .WithMany("AssignmentHistories")
+                        .HasForeignKey("CareServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "ChangedBy")
+                        .WithMany()
+                        .HasForeignKey("ChangedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "NewProvider")
+                        .WithMany()
+                        .HasForeignKey("NewProviderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "PreviousProvider")
+                        .WithMany()
+                        .HasForeignKey("PreviousProviderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CareService");
+
+                    b.Navigation("ChangedBy");
+
+                    b.Navigation("NewProvider");
+
+                    b.Navigation("PreviousProvider");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceDefinition", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.Assessments.AssessmentForm", "DefaultForm")
@@ -5568,6 +5970,31 @@ namespace Salmandyar.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("DefaultForm");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceNotificationRecord", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.CareService", "CareService")
+                        .WithMany("Notifications")
+                        .HasForeignKey("CareServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "RecipientUser")
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CareService");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("RecipientUser");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceReminder", b =>
@@ -5601,6 +6028,40 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("ServiceDefinition");
 
                     b.Navigation("TargetUser");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceSchedule", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
+                        .WithMany()
+                        .HasForeignKey("CareRecipientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.ServiceDefinition", "ServiceDefinition")
+                        .WithMany()
+                        .HasForeignKey("ServiceDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "UpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("UpdatedById")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CareRecipient");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("ServiceDefinition");
+
+                    b.Navigation("UpdatedBy");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.UserEvaluations.UserEvaluationAnswer", b =>
@@ -5763,6 +6224,15 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("VitalSigns");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.CareService", b =>
+                {
+                    b.Navigation("ActivityLogs");
+
+                    b.Navigation("AssignmentHistories");
+
+                    b.Navigation("Notifications");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.CaregiverProfile", b =>
                 {
                     b.Navigation("Documents");
@@ -5896,6 +6366,11 @@ namespace Salmandyar.Infrastructure.Migrations
             modelBuilder.Entity("Salmandyar.Domain.Entities.ReportItem", b =>
                 {
                     b.Navigation("SubItems");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.ServiceSchedule", b =>
+                {
+                    b.Navigation("GeneratedServices");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.User", b =>

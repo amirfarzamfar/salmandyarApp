@@ -23,6 +23,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<VitalSign> VitalSigns { get; set; }
     public DbSet<CareService> CareServices { get; set; }
     public DbSet<ServiceDefinition> ServiceDefinitions { get; set; }
+    public DbSet<ServiceActivityLog> ServiceActivityLogs { get; set; }
+    public DbSet<ServiceAssignmentHistory> ServiceAssignmentHistories { get; set; }
+    public DbSet<ServiceNotificationRecord> ServiceNotificationRecords { get; set; }
+    public DbSet<ServiceSchedule> ServiceSchedules { get; set; }
     public DbSet<NursingReport> NursingReports { get; set; }
     public DbSet<ReportCategory> ReportCategories { get; set; }
     public DbSet<ReportItem> ReportItems { get; set; }
@@ -141,6 +145,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
         builder.Entity<CaregiverProfileDocument>().ToTable("CaregiverProfileDocuments");
         builder.Entity<CareService>().ToTable("CareServices");
         builder.Entity<ServiceDefinition>().ToTable("ServiceDefinitions");
+        builder.Entity<ServiceActivityLog>().ToTable("ServiceActivityLogs");
+        builder.Entity<ServiceAssignmentHistory>().ToTable("ServiceAssignmentHistories");
+        builder.Entity<ServiceNotificationRecord>().ToTable("ServiceNotificationRecords");
+        builder.Entity<ServiceSchedule>().ToTable("ServiceSchedules");
         builder.Entity<VitalSign>().ToTable("VitalSigns");
         builder.Entity<PatientSelfServiceAccessPolicy>().ToTable("PatientSelfServiceAccessPolicies");
         builder.Entity<PatientSelfServiceFeatureGrant>().ToTable("PatientSelfServiceFeatureGrants");
@@ -332,6 +340,294 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(s => s.DefaultFormId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // ===== Patient Service Management Configs =====
+        builder.Entity<CareService>()
+            .Property(s => s.Status)
+            .HasConversion<int>();
+
+        builder.Entity<CareService>()
+            .Property(s => s.Priority)
+            .HasConversion<int>();
+
+        builder.Entity<CareService>()
+            .Property(s => s.LocationType)
+            .HasConversion<int>();
+
+        builder.Entity<CareService>()
+            .Property(s => s.AssignmentStatus)
+            .HasConversion<int>();
+
+        builder.Entity<CareService>()
+            .Property(s => s.NotificationStatus)
+            .HasConversion<int>();
+
+        builder.Entity<CareService>()
+            .Property(s => s.ScheduledDate)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<CareService>()
+            .Property(s => s.ActualStartTime)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<CareService>()
+            .Property(s => s.ActualEndTime)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<CareService>()
+            .Property(s => s.AssignedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<CareService>()
+            .Property(s => s.NotificationSentAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<CareService>()
+            .Property(s => s.CreatedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<CareService>()
+            .Property(s => s.UpdatedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<CareService>()
+            .HasOne(s => s.ParentSchedule)
+            .WithMany(sc => sc.GeneratedServices)
+            .HasForeignKey(s => s.ParentScheduleId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<CareService>()
+            .HasOne(s => s.CreatedBy)
+            .WithMany()
+            .HasForeignKey(s => s.CreatedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<CareService>()
+            .HasOne(s => s.UpdatedBy)
+            .WithMany()
+            .HasForeignKey(s => s.UpdatedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<CareService>()
+            .HasOne(s => s.AssignedBy)
+            .WithMany()
+            .HasForeignKey(s => s.AssignedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<CareService>()
+            .HasIndex(s => s.CareRecipientId);
+        builder.Entity<CareService>()
+            .HasIndex(s => s.ScheduledDate);
+        builder.Entity<CareService>()
+            .HasIndex(s => s.Status);
+        builder.Entity<CareService>()
+            .HasIndex(s => s.PerformerId);
+        builder.Entity<CareService>()
+            .HasIndex(s => new { s.ScheduledDate, s.Status });
+
+        // Service Activity Log
+        builder.Entity<ServiceActivityLog>()
+            .Property(a => a.ActivityType)
+            .HasConversion<int>();
+
+        builder.Entity<ServiceActivityLog>()
+            .Property(a => a.CreatedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<ServiceActivityLog>()
+            .HasOne(a => a.CareService)
+            .WithMany(s => s.ActivityLogs)
+            .HasForeignKey(a => a.CareServiceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ServiceActivityLog>()
+            .HasOne(a => a.ActorUser)
+            .WithMany()
+            .HasForeignKey(a => a.ActorUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ServiceActivityLog>()
+            .HasIndex(a => new { a.CareServiceId, a.CreatedAtUtc });
+
+        // Service Assignment History
+        builder.Entity<ServiceAssignmentHistory>()
+            .Property(h => h.ChangedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<ServiceAssignmentHistory>()
+            .HasOne(h => h.CareService)
+            .WithMany(s => s.AssignmentHistories)
+            .HasForeignKey(h => h.CareServiceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ServiceAssignmentHistory>()
+            .HasOne(h => h.PreviousProvider)
+            .WithMany()
+            .HasForeignKey(h => h.PreviousProviderId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ServiceAssignmentHistory>()
+            .HasOne(h => h.NewProvider)
+            .WithMany()
+            .HasForeignKey(h => h.NewProviderId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ServiceAssignmentHistory>()
+            .HasOne(h => h.ChangedBy)
+            .WithMany()
+            .HasForeignKey(h => h.ChangedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ServiceAssignmentHistory>()
+            .HasIndex(h => new { h.CareServiceId, h.ChangedAtUtc });
+
+        // Service Notification Record
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.RecipientType)
+            .HasConversion<int>();
+
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.Channel)
+            .HasConversion<int>();
+
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.Status)
+            .HasConversion<int>();
+
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.ScheduledSendAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.SentAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.DeliveredAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.ReadAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.FailedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ServiceNotificationRecord>()
+            .Property(n => n.CreatedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<ServiceNotificationRecord>()
+            .HasOne(n => n.CareService)
+            .WithMany(s => s.Notifications)
+            .HasForeignKey(n => n.CareServiceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ServiceNotificationRecord>()
+            .HasOne(n => n.RecipientUser)
+            .WithMany()
+            .HasForeignKey(n => n.RecipientUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ServiceNotificationRecord>()
+            .HasOne(n => n.CreatedBy)
+            .WithMany()
+            .HasForeignKey(n => n.CreatedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ServiceNotificationRecord>()
+            .HasIndex(n => new { n.CareServiceId, n.Status });
+        builder.Entity<ServiceNotificationRecord>()
+            .HasIndex(n => n.RecipientUserId);
+
+        // Service Schedule
+        builder.Entity<ServiceSchedule>()
+            .Property(s => s.StartDate)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<ServiceSchedule>()
+            .Property(s => s.EndDate)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ServiceSchedule>()
+            .Property(s => s.RecurrenceType)
+            .HasConversion<int>();
+
+        builder.Entity<ServiceSchedule>()
+            .Property(s => s.Priority)
+            .HasConversion<int>();
+
+        builder.Entity<ServiceSchedule>()
+            .Property(s => s.LocationType)
+            .HasConversion<int>();
+
+        builder.Entity<ServiceSchedule>()
+            .Property(s => s.CreatedAtUtc)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<ServiceSchedule>()
+            .Property(s => s.UpdatedAtUtc)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ServiceSchedule>()
+            .Property(s => s.WeekDays)
+            .HasConversion(
+                v => v == null ? null : string.Join(',', v),
+                v => string.IsNullOrWhiteSpace(v) ? null : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+
+        builder.Entity<ServiceSchedule>()
+            .HasOne(s => s.CareRecipient)
+            .WithMany()
+            .HasForeignKey(s => s.CareRecipientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ServiceSchedule>()
+            .HasOne(s => s.ServiceDefinition)
+            .WithMany()
+            .HasForeignKey(s => s.ServiceDefinitionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ServiceSchedule>()
+            .HasOne(s => s.CreatedBy)
+            .WithMany()
+            .HasForeignKey(s => s.CreatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ServiceSchedule>()
+            .HasOne(s => s.UpdatedBy)
+            .WithMany()
+            .HasForeignKey(s => s.UpdatedById)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ServiceSchedule>()
+            .HasIndex(s => s.CareRecipientId);
+        builder.Entity<ServiceSchedule>()
+            .HasIndex(s => new { s.StartDate, s.IsActive });
 
         builder.Entity<NursingReport>()
             .HasOne(r => r.Author)
