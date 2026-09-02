@@ -36,71 +36,52 @@ const monthNamesFa = [
   'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند',
 ];
 
-function gregorianToJalali(gy: number, gm: number, gd: number): [number, number, number] {
-  const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
-  if (gy > 1600) {
-    let jy = 979;
-    gy -= 1600;
-    const g2 = gy % 4 === 0 ? 366 : 365;
-    let days =
-      365 * gy +
-      Math.floor((gy + 3) / 4) -
-      Math.floor((gy + 99) / 100) +
-      Math.floor((gy + 399) / 400) +
-      gd +
-      g_d_m[gm - 1] -
-      (g2 === 366 && gm > 2 ? 1 : 0);
-    jy += 33 * Math.floor(days / 12053);
-    days = days % 12053;
-    jy += 4 * Math.floor(days / 1461);
-    days = days % 1461;
-    if (days > 365) {
-      jy += Math.floor((days - 1) / 365);
-      days = (days - 1) % 365;
-    }
-    const jm = days < 186 ? 1 + Math.floor(days / 31) : 7 + Math.floor((days - 186) / 30);
-    const jd = 1 + (days < 186 ? days % 31 : (days - 186) % 30);
-    return [jy, jm, jd];
+const PERSIAN_INTL = (() => {
+  if (typeof Intl === 'undefined') return null;
+  try {
+    return new Intl.DateTimeFormat('en-US-u-ca-persian', {
+      year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC',
+    });
+  } catch {
+    return null;
   }
-  return [0, 0, 0];
+})();
+
+function gregorianToJalali(gy: number, gm: number, gd: number): [number, number, number] {
+  if (!PERSIAN_INTL) return [0, 0, 0];
+  try {
+    const d = new Date(Date.UTC(gy, gm - 1, gd, 12, 0, 0));
+    const parts = PERSIAN_INTL.formatToParts(d);
+    const y = parseInt(parts.find(p => p.type === 'year')?.value || '0', 10);
+    const m = parseInt(parts.find(p => p.type === 'month')?.value || '0', 10);
+    const day = parseInt(parts.find(p => p.type === 'day')?.value || '0', 10);
+    return [y, m, day];
+  } catch {
+    return [0, 0, 0];
+  }
 }
 
 function jalaliToGregorian(jy: number, jm: number, jd: number): [number, number, number] {
-  if (jy > 979) {
-    let gy = 1600;
-    jy -= 979;
-    let days =
-      365 * jy +
-      Math.floor(jy / 33) * 8 +
-      Math.floor(((jy % 33) + 3) / 4) +
-      jd +
-      (jm < 7 ? (jm - 1) * 31 : (jm - 7) * 30 + 186) -
-      355666 +
-      365236 -
-      1595;
-    gy += 400 * Math.floor(days / 146097);
-    days %= 146097;
-    if (days > 36524) {
-      gy += 100 * Math.floor(--days / 36524);
-      days %= 36524;
-      if (days >= 365) days++;
+  try {
+    let loMs = Date.UTC(jy + 621 - 4, 0, 1);
+    let hiMs = Date.UTC(jy + 621 + 4, 11, 31);
+    const DAY_MS = 86400000;
+    while (loMs < hiMs) {
+      const steps = Math.floor((hiMs - loMs) / DAY_MS / 2);
+      const midMs = loMs + steps * DAY_MS;
+      const md = new Date(midMs);
+      const [mjy, mjm, mjd] = gregorianToJalali(md.getUTCFullYear(), md.getUTCMonth() + 1, md.getUTCDate());
+      if (mjy < jy || (mjy === jy && mjm < jm) || (mjy === jy && mjm === jm && mjd < jd)) {
+        loMs = midMs + DAY_MS;
+      } else {
+        hiMs = midMs;
+      }
     }
-    gy += 4 * Math.floor(days / 1461);
-    days %= 1461;
-    if (days > 365) {
-      gy += Math.floor((days - 1) / 365);
-      days = (days - 1) % 365;
-    }
-    let gd = days + 1;
-    const sal_a = [
-      31, (gy % 4 === 0 && gy % 100 !== 0) || gy % 400 === 0 ? 29 : 28,
-      31, 30, 31, 30, 31, 31, 30, 31, 30, 31,
-    ];
-    let gm = 0;
-    for (gm = 0; gm < 12 && gd > sal_a[gm]; gm++) gd -= sal_a[gm];
-    return [gy, gm + 1, gd];
+    const r = new Date(loMs);
+    return [r.getUTCFullYear(), r.getUTCMonth() + 1, r.getUTCDate()];
+  } catch {
+    return [0, 0, 0];
   }
-  return [0, 0, 0];
 }
 
 function daysInJalaliMonth(jy: number, jm: number): number {

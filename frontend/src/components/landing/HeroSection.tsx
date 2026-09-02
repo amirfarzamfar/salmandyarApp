@@ -68,7 +68,7 @@ export default function HeroSection() {
               {!loading && !user && (
                 <Link href="/register">
                   <Button variant="ghost" size="lg" className="w-full sm:w-auto text-teal-700 hover:bg-teal-100/60">
-                   ثبت‌نام و درخواست پرستار 
+                  ثبت‌نام و درخواست پرستار
                   </Button>
                 </Link>
               )}

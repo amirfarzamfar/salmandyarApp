@@ -373,9 +373,76 @@ public class PatientServiceManagementService : IPatientServiceManagementService
         return (string.IsNullOrWhiteSpace(name) ? u.UserName ?? userId : name, roles.FirstOrDefault() ?? "");
     }
 
+    private static TimeSpan? NormalizeTimeSpan(TimeSpan? ts, string? rawString = null)
+    {
+        if (ts.HasValue) return ts.Value;
+        if (string.IsNullOrWhiteSpace(rawString)) return null;
+        var clean = rawString.Trim();
+        if (TimeSpan.TryParseExact(clean, @"h\:mm", null, out var hm)) return hm;
+        if (TimeSpan.TryParseExact(clean, @"hh\:mm", null, out var hhm)) return hhm;
+        if (TimeSpan.TryParseExact(clean, @"hh\:mm\:ss", null, out var hms)) return hms;
+        if (TimeSpan.TryParse(clean, out var parsed)) return parsed;
+        return null;
+    }
+
+    private static DateTime NormalizeScheduledDate(DateTime dtoDate, TimeSpan? startTimeUtcNormalized)
+    {
+        try
+        {
+            DateTime clean;
+            if (dtoDate.Kind == DateTimeKind.Unspecified)
+            {
+                clean = DateTime.SpecifyKind(dtoDate.Date, DateTimeKind.Utc);
+            }
+            else
+            {
+                clean = dtoDate.ToUniversalTime().Date;
+            }
+            if (startTimeUtcNormalized.HasValue)
+            {
+                clean = clean.Date + startTimeUtcNormalized.Value;
+                clean = DateTime.SpecifyKind(clean, DateTimeKind.Utc);
+            }
+            return clean;
+        }
+        catch
+        {
+            return DateTime.SpecifyKind(dtoDate.Kind == DateTimeKind.Unspecified ? dtoDate : dtoDate.ToUniversalTime(), DateTimeKind.Utc);
+        }
+    }
+
+    private static (DateTime? start, DateTime? end) BuildLegacyStartEndUtc(DateTime scheduledDateUtc, TimeSpan? startTime, int? durationMinutes)
+    {
+        DateTime? s = null; DateTime? e = null;
+        try
+        {
+            var baseDate = scheduledDateUtc.Kind == DateTimeKind.Utc ? scheduledDateUtc : scheduledDateUtc.ToUniversalTime();
+            if (startTime.HasValue)
+            {
+                s = baseDate.Date + startTime.Value;
+                s = DateTime.SpecifyKind(s.Value, DateTimeKind.Utc);
+            }
+            else
+            {
+                s = DateTime.SpecifyKind(baseDate.Date, DateTimeKind.Utc);
+            }
+            if (durationMinutes.HasValue)
+            {
+                e = s.Value.AddMinutes(durationMinutes.Value);
+            }
+        }
+        catch { /* ignore */ }
+        return (s, e);
+    }
+
     public async Task<PatientServiceDto> CreateServiceAsync(CreatePatientServiceDto dto, string currentUserId)
     {
         var (userName, userRole) = await GetUserInfoAsync(currentUserId);
+
+        var startTimeNorm = NormalizeTimeSpan(dto.ScheduledStartTime);
+        var scheduledUtc = NormalizeScheduledDate(dto.ScheduledDate, startTimeNorm);
+        var (legacyStart, legacyEnd) = BuildLegacyStartEndUtc(scheduledUtc, startTimeNorm, dto.DurationMinutes);
+        var perfdAt = legacyStart ?? scheduledUtc;
 
         var entity = new CareService
         {
@@ -383,9 +450,9 @@ public class PatientServiceManagementService : IPatientServiceManagementService
             ServiceDefinitionId = dto.ServiceDefinitionId,
             CustomServiceName = dto.CustomServiceName,
             PerformerId = dto.PerformerId,
-            ScheduledDate = dto.ScheduledDate.ToUniversalTime(),
-            ScheduledStartTime = dto.ScheduledStartTime,
-            ScheduledEndTime = dto.ScheduledEndTime,
+            ScheduledDate = scheduledUtc,
+            ScheduledStartTime = startTimeNorm,
+            ScheduledEndTime = dto.ScheduledEndTime ?? (dto.DurationMinutes.HasValue && startTimeNorm.HasValue ? startTimeNorm.Value.Add(TimeSpan.FromMinutes(dto.DurationMinutes.Value)) : dto.ScheduledEndTime),
             DurationMinutes = dto.DurationMinutes,
             Status = dto.Status,
             Priority = dto.Priority,
@@ -393,6 +460,9 @@ public class PatientServiceManagementService : IPatientServiceManagementService
             Description = dto.Description,
             Notes = dto.Notes,
             LocationAddress = dto.LocationAddress,
+            StartTime = legacyStart,
+            EndTime = legacyEnd,
+            PerformedAt = perfdAt,
             CreatedById = currentUserId,
             CreatedAt = DateTime.UtcNow
         };
@@ -454,10 +524,79 @@ public class PatientServiceManagementService : IPatientServiceManagementService
                         entity.Id.ToString(), $"/dashboard/admin/patient-services/{entity.Id}");
                     entity.NotificationStatus = ServiceNotificationStatus.Sent;
                     entity.NotificationSentAt = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
                 }
                 catch { /* ignore notification errors */ }
             }
+        }
+
+        if (dto.CreateNotification)
+        {
+            var recipientType = dto.NotificationRecipientType ?? ServiceNotificationRecipientType.Patient;
+            try
+            {
+                var recipientUserIds = new List<string>();
+                var careRecipient = await _context.CareRecipients
+                    .AsNoTracking()
+                    .Include(cr => cr.User)
+                    .FirstOrDefaultAsync(cr => cr.Id == dto.CareRecipientId);
+
+                string? patientUserId = careRecipient?.UserId;
+                string? performerUserId = !string.IsNullOrWhiteSpace(dto.PerformerId) ? dto.PerformerId : null;
+
+                switch (recipientType)
+                {
+                    case ServiceNotificationRecipientType.Patient:
+                        if (patientUserId != null) recipientUserIds.Add(patientUserId);
+                        break;
+                    case ServiceNotificationRecipientType.PatientFamily:
+                        if (patientUserId != null) recipientUserIds.Add(patientUserId);
+                        break;
+                    case ServiceNotificationRecipientType.Nurse:
+                    case ServiceNotificationRecipientType.Caregiver:
+                        if (performerUserId != null) recipientUserIds.Add(performerUserId);
+                        break;
+                    case ServiceNotificationRecipientType.Supervisor:
+                        var supervisorIds = await _context.UserRoles
+                            .Where(ur => ur.RoleId == Roles.Supervisor || ur.RoleId == Roles.Manager || ur.RoleId == Roles.Admin || ur.RoleId == Roles.SuperAdmin)
+                            .Select(ur => ur.UserId)
+                            .Distinct()
+                            .ToListAsync();
+                        recipientUserIds.AddRange(supervisorIds);
+                        break;
+                    case ServiceNotificationRecipientType.All:
+                        if (patientUserId != null) recipientUserIds.Add(patientUserId);
+                        if (performerUserId != null) recipientUserIds.Add(performerUserId);
+                        var allSupervisorIds = await _context.UserRoles
+                            .Where(ur => ur.RoleId == Roles.Supervisor || ur.RoleId == Roles.Manager || ur.RoleId == Roles.Admin || ur.RoleId == Roles.SuperAdmin)
+                            .Select(ur => ur.UserId)
+                            .Distinct()
+                            .ToListAsync();
+                        recipientUserIds.AddRange(allSupervisorIds);
+                        break;
+                }
+
+                foreach (var uid in recipientUserIds.Distinct().Where(x => !string.IsNullOrWhiteSpace(x)))
+                {
+                    try
+                    {
+                        var title = string.IsNullOrWhiteSpace(dto.NotificationTitle) ? "خدمت جدید ثبت شد" : dto.NotificationTitle;
+                        var msg = string.IsNullOrWhiteSpace(dto.NotificationMessage)
+                            ? $"خدمت در تاریخ {ToIran(entity.ScheduledDate):yyyy/MM/dd} ساعت {(entity.ScheduledStartTime.HasValue ? entity.ScheduledStartTime.Value.ToString(@"hh\:mm") : "---")} برای شما برنامه‌ریزی شد."
+                            : dto.NotificationMessage;
+                        await _notificationService.CreateNotificationAsync(uid, title, msg, NotificationType.Reminder,
+                            entity.Id.ToString(), $"/dashboard/admin/patient-services/{entity.Id}");
+                        if (entity.NotificationStatus != ServiceNotificationStatus.Sent)
+                        {
+                            entity.NotificationStatus = ServiceNotificationStatus.Sent;
+                            entity.NotificationSentAt = DateTime.UtcNow;
+                        }
+                    }
+                    catch { /* ignore individual notification errors */ }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+            catch { /* ignore notification errors */ }
         }
 
         var result = await GetServiceByIdAsync(entity.Id);
@@ -474,24 +613,31 @@ public class PatientServiceManagementService : IPatientServiceManagementService
         var oldStatus = entity.Status;
         var oldDate = entity.ScheduledDate;
 
+        var startTimeNorm = NormalizeTimeSpan(dto.ScheduledStartTime);
+        var scheduledUtc = NormalizeScheduledDate(dto.ScheduledDate, startTimeNorm);
+        var (legacyStart, legacyEnd) = BuildLegacyStartEndUtc(scheduledUtc, startTimeNorm, dto.DurationMinutes);
+
         entity.ServiceDefinitionId = dto.ServiceDefinitionId;
         entity.CustomServiceName = dto.CustomServiceName;
-        entity.ScheduledDate = dto.ScheduledDate.ToUniversalTime();
-        entity.ScheduledStartTime = dto.ScheduledStartTime;
-        entity.ScheduledEndTime = dto.ScheduledEndTime;
+        entity.ScheduledDate = scheduledUtc;
+        entity.ScheduledStartTime = startTimeNorm;
+        entity.ScheduledEndTime = dto.ScheduledEndTime ?? (dto.DurationMinutes.HasValue && startTimeNorm.HasValue ? startTimeNorm.Value.Add(TimeSpan.FromMinutes(dto.DurationMinutes.Value)) : dto.ScheduledEndTime);
         entity.DurationMinutes = dto.DurationMinutes;
         entity.Priority = dto.Priority;
         entity.LocationType = dto.LocationType;
         entity.Description = dto.Description;
         entity.Notes = dto.Notes;
         entity.LocationAddress = dto.LocationAddress;
+        entity.StartTime = legacyStart;
+        entity.EndTime = legacyEnd;
+        entity.PerformedAt = legacyStart ?? scheduledUtc;
         entity.UpdatedById = currentUserId;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
         var changes = new List<string>();
-        if (oldDate.Date != dto.ScheduledDate.Date) changes.Add($"تاریخ از {ToIran(oldDate):yyyy/MM/dd} به {ToIran(dto.ScheduledDate):yyyy/MM/dd}");
+        if (oldDate.Date != scheduledUtc.Date) changes.Add($"تاریخ از {ToIran(oldDate):yyyy/MM/dd} به {ToIran(scheduledUtc):yyyy/MM/dd}");
         if (oldStatus != entity.Status) changes.Add($"وضعیت تغییر کرد");
         if (changes.Count > 0)
         {

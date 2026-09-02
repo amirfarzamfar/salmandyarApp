@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -21,6 +21,12 @@ import {
   StickyNote,
   RefreshCw,
 } from 'lucide-react';
+import DatePicker from 'react-multi-date-picker';
+import DateObjectImport from 'react-date-object';
+import persianCalendar from 'react-date-object/calendars/persian';
+import persianFaLocale from 'react-date-object/locales/persian_fa';
+import gregorianCalendar from 'react-date-object/calendars/gregorian';
+import gregorianEnLocale from 'react-date-object/locales/gregorian_en';
 import { patientServicesService } from '@/services/patient-services.service';
 import { patientService } from '@/services/patient.service';
 import { serviceCatalogService } from '@/services/service-catalog.service';
@@ -33,7 +39,208 @@ import {
 } from '@/types/patient-service';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
-import PersianDatePicker from '@/components/admin/content/PersianDatePicker';
+
+const DateObject = ((DateObjectImport as any)?.default ?? DateObjectImport) as any;
+
+function sdp_gregorianIsoToJalaliDisplay(isoOrDate: string, includeTimePart = false): string {
+  try {
+    if (!isoOrDate) return '';
+    const trimmed = isoOrDate.trim();
+    if (!trimmed) return '';
+    let gDate: Date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const [y, m, d] = trimmed.split('-').map(n => parseInt(n, 10));
+      gDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+    } else {
+      gDate = new Date(trimmed);
+      if (isNaN(gDate.getTime())) return '';
+    }
+    const gregorianDObj = new DateObject({
+      calendar: gregorianCalendar, locale: gregorianEnLocale,
+      year: gDate.getUTCFullYear(), month: gDate.getUTCMonth() + 1, day: gDate.getUTCDate(),
+      hour: gDate.getUTCHours(), minute: gDate.getUTCMinutes(), second: gDate.getUTCSeconds(),
+    });
+    const persianDObj = gregorianDObj.convert(persianCalendar, persianFaLocale);
+    const jy = persianDObj.year; const jm = persianDObj.month.number; const jd = persianDObj.day;
+    const hh = persianDObj.hour; const mm = persianDObj.minute;
+    if (!jy || !jm || !jd) return '';
+    const jmStr = String(jm).padStart(2, '0'); const jdStr = String(jd).padStart(2, '0');
+    const base = `${jy}/${jmStr}/${jdStr}`;
+    if (!includeTimePart) return base;
+    const hhStr = String(hh).padStart(2, '0'); const mmStr = String(mm).padStart(2, '0');
+    return `${base} ${hhStr}:${mmStr}`;
+  } catch { return ''; }
+}
+function sdp_jalaliDisplayToGregorianIsoUtc(jalaliDisplay: string, includeTimePart = false): string | null {
+  try {
+    const clean = jalaliDisplay.trim(); if (!clean) return null;
+    const dateTimeParts = clean.split(/\s+/);
+    const datePart = dateTimeParts[0] || '';
+    const timePart = includeTimePart ? (dateTimeParts[1] || '00:00') : '00:00';
+    const sep = datePart.includes('-') ? '-' : '/';
+    const [jyStr, jmStr, jdStr] = datePart.split(sep);
+    if (!jyStr || !jmStr || !jdStr) return null;
+    const jy = parseInt(jyStr, 10); const jm = parseInt(jmStr, 10); const jd = parseInt(jdStr, 10);
+    if (!jy || !jm || !jd) return null;
+    const [hhStr, mmStr] = (timePart || '00:00').split(':');
+    const hh = parseInt(hhStr || '0', 10) || 0; const mm = parseInt(mmStr || '0', 10) || 0;
+    const persianDObj = new DateObject({
+      calendar: persianCalendar, locale: persianFaLocale,
+      year: jy, month: jm, day: jd, hour: hh, minute: mm, second: 0,
+    });
+    const gregorianDObj = persianDObj.convert(gregorianCalendar, gregorianEnLocale);
+    const gy = gregorianDObj.year; const gm = gregorianDObj.month.number; const gd = gregorianDObj.day;
+    const gh = gregorianDObj.hour; const gmin = gregorianDObj.minute;
+    if (!gy || !gm || !gd) return null;
+    const result = new Date(Date.UTC(gy, gm - 1, gd, gh, gmin, 0));
+    if (isNaN(result.getTime())) return null;
+    return result.toISOString();
+  } catch { return null; }
+}
+function sdp_gregorianIsoToJalaliDateObject(isoOrDate: string): any | null {
+  try {
+    if (!isoOrDate) return null; const trimmed = isoOrDate.trim(); if (!trimmed) return null;
+    let gDate: Date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const [y, m, d] = trimmed.split('-').map(n => parseInt(n, 10));
+      gDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+    } else {
+      gDate = new Date(trimmed); if (isNaN(gDate.getTime())) return null;
+    }
+    const gregorianDObj = new DateObject({
+      calendar: gregorianCalendar, locale: gregorianEnLocale,
+      year: gDate.getUTCFullYear(), month: gDate.getUTCMonth() + 1, day: gDate.getUTCDate(),
+      hour: gDate.getUTCHours(), minute: gDate.getUTCMinutes(), second: gDate.getUTCSeconds(),
+    });
+    const persianDObj = gregorianDObj.convert(persianCalendar, persianFaLocale);
+    const jy = persianDObj.year; const jm = persianDObj.month.number; const jd = persianDObj.day;
+    if (!jy || !jm || !jd) return null;
+    return new DateObject({ calendar: persianCalendar, locale: persianFaLocale, year: jy, month: jm, day: jd });
+  } catch { return null; }
+}
+
+type ServiceDatePickerProps = {
+  value: string | null;
+  onChange: (isoUtcDate: string | null) => void;
+  placeholder?: string;
+  label?: string;
+  includeTime?: boolean;
+  disabled?: boolean;
+  className?: string;
+  id?: string;
+};
+
+function ServiceDatePicker({
+  value, onChange, placeholder = 'انتخاب تاریخ...',
+  includeTime = false, disabled = false, className, id,
+}: ServiceDatePickerProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const datePickerRef = useRef<any>(null);
+
+  const displayValue = useMemo(() => {
+    return value ? sdp_gregorianIsoToJalaliDisplay(value, includeTime) : '';
+  }, [value, includeTime]);
+
+  const pickerValue = useMemo(
+    () => sdp_gregorianIsoToJalaliDateObject(value ?? ''),
+    [value]
+  );
+
+  const handlePickerChange = (dateObjArray: any) => {
+    const dateObj = Array.isArray(dateObjArray) ? dateObjArray[0] : dateObjArray;
+    if (!dateObj) { onChange(null); return; }
+    try {
+      let year: number, month: number, day: number;
+      const formatted = typeof dateObj.format === 'function' ? dateObj.format('YYYY/MM/DD') : '';
+      const parts = formatted.split('/');
+      if (parts.length === 3) {
+        year = parseInt(parts[0], 10); month = parseInt(parts[1], 10); day = parseInt(parts[2], 10);
+      } else {
+        year = dateObj.year; month = dateObj.month?.number || dateObj.month; day = dateObj.day;
+      }
+      if (!year || !month || !day) return;
+      const jmStr = String(month).padStart(2, '0'); const jdStr = String(day).padStart(2, '0');
+      const displayDate = `${year}/${jmStr}/${jdStr}`;
+      const iso = sdp_jalaliDisplayToGregorianIsoUtc(displayDate, includeTime);
+      if (iso) onChange(iso); else onChange(null);
+      try { datePickerRef.current?.closeCalendar?.(); } catch {}
+    } catch {}
+  };
+
+  const handleClear = (e: React.MouseEvent) => { e.stopPropagation(); onChange(null); };
+  const handleTrigger = () => {
+    if (disabled) return;
+    try { if (!isOpen) datePickerRef.current?.openCalendar?.(); else datePickerRef.current?.closeCalendar?.(); } catch {}
+  };
+  const handleContainerKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault(); handleTrigger();
+    } else if (e.key === 'Escape') {
+      try { datePickerRef.current?.closeCalendar?.(); } catch {}
+    }
+  };
+
+  return (
+    <div className={cn('space-y-2 w-full', className)}>
+      <DatePicker
+        ref={datePickerRef}
+        value={pickerValue}
+        onChange={handlePickerChange}
+        calendar={persianCalendar}
+        locale={persianFaLocale}
+        format="YYYY/MM/DD"
+        onOpen={() => setIsOpen(true)}
+        onClose={() => setIsOpen(false)}
+        portal
+        inputClass="!hidden"
+        containerStyle={{ display: 'inline-block', width: '0', height: '0', overflow: 'hidden' }}
+        style={{ display: 'none' }}
+      />
+      <div
+        id={id}
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="dialog"
+        tabIndex={disabled ? -1 : 0}
+        onKeyDown={handleContainerKeyDown}
+        onClick={handleTrigger}
+        className={cn(
+          'flex items-stretch overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all select-none',
+          !disabled && 'focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-500/10 cursor-pointer hover:border-teal-300',
+          disabled && 'opacity-60 cursor-not-allowed bg-gray-50',
+          isOpen && 'border-teal-500 ring-4 ring-teal-500/10'
+        )}
+      >
+        <button
+          type="button" tabIndex={-1} disabled={disabled}
+          onClick={(e) => { e.stopPropagation(); handleTrigger(); }}
+          className={cn('px-3.5 bg-slate-50 text-slate-500 flex items-center border-r border-gray-200 transition-colors', !disabled && 'hover:bg-slate-100')}
+          aria-label="باز کردن انتخاب‌گر تاریخ"
+        >
+          <Calendar className="h-4 w-4 text-teal-600" />
+        </button>
+        <div className="flex-1 flex items-center px-4 py-2.5">
+          <span
+            dir="ltr"
+            className={cn('text-sm font-mono tracking-wide text-center flex-1', displayValue ? 'text-slate-700' : 'text-gray-400')}
+          >
+            {displayValue || placeholder}
+          </span>
+        </div>
+        {!disabled && displayValue && (
+          <button
+            type="button" onClick={handleClear} tabIndex={-1}
+            className="px-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center"
+            aria-label="پاک کردن تاریخ"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface CreateServiceDrawerProps {
   open: boolean;
@@ -220,6 +427,9 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
     setValue,
     watch,
     reset,
+    trigger,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
@@ -344,7 +554,7 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
       handleClose();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'خطا در ایجاد خدمت');
+      toast.error(extractApiError(err));
     },
   });
 
@@ -360,7 +570,7 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
       handleClose();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'خطا در ویرایش خدمت');
+      toast.error(extractApiError(err));
     },
   });
 
@@ -376,7 +586,7 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
       handleClose();
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'خطا در ایجاد برنامه‌ریزی');
+      toast.error(extractApiError(err));
     },
   });
 
@@ -385,17 +595,110 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
     onClose();
   };
 
-  const onSubmit = (data: FormData) => {
-    if (!isEditMode && !data.careRecipientId) {
-      toast.error('لطفاً بیمار را انتخاب کنید');
-      return;
+  const toTimeSpanFormat = (t: string | null | undefined): string | null | undefined => {
+    if (t == null) return t;
+    const clean = String(t).trim();
+    if (!clean) return t;
+    const parts = clean.split(':');
+    if (parts.length === 2) return `${clean}:00`;
+    return clean;
+  };
+
+  const extractApiError = (err: any): string => {
+    if (!err) return 'خطای نامشخص در سرور';
+    const respData = err?.response?.data;
+    if (typeof respData === 'string') return respData;
+    if (respData) {
+      if (typeof respData.error === 'string') return respData.error;
+      if (typeof respData.message === 'string') return respData.message;
+      if (Array.isArray(respData.errors)) {
+        const first = Object.values(respData.errors)[0] as any;
+        if (Array.isArray(first) && first.length) return first[0];
+        if (typeof first === 'string') return first;
+      }
+      if (typeof respData === 'object') {
+        for (const val of Object.values(respData)) {
+          if (Array.isArray(val) && typeof val[0] === 'string') return val[0];
+          if (typeof val === 'string') return val;
+        }
+      }
     }
-    if (!data.serviceDefinitionId) {
-      toast.error('لطفاً نوع خدمت را انتخاب کنید');
-      return;
+    if (typeof err?.message === 'string') return err.message;
+    return 'خطا در ثبت خدمت';
+  };
+
+  const isLoading = createMutation.isPending || scheduleMutation.isPending || updateMutation.isPending;
+
+  const runManualValidation = (data: FormData): boolean => {
+    let ok = true;
+
+    if (!isEditMode && (!data.careRecipientId || data.careRecipientId <= 0)) {
+      setError('careRecipientId', { type: 'required', message: 'انتخاب بیمار الزامی است' });
+      ok = false;
+    } else {
+      clearErrors('careRecipientId');
     }
+
+    if (!data.serviceDefinitionId || data.serviceDefinitionId <= 0) {
+      setError('serviceDefinitionId', { type: 'required', message: 'انتخاب نوع خدمت الزامی است' });
+      ok = false;
+    } else {
+      clearErrors('serviceDefinitionId');
+    }
+
     if (!data.scheduledDate) {
-      toast.error('لطفاً تاریخ را انتخاب کنید');
+      setError('scheduledDate', { type: 'required', message: 'تاریخ خدمت الزامی است' });
+      ok = false;
+    } else {
+      try {
+        const d = new Date(data.scheduledDate);
+        if (isNaN(d.getTime())) {
+          setError('scheduledDate', { type: 'invalid', message: 'تاریخ خدمت معتبر نیست' });
+          ok = false;
+        } else {
+          clearErrors('scheduledDate');
+        }
+      } catch {
+        setError('scheduledDate', { type: 'invalid', message: 'تاریخ خدمت معتبر نیست' });
+        ok = false;
+      }
+    }
+
+    if (!data.scheduledStartTime || data.scheduledStartTime.trim() === '') {
+      setError('scheduledStartTime', { type: 'required', message: 'ساعت شروع خدمت الزامی است' });
+      ok = false;
+    } else {
+      clearErrors('scheduledStartTime');
+    }
+
+    if (!data.durationMinutes || data.durationMinutes <= 0) {
+      setError('durationMinutes', { type: 'required', message: 'مدت زمان خدمت الزامی است' });
+      ok = false;
+    } else {
+      clearErrors('durationMinutes');
+    }
+
+    if (!data.description || data.description.trim() === '') {
+      setError('description', { type: 'required', message: 'توضیحات خدمت الزامی است' });
+      ok = false;
+    } else {
+      clearErrors('description');
+    }
+
+    return ok;
+  };
+
+  const onSubmit = async (data: FormData) => {
+    const requiredFields =
+      isEditMode
+        ? ['serviceDefinitionId', 'scheduledDate', 'scheduledStartTime', 'durationMinutes', 'description']
+        : ['careRecipientId', 'serviceDefinitionId', 'scheduledDate', 'scheduledStartTime', 'durationMinutes', 'description'];
+
+    const triggerValid = await trigger(requiredFields as any);
+    const manualValid = runManualValidation(data);
+
+    if (!triggerValid || !manualValid) {
+      toast.error('لطفاً فیلدهای قرمزرنگ را بررسی و تکمیل کنید.');
       return;
     }
 
@@ -403,10 +706,10 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
       const dto = {
         id: editingServiceId,
         dto: {
-          serviceDefinitionId: data.serviceDefinitionId,
+          serviceDefinitionId: data.serviceDefinitionId!,
           customServiceName: data.customServiceName || null,
-          scheduledDate: data.scheduledDate,
-          scheduledStartTime: data.scheduledStartTime,
+          scheduledDate: data.scheduledDate!,
+          scheduledStartTime: toTimeSpanFormat(data.scheduledStartTime),
           scheduledEndTime: null,
           durationMinutes: data.durationMinutes,
           priority: data.priority,
@@ -419,12 +722,12 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
       updateMutation.mutate(dto);
     } else if (data.scheduleEnabled) {
       const dto: any = {
-        careRecipientId: data.careRecipientId,
-        serviceDefinitionId: data.serviceDefinitionId,
+        careRecipientId: data.careRecipientId!,
+        serviceDefinitionId: data.serviceDefinitionId!,
         customServiceName: data.customServiceName || null,
-        startDate: data.scheduleStartDate || data.scheduledDate,
-        startTime: data.scheduleStartTime,
-        durationMinutes: data.scheduleDurationMinutes,
+        startDate: (data.scheduleStartDate || data.scheduledDate)!,
+        startTime: toTimeSpanFormat(data.scheduleStartTime) ?? '09:00:00',
+        durationMinutes: data.scheduleDurationMinutes ?? 60,
         recurrenceType: data.scheduleRecurrenceType,
         occurrencesCount: data.scheduleOccurrencesCount,
         endDate: data.scheduleEndDate,
@@ -438,15 +741,17 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
     } else {
       const dto: CreatePatientServiceDto = {
         careRecipientId: data.careRecipientId!,
-        serviceDefinitionId: data.serviceDefinitionId,
+        serviceDefinitionId: data.serviceDefinitionId!,
         customServiceName: data.customServiceName || null,
         performerId: data.performerId,
-        scheduledDate: data.scheduledDate,
-        scheduledStartTime: data.scheduledStartTime,
+        scheduledDate: data.scheduledDate!,
+        scheduledStartTime: toTimeSpanFormat(data.scheduledStartTime),
+        scheduledEndTime: null,
         durationMinutes: data.durationMinutes,
         priority: data.priority,
         locationType: data.locationType,
         description: data.description,
+        notes: '',
         locationAddress: data.locationAddress || null,
         createNotification: data.createNotification,
         notificationTitle: data.createNotification ? data.notificationTitle : undefined,
@@ -457,14 +762,12 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
     }
   };
 
-  const isLoading = createMutation.isPending || scheduleMutation.isPending || updateMutation.isPending;
-
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
+    <div className="fixed inset-0 z-[80] flex flex-col md:flex-row md:items-center md:justify-center p-0 md:p-4 overflow-hidden">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={handleClose} />
-      <div className="relative z-10 w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300" dir="rtl">
+      <div className="relative z-10 w-full max-w-5xl md:max-h-[92vh] h-full md:h-auto md:rounded-2xl md:border md:border-slate-200 bg-white shadow-2xl md:mx-auto flex flex-col md:animate-in md:fade-in md:zoom-in-95 md:duration-200 animate-in slide-in-from-right md:slide-in-from-right-0 duration-300" dir="rtl">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-l from-teal-50 to-white">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center">
@@ -492,7 +795,10 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
             <Field label="بیمار" icon={User} required={!isEditMode} className="md:col-span-2" error={errors.careRecipientId?.message}>
               <SelectField
                 value={watch('careRecipientId')}
-                onChange={(v) => setValue('careRecipientId', v as any, { shouldValidate: true })}
+                onChange={(v) => {
+                  setValue('careRecipientId', v as any, { shouldValidate: true });
+                  if (v) clearErrors('careRecipientId');
+                }}
                 options={patientOptions as any}
                 placeholder={isEditMode ? 'غیرقابل ویرایش — بیمار ثابت است' : 'جستجو و انتخاب بیمار...'}
                 searchable
@@ -503,7 +809,10 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
             <Field label="نوع خدمت" icon={Calendar} required className="md:col-span-2" error={errors.serviceDefinitionId?.message}>
               <SelectField
                 value={watch('serviceDefinitionId')}
-                onChange={(v) => setValue('serviceDefinitionId', v as any, { shouldValidate: true })}
+                onChange={(v) => {
+                  setValue('serviceDefinitionId', v as any, { shouldValidate: true });
+                  if (v) clearErrors('serviceDefinitionId');
+                }}
                 options={serviceOptions as any}
                 placeholder="انتخاب نوع خدمت..."
                 searchable
@@ -519,16 +828,19 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
               />
             </Field>
 
-            <Field label="تاریخ خدمت" icon={Calendar} required>
-              <PersianDatePicker
+            <Field label="تاریخ خدمت" icon={Calendar} required error={errors.scheduledDate?.message}>
+              <ServiceDatePicker
                 value={watch('scheduledDate')}
-                onChange={(v) => setValue('scheduledDate', v, { shouldValidate: true })}
+                onChange={(v) => {
+                  setValue('scheduledDate', v, { shouldValidate: true });
+                  if (v) clearErrors('scheduledDate');
+                }}
                 placeholder="۱۴۰۳/۰۱/۰۱"
                 includeTime={false}
               />
             </Field>
 
-            <Field label="ساعت شروع" icon={Clock} required>
+            <Field label="ساعت شروع" icon={Clock} required error={errors.scheduledStartTime?.message}>
               <input
                 type="time"
                 {...register('scheduledStartTime')}
@@ -536,13 +848,16 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
               />
             </Field>
 
-            <Field label="مدت زمان (دقیقه)" icon={Clock} required>
+            <Field label="مدت زمان (دقیقه)" icon={Clock} required error={errors.durationMinutes?.message}>
               <div className="grid grid-cols-4 gap-2">
                 {durationOptions.map((d) => (
                   <button
                     key={d}
                     type="button"
-                    onClick={() => setValue('durationMinutes', d)}
+                    onClick={() => {
+                      setValue('durationMinutes', d, { shouldValidate: true });
+                      clearErrors('durationMinutes');
+                    }}
                     className={cn(
                       'py-2 rounded-xl border text-sm font-medium transition-all',
                       watch('durationMinutes') === d
@@ -618,9 +933,13 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
               />
             </Field>
 
-            <Field label="توضیحات" className="md:col-span-2">
+            <Field label="توضیحات" required className="md:col-span-2" error={errors.description?.message}>
               <textarea
-                {...register('description')}
+                {...register('description', {
+                  onChange: (e) => {
+                    if (e.target.value && e.target.value.trim()) clearErrors('description');
+                  }
+                })}
                 rows={3}
                 placeholder="توضیحات مربوط به خدمت..."
                 className="w-full px-4 py-2.5 rounded-2xl border border-gray-200 bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all text-sm outline-none resize-none"
@@ -722,7 +1041,7 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
                 {watch('scheduleEnabled') && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <Field label="تاریخ شروع" icon={Calendar} required>
-                      <PersianDatePicker
+                      <ServiceDatePicker
                         value={watch('scheduleStartDate')}
                         onChange={(v) => setValue('scheduleStartDate', v)}
                         placeholder="انتخاب تاریخ شروع..."
@@ -779,7 +1098,7 @@ export default function CreateServiceDrawer({ open, onClose, onCreated, editingS
                           />
                         </Field>
                         <Field label="تا تاریخ">
-                          <PersianDatePicker
+                          <ServiceDatePicker
                             value={watch('scheduleEndDate')}
                             onChange={(v) => setValue('scheduleEndDate', v)}
                             placeholder="اختیاری"

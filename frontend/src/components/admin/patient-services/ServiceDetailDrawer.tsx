@@ -210,6 +210,7 @@ export default function ServiceDetailDrawer({
     if (!iso) return '—';
     try {
       const d = new Date(iso);
+      if (isNaN(d.getTime())) return iso;
       return d.toLocaleDateString('fa-IR') + ' ' + d.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
     } catch {
       return iso;

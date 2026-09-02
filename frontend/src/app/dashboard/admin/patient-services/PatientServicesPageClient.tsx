@@ -146,14 +146,38 @@ export default function PatientServicesPageClient() {
   };
 
   const handleOpenEditForService = (svc: PatientServiceListItemDto | PatientServiceDetailDto) => {
+    const rawDate = (svc as any).scheduledDate;
+    let normalizedScheduledDate: string | null = null;
+    if (rawDate) {
+      try {
+        const d = new Date(rawDate);
+        if (!isNaN(d.getTime())) {
+          normalizedScheduledDate = d.toISOString();
+        }
+      } catch {
+        normalizedScheduledDate = null;
+      }
+    }
+
+    const rawStartTime = (svc as any).scheduledStartTime;
+    let normalizedStartTime: string = '09:00';
+    if (rawStartTime && typeof rawStartTime === 'string' && rawStartTime.includes(':')) {
+      const parts = rawStartTime.split(':');
+      if (parts.length >= 2) {
+        const hh = String(parseInt(parts[0], 10)).padStart(2, '0');
+        const mm = String(parseInt(parts[1], 10)).padStart(2, '0');
+        normalizedStartTime = `${hh}:${mm}`;
+      }
+    }
+
     setEditingServiceId(svc.id);
     setEditingInitialData({
       careRecipientId: svc.careRecipientId,
       serviceDefinitionId: svc.serviceDefinitionId,
       customServiceName: (svc as any).customServiceName ?? '',
       performerId: (svc as any).performerId ?? null,
-      scheduledDate: (svc as any).scheduledDate ? new Date((svc as any).scheduledDate).toISOString().slice(0, 10) : null,
-      scheduledStartTime: (svc as any).scheduledStartTime ?? '09:00',
+      scheduledDate: normalizedScheduledDate,
+      scheduledStartTime: normalizedStartTime,
       durationMinutes: (svc as any).durationMinutes ?? 60,
       priority: (svc as any).priority ?? 0,
       locationType: (svc as any).locationType ?? 0,

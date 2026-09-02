@@ -41,7 +41,14 @@ interface ServiceListTableProps {
 function formatFaDate(value?: string | null) {
   if (!value) return "-";
   try {
-    return new Date(value).toLocaleDateString("fa-IR");
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "-";
+    const fa = d.toLocaleDateString("fa-IR");
+    if (!fa) return "-";
+    if (fa.startsWith("-") || fa.includes("−") || /^[−-]?\d{2,3}\//.test(fa)) {
+      return "-";
+    }
+    return fa;
   } catch {
     return "-";
   }
@@ -62,7 +69,18 @@ function formatFaDateTime(value?: string | null) {
 function formatTimeOnly(value?: string | null) {
   if (!value) return "-";
   try {
-    return new Date(value).toLocaleTimeString("fa-IR", {
+    if (value.includes(":") && value.length <= 12) {
+      const clean = value.split(".")[0];
+      const [h, m] = clean.split(":");
+      if (h && m) {
+        const hh = String(parseInt(h, 10)).padStart(2, "0");
+        const mm = String(parseInt(m, 10)).padStart(2, "0");
+        return `${hh}:${mm}`;
+      }
+    }
+    const d = new Date(value);
+    if (isNaN(d.getTime())) return "-";
+    return d.toLocaleTimeString("fa-IR", {
       hour: "2-digit",
       minute: "2-digit",
     });
