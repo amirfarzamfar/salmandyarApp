@@ -149,40 +149,6 @@ This stack exposes `nginx` on port `80`. For production HTTPS, put TLS in front 
 
 If you want container-level TLS later, extend the nginx config and mount certificates into the container.
 
-## ⚠️ Production Routing — Frontend Route Whitelist (CRITICAL)
-
-If your production server / reverse proxy splits traffic with a **regex-based
-location block** (so the catch-all `location /` hits the .NET backend instead of
-Next.js), you **must** keep the frontend routes in sync with the current
-`app/` directory. Otherwise, every new Next.js page (e.g. `/health-tests`) will
-be proxied to .NET and return `HTTP 401 Unauthorized` because the backend
-applies `[Authorize]` on unknown controllers.
-
-### Old (incomplete) pattern — DO NOT USE:
-```nginx
-# ❌ Missing routes: /health-tests, /guides, /authors, /register, /forgot-password
-location ~ ^/(services|articles|tools|diseases|cities|login|portal) {
-    proxy_pass http://frontend_upstream;
-}
-```
-
-### New (complete and future-proof) pattern — USE THIS:
-```nginx
-# ✅ All public Next.js routes (Nov 2025 + Health Tests + Guides + Authors)
-location ~ ^/(services|articles|tools|diseases|cities|guides|authors|login|portal|register|forgot-password|health-tests|health-tests/) {
-    proxy_pass http://frontend_upstream;
-}
-```
-
-### Why?
-- `/health-tests` → 6 new pages (hub + 6 single tests)
-- `/guides/*`  → Guide landing + single guide pages
-- `/authors/*` → Author landing + single author pages
-- `/register`, `/forgot-password` → Auth flows outside `/login`
-
-The same whitelist is documented at the top of
-[ops/nginx/nginx.conf](file:///c:/Users/amirFarzam/Desktop/salmandyar-main/salmandyar-main/ops/nginx/nginx.conf#L1-L40).
-
 ## GitHub Actions Deploy
 
 The workflow in `.github/workflows/deploy.yml` expects these GitHub secrets:
