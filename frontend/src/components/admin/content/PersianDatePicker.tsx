@@ -12,6 +12,13 @@ import { cn } from '@/lib/utils';
 
 const DateObject = ((DateObjectImport as any)?.default ?? DateObjectImport) as any;
 
+function normalizeDigits(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/[۰-۹]/g, (digit) =>
+      String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit))
+  );
+}
+
 type Props = {
   value: string | null;
   onChange: (isoUtcDate: string | null) => void;
@@ -54,7 +61,7 @@ function gregorianIsoToJalaliDisplay(isoOrDate: string, includeTimePart = false)
 
 function jalaliDisplayToGregorianIsoUtc(jalaliDisplay: string, includeTimePart = false): string | null {
   try {
-    const clean = jalaliDisplay.trim(); if (!clean) return null;
+    const clean = normalizeDigits(jalaliDisplay.trim()); if (!clean) return null;
     const dateTimeParts = clean.split(/\s+/);
     const datePart = dateTimeParts[0] || '';
     const timePart = includeTimePart ? (dateTimeParts[1] || '00:00') : '00:00';
@@ -65,8 +72,8 @@ function jalaliDisplayToGregorianIsoUtc(jalaliDisplay: string, includeTimePart =
     if (!jalaliIsValid(parsed)) return null;
 
     const [hhStr, mmStr] = (timePart || '00:00').split(':');
-    const hh = parseInt(hhStr || '0', 10) || 0;
-    const mm = parseInt(mmStr || '0', 10) || 0;
+    const hh = parseInt(normalizeDigits(hhStr || '0'), 10) || 0;
+    const mm = parseInt(normalizeDigits(mmStr || '0'), 10) || 0;
     parsed.setHours(hh, mm, 0, 0);
 
     const gy = parsed.getFullYear();

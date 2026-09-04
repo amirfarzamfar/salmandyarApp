@@ -103,6 +103,13 @@ function statusBadge(s: GuestServiceRequestStatus) {
   return `inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${cls}`;
 }
 
+function normalizeDigits(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/[۰-۹]/g, (digit) =>
+      String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit))
+  );
+}
+
 export default function GuestRequestsAdminPage() {
   // ---------- list / filter state ----------
   const [loadingList, setLoadingList] = useState(true);
@@ -168,13 +175,15 @@ export default function GuestRequestsAdminPage() {
     hhmm: string | undefined,
     setGregorian: (v: string) => void
   ) => {
-    const jStr = jalaliValue.trim();
+    const jStr = normalizeDigits(jalaliValue.trim());
     if (!jStr) { setGregorian(''); return; }
     try {
       const parsedDate = jalaliParse(jStr, 'yyyy/MM/dd', new Date());
       if (!jalaliIsValid(parsedDate)) { return; }
       if (hhmm !== undefined && hhmm) {
-        const [h, m] = hhmm.split(':').map(Number);
+        const [hStr, mStr] = hhmm.split(':');
+        const h = Number(normalizeDigits(hStr));
+        const m = Number(normalizeDigits(mStr));
         if (!Number.isNaN(h) && !Number.isNaN(m)) {
           parsedDate.setHours(h, m, 0, 0);
         }

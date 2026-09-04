@@ -21,6 +21,13 @@ import {
   stopHubConnectionSafely,
 } from '@/lib/network';
 
+function normalizeDigits(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value).replace(/[۰-۹]/g, (digit) =>
+      String('۰۱۲۳۴۵۶۷۸۹'.indexOf(digit))
+  );
+}
+
 export default function CareServicesTab({ patientId }: { patientId: number }) {
   const [services, setServices] = useState<CareService[]>([]);
   const [reminders, setReminders] = useState<ServiceReminder[]>([]);
@@ -419,9 +426,10 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
             // Step 3: Convert Jalali display string → CORRECT Gregorian native Date
             // Using date-fns-jalali jalaliParse (PROJECT-WIDE STANDARD per guest-requests page)
             const baseDate = new Date();
-            const parsedGregorianDate = jalaliParse(jalaliDisplay, 'yyyy/MM/dd', baseDate);
+            const jalaliDisplayNormalized = normalizeDigits(jalaliDisplay);
+            const parsedGregorianDate = jalaliParse(jalaliDisplayNormalized, 'yyyy/MM/dd', baseDate);
             if (!jalaliIsValid(parsedGregorianDate)) {
-              console.error('[CareServicesTab performedAt] Invalid Jalali date parsed:', jalaliDisplay);
+              console.error('[CareServicesTab performedAt] Invalid Jalali date parsed:', jalaliDisplayNormalized, '(original:', jalaliDisplay, ')');
               field.onChange('');
               return;
             }
