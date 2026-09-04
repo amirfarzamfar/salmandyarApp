@@ -2,11 +2,24 @@ import api from '@/lib/axios';
 import {
   AddGuestServiceRequestNoteDto,
   AssignGuestServiceRequestCaregiverDto,
+  AssignGuestServiceRequestSupervisorDto,
   ConvertGuestServiceRequestToPatientDto,
+  CreateGuestContactLogDto,
+  CreateGuestFollowUpDto,
   CreateGuestServiceRequestDto,
+  DuplicatePatientCandidate,
+  GuestContactLog,
+  GuestFollowUp,
+  GuestRequestDashboardStats,
+  GuestRequestQueryParams,
   GuestServiceRequestDetails,
   GuestServiceRequestListItem,
+  PagedResponse,
+  RejectGuestRequestDto,
   SendGuestServiceRequestSmsDto,
+  SmsTemplate,
+  UpdateGuestFollowUpDto,
+  UpdateGuestServiceRequestPriorityDto,
   UpdateGuestServiceRequestStatusDto,
 } from '@/types/guest-request';
 
@@ -30,8 +43,23 @@ export const guestRequestsService = {
     }
   },
 
+  getStats: async () => {
+    const response = await api.get<GuestRequestDashboardStats>('/admin/guest-requests/stats');
+    return response.data;
+  },
+
   getAll: async () => {
     const response = await api.get<GuestServiceRequestListItem[]>('/admin/guest-requests');
+    return response.data;
+  },
+
+  getPaged: async (params: GuestRequestQueryParams = {}) => {
+    const response = await api.get<PagedResponse<GuestServiceRequestListItem>>('/admin/guest-requests/paged', { params });
+    return response.data;
+  },
+
+  getSmsTemplates: async () => {
+    const response = await api.get<SmsTemplate[]>('/admin/guest-requests/sms-templates');
     return response.data;
   },
 
@@ -45,6 +73,21 @@ export const guestRequestsService = {
     return response.data;
   },
 
+  updatePriority: async (id: string, data: UpdateGuestServiceRequestPriorityDto) => {
+    const response = await api.patch<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/priority`, data);
+    return response.data;
+  },
+
+  assignSupervisor: async (id: string, data: AssignGuestServiceRequestSupervisorDto) => {
+    const response = await api.patch<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/assign-supervisor`, data);
+    return response.data;
+  },
+
+  assignCaregiver: async (id: string, data: AssignGuestServiceRequestCaregiverDto) => {
+    const response = await api.patch<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/assign-caregiver`, data);
+    return response.data;
+  },
+
   addNote: async (id: string, data: AddGuestServiceRequestNoteDto) => {
     const response = await api.post<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/notes`, data);
     return response.data;
@@ -55,13 +98,43 @@ export const guestRequestsService = {
     return response.data;
   },
 
+  getContactLogs: async (id: string) => {
+    const response = await api.get<GuestContactLog[]>(`/admin/guest-requests/${id}/contact-logs`);
+    return response.data;
+  },
+
+  createContactLog: async (id: string, data: CreateGuestContactLogDto) => {
+    const response = await api.post<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/contact-logs`, data);
+    return response.data;
+  },
+
+  getFollowUps: async (id: string) => {
+    const response = await api.get<GuestFollowUp[]>(`/admin/guest-requests/${id}/follow-ups`);
+    return response.data;
+  },
+
+  createFollowUp: async (id: string, data: CreateGuestFollowUpDto) => {
+    const response = await api.post<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/follow-ups`, data);
+    return response.data;
+  },
+
+  updateFollowUp: async (followUpId: string, data: UpdateGuestFollowUpDto) => {
+    const response = await api.patch<GuestFollowUp>(`/admin/guest-requests/follow-ups/${followUpId}`, data);
+    return response.data;
+  },
+
+  searchDuplicatePatients: async (id: string) => {
+    const response = await api.get<DuplicatePatientCandidate[]>(`/admin/guest-requests/${id}/duplicate-patients`);
+    return response.data;
+  },
+
   convertToPatient: async (id: string, data: ConvertGuestServiceRequestToPatientDto) => {
     const response = await api.post<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/convert-to-patient`, data);
     return response.data;
   },
 
-  assignCaregiver: async (id: string, data: AssignGuestServiceRequestCaregiverDto) => {
-    const response = await api.patch<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/assign-caregiver`, data);
+  reject: async (id: string, data: RejectGuestRequestDto) => {
+    const response = await api.post<GuestServiceRequestDetails>(`/admin/guest-requests/${id}/reject`, data);
     return response.data;
   },
 };

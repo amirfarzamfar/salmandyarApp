@@ -170,6 +170,7 @@ export default async function Footer() {
             title="ابزارهای رایگان سلامت"
             titleColor="text-purple-400"
             links={[
+              { label: 'تست‌های سلامت', href: '/health-tests', special: true },
               ...topTools.map(t => ({ label: t.name, href: `/tools/${t.slug}` })),
               { label: 'همه ابزارها ←', href: '/tools', special: true },
             ]}

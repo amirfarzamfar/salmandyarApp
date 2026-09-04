@@ -134,6 +134,21 @@ public static class Permissions
         public const string ManageMedicationTimeline = "portal.manage_medication_timeline";
     }
 
+    public static class GuestRequests
+    {
+        public const string View = "guest_requests.view";
+        public const string Update = "guest_requests.update";
+        public const string Assign = "guest_requests.assign";
+        public const string Contact = "guest_requests.contact";
+        public const string FollowUp = "guest_requests.follow_up";
+        public const string ChangeStatus = "guest_requests.change_status";
+        public const string ChangePriority = "guest_requests.change_priority";
+        public const string SendSms = "guest_requests.send_sms";
+        public const string Convert = "guest_requests.convert";
+        public const string Reject = "guest_requests.reject";
+        public const string ViewDashboard = "guest_requests.view_dashboard";
+    }
+
     public static IReadOnlyList<PermissionDefinition> Definitions { get; } =
     [
         new(Dashboard.View, "dashboard", "داشبورد", "مشاهده داشبوردها", "اجازه مشاهده داشبوردهای اصلی سامانه را می‌دهد."),
@@ -210,7 +225,19 @@ public static class Permissions
         new(Portal.ManageProfile, "portal", "پرتال کاربری", "مدیریت پروفایل پرتال", "اجازه ویرایش پروفایل و تکمیل wizard پرتال را می‌دهد."),
         new(Portal.RecordVitals, "portal", "پرتال کاربری", "ثبت علائم حیاتی", "اجازه ثبت علائم حیاتی از پرتال یا self-service را می‌دهد."),
         new(Portal.AcknowledgeVitals, "portal", "پرتال کاربری", "تایید علائم حیاتی", "اجازه تایید یا پیگیری علائم حیاتی را می‌دهد."),
-        new(Portal.ManageMedicationTimeline, "portal", "پرتال کاربری", "مدیریت تایم‌لاین دارو", "اجازه تعامل با تایم‌لاین مصرف دارو را می‌دهد.")
+        new(Portal.ManageMedicationTimeline, "portal", "پرتال کاربری", "مدیریت تایم‌لاین دارو", "اجازه تعامل با تایم‌لاین مصرف دارو را می‌دهد."),
+
+        new(GuestRequests.ViewDashboard, "guest_requests", "درخواست‌های بدون ثبت‌نام", "مشاهده داشبورد درخواست‌ها", "اجازه مشاهده آمار و داشبورد عملیاتی درخواست‌های بدون ثبت‌نام را می‌دهد."),
+        new(GuestRequests.View, "guest_requests", "درخواست‌های بدون ثبت‌نام", "مشاهده درخواست‌ها", "اجازه مشاهده لیست و جزئیات درخواست‌های بدون ثبت‌نام را می‌دهد."),
+        new(GuestRequests.Update, "guest_requests", "درخواست‌های بدون ثبت‌نام", "ویرایش اطلاعات درخواست", "اجازه ویرایش اطلاعات پایه درخواست را می‌دهد."),
+        new(GuestRequests.Assign, "guest_requests", "درخواست‌های بدون ثبت‌نام", "تخصیص مسئول", "اجازه تخصیص و تغییر مسئول درخواست (کارشناس یا نیروی مراقبت) را می‌دهد."),
+        new(GuestRequests.Contact, "guest_requests", "درخواست‌های بدون ثبت‌نام", "ثبت تاریخچه تماس", "اجازه ثبت و مشاهده تاریخچه تماس با درخواست‌دهنده را می‌دهد."),
+        new(GuestRequests.FollowUp, "guest_requests", "درخواست‌های بدون ثبت‌نام", "مدیریت پیگیری‌ها", "اجازه ایجاد، ویرایش و انجام پیگیری‌های زمانی برای درخواست را می‌دهد."),
+        new(GuestRequests.ChangeStatus, "guest_requests", "درخواست‌های بدون ثبت‌نام", "تغییر وضعیت درخواست", "اجازه تغییر وضعیت عملیاتی درخواست (بررسی، تماس گرفته شد، واجد شرایط و...) را می‌دهد."),
+        new(GuestRequests.ChangePriority, "guest_requests", "درخواست‌های بدون ثبت‌نام", "تغییر اولویت درخواست", "اجازه تنظیم و تغییر اولویت درخواست (کم، عادی، بالا، فوری) را می‌دهد."),
+        new(GuestRequests.SendSms, "guest_requests", "درخواست‌های بدون ثبت‌نام", "ارسال پیامک", "اجازه ارسال پیامک اطلاع‌رسانی به درخواست‌دهنده را می‌دهد."),
+        new(GuestRequests.Convert, "guest_requests", "درخواست‌های بدون ثبت‌نام", "تبدیل به بیمار", "اجازه بررسی و تبدیل درخواست به پرونده بیمار (یا اتصال به بیمار موجود) را می‌دهد."),
+        new(GuestRequests.Reject, "guest_requests", "درخواست‌های بدون ثبت‌نام", "رد یا لغو درخواست", "اجازه رد یا لغو یک درخواست با ثبت دلیل را می‌دهد.")
     ];
 
     public static IReadOnlyList<string> All { get; } = Definitions

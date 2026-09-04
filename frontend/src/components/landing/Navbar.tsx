@@ -320,6 +320,37 @@ export default function Navbar() {
                           <h4 className="text-[11px] font-black uppercase tracking-wider text-purple-700 mb-3 flex items-center gap-1.5 px-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" /> ابزارهای ویژه پرکاربرد
                           </h4>
+
+                          {/* Health Tests Featured Card */}
+                          <Link
+                            href="/health-tests"
+                            className="group block p-4 rounded-2xl bg-gradient-to-br from-rose-50 via-white to-amber-50 border-2 border-rose-200 hover:border-rose-400 hover:shadow-xl hover:shadow-rose-500/10 transition-all duration-300 relative overflow-hidden"
+                          >
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.08] transition bg-gradient-to-br from-rose-500 to-amber-500" />
+                            <div className="relative flex items-start gap-3.5">
+                              <div className="shrink-0 w-[52px] h-[52px] rounded-2xl bg-gradient-to-br from-rose-500 via-orange-500 to-amber-500 text-white flex items-center justify-center shadow-xl shadow-rose-500/25 group-hover:scale-110 group-hover:rotate-[-2deg] transition-all duration-300 ring-8 ring-rose-500/10">
+                                <HeartPulse size={24} strokeWidth={2.3} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <h5 className="font-black text-base text-gray-900 leading-tight">
+                                    تست‌های سلامت سالمند
+                                  </h5>
+                                  <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-lg bg-gradient-to-l from-rose-500 to-orange-500 text-white shadow shadow-rose-500/20">
+                                    <Zap size={9} fill="currentColor" /> جدید
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed line-clamp-2 mb-2">
+                                  در چند دقیقه، وضعیت سلامت، حافظه، خطر سقوط و نیاز به مراقبت سالمند خانواده را ارزیابی کنید.
+                                </p>
+                                <div className="inline-flex items-center gap-1 text-xs font-black text-rose-700 group-hover:-translate-x-1 transition-transform">
+                                  شروع تست‌ها
+                                  <ChevronLeft size={13} strokeWidth={2.5} />
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+
                           {topTools.filter((t: any) => !!t.isFeatured).slice(0, 2).map((tool: any) => {
                             const Icon = TOOL_ICON_BY_SLUG[tool.slug] || Calculator;
                             const color = TOOL_COLORS[tool.toolType as keyof typeof TOOL_COLORS] || TOOL_COLORS.Calculator;
@@ -483,6 +514,33 @@ export default function Navbar() {
                 </div>
               </a>
             </div>
+
+            <Link
+              href="/health-tests"
+              onClick={() => setIsOpen(false)}
+              className="block mb-3 rounded-2xl p-3.5 border border-rose-100 bg-gradient-to-br from-rose-50/70 via-orange-50/70 to-amber-50/60 hover:from-rose-50 hover:via-orange-50 hover:to-amber-50 transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-rose-500 via-orange-500 to-amber-400 text-white flex items-center justify-center shadow-lg shadow-rose-500/20 shrink-0">
+                  <HeartPulse size={22} strokeWidth={2.3} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-black text-base text-slate-900">تست‌های سلامت سالمند</span>
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black">
+                      <Zap size={10} fill="currentColor" />
+                      جدید
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-snug mt-0.5">
+                    بررسی وضعیت حافظه، خطر سقوط، تغذیه و نیاز به مراقبت — رایگان
+                  </p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/80 border border-rose-100 text-rose-500 flex items-center justify-center shrink-0">
+                  <ChevronLeft size={15} strokeWidth={2.5} />
+                </div>
+              </div>
+            </Link>
 
             <MobileMenuSection title="خدمات پرستاری" icon={<Stethoscope size={16} />} items={servicesWithSeo.map(s => ({ label: s.serviceDefinition?.title || '', href: `/services/${s.slug}` }))} />
             <MobileMenuSection title="دسته‌بندی مقالات" icon={<BookOpen size={16} />} items={menuCategories.map(c => ({ label: c.name, href: `/articles/category/${c.slug}` }))} />

@@ -77,11 +77,63 @@ public enum GuestServiceRequestStatus
 {
     New = 0,
     UnderReview = 1,
-    Contacted = 2,
-    ConvertedToPatient = 3,
-    Assigned = 4,
-    Completed = 5,
-    Cancelled = 6
+    NeedContact = 2,
+    Contacted = 3,
+    FollowUpScheduled = 4,
+    Eligible = 5,
+    AwaitingConversion = 6,
+    ConvertedToPatient = 7,
+    Assigned = 8,
+    Completed = 9,
+    Cancelled = 10,
+    Rejected = 11,
+    Duplicate = 12
+}
+
+public enum GuestServiceRequestPriority
+{
+    Low = 0,
+    Normal = 1,
+    High = 2,
+    Urgent = 3
+}
+
+public enum GuestContactChannel
+{
+    PhoneCall = 0,
+    WhatsApp = 1,
+    Sms = 2,
+    InPerson = 3,
+    Other = 4
+}
+
+public enum GuestContactResult
+{
+    Answered = 0,
+    NoAnswer = 1,
+    Busy = 2,
+    WrongNumber = 3,
+    CallBackRequested = 4,
+    NotInterested = 5,
+    Eligible = 6,
+    NotEligible = 7
+}
+
+public enum GuestFollowUpStatus
+{
+    Pending = 0,
+    Done = 1,
+    Cancelled = 2,
+    Overdue = 3
+}
+
+public enum GuestServiceRequestSource
+{
+    LandingForm = 0,
+    DirectAdminEntry = 1,
+    PhoneCall = 2,
+    Referral = 3,
+    Other = 4
 }
 
 public enum GuestServiceRequestTimelineEventType
@@ -91,5 +143,13 @@ public enum GuestServiceRequestTimelineEventType
     NoteAdded = 2,
     SmsSent = 3,
     ConvertedToPatient = 4,
-    CaregiverAssigned = 5
+    CaregiverAssigned = 5,
+    SupervisorAssigned = 6,
+    PriorityChanged = 7,
+    ContactLogged = 8,
+    FollowUpCreated = 9,
+    FollowUpUpdated = 10,
+    RequestRejected = 11,
+    DuplicateDetected = 12,
+    PatientLinked = 13
 }

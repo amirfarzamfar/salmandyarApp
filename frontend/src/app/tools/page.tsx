@@ -1,11 +1,12 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { Calculator, CheckSquare, Brain, Sparkles, ShieldCheck, Users, ArrowLeft, FileText, Pill, Activity, Clock, Zap, Award, ChevronLeft, TrendingUp } from 'lucide-react';
+import { Calculator, CheckSquare, Brain, Sparkles, ShieldCheck, Users, ArrowLeft, FileText, Pill, Activity, Clock, Zap, Award, ChevronLeft, TrendingUp, HeartPulse } from 'lucide-react';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import { HealthTool } from '@/lib/types/content';
 import { listTools, getFeaturedTools, listArticles, listServicesWithSeo } from '@/lib/content-api';
+import { Button } from '@/components/ui/Button';
 
 export const metadata: Metadata = {
   title: 'ابزارهای سلامت رایگان | سالمندیار',
@@ -256,19 +257,37 @@ export default async function ToolsListPage() {
             <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full bg-fuchsia-500/10 blur-3xl" />
             <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className="lg:col-span-7">
-                <h2 className="text-3xl sm:text-4xl font-black mb-4 leading-tight">
-                  ابزارهای جدید به‌زودی اضافه می‌شوند
+                <h2 className="text-3xl sm:text-4xl font-black mb-4 leading-tight flex items-center gap-3">
+                  <HeartPulse size={32} className="text-rose-400" />
+                  تست‌های سلامت سالمند
                 </h2>
                 <p className="text-white/80 leading-relaxed text-base sm:text-lg">
-                  تیم مهندسی و پزشکی سالمندیار در حال توسعه ابزارهای بیشتری برای کمک به شماست.
-                  اگر ابزار خاصی مد نظر دارید به ما اطلاع دهید.
+                  کنار ابزارهای محاسباتی، می‌توانید از تست‌های تعاملی سلامت سالمندیار برای غربالگری
+                  حافظه، خطر سقوط، تغذیه، ایمنی منزل و نیاز به مراقبت استفاده کنید.
                 </p>
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    asChild
+                    className="bg-gradient-to-l from-rose-600 to-orange-500 hover:from-rose-700 hover:to-orange-600 border-0 rounded-full shadow-lg shadow-rose-500/20"
+                  >
+                    <Link href="/health-tests">
+                      <Sparkles size={17} />
+                      شروع تست‌های سلامت
+                      <ChevronLeft size={16} strokeWidth={2.4} />
+                    </Link>
+                  </Button>
+                  <span className="inline-flex items-center gap-1.5 text-sm text-white/70 px-3 py-1.5 rounded-full bg-white/10 border border-white/15">
+                    رایگان · بدون ثبت نام · نتیجه فوری
+                  </span>
+                </div>
               </div>
               <div className="lg:col-span-5 grid grid-cols-2 gap-3">
-                {['محاسبه غلظت دارو', 'چک لیست پانسمان', 'سنجش فشار خون', 'تنظیم دارو روزانه'].map(name => (
+                {['تست حافظه سالمند', 'تست خطر سقوط', 'تست تغذیه', 'ایمنی منزل سالمند'].map(name => (
                   <div key={name} className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
-                      <Sparkles size={16} className="text-yellow-300" />
+                    <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500/30 to-orange-500/30 border border-white/10 flex items-center justify-center">
+                      <Activity size={16} className="text-rose-200" />
                     </div>
                     <span className="text-sm font-bold text-white/90">{name}</span>
                   </div>

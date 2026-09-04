@@ -2374,6 +2374,104 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("ServiceTestimonials", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestContactLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ActorUserId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Channel")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("ContactedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NextAction")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("NextFollowUpSuggestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Result")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ActorUserId");
+
+                    b.HasIndex("RequestId", "ContactedAt");
+
+                    b.ToTable("GuestContactLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestFollowUp", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssignedToUserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FollowUpType")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ResolutionNotes")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ScheduledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssignedToUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("RequestId", "ScheduledAt");
+
+                    b.HasIndex("Status", "ScheduledAt");
+
+                    b.ToTable("GuestFollowUps", (string)null);
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2400,6 +2498,9 @@ namespace Salmandyar.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ConvertedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int?>("ConvertedCareRecipientId")
                         .HasColumnType("integer");
 
@@ -2409,11 +2510,29 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Property<int>("FormId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("FormVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastContactAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("NextFollowUpAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Priority")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text");
+
                     b.Property<int?>("ServiceDefinitionId")
                         .HasColumnType("integer");
 
                     b.Property<string>("ServiceType")
                         .HasColumnType("text");
+
+                    b.Property<int>("Source")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -2438,16 +2557,28 @@ namespace Salmandyar.Infrastructure.Migrations
 
                     b.HasIndex("AssignedSupervisorId");
 
+                    b.HasIndex("ContactMobile");
+
                     b.HasIndex("ConvertedCareRecipientId");
+
+                    b.HasIndex("CreatedAt");
 
                     b.HasIndex("FormId");
 
+                    b.HasIndex("NextFollowUpAt");
+
+                    b.HasIndex("Priority");
+
                     b.HasIndex("ServiceDefinitionId");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("SubmissionId");
 
                     b.HasIndex("TrackingCode")
                         .IsUnique();
+
+                    b.HasIndex("Status", "Priority", "CreatedAt");
 
                     b.ToTable("GuestServiceRequests", (string)null);
                 });
@@ -2486,7 +2617,7 @@ namespace Salmandyar.Infrastructure.Migrations
 
                     b.HasIndex("ActorUserId");
 
-                    b.HasIndex("RequestId");
+                    b.HasIndex("RequestId", "OccurredAt");
 
                     b.ToTable("GuestServiceRequestTimelineEvents", (string)null);
                 });
@@ -5400,6 +5531,50 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("ServiceSeoProfile");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestContactLog", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "ActorUser")
+                        .WithMany()
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", "Request")
+                        .WithMany("ContactLogs")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ActorUser");
+
+                    b.Navigation("Request");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestFollowUp", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "AssignedToUser")
+                        .WithMany()
+                        .HasForeignKey("AssignedToUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", "Request")
+                        .WithMany("FollowUps")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AssignedToUser");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Request");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.User", "AssignedCaregiver")
@@ -6295,6 +6470,10 @@ namespace Salmandyar.Infrastructure.Migrations
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", b =>
                 {
+                    b.Navigation("ContactLogs");
+
+                    b.Navigation("FollowUps");
+
                     b.Navigation("TimelineEvents");
                 });
 

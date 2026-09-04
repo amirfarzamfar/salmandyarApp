@@ -87,6 +87,8 @@ public class ApplicationDbContext : IdentityDbContext<User>
     // Guest Service Request Module
     public DbSet<GuestServiceRequest> GuestServiceRequests { get; set; }
     public DbSet<GuestServiceRequestTimelineEvent> GuestServiceRequestTimelineEvents { get; set; }
+    public DbSet<GuestContactLog> GuestContactLogs { get; set; }
+    public DbSet<GuestFollowUp> GuestFollowUps { get; set; }
 
     // Content Platform Module (SEO / Article / Blog / Medical Content)
     public DbSet<Author> Authors { get; set; }
@@ -952,14 +954,80 @@ public class ApplicationDbContext : IdentityDbContext<User>
         // Guest Service Request Module Configurations
         builder.Entity<GuestServiceRequest>().ToTable("GuestServiceRequests");
         builder.Entity<GuestServiceRequestTimelineEvent>().ToTable("GuestServiceRequestTimelineEvents");
+        builder.Entity<GuestContactLog>().ToTable("GuestContactLogs");
+        builder.Entity<GuestFollowUp>().ToTable("GuestFollowUps");
 
         builder.Entity<GuestServiceRequest>()
             .Property(r => r.Status)
             .HasConversion<string>();
 
         builder.Entity<GuestServiceRequest>()
+            .Property(r => r.Priority)
+            .HasConversion<int>();
+
+        builder.Entity<GuestServiceRequest>()
+            .Property(r => r.Source)
+            .HasConversion<int>();
+
+        builder.Entity<GuestServiceRequest>()
+            .Property(r => r.CreatedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<GuestServiceRequest>()
+            .Property(r => r.UpdatedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<GuestServiceRequest>()
+            .Property(r => r.ClosedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<GuestServiceRequest>()
+            .Property(r => r.LastContactAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<GuestServiceRequest>()
+            .Property(r => r.NextFollowUpAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<GuestServiceRequest>()
+            .Property(r => r.ConvertedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<GuestServiceRequest>()
             .HasIndex(r => r.TrackingCode)
             .IsUnique();
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => r.Status);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => r.Priority);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => r.CreatedAt);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => r.AssignedSupervisorId);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => r.AssignedCaregiverId);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => r.NextFollowUpAt);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => r.ContactMobile);
+
+        builder.Entity<GuestServiceRequest>()
+            .HasIndex(r => new { r.Status, r.Priority, r.CreatedAt });
 
         builder.Entity<GuestServiceRequest>()
             .HasOne(r => r.Form)
@@ -1002,6 +1070,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .HasConversion<string>();
 
         builder.Entity<GuestServiceRequestTimelineEvent>()
+            .Property(e => e.OccurredAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<GuestServiceRequestTimelineEvent>()
             .HasOne(e => e.Request)
             .WithMany(r => r.TimelineEvents)
             .HasForeignKey(e => e.RequestId)
@@ -1012,6 +1084,99 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany()
             .HasForeignKey(e => e.ActorUserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GuestServiceRequestTimelineEvent>()
+            .HasIndex(e => new { e.RequestId, e.OccurredAt });
+
+        // ===== GuestContactLog Configs =====
+        builder.Entity<GuestContactLog>()
+            .Property(c => c.ContactedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<GuestContactLog>()
+            .Property(c => c.CreatedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<GuestContactLog>()
+            .Property(c => c.NextFollowUpSuggestedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<GuestContactLog>()
+            .Property(c => c.Channel)
+            .HasConversion<int>();
+
+        builder.Entity<GuestContactLog>()
+            .Property(c => c.Result)
+            .HasConversion<int>();
+
+        builder.Entity<GuestContactLog>()
+            .HasOne(c => c.Request)
+            .WithMany(r => r.ContactLogs)
+            .HasForeignKey(c => c.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<GuestContactLog>()
+            .HasOne(c => c.ActorUser)
+            .WithMany()
+            .HasForeignKey(c => c.ActorUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GuestContactLog>()
+            .HasIndex(c => new { c.RequestId, c.ContactedAt });
+
+        // ===== GuestFollowUp Configs =====
+        builder.Entity<GuestFollowUp>()
+            .Property(f => f.ScheduledAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<GuestFollowUp>()
+            .Property(f => f.Status)
+            .HasConversion<int>();
+
+        builder.Entity<GuestFollowUp>()
+            .Property(f => f.CompletedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<GuestFollowUp>()
+            .Property(f => f.CreatedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<GuestFollowUp>()
+            .Property(f => f.UpdatedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<GuestFollowUp>()
+            .HasOne(f => f.Request)
+            .WithMany(r => r.FollowUps)
+            .HasForeignKey(f => f.RequestId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<GuestFollowUp>()
+            .HasOne(f => f.AssignedToUser)
+            .WithMany()
+            .HasForeignKey(f => f.AssignedToUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<GuestFollowUp>()
+            .HasOne(f => f.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(f => f.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<GuestFollowUp>()
+            .HasIndex(f => new { f.RequestId, f.ScheduledAt });
+
+        builder.Entity<GuestFollowUp>()
+            .HasIndex(f => new { f.Status, f.ScheduledAt });
+
+        builder.Entity<GuestFollowUp>()
+            .HasIndex(f => f.AssignedToUserId);
 
         // User Evaluation Module Configurations
         builder.Entity<UserEvaluationForm>().ToTable("UserEvaluationForms");

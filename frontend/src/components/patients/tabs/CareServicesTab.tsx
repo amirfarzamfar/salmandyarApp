@@ -8,10 +8,10 @@ import { ServiceDefinition, CareServiceStatus, ServiceCategory } from '@/types/s
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { careServiceFormSchema, CareServiceFormValues } from '@/components/patients/CareServiceFormSchema';
-import DatePicker, { DateObject } from 'react-multi-date-picker';
+import DatePicker from 'react-multi-date-picker';
 import persian from 'react-date-object/calendars/persian';
 import persian_fa from 'react-date-object/locales/persian_fa';
-import TimePicker from 'react-multi-date-picker/plugins/time_picker';
+import { parse as jalaliParse, isValid as jalaliIsValid } from 'date-fns-jalali';
 import { Plus, CheckCircle, Clock, XCircle, AlertCircle, Bell, Calendar, ChevronDown, Shield, Users, User } from 'lucide-react';
 import ServiceReminderForm from '../ServiceReminderForm';
 import {
@@ -386,29 +386,71 @@ export default function CareServicesTab({ patientId }: { patientId: number }) {
                         {errors.serviceDefinitionId && <p className="text-red-500 text-xs mt-1">{errors.serviceDefinitionId.message}</p>}
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">تاریخ انجام</label>
-                        <Controller
-                          control={control}
-                          name="performedAt"
-                          render={({ field: { onChange, value } }) => (
-                            <DatePicker
-                              value={value ? new Date(value) : new Date()}
-                              onChange={(date: any) => {
-                                if (date && date.isValid) {
-                                  onChange(date.toDate().toISOString());
-                                }
-                              }}
-                              calendar={persian}
-                              locale={persian_fa}
-                              calendarPosition="bottom-right"
-                              inputClass="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 text-center"
-                              containerStyle={{ width: "100%" }}
-                            />
-                          )}
-                        />
-                         {errors.performedAt && <p className="text-red-500 text-xs mt-1">{errors.performedAt.message}</p>}
-                    </div>
+                 <div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    تاریخ انجام
+  </label>
+
+  <Controller
+    control={control}
+    name="performedAt"
+    render={({ field }) => (
+      <DatePicker
+        value={field.value ? new Date(field.value) : new Date()}
+        onChange={(rawDate: any) => {
+          // ========== PROJECT STANDARD: Same algorithm as syncGregorianFromJalaliDate in admin/guest-requests ==========
+          // Step 1: Handle both [DateObject] array and single DateObject
+          const dateObj = Array.isArray(rawDate) ? rawDate[0] : rawDate;
+          if (!dateObj) { field.onChange(''); return; }
+
+          try {
+            // Step 2: Format DateObj to JALALI display string "1404/06/11"
+            let jalaliDisplay: string;
+            if (typeof dateObj.format === 'function') {
+              jalaliDisplay = dateObj.format('YYYY/MM/DD');
+            } else {
+              const y = dateObj.year;
+              const m = dateObj.month?.number || dateObj.month;
+              const d = dateObj.day;
+              if (!y || !m || !d) { field.onChange(''); return; }
+              jalaliDisplay = `${y}/${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
+            }
+
+            // Step 3: Convert Jalali display string → CORRECT Gregorian native Date
+            // Using date-fns-jalali jalaliParse (PROJECT-WIDE STANDARD per guest-requests page)
+            const baseDate = new Date();
+            const parsedGregorianDate = jalaliParse(jalaliDisplay, 'yyyy/MM/dd', baseDate);
+            if (!jalaliIsValid(parsedGregorianDate)) {
+              console.error('[CareServicesTab performedAt] Invalid Jalali date parsed:', jalaliDisplay);
+              field.onChange('');
+              return;
+            }
+
+            // Step 4: Gregorian native Date now has correct year (2025). Emit ISO 8601.
+            field.onChange(parsedGregorianDate.toISOString());
+            field.onBlur?.();
+
+            console.log('[CareServicesTab performedAt] Jalali=', jalaliDisplay, '→ GregorianISO=', parsedGregorianDate.toISOString());
+          } catch (e) {
+            console.error('[CareServicesTab performedAt] DatePicker conversion error:', e);
+            field.onChange('');
+          }
+        }}
+        calendar={persian}
+        locale={persian_fa}
+        calendarPosition="bottom-right"
+        inputClass="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 text-center"
+        containerStyle={{ width: "100%" }}
+      />
+    )}
+  />
+
+  {errors.performedAt && (
+    <p className="text-red-500 text-xs mt-1">
+      {errors.performedAt.message}
+    </p>
+  )}
+</div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">ساعت انجام</label>

@@ -10,6 +10,7 @@ public class GuestServiceRequest
     public string TrackingCode { get; set; } = string.Empty;
     public int FormId { get; set; }
     public virtual AssessmentForm Form { get; set; } = null!;
+    public int FormVersion { get; set; } = 1;
     public int SubmissionId { get; set; }
     public virtual AssessmentSubmission Submission { get; set; } = null!;
     public int? ServiceDefinitionId { get; set; }
@@ -20,17 +21,29 @@ public class GuestServiceRequest
     public virtual User? AssignedCaregiver { get; set; }
     public int? ConvertedCareRecipientId { get; set; }
     public virtual CareRecipient? ConvertedCareRecipient { get; set; }
+
     public GuestServiceRequestStatus Status { get; set; } = GuestServiceRequestStatus.New;
+    public GuestServiceRequestPriority Priority { get; set; } = GuestServiceRequestPriority.Normal;
+    public GuestServiceRequestSource Source { get; set; } = GuestServiceRequestSource.LandingForm;
+
     public string? ServiceType { get; set; }
     public string? Urgency { get; set; }
     public string? City { get; set; }
     public string ContactName { get; set; } = string.Empty;
     public string ContactMobile { get; set; } = string.Empty;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? ClosedAt { get; set; }
+    public DateTime? LastContactAt { get; set; }
+    public DateTime? NextFollowUpAt { get; set; }
+    public DateTime? ConvertedAt { get; set; }
+
+    public string? RejectionReason { get; set; }
 
     public virtual ICollection<GuestServiceRequestTimelineEvent> TimelineEvents { get; set; } = new List<GuestServiceRequestTimelineEvent>();
+    public virtual ICollection<GuestContactLog> ContactLogs { get; set; } = new List<GuestContactLog>();
+    public virtual ICollection<GuestFollowUp> FollowUps { get; set; } = new List<GuestFollowUp>();
 }
 
 public class GuestServiceRequestTimelineEvent

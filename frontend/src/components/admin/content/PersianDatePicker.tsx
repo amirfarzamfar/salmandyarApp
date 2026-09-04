@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import DatePicker from 'react-multi-date-picker';
 import { Calendar, X as XIcon } from 'lucide-react';
 import DateObjectImport from 'react-date-object';
 import persianCalendar from 'react-date-object/calendars/persian';
 import persianFaLocale from 'react-date-object/locales/persian_fa';
-import gregorianCalendar from 'react-date-object/calendars/gregorian';
-import gregorianEnLocale from 'react-date-object/locales/gregorian_en';
+import { parse as jalaliParse, isValid as jalaliIsValid, format as jalaliFormat } from 'date-fns-jalali';
+import { parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const DateObject = ((DateObjectImport as any)?.default ?? DateObjectImport) as any;
@@ -23,6 +23,14 @@ type Props = {
   id?: string;
 };
 
+// ==========================================================================
+// PREFERRED PROJECT STANDARD: date-fns-jalali conversion (per guest-requests page)
+// This is the ONLY correct conversion in this codebase.
+// react-date-object's .convert() does NOT translate numeric year/month/day —
+// it only sets a .calendar label while preserving Persian numbers (1404 stays 1404
+// instead of becoming 2025).
+// ==========================================================================
+
 function gregorianIsoToJalaliDisplay(isoOrDate: string, includeTimePart = false): string {
   try {
     if (!isoOrDate) return '';
@@ -31,39 +39,14 @@ function gregorianIsoToJalaliDisplay(isoOrDate: string, includeTimePart = false)
 
     let gDate: Date;
     if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      const [y, m, d] = trimmed.split('-').map(n => parseInt(n, 10));
-      gDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+      gDate = parseISO(trimmed);
     } else {
       gDate = new Date(trimmed);
       if (isNaN(gDate.getTime())) return '';
     }
 
-    const gregorianDObj = new DateObject({
-      calendar: gregorianCalendar,
-      locale: gregorianEnLocale,
-      year: gDate.getUTCFullYear(),
-      month: gDate.getUTCMonth() + 1,
-      day: gDate.getUTCDate(),
-      hour: gDate.getUTCHours(),
-      minute: gDate.getUTCMinutes(),
-      second: gDate.getUTCSeconds(),
-    });
-
-    const persianDObj = gregorianDObj.convert(persianCalendar, persianFaLocale);
-    const jy = persianDObj.year;
-    const jm = persianDObj.month.number;
-    const jd = persianDObj.day;
-    const hh = persianDObj.hour;
-    const mm = persianDObj.minute;
-    if (!jy || !jm || !jd) return '';
-
-    const jmStr = String(jm).padStart(2, '0');
-    const jdStr = String(jd).padStart(2, '0');
-    const base = `${jy}/${jmStr}/${jdStr}`;
-    if (!includeTimePart) return base;
-    const hhStr = String(hh).padStart(2, '0');
-    const mmStr = String(mm).padStart(2, '0');
-    return `${base} ${hhStr}:${mmStr}`;
+    const jDisplay = jalaliFormat(gDate, includeTimePart ? 'yyyy/MM/dd HH:mm' : 'yyyy/MM/dd');
+    return jDisplay || '';
   } catch {
     return '';
   }
@@ -71,43 +54,26 @@ function gregorianIsoToJalaliDisplay(isoOrDate: string, includeTimePart = false)
 
 function jalaliDisplayToGregorianIsoUtc(jalaliDisplay: string, includeTimePart = false): string | null {
   try {
-    const clean = jalaliDisplay.trim();
-    if (!clean) return null;
-
+    const clean = jalaliDisplay.trim(); if (!clean) return null;
     const dateTimeParts = clean.split(/\s+/);
     const datePart = dateTimeParts[0] || '';
     const timePart = includeTimePart ? (dateTimeParts[1] || '00:00') : '00:00';
-    const sep = datePart.includes('-') ? '-' : '/';
-    const [jyStr, jmStr, jdStr] = datePart.split(sep);
-    if (!jyStr || !jmStr || !jdStr) return null;
-    const jy = parseInt(jyStr, 10);
-    const jm = parseInt(jmStr, 10);
-    const jd = parseInt(jdStr, 10);
-    if (!jy || !jm || !jd) return null;
+    if (!datePart) return null;
+
+    const baseDate = new Date();
+    const parsed = jalaliParse(datePart, 'yyyy/MM/dd', baseDate);
+    if (!jalaliIsValid(parsed)) return null;
 
     const [hhStr, mmStr] = (timePart || '00:00').split(':');
     const hh = parseInt(hhStr || '0', 10) || 0;
     const mm = parseInt(mmStr || '0', 10) || 0;
+    parsed.setHours(hh, mm, 0, 0);
 
-    const persianDObj = new DateObject({
-      calendar: persianCalendar,
-      locale: persianFaLocale,
-      year: jy,
-      month: jm,
-      day: jd,
-      hour: hh,
-      minute: mm,
-      second: 0,
-    });
-
-    const gregorianDObj = persianDObj.convert(gregorianCalendar, gregorianEnLocale);
-    const gy = gregorianDObj.year;
-    const gm = gregorianDObj.month.number;
-    const gd = gregorianDObj.day;
-    const gh = gregorianDObj.hour;
-    const gmin = gregorianDObj.minute;
-    if (!gy || !gm || !gd) return null;
-
+    const gy = parsed.getFullYear();
+    const gm = parsed.getMonth() + 1;
+    const gd = parsed.getDate();
+    const gh = parsed.getHours();
+    const gmin = parsed.getMinutes();
     const result = new Date(Date.UTC(gy, gm - 1, gd, gh, gmin, 0));
     if (isNaN(result.getTime())) return null;
     return result.toISOString();
@@ -119,41 +85,17 @@ function jalaliDisplayToGregorianIsoUtc(jalaliDisplay: string, includeTimePart =
 function gregorianIsoToJalaliDateObject(isoOrDate: string): any | null {
   try {
     if (!isoOrDate) return null;
-    const trimmed = isoOrDate.trim();
-    if (!trimmed) return null;
-
-    let gDate: Date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      const [y, m, d] = trimmed.split('-').map(n => parseInt(n, 10));
-      gDate = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
-    } else {
-      gDate = new Date(trimmed);
-      if (isNaN(gDate.getTime())) return null;
-    }
-
-    const gregorianDObj = new DateObject({
-      calendar: gregorianCalendar,
-      locale: gregorianEnLocale,
-      year: gDate.getUTCFullYear(),
-      month: gDate.getUTCMonth() + 1,
-      day: gDate.getUTCDate(),
-      hour: gDate.getUTCHours(),
-      minute: gDate.getUTCMinutes(),
-      second: gDate.getUTCSeconds(),
-    });
-
-    const persianDObj = gregorianDObj.convert(persianCalendar, persianFaLocale);
-    const jy = persianDObj.year;
-    const jm = persianDObj.month.number;
-    const jd = persianDObj.day;
+    const trimmed = isoOrDate.trim(); if (!trimmed) return null;
+    const gDate = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? parseISO(trimmed) : new Date(trimmed);
+    if (isNaN(gDate.getTime())) return null;
+    const jDisplay = jalaliFormat(gDate, 'yyyy/MM/dd');
+    if (!jDisplay) return null;
+    const [jyStr, jmStr, jdStr] = jDisplay.split('/');
+    const jy = parseInt(jyStr, 10); const jm = parseInt(jmStr, 10); const jd = parseInt(jdStr, 10);
     if (!jy || !jm || !jd) return null;
-
     return new DateObject({
-      calendar: persianCalendar,
-      locale: persianFaLocale,
-      year: jy,
-      month: jm,
-      day: jd,
+      calendar: persianCalendar, locale: persianFaLocale,
+      year: jy, month: jm, day: jd,
     });
   } catch {
     return null;

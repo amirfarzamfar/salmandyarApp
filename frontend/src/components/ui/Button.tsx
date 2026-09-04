@@ -1,20 +1,15 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
-
-// Since we didn't install class-variance-authority or @radix-ui/react-slot, I will implement a simpler version first
-// But wait, the best practice is to use these. I'll stick to a simpler implementation for now to avoid too many installs
-// unless the user asked for shadcn/ui specifically (which they didn't, but implied "latest methods").
-// I will create a simple Button component with tailwind for now to be fast and efficient.
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
+  asChild?: boolean;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', ...props }, ref) => {
+  ({ className, variant = 'primary', size = 'md', asChild = false, ...props }, ref) => {
     const variants = {
       primary: 'bg-teal-600 text-white hover:bg-teal-700 shadow-md',
       secondary: 'bg-blue-600 text-white hover:bg-blue-700 shadow-md',
@@ -28,11 +23,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'px-6 py-3 text-lg',
     };
 
+    const Comp: any = asChild ? Slot : "button"
+
     return (
-      <button
+      <Comp
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center rounded-full font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
+          'inline-flex items-center justify-center gap-2 rounded-full font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none',
           variants[variant],
           sizes[size],
           className

@@ -23,6 +23,45 @@
   }
 }
 
+/* Accessibility: reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus visibility for keyboard users */
+:focus-visible {
+  outline: 2px solid #0d9488;
+  outline-offset: 2px;
+  border-radius: 0.75rem;
+}
+
+/* Ensure minimum interactive targets on mobile */
+button,
+a,
+[role="button"],
+[role="link"],
+[role="tab"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+@media (min-width: 768px) {
+  button,
+  a,
+  [role="button"],
+  [role="link"] {
+    min-height: auto;
+    min-width: auto;
+  }
+}
+
 *,
 *::before,
 *::after {

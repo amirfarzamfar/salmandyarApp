@@ -134,12 +134,7 @@ function ServiceDatePicker({
   value, onChange, placeholder = 'انتخاب تاریخ...',
   includeTime = false, disabled = false, className, id,
 }: ServiceDatePickerProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const datePickerRef = useRef<any>(null);
-
-  const displayValue = useMemo(() => {
-    return value ? sdp_gregorianIsoToJalaliDisplay(value, includeTime) : '';
-  }, [value, includeTime]);
 
   const pickerValue = useMemo(
     () => sdp_gregorianIsoToJalaliDateObject(value ?? ''),
@@ -158,26 +153,14 @@ function ServiceDatePicker({
       } else {
         year = dateObj.year; month = dateObj.month?.number || dateObj.month; day = dateObj.day;
       }
-      if (!year || !month || !day) return;
+      if (!year || !month || !day) { onChange(null); return; }
       const jmStr = String(month).padStart(2, '0'); const jdStr = String(day).padStart(2, '0');
       const displayDate = `${year}/${jmStr}/${jdStr}`;
       const iso = sdp_jalaliDisplayToGregorianIsoUtc(displayDate, includeTime);
-      if (iso) onChange(iso); else onChange(null);
-      try { datePickerRef.current?.closeCalendar?.(); } catch {}
-    } catch {}
-  };
-
-  const handleClear = (e: React.MouseEvent) => { e.stopPropagation(); onChange(null); };
-  const handleTrigger = () => {
-    if (disabled) return;
-    try { if (!isOpen) datePickerRef.current?.openCalendar?.(); else datePickerRef.current?.closeCalendar?.(); } catch {}
-  };
-  const handleContainerKeyDown = (e: React.KeyboardEvent) => {
-    if (disabled) return;
-    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
-      e.preventDefault(); handleTrigger();
-    } else if (e.key === 'Escape') {
-      try { datePickerRef.current?.closeCalendar?.(); } catch {}
+      onChange(iso);
+    } catch (e) {
+      console.error('[ServiceDatePicker] handlePickerChange error:', e);
+      onChange(null);
     }
   };
 
@@ -185,59 +168,18 @@ function ServiceDatePicker({
     <div className={cn('space-y-2 w-full', className)}>
       <DatePicker
         ref={datePickerRef}
+        id={id}
         value={pickerValue}
         onChange={handlePickerChange}
         calendar={persianCalendar}
         locale={persianFaLocale}
         format="YYYY/MM/DD"
-        onOpen={() => setIsOpen(true)}
-        onClose={() => setIsOpen(false)}
         portal
-        inputClass="!hidden"
-        containerStyle={{ display: 'inline-block', width: '0', height: '0', overflow: 'hidden' }}
-        style={{ display: 'none' }}
+        disabled={disabled}
+        inputClass="w-full !px-4 !py-2.5 !rounded-2xl !border !border-gray-200 !bg-white !text-sm !font-mono !text-slate-700 !tracking-wide !outline-none !transition-all focus:!border-teal-500 focus:!ring-4 focus:!ring-teal-500/10 hover:!border-teal-300 disabled:!opacity-60 disabled:!cursor-not-allowed disabled:!bg-gray-50"
+        containerStyle={{ width: '100%', display: 'block' }}
+        placeholder={placeholder}
       />
-      <div
-        id={id}
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-haspopup="dialog"
-        tabIndex={disabled ? -1 : 0}
-        onKeyDown={handleContainerKeyDown}
-        onClick={handleTrigger}
-        className={cn(
-          'flex items-stretch overflow-hidden rounded-2xl border border-gray-200 bg-white transition-all select-none',
-          !disabled && 'focus-within:border-teal-500 focus-within:ring-4 focus-within:ring-teal-500/10 cursor-pointer hover:border-teal-300',
-          disabled && 'opacity-60 cursor-not-allowed bg-gray-50',
-          isOpen && 'border-teal-500 ring-4 ring-teal-500/10'
-        )}
-      >
-        <button
-          type="button" tabIndex={-1} disabled={disabled}
-          onClick={(e) => { e.stopPropagation(); handleTrigger(); }}
-          className={cn('px-3.5 bg-slate-50 text-slate-500 flex items-center border-r border-gray-200 transition-colors', !disabled && 'hover:bg-slate-100')}
-          aria-label="باز کردن انتخاب‌گر تاریخ"
-        >
-          <Calendar className="h-4 w-4 text-teal-600" />
-        </button>
-        <div className="flex-1 flex items-center px-4 py-2.5">
-          <span
-            dir="ltr"
-            className={cn('text-sm font-mono tracking-wide text-center flex-1', displayValue ? 'text-slate-700' : 'text-gray-400')}
-          >
-            {displayValue || placeholder}
-          </span>
-        </div>
-        {!disabled && displayValue && (
-          <button
-            type="button" onClick={handleClear} tabIndex={-1}
-            className="px-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors flex items-center"
-            aria-label="پاک کردن تاریخ"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        )}
-      </div>
     </div>
   );
 }
