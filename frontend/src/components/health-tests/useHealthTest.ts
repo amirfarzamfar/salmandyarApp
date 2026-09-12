@@ -17,6 +17,16 @@ import {
   calculateScores,
 } from '@/lib/health-tests/test-engine';
 
+function stableQuestionsSignature(test: HealthTest): string {
+  const parts = test.questions.map(q => `${q.text}|${q.options.map(o => `${o.label}:${o.score}`).join(',')}`).join('||');
+  let h1 = 0x811c9dc5;
+  for (let i = 0; i < parts.length; i++) {
+    h1 ^= parts.charCodeAt(i);
+    h1 = Math.imul(h1, 0x01000193);
+  }
+  return (h1 >>> 0).toString(36);
+}
+
 export interface UseHealthTestApi {
   test: HealthTest;
   state: HealthTestRuntimeState;
@@ -40,17 +50,36 @@ export interface UseHealthTestApi {
 }
 
 export function useHealthTest(test: HealthTest): UseHealthTestApi {
-  const [state, setState] = useState<HealthTestRuntimeState>(() => {
-    const hydrated = loadState(test.id);
-    if (hydrated && hydrated.testId === test.id) {
-      return hydrated;
-    }
-    return createInitialState(test.id);
-  });
+  const [state, setState] = useState<HealthTestRuntimeState>(() =>
+    createInitialState(test.id),
+  );
 
   const prevJsonRef = useRef<string>('');
+  const didHydrateFromStorageRef = useRef(false);
+  const lastQuestionsSigRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const incomingSig = stableQuestionsSignature(test);
+    if (lastQuestionsSigRef.current != null && lastQuestionsSigRef.current !== incomingSig) {
+      clearState(test.id);
+      didHydrateFromStorageRef.current = false;
+      prevJsonRef.current = '';
+      setState(createInitialState(test.id));
+    }
+    lastQuestionsSigRef.current = incomingSig;
+  }, [test.id, test.questions]);
+
+  useEffect(() => {
+    if (didHydrateFromStorageRef.current) return;
+    didHydrateFromStorageRef.current = true;
+    const hydrated = loadState(test.id);
+    if (hydrated && hydrated.testId === test.id) {
+      setState(hydrated);
+    }
+  }, [test.id]);
+
+  useEffect(() => {
+    if (!didHydrateFromStorageRef.current) return;
     const json = JSON.stringify(state);
     if (prevJsonRef.current === json) return;
     prevJsonRef.current = json;

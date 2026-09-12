@@ -483,6 +483,37 @@ public class AssessmentService : IAssessmentService
         return allForms.Select(MapToDto).ToList();
     }
 
+    public async Task<List<AssessmentFormDto>> GetPublicHealthTestsAsync(CancellationToken ct = default)
+    {
+        var forms = await _context.AssessmentForms
+            .AsNoTracking()
+            .Include(f => f.Questions)
+                .ThenInclude(q => q.Options)
+            .Where(f => f.IsActive && f.Workflow == AssessmentFormWorkflow.HealthTestPublic)
+            .OrderByDescending(f => f.IsDefault)
+            .ThenByDescending(f => f.CreatedAt)
+            .ToListAsync(ct);
+
+        return forms.Select(MapToDto).ToList();
+    }
+
+    public async Task<AssessmentFormDto?> GetPublicHealthTestByCodeAsync(string code, CancellationToken ct = default)
+    {
+        var form = await _context.AssessmentForms
+            .AsNoTracking()
+            .Include(f => f.Questions)
+                .ThenInclude(q => q.Options)
+            .FirstOrDefaultAsync(
+                f => f.IsActive &&
+                     f.Workflow == AssessmentFormWorkflow.HealthTestPublic &&
+                     f.Code == code.Trim(),
+                ct);
+
+        if (form == null) return null;
+
+        return MapToDto(form);
+    }
+
     private async Task SyncDefaultHomeCareFormAsync(AssessmentForm form)
     {
         if (form.Workflow != AssessmentFormWorkflow.HomeCareRequest || !form.ServiceDefinitionId.HasValue)

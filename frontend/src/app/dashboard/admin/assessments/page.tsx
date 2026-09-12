@@ -17,6 +17,8 @@ const workflowLabels: Record<number, string> = {
   [AssessmentFormWorkflow.HomeCareRequest]: 'درخواست خدمت در منزل',
   [AssessmentFormWorkflow.Checklist]: 'چک‌لیست',
   [AssessmentFormWorkflow.SatisfactionSurvey]: 'نظرسنجی رضایت',
+  [AssessmentFormWorkflow.GuestServiceRequest]: 'درخواست بدون ثبت‌نام (لندینگ)',
+  [AssessmentFormWorkflow.HealthTestPublic]: 'تست سلامت سالمندان (عمومی)',
 };
 
 export default function AssessmentsListPage() {
@@ -102,20 +104,31 @@ export default function AssessmentsListPage() {
                 <div key={form.id} className="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-teal-500/50 transition-all group relative">
                     <div className="flex justify-between items-start mb-4">
                         <div className={`p-3 rounded-lg transition-colors ${
-                            form.type === 0 ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'
+                            form.workflow === AssessmentFormWorkflow.HealthTestPublic 
+                                ? 'bg-rose-500/10 text-rose-400' 
+                                : form.type === 0 
+                                    ? 'bg-blue-500/10 text-blue-400' 
+                                    : 'bg-purple-500/10 text-purple-400'
                         }`}>
-                            {form.type === 0 ? <Activity size={24} /> : <ClipboardList size={24} />}
+                            {form.workflow === AssessmentFormWorkflow.HealthTestPublic ? <Activity size={24} /> : form.type === 0 ? <Activity size={24} /> : <ClipboardList size={24} />}
                         </div>
-                        <button 
-                            onClick={() => toggleMutation.mutate(form.id)}
-                            className={`text-xs font-medium px-2 py-1 rounded-full border transition-colors ${
-                                form.isActive 
-                                ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20' 
-                                : 'bg-slate-700 text-slate-400 border-slate-600 hover:bg-green-500/10 hover:text-green-400'
-                            }`}
-                        >
-                            {form.isActive ? 'فعال' : 'غیرفعال'}
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {form.workflow === AssessmentFormWorkflow.HealthTestPublic && (
+                                <span className="text-xs font-bold px-3 py-1 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 text-white shadow-lg shadow-rose-500/20">
+                                    عمومی
+                                </span>
+                            )}
+                            <button 
+                                onClick={() => toggleMutation.mutate(form.id)}
+                                className={`text-xs font-medium px-2 py-1 rounded-full border transition-colors ${
+                                    form.isActive 
+                                    ? 'bg-green-500/10 text-green-400 border-green-500/20 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20' 
+                                    : 'bg-slate-700 text-slate-400 border-slate-600 hover:bg-green-500/10 hover:text-green-400'
+                                }`}
+                            >
+                                {form.isActive ? 'فعال' : 'غیرفعال'}
+                            </button>
+                        </div>
                     </div>
                     
                     <h3 className="text-lg font-bold text-white mb-2">{form.title}</h3>

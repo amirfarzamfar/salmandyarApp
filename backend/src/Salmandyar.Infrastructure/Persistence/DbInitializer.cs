@@ -656,6 +656,7 @@ public static class DbInitializer
             }
         }
 
+        await SeedHealthTestForms(context);
         await SeedContentPlatformAsync(context);
     }
 
@@ -1664,6 +1665,479 @@ public static class DbInitializer
             }
         }
     }
+
+    private static async Task SeedHealthTestForms(ApplicationDbContext context)
+    {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+        };
+
+        var targetTypes = new List<AssessmentType> { AssessmentType.Patient, AssessmentType.PatientFamily, AssessmentType.Elderly };
+        var targetTypesJson = JsonSerializer.Serialize(targetTypes.Select(t => (int)t), jsonOptions);
+
+        var tests = new List<AssessmentForm>();
+
+        var formElderlyHealth = new AssessmentForm
+        {
+            Code = "elderly-health",
+            Title = "تست سلامت کلی سالمند",
+            Description = "بررسی کلی و جامع وضعیت حافظه، تحرک، تغذیه، ایمنی و مدیریت دارو برای شناسایی زودهنگام نیاز به مراقبت.",
+            Type = AssessmentType.Elderly,
+            TargetTypesJson = targetTypesJson,
+            Workflow = AssessmentFormWorkflow.HealthTestPublic,
+            Version = 1,
+            IsActive = true,
+            IsDefault = true,
+            IntroTitle = "تست سلامت کلی سالمند",
+            IntroDescription = "در حدود ۵ دقیقه، وضعیت کلی سلامت سالمند خانواده‌تان را ارزیابی کنید: حافظه، تحرک، دارو، تغذیه و ایمنی منزل. رایگان، بدون ثبت‌نام و نتایج قابل فهم.",
+            EstimatedDurationMinutes = 5,
+            LayoutJson = JsonSerializer.Serialize(new
+            {
+                healthTest = new
+                {
+                    slug = "elderly-health",
+                    metaTitle = "تست سلامت کلی سالمند آنلاین رایگان | سالمندیار",
+                    metaDescription = "در حدود ۵ دقیقه، وضعیت کلی سلامت سالمند خانواده‌تان را ارزیابی کنید: حافظه، تحرک، دارو، تغذیه و ایمنی منزل. رایگان، بدون ثبت‌نام و نتایج قابل فهم.",
+                    metaKeywords = new[] { "تست سلامت سالمند", "ارزیابی سلامت سالمند", "آزمایش سلامت سالمند", "چک لیست سلامت سالمند", "ارزیابی جامع سالمند" },
+                    iconName = "HeartPulse",
+                    accentGradientFrom = "from-rose-500",
+                    accentGradientTo = "to-orange-500",
+                    categories = new[] { "elderly-general" },
+                    featured = true,
+                    stages = new[]
+                    {
+                        new { kind = "start", title = "شروع", startQuestionIndex = 0, endQuestionIndexExclusive = 3 },
+                        new { kind = "awareness", title = "شناخت", startQuestionIndex = 3, endQuestionIndexExclusive = 7 },
+                        new { kind = "evaluation", title = "بررسی", startQuestionIndex = 7, endQuestionIndexExclusive = 12 },
+                        new { kind = "result", title = "نتیجه", startQuestionIndex = 12, endQuestionIndexExclusive = 12 }
+                    },
+                    scoring = new { thresholds = new { low = 49, mid = 74 } },
+                    recommendations = new
+                    {
+                        low = new
+                        {
+                            level = "low",
+                            title = "وضعیت مطلوب؛ ادامه همین سبک زندگی",
+                            description = "براساس پاسخ‌ها، وضعیت کلی سالمند خانواده در محدوده مطلوبی قرار دارد. پیشنهاد می‌کنیم این تست را هر ۳ تا ۶ ماه تکرار کنید تا تغییرات کوچک را زودتر متوجه شوید.",
+                            primaryCtaLabel = "آشنایی با خدمات پیشگیرانه سالمندیار",
+                            primaryCtaHref = "/services"
+                        },
+                        medium = new
+                        {
+                            level = "medium",
+                            title = "نیازمند توجه و نظارت دوره‌ای",
+                            description = "ممکن است مراقبت و نظارت دوره‌ای برای سالمند شما مفید باشد. مراقبتی روزانه یا ویژیت نیم‌روزه می‌تواند به حفظ استقلال و کیفیت زندگی کمک کند.",
+                            primaryCtaLabel = "مشاهده خدمات مراقبت در منزل",
+                            primaryCtaHref = "/services"
+                        },
+                        high = new
+                        {
+                            level = "high",
+                            title = "به حمایت و مراقبت بیشتری نیاز دارد",
+                            description = "به نظر می‌رسد سالمند شما ممکن است به حمایت بیشتری در زندگی روزمره، مدیریت دارو یا ایمنی منزل نیاز داشته باشد. مشاوره رایگان تیم سالمندیار می‌تواند به انتخاب سطح مناسب کمک کند.",
+                            primaryCtaLabel = "درخواست مشاوره رایگان و فوری پرستار",
+                            primaryCtaHref = "/portal/home-care/request"
+                        }
+                    },
+                    relatedLinks = new[]
+                    {
+                        new { label = "خدمات مراقبت در منزل", href = "/services" },
+                        new { label = "مقاله مراقبت از سالمند آلزایمر", href = "/articles" }
+                    },
+                    faqs = new[]
+                    {
+                        new { id = 1, question = "نتیجه این تست پزشکی محسوب می‌شود؟", answer = "خیر؛ این تست صرفاً ابزاری آموزشی و غربالگری است و هرگز جایگزین معاینه، تشخیص و درمان پزشک یا متخصص نمی‌شود.", displayOrder = 1 },
+                        new { id = 2, question = "آیا داده‌های این تست ذخیره می‌شود؟", answer = "پاسخ‌ها فقط روی دستگاه خود شما (در مرورگر) و برای تکمیل تست نگه داشته می‌شوند و به سرور سالمندیار ارسال نمی‌شوند.", displayOrder = 2 }
+                    }
+                }
+            }, jsonOptions),
+            Questions = new List<AssessmentQuestion>
+            {
+                new() { Order = 1, Text = "در یک روز معمولی، سالمند چگونه راه می‌رود؟", Description = "به‌طور متوسط و بدون کمک گرفتن از دیوار یا چیزهای دیگر.", Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "mobility" }, Options = BuildScoredOptions(("راحت و بدون کمک", 5), ("آهسته یا کمی احتیاط می‌کند", 4), ("با عصا یا وسیله کمکی", 3), ("با کمک فرد دیگر", 2), ("تقریباً ناتوان از راه رفتن", 1)) },
+                new() { Order = 2, Text = "آیا به یاد آوردن رویدادهای اخیر برایش دشوار است؟", Description = "مثل جایی که وسایل را گذاشته، یا برنامه روز.", Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "memory" }, Options = BuildScoredOptions(("تقریباً هرگز نه", 5), ("گاهی گاهی فراموشی‌های کوچک", 4), ("چند بار در هفته مشکل دارد", 3), ("تقریباً هر روز", 2), ("نمی‌تواند رویدادهای همین روز را بیاد بیاورد", 1)) },
+                new() { Order = 3, Text = "داروهای روزانه خود را به‌درستی و در زمان درست مصرف می‌کند؟", Description = "بدون فراموشی یا مقدار اشتباه.", Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "medication" }, Options = BuildScoredOptions(("همیشه بدون نیاز به یادآوری", 5), ("کم کم نیاز به یادآوری دارد", 4), ("لازم است کسی یادآوری کند", 3), ("کسی باید به او کمک کند درست مصرف کند", 2), ("کاملاً به دیگران وابسته است", 1)) },
+                new() { Order = 4, Text = "اشتها و میل به خوردن غذا چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "nutrition" }, Options = BuildScoredOptions(("عالی و متعادل", 5), ("اکثراً خوب، گاهی کم اشتها", 4), ("باید تشویق شود غذا بخورد", 3), ("به ندرت و کم کم غذا می‌خورد", 2), ("کمتر از دو وعده کامل در روز", 1)) },
+                new() { Order = 5, Text = "برای لباس‌پوشیدن و حمام کردن چه‌قدر مستقل است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "daily_living" }, Options = BuildScoredOptions(("کاملاً مستقل", 5), ("کم کم در موارد خاص کمک نیاز دارد", 4), ("برای حمام یا لباس‌پوشیدن کمک لازم است", 3), ("اکثر مراحل را دیگران انجام می‌دهند", 2), ("کاملاً وابسته", 1)) },
+                new() { Order = 6, Text = "در ۶ ماه گذشته تجربه سقوط یا سرخوردن داشته؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "mobility" }, Options = BuildScoredOptions(("اصلاً خیر", 5), ("یک‌بار سر خوردن بدون آسیب", 4), ("یک‌بار سقوط بدون آسیب جدی", 3), ("دو بار یا بیشتر سقوط", 2), ("سقوط منجر به آسیب یا بستری", 1)) },
+                new() { Order = 7, Text = "حمام و راهروهای خانه دارای نور کافی و دستگیره ایمنی هستند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("همه موارد مناسب هستند", 5), ("اکثراً مناسب است، جزئیات کم دارد", 4), ("نور کافی ولی دستگیره کم است", 3), ("هم نور کم و هم دستگیره ندارند", 2), ("فرش سر خورده و محیط ناامن", 1)) },
+                new() { Order = 8, Text = "در یک هفته معمولی، چقدر احساس خوشحالی، انرژی و اشتیاق دارد؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "mood" }, Options = BuildScoredOptions(("اکثر روزها خوشحال و با انرژی", 5), ("گاهی بی‌حال ولی به سرعت بهتر می‌شود", 4), ("چند روز در هفته بی‌حال و کم‌رو", 3), ("اکثر روزها بی‌انگیزه یا غمگین", 2), ("کمتر در تعامل با دیگران است و بی‌علاقه", 1)) },
+                new() { Order = 9, Text = "بینایی و شنوایی برای برقراری ارتباط چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "senses" }, Options = BuildScoredOptions(("عالی یا با عینک/سمعک مناسب", 5), ("اخیراً کمی ضعیف‌تر شده", 4), ("گاهی در گفتگو یا دیدن TV مشکل دارد", 3), ("به سختی می‌شنود یا می‌بیند", 2), ("تقریباً ناتوان از دیدن یا شنیدن", 1)) },
+                new() { Order = 10, Text = "یادآوری نام نزدیکان و وقایع مهم گذشته چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "memory" }, Options = BuildScoredOptions(("به خوبی سال‌های قبل را به یاد می‌آورد", 5), ("نام‌ها را کم کم اشتباه می‌گوید", 4), ("با چند سوال به یاد می‌آورد", 3), ("نام بعضی بستگان را فراموش کرده", 2), ("به سختی افراد را می‌شناسد", 1)) },
+                new() { Order = 11, Text = "تعداد داروهای روزانه چند عدد است؟", Description = "شامل قرص، کپسول و قطره‌های روتین (بدون مصرف موقت).", Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "medication" }, Options = BuildScoredOptions(("هیچ یا ۱ تا ۲ عدد", 5), ("۳ تا ۴ عدد", 4), ("۵ تا ۶ عدد", 3), ("۷ تا ۹ عدد", 2), ("۱۰ عدد یا بیشتر", 1)) },
+                new() { Order = 12, Text = "آیا قادر است مدیریت خانه (خرید، صورت‌حساب‌ها و تلفن) را به‌تنهایی انجام دهد؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "daily_living" }, Options = BuildScoredOptions(("کاملاً بدون مشکل", 5), ("کم کم برای خرید یا محاسبه نیاز به کمک دارد", 4), ("باید کسی همراهی کند", 3), ("اکثر امور را دیگران انجام می‌دهند", 2), ("کاملاً غیرقابل انجام", 1)) }
+            }
+        };
+        tests.Add(formElderlyHealth);
+
+        var formMemory = new AssessmentForm
+        {
+            Code = "memory",
+            Title = "تست حافظه و عملکرد شناختی",
+            Description = "بررسی اولیه حافظه کوتاه‌مدت و بلندمدت، جهت‌یابی زمان و مکان، و مهارت‌های شناختی روزمره.",
+            Type = AssessmentType.Elderly,
+            TargetTypesJson = targetTypesJson,
+            Workflow = AssessmentFormWorkflow.HealthTestPublic,
+            Version = 1,
+            IsActive = true,
+            IsDefault = false,
+            IntroTitle = "تست حافظه و عملکرد شناختی",
+            IntroDescription = "تست غربالگری حافظه سالمند برای بررسی سریع عملکرد شناختی، جهت‌یابی و حافظه کوتاه‌مدت. بدون ثبت‌نام، رایگان و نتایج قابل فهم.",
+            EstimatedDurationMinutes = 3,
+            LayoutJson = JsonSerializer.Serialize(new
+            {
+                healthTest = new
+                {
+                    slug = "memory",
+                    metaTitle = "تست حافظه سالمند آنلاین رایگان | ارزیابی شناختی",
+                    metaDescription = "تست غربالگری حافظه سالمند برای بررسی سریع عملکرد شناختی، جهت‌یابی و حافظه کوتاه‌مدت. بدون ثبت‌نام، رایگان و نتایج قابل فهم.",
+                    metaKeywords = new string[0],
+                    iconName = "Brain",
+                    accentGradientFrom = "from-violet-500",
+                    accentGradientTo = "to-fuchsia-600",
+                    categories = new[] { "elderly-cognitive" },
+                    featured = false,
+                    scoring = new { thresholds = new { low = 49, mid = 74 } },
+                    recommendations = new
+                    {
+                        low = new
+                        {
+                            level = "low",
+                            title = "عملکرد شناختی در محدوده مطلوب",
+                            description = "فعالیت‌های ذهنی روزمره مثل مطالعه، بازی فکری و تعامل اجتماعی می‌تواند تداوم این وضعیت را کمک کند.",
+                            primaryCtaLabel = "مقالات تندرستی ذهنی سالمندان",
+                            primaryCtaHref = "/articles"
+                        },
+                        medium = new
+                        {
+                            level = "medium",
+                            title = "برای اطمینان بیشتر مشاوره خوب است",
+                            description = "بررسی منظم حافظه و حضور در فعالیت‌های فکری، همراه با مشاوره متخصص، می‌تواند در این مرحله مفید باشد.",
+                            primaryCtaLabel = "آشنایی با خدمات سالمندیار",
+                            primaryCtaHref = "/services"
+                        },
+                        high = new
+                        {
+                            level = "high",
+                            title = "توصیه می‌شود به‌سرعت با متخصص مشورت شود",
+                            description = "برخی پاسخ‌ها نشان می‌دهد بهتر است عملکرد شناختی سالمند بیشتر بررسی شود. در صورت تمایل می‌توانید از مشاوره رایگان تیم سالمندیار استفاده کنید.",
+                            primaryCtaLabel = "درخواست مشاوره فوری پرستار",
+                            primaryCtaHref = "/portal/home-care/request"
+                        }
+                    }
+                }
+            }, jsonOptions),
+            Questions = new List<AssessmentQuestion>
+            {
+                new() { Order = 1, Text = "آیا نام روز و ماه جاری را بدون فکر کردن زیاد می‌گوید؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "memory" }, Options = BuildScoredOptions(("همیشه درست", 4), ("گاهی در روز یا ماه اشتباه می‌کند", 3), ("باید یادآوری شود", 2), ("تقریباً نمی‌تواند", 1)) },
+                new() { Order = 2, Text = "چقدر وسایل روزمره‌اش مثل عینک یا کلید را پیدا می‌کند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "memory" }, Options = BuildScoredOptions(("معمولاً می‌داند کجاست", 4), ("گاهی جست‌وجو می‌کند ولی پیدا می‌کند", 3), ("خودش پیدا نمی‌کند", 2), ("چند بار در روز گم می‌کند", 1)) },
+                new() { Order = 3, Text = "آیا داستان یا خبر تازه را به‌صورت معنادار نقل می‌کند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "memory" }, Options = BuildScoredOptions(("به خوبی و با جزئیات", 4), ("کم کم تکرار می‌کند", 3), ("جزئیات را فراموش می‌کند", 2), ("تقریباً نمی‌تواند نقل کند", 1)) },
+                new() { Order = 4, Text = "چند بار اخیراً در آشپزی یا برق/گاز فراموشی کرده؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "memory" }, Options = BuildScoredOptions(("اصلاً خیر", 4), ("خیلی کم", 3), ("چند بار ماه گذشته", 2), ("چند بار در هفته اخیر", 1)) },
+                new() { Order = 5, Text = "افراد آشنا را چقدر می‌شناسد؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "memory" }, Options = BuildScoredOptions(("همه بستگان و همسایه‌ها", 4), ("فقط نزدیکان", 3), ("گاهی در تشخیص اشتباه می‌کند", 2), ("کمی سختی در شناخت دارد", 1)) },
+                new() { Order = 6, Text = "در یک گفتگوی طولانی، چقدر تمرکز و دنبال سؤال می‌ماند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "memory" }, Options = BuildScoredOptions(("کاملاً دنبال می‌کند", 4), ("گاهی تمرکزش پخش می‌شود", 3), ("باید سؤال تکرار شود", 2), ("به سختی با گفتگو همراه می‌شود", 1)) }
+            }
+        };
+        tests.Add(formMemory);
+
+        var formFallRisk = new AssessmentForm
+        {
+            Code = "fall-risk",
+            Title = "تست ارزیابی خطر سقوط سالمند",
+            Description = "تخمین سریع خطر سقوط بر اساس تعادل، سابقه سقوط، مصرف دارو و محیط خانه.",
+            Type = AssessmentType.Elderly,
+            TargetTypesJson = targetTypesJson,
+            Workflow = AssessmentFormWorkflow.HealthTestPublic,
+            Version = 1,
+            IsActive = true,
+            IsDefault = false,
+            IntroTitle = "تست ارزیابی خطر سقوط سالمند",
+            IntroDescription = "خطر سقوط سالمند را بر اساس تعادل، سرعت راه رفتن، نیاز به وسیله کمکی و سابقه سقوط تخمین بزنید. بدون ثبت‌نام.",
+            EstimatedDurationMinutes = 3,
+            LayoutJson = JsonSerializer.Serialize(new
+            {
+                healthTest = new
+                {
+                    slug = "fall-risk",
+                    metaTitle = "تست خطر سقوط سالمند | غربالگری سریع آنلاین رایگان",
+                    metaDescription = "خطر سقوط سالمند را بر اساس تعادل، سرعت راه رفتن، نیاز به وسیله کمکی و سابقه سقوط تخمین بزنید. بدون ثبت‌نام.",
+                    metaKeywords = new string[0],
+                    iconName = "Footprints",
+                    accentGradientFrom = "from-amber-500",
+                    accentGradientTo = "to-rose-500",
+                    categories = new[] { "elderly-mobility" },
+                    featured = false,
+                    scoring = new { thresholds = new { low = 49, mid = 74 } },
+                    recommendations = new
+                    {
+                        low = new
+                        {
+                            level = "low",
+                            title = "خطر سقوط در محدوده پایین",
+                            description = "ادامه رعایت نکات ایمنی منزل و معاینات دوره‌ای پیشنهاد می‌شود.",
+                            primaryCtaLabel = "مقاله ایمنی منزل برای سالمندان",
+                            primaryCtaHref = "/articles"
+                        },
+                        medium = new
+                        {
+                            level = "medium",
+                            title = "نیازمند تدابیر ایمنی و نظارت بیشتر",
+                            description = "اصلاح مسیر خانه، دستگیره حمام، نوار لغزنده و همراهی هنگام راه رفتن می‌تواند بسیار کمک کند.",
+                            primaryCtaLabel = "مشاهده خدمات مراقبت روزانه",
+                            primaryCtaHref = "/services"
+                        },
+                        high = new
+                        {
+                            level = "high",
+                            title = "خطر سقوط بالا؛ اقدام فوری توصیه می‌شود",
+                            description = "به نظر می‌رسد نیازمند تدابیر فوری ایمنی، نوارهای پشتیبان، نورپردازی و حضور همدم در منزل است.",
+                            primaryCtaLabel = "درخواست مشاوره فوری و همدم روزانه",
+                            primaryCtaHref = "/portal/home-care/request"
+                        }
+                    }
+                }
+            }, jsonOptions),
+            Questions = new List<AssessmentQuestion>
+            {
+                new() { Order = 1, Text = "در یک‌تایی و بدون گرفتن، چند ثانیه ایستاده می‌ماند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "mobility" }, Options = BuildScoredOptions(("بیش از ۱۰ ثانیه بدون مشکل", 4), ("حدود ۵ تا ۱۰ ثانیه", 3), ("کمتر از ۵ ثانیه یا احتیاط زیاد", 2), ("بدون کمک نمی‌تواند بایستد", 1)) },
+                new() { Order = 2, Text = "سرعت راه رفتن در مسیر صاف چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "mobility" }, Options = BuildScoredOptions(("عادی و با ثبات", 4), ("کمی آهسته‌تر از قبل", 3), ("خیلی آهسته و با تکان", 2), ("به سختی حرکت می‌کند", 1)) },
+                new() { Order = 3, Text = "آیا در شش ماه گذشته سقوط داشته؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "mobility" }, Options = BuildScoredOptions(("خیر", 4), ("یک‌بار بدون آسیب", 3), ("دو بار یا بیشتر بدون آسیب", 2), ("حداقل یک‌بار با آسیب/بستری", 1)) },
+                new() { Order = 4, Text = "آیا داروهایی که خواب‌آور یا افت فشار خون ایجاد می‌کنند مصرف می‌کند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "medication" }, Options = BuildScoredOptions(("نمی‌داند یا خیر", 4), ("شاید یکی دو مورد", 3), ("بله، چند مورد تحت نظر پزشک", 2), ("بله و گاهی سرگیجه یا خواب‌آلودگی زیاد", 1)) },
+                new() { Order = 5, Text = "برای بالا و پایین رفتن از چند پله چه‌قدر مشکل دارد؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "mobility" }, Options = BuildScoredOptions(("کاملاً بدون مشکل", 4), ("کم کم به دستگیره یا عصا نیاز دارد", 3), ("باید فرد دیگر همراه و کمک کند", 2), ("تقریباً غیرممکن است", 1)) },
+                new() { Order = 6, Text = "فرش‌ها، سنگفرش و مسیر حرکت در خانه چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("صاف، ثابت و سر خورده ندارند", 4), ("اکثراً خوب، چند قسمت نازک", 3), ("چند فرش سر خورده یا چراغ کم", 2), ("اغلب مسیر ناامن و تاریک", 1)) }
+            }
+        };
+        tests.Add(formFallRisk);
+
+        var formCareNeeds = new AssessmentForm
+        {
+            Code = "care-needs",
+            Title = "تست نیاز به مراقبت و کمک روزانه",
+            Description = "ارزیابی استقلال در فعالیت‌های اساسی زندگی روزمره (ADL) و ابزاری (IADL).",
+            Type = AssessmentType.PatientFamily,
+            TargetTypesJson = targetTypesJson,
+            Workflow = AssessmentFormWorkflow.HealthTestPublic,
+            Version = 1,
+            IsActive = true,
+            IsDefault = false,
+            IntroTitle = "تست نیاز به مراقبت و کمک روزانه",
+            IntroDescription = "به کمک این تست، میزان نیاز سالمند به کمک در فعالیت‌های روزمره (حمام، تغذیه، دارو، خانه) را تخمین بزنید.",
+            EstimatedDurationMinutes = 4,
+            LayoutJson = JsonSerializer.Serialize(new
+            {
+                healthTest = new
+                {
+                    slug = "care-needs",
+                    metaTitle = "تست نیاز به مراقبت سالمند | میزان حمایت روزانه چقدر؟",
+                    metaDescription = "به کمک این تست، میزان نیاز سالمند به کمک در فعالیت‌های روزمره (حمام، تغذیه، دارو، خانه) را تخمین بزنید.",
+                    metaKeywords = new string[0],
+                    iconName = "HandHeart",
+                    accentGradientFrom = "from-teal-500",
+                    accentGradientTo = "to-sky-600",
+                    categories = new[] { "elderly-care" },
+                    featured = false,
+                    scoring = new { thresholds = new { low = 49, mid = 74 } },
+                    recommendations = new
+                    {
+                        low = new
+                        {
+                            level = "low",
+                            title = "استقلال خوب؛ فقط نظارت دوره‌ای کافی است",
+                            description = "برای حفظ استقلال، بازدیدهای دوره‌ای همدم یا پرستار می‌تواند خیال خانواده را راحت کند.",
+                            primaryCtaLabel = "دیدن بسته‌های ویژیت نیم‌روزه",
+                            primaryCtaHref = "/services"
+                        },
+                        medium = new
+                        {
+                            level = "medium",
+                            title = "مراقبت روزانه یا چند ساعت در روز مفید است",
+                            description = "حضور پرستار یا مراقب در شیفت روزانه می‌تواند کیفیت زندگی را بهبود و فشار خانواده را کاهش دهد.",
+                            primaryCtaLabel = "مشاهده شیفت‌های روزانه مراقبت در منزل",
+                            primaryCtaHref = "/services"
+                        },
+                        high = new
+                        {
+                            level = "high",
+                            title = "نیاز به حضور مداوم یا شبانه‌روزی",
+                            description = "به احتمال زیاد سالمند شما برای فعالیت‌های روزمره به کمک مداوم نیاز دارد. مشاوره رایگان سالمندیار می‌تواند سطح مناسب را انتخاب کند.",
+                            primaryCtaLabel = "درخواست مشاوره فوری پرستار ۲۴ ساعته",
+                            primaryCtaHref = "/portal/home-care/request"
+                        }
+                    }
+                }
+            }, jsonOptions),
+            Questions = new List<AssessmentQuestion>
+            {
+                new() { Order = 1, Text = "حمام کردن و پاکی بدن را چقدر مستقل انجام می‌دهد؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "daily_living" }, Options = BuildScoredOptions(("کاملاً خودش", 4), ("کمک کم برای ورود/خروج از حمام", 3), ("باید بدنش را کسی بشوید", 2), ("کاملاً وابسته", 1)) },
+                new() { Order = 2, Text = "لباس‌پوشیدن و بستن دکمه، زیپ و بند کفش چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "daily_living" }, Options = BuildScoredOptions(("کاملاً مستقل", 4), ("کم کم برای دکمه یا بند کفش", 3), ("اکثر لباس را دیگران می‌پوشانند", 2), ("کاملاً وابسته", 1)) },
+                new() { Order = 3, Text = "رفتن به دستشویی و پاکی آن چقدر به کمک نیاز دارد؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "daily_living" }, Options = BuildScoredOptions(("کاملاً مستقل", 4), ("تنها برای بلند شدن یا نشستن کمک", 3), ("باید همراه باشد", 2), ("کاملاً وابسته یا با تشت", 1)) },
+                new() { Order = 4, Text = "خوردن غذا و نوشیدنی چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "nutrition" }, Options = BuildScoredOptions(("خودش غذا می‌خورد و درست انتخاب می‌کند", 4), ("کم کم برای برش یا ریختن کمک می‌خواهد", 3), ("باید کنارش بنشینند و کمکی کنند", 2), ("تقریباً باید تغذیه شود", 1)) },
+                new() { Order = 5, Text = "جابجایی از تخت به صندلی و برعکس چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "daily_living" }, Options = BuildScoredOptions(("کاملاً مستقل", 4), ("کم کم به وسیله یا دست کمک", 3), ("باید کسی کمک کند", 2), ("با کمک هم یا lift مخصوص", 1)) },
+                new() { Order = 6, Text = "مدیریت داروهای روزانه چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "medication" }, Options = BuildScoredOptions(("خودش جعبه دارو چیده و مصرف می‌کند", 4), ("کسی یادآوری می‌کند", 3), ("باید کسی درست کند و تحویل بدهد", 2), ("کسی باید کمک کند مصرف کند", 1)) },
+                new() { Order = 7, Text = "برای خرید، پرداخت قبض و امور خانه چقدر مستقل است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "daily_living" }, Options = BuildScoredOptions(("همه کارها را خودش", 4), ("خرید سنگین را دیگران انجام می‌دهند", 3), ("باید همراه و کمک مالی کند", 2), ("کل امور را دیگران انجام می‌دهند", 1)) }
+            }
+        };
+        tests.Add(formCareNeeds);
+
+        var formNutrition = new AssessmentForm
+        {
+            Code = "nutrition",
+            Title = "تست وضعیت تغذیه سالمند",
+            Description = "ارزیابی سریع کمبود وزن ناخواسته، اشتها، تنوع وعده‌های غذایی و مشکلات بلع.",
+            Type = AssessmentType.Elderly,
+            TargetTypesJson = targetTypesJson,
+            Workflow = AssessmentFormWorkflow.HealthTestPublic,
+            Version = 1,
+            IsActive = true,
+            IsDefault = false,
+            IntroTitle = "تست وضعیت تغذیه سالمند",
+            IntroDescription = "وضعیت تغذیه سالمند را از نظر اشتها، وزن، تنوع غذا، مشکل جویدن و دریافت مایعات بررسی کنید.",
+            EstimatedDurationMinutes = 3,
+            LayoutJson = JsonSerializer.Serialize(new
+            {
+                healthTest = new
+                {
+                    slug = "nutrition",
+                    metaTitle = "تست تغذیه سالمند | ارزیابی سریع انرژی و وزن",
+                    metaDescription = "وضعیت تغذیه سالمند را از نظر اشتها، وزن، تنوع غذا، مشکل جویدن و دریافت مایعات بررسی کنید.",
+                    metaKeywords = new string[0],
+                    iconName = "UtensilsCrossed",
+                    accentGradientFrom = "from-lime-500",
+                    accentGradientTo = "to-emerald-600",
+                    categories = new[] { "elderly-nutrition" },
+                    featured = false,
+                    scoring = new { thresholds = new { low = 49, mid = 74 } },
+                    recommendations = new
+                    {
+                        low = new
+                        {
+                            level = "low",
+                            title = "وضعیت تغذیه در محدوده مطلوب",
+                            description = "ادامه وعده‌های منظم و تنوع‌دار همراه با بررسی دوره‌ای وزن پیشنهاد می‌شود.",
+                            primaryCtaLabel = "مقالات تغذیه سالمندان",
+                            primaryCtaHref = "/articles"
+                        },
+                        medium = new
+                        {
+                            level = "medium",
+                            title = "برنامه غذایی و نظارت هفتگی مفید خواهد بود",
+                            description = "برنامه غذایی مناسب سن و بیماری‌ها همراه با نظارت پرستار در روزهای مشخص می‌تواند به جذب بهتر کمک کند.",
+                            primaryCtaLabel = "مشاهده خدمات پرستاری شامل برنامه تغذیه",
+                            primaryCtaHref = "/services"
+                        },
+                        high = new
+                        {
+                            level = "high",
+                            title = "ممکن است به ارزیابی تخصصی تغذیه نیاز باشد",
+                            description = "کاهش وزن ناگهانی یا مشکل در بلع، نیازمند بررسی سریع توسط پزشک یا متخصص تغذیه است. در صورت تمایل همدم مراقبت روزانه می‌تواند به درست کردن غذا و تغذیه کمک کند.",
+                            primaryCtaLabel = "درخواست مشاوره رایگان با کارشناس",
+                            primaryCtaHref = "/portal/home-care/request"
+                        }
+                    }
+                }
+            }, jsonOptions),
+            Questions = new List<AssessmentQuestion>
+            {
+                new() { Order = 1, Text = "در ۳ ماه گذشته، وزنش چگونه تغییر کرده؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "nutrition" }, Options = BuildScoredOptions(("بدون تغییر یا کمی بالا", 4), ("کمتر از ۲ کیلوگرم کاهش", 3), ("حدود ۲ تا ۵ کیلوگرم کاهش", 2), ("بیش از ۵ کیلوگرم کاهش یا بسیار ناگهانی", 1)) },
+                new() { Order = 2, Text = "طیف غذاها و تنوع وعده‌ها چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "nutrition" }, Options = BuildScoredOptions(("شامل گوشت/حبوبات، سبزی، میوه، لبنیات و غلات", 4), ("اکثراً تنوع دارد", 3), ("همیشه چند غذا یکسان و کم تنوع", 2), ("تقریباً فقط سوپ یا نرم‌غذا", 1)) },
+                new() { Order = 3, Text = "در طول روز چه‌قدر آب و مایع مفید می‌نوشد؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "nutrition" }, Options = BuildScoredOptions(("حداقل ۶ تا ۸ لیوان", 4), ("حدود ۴ تا ۶ لیوان", 3), ("کمتر از ۴ لیوان", 2), ("باید تشویق شود مایع بنوشد", 1)) },
+                new() { Order = 4, Text = "جویدن غذا سخت و بلعیدن چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "nutrition" }, Options = BuildScoredOptions(("هیچ مشکلی ندارد", 4), ("فقط برای غذاهای خیلی سخت", 3), ("باید غذا نرم یا رنده شود", 2), ("هنگام بلع گلو می‌گیرد یا سرفه می‌کند", 1)) },
+                new() { Order = 5, Text = "علت اصلی کم خوردن اگر وجود دارد چیست؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "nutrition" }, Options = BuildScoredOptions(("اشتها خوب و دلیل خاصی نیست", 4), ("دندان یا گلو گاهی درد می‌کند", 3), ("دل‌درد، تهوع یا یبوست زیاد", 2), ("کم اشتهای مداوم و دل‌بستگی", 1)) },
+                new() { Order = 6, Text = "چقدر به تنهایی قادر به آماده کردن وعده غذای کامل است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "nutrition" }, Options = BuildScoredOptions(("کاملاً مستقل", 4), ("کم کم برای خرید یا برش مواد", 3), ("باید آماده تحویل بگیرند یا کسی بپزد", 2), ("کاملاً به دیگران وابسته است", 1)) }
+            }
+        };
+        tests.Add(formNutrition);
+
+        var formHomeSafety = new AssessmentForm
+        {
+            Code = "home-safety",
+            Title = "تست ایمنی منزل برای سالمند",
+            Description = "چک لیست ایمنی سراسری منزل برای کاهش خطر سقوط، سوختگی و حوادث دیگر.",
+            Type = AssessmentType.PatientFamily,
+            TargetTypesJson = targetTypesJson,
+            Workflow = AssessmentFormWorkflow.HealthTestPublic,
+            Version = 1,
+            IsActive = true,
+            IsDefault = false,
+            IntroTitle = "تست ایمنی منزل برای سالمند",
+            IntroDescription = "ایمنی حمام، پله‌ها، نورپردازی، لوازم برقی و مبلمان منزل از نظر سالمند را با این تست بررسی کنید.",
+            EstimatedDurationMinutes = 3,
+            LayoutJson = JsonSerializer.Serialize(new
+            {
+                healthTest = new
+                {
+                    slug = "home-safety",
+                    metaTitle = "چک لیست ایمنی منزل سالمند | سالمندیار",
+                    metaDescription = "ایمنی حمام، پله‌ها، نورپردازی، لوازم برقی و مبلمان منزل از نظر سالمند را با این تست بررسی کنید.",
+                    metaKeywords = new string[0],
+                    iconName = "Home",
+                    accentGradientFrom = "from-indigo-500",
+                    accentGradientTo = "to-blue-600",
+                    categories = new[] { "elderly-home" },
+                    featured = false,
+                    scoring = new { thresholds = new { low = 49, mid = 74 } },
+                    recommendations = new
+                    {
+                        low = new
+                        {
+                            level = "low",
+                            title = "خانه تا حد زیادی ایمن است",
+                            description = "بررسی سالانه نرده‌ها، شیرآلات و سنسورها برای حفظ ایمنی پیشنهاد می‌شود.",
+                            primaryCtaLabel = "مقاله کامل راه‌اندازی خانه سالمندی",
+                            primaryCtaHref = "/articles"
+                        },
+                        medium = new
+                        {
+                            level = "medium",
+                            title = "اصلاحات ایمنی ساده می‌تواند خطر را کاهش دهد",
+                            description = "نصب دستگیره حمام، پاشنه لغزنده، چراغ سنسوری و نردبان پله را در اولویت قرار دهید. همدم روزانه می‌تواند به چک کردن ایمنی روزانه کمک کند.",
+                            primaryCtaLabel = "مشاهده خدمات بازدید دوره‌ای و ایمن‌سازی منزل",
+                            primaryCtaHref = "/services"
+                        },
+                        high = new
+                        {
+                            level = "high",
+                            title = "نیاز به ایمن‌سازی فوری و نظارت",
+                            description = "برخی موارد خانه خطرساز هستند؛ پیشنهاد می‌شود قبل از هر کاری برای دستگیره، نور، سنسور گاز و آتش و نرده اقدام کنید. در صورت تمایل، حضور مداوم پرستار در منزل می‌تواند خیال خانواده را راحت کند.",
+                            primaryCtaLabel = "درخواست مشاوره فوری برای مراقبت در منزل",
+                            primaryCtaHref = "/portal/home-care/request"
+                        }
+                    }
+                }
+            }, jsonOptions),
+            Questions = new List<AssessmentQuestion>
+            {
+                new() { Order = 1, Text = "مسیر حرکت بین اتاق‌ها عاری از فرش سرخورده، سیم و وسایل است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("کاملاً تمیز و عاری از مانع", 4), ("اکثر مسیرها خوب، یک دو مورد جزئی", 3), ("چند مانع یا فرش سر خورده", 2), ("اغلب مسیر دارای مانع", 1)) },
+                new() { Order = 2, Text = "حمام و دستشویی دارای دستگیره و پاشنه لغزنده هستند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("همه موارد موجود است", 4), ("فقط یکی از دو دستگیره یا پاشنه", 3), ("هیچ‌کدام ندارند ولی حمام کمی خطر دارد", 2), ("حمام بسیار لغزنده و بدون دستگیره", 1)) },
+                new() { Order = 3, Text = "پله‌ها دارای نردبان، دستگیره و نور مناسب هستند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("همه موارد کامل", 4), ("نور یا دستگیره کمی ضعیف", 3), ("نردبان یا نور کم و چوب نازک", 2), ("بدون دستگیره، نور کم و ناامن", 1)) },
+                new() { Order = 4, Text = "لوله گاز، شیرآلات و وسایل گرمایشی دوره‌ای بررسی می‌شوند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("بله، توسط کارشناس هر سال", 4), ("گاهی توسط خود خانواده", 3), ("بیش از دو سال نیست بررسی شده", 2), ("هیچ‌گاه توسط متخصص بررسی نشده", 1)) },
+                new() { Order = 5, Text = "آیا دزدگیر، اعلان حریق یا دتکتور گاز نصب است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("حداقل دو مورد نصب و فعال", 4), ("یک مورد نصب و فعال", 3), ("نصب شده ولی فعال یا سالم نیست", 2), ("هیچ‌کدام ندارند", 1)) },
+                new() { Order = 6, Text = "کلید، تلفن، آبخوری و دفترچه دارو در دسترس راحت هستند؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("همه در نزدیکی تخت و مبل اصلی در دسترس", 4), ("اکثر موارد در دسترس", 3), ("باید چند قدم راه برود", 2), ("در دسترس راحت نیستند", 1)) },
+                new() { Order = 7, Text = "نورپردازی راهرو و اطراف تخت برای شب چگونه است؟", Description = null, Type = QuestionType.MultipleChoice, Weight = 1, Tags = new List<string> { "home_safety" }, Options = BuildScoredOptions(("چراغ خواب یا سنسور حرکتی مناسب", 4), ("چراغ کم نور دارد", 3), ("باید مسیر را لمسی بیابد", 2), ("کاملاً تاریک و ناامن", 1)) }
+            }
+        };
+        tests.Add(formHomeSafety);
+
+        foreach (var test in tests)
+        {
+            var exists = await context.AssessmentForms
+                .AnyAsync(f => f.Code == test.Code);
+            if (!exists)
+            {
+                context.AssessmentForms.Add(test);
+            }
+        }
+
+        await context.SaveChangesAsync();
+    }
+
+    private static List<AssessmentOption> BuildScoredOptions(params (string Label, int Score)[] items) =>
+        items.Select((item, index) => new AssessmentOption
+        {
+            Text = item.Label,
+            ScoreValue = item.Score,
+            Order = index + 1
+        }).ToList();
 
     private static List<AssessmentOption> BuildOptions(params string[] items) =>
         items.Select((item, index) => new AssessmentOption

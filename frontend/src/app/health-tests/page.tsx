@@ -19,7 +19,10 @@ import Footer from '@/components/landing/Footer';
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import CategoryFAQ from '@/components/content/CategoryFAQ';
 import type { FAQItem } from '@/lib/types/content';
-import { HEALTH_TESTS, listFeaturedHealthTests } from '@/lib/health-tests/tests';
+import { HEALTH_TESTS } from '@/lib/health-tests/tests';
+import type { HealthTest } from '@/lib/health-tests/types';
+import { publicFormsService } from '@/services/public-forms.service';
+import { mapAssessmentFormToHealthTest } from '@/lib/health-tests/adapter';
 import HealthTestCard from '@/components/health-tests/HealthTestCard';
 import FeaturedHealthTestCard from '@/components/health-tests/FeaturedHealthTestCard';
 import HealthTestCategorySection from '@/components/health-tests/HealthTestCategorySection';
@@ -29,6 +32,9 @@ import { FAQSchema } from '@/lib/seo/structured-data';
 import Script from 'next/script';
 import { Button } from '@/components/ui/Button';
 import GuestRequestSection from '@/components/landing/GuestRequestSection';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export const metadata: Metadata = {
   title: 'تست سلامت آنلاین رایگان | ارزیابی سلامت سالمندان | سالمندیار',
@@ -136,8 +142,25 @@ const HUB_FAQS: FAQItem[] = [
 
 const HUB_PAGE_URL = '/health-tests';
 
-export default function HealthTestsHubPage() {
-  const orderedTests = listFeaturedHealthTests();
+function listFeaturedHealthTestsFrom(tests: HealthTest[]): HealthTest[] {
+  return tests.filter(t => t.featured).concat(tests.filter(t => !t.featured));
+}
+
+export default async function HealthTestsHubPage() {
+  let tests: HealthTest[] = HEALTH_TESTS;
+  let isOfflineFallback = false;
+  try {
+    const forms = await publicFormsService.listPublicHealthTests();
+    if (Array.isArray(forms) && forms.length > 0) {
+      tests = forms.map(f => mapAssessmentFormToHealthTest(f));
+    } else {
+      isOfflineFallback = true;
+    }
+  } catch {
+    isOfflineFallback = true;
+  }
+
+  const orderedTests = listFeaturedHealthTestsFrom(tests);
   const featured = orderedTests.find(t => t.featured) || orderedTests[0];
   const others = orderedTests.filter(t => t.id !== featured.id);
 
@@ -146,7 +169,7 @@ export default function HealthTestsHubPage() {
       <Navbar />
 
       <FAQSchema faqs={HUB_FAQS} pageUrl={HUB_PAGE_URL} />
-      <HealthTestsCollectionSchemaLd />
+      <HealthTestsCollectionSchemaLd tests={tests} />
 
       <main className="pt-28 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -161,8 +184,13 @@ export default function HealthTestsHubPage() {
             <div className="relative">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/15 border border-white/25 backdrop-blur text-xs font-black mb-5">
                 <Sparkles size={14} />
-                {HEALTH_TESTS.length}+ تست سلامت کاملاً رایگان
+                {tests.length}+ تست سلامت کاملاً رایگان
               </div>
+              {isOfflineFallback && (
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 backdrop-blur text-xs font-black mb-5 mr-2">
+                  نسخه آفلاین
+                </div>
+              )}
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black mb-5 leading-tight">
                 تست‌های سلامت <span className="text-yellow-100">رایگان سالمندیار</span>
               </h1>
@@ -438,7 +466,7 @@ export default function HealthTestsHubPage() {
   );
 }
 
-function HealthTestsCollectionSchemaLd() {
+function HealthTestsCollectionSchemaLd({ tests }: { tests: HealthTest[] }) {
   const pagePath = HUB_PAGE_URL;
   const data = {
     '@context': 'https://schema.org',
@@ -448,8 +476,8 @@ function HealthTestsCollectionSchemaLd() {
       'مجموعه‌ای جامع از تست‌های تعاملی سلامت برای سالمندان و خانواده شامل تست سلامت کلی، حافظه، خطر سقوط، نیاز به مراقبت، تغذیه و ایمنی منزل.',
     url: `https://salmandyar.ir${pagePath}`,
     inLanguage: 'fa-IR',
-    numberOfItems: HEALTH_TESTS.length,
-    hasPart: HEALTH_TESTS.map(test => ({
+    numberOfItems: tests.length,
+    hasPart: tests.map(test => ({
       '@type': 'MedicalWebPage' as const,
       name: test.title,
       description: test.shortDescription,

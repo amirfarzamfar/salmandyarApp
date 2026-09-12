@@ -22,6 +22,9 @@ import {
   HEALTH_TESTS,
   getHealthTestBySlug,
 } from '@/lib/health-tests/tests';
+import type { HealthTest } from '@/lib/health-tests/types';
+import { publicFormsService } from '@/services/public-forms.service';
+import { mapAssessmentFormToHealthTest } from '@/lib/health-tests/adapter';
 import HealthTestFlow from '@/components/health-tests/HealthTestFlow';
 import HealthTestCard from '@/components/health-tests/HealthTestCard';
 import HealthTestCategorySection from '@/components/health-tests/HealthTestCategorySection';
@@ -33,6 +36,9 @@ import type { FAQItem } from '@/lib/types/content';
 
 type Params = Promise<{ slug: string }>;
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export function generateStaticParams() {
   return HEALTH_TESTS.map(t => ({ slug: t.slug }));
 }
@@ -42,7 +48,17 @@ export async function generateMetadata(
   parent: ResolvingMetadata,
 ): Promise<Metadata> {
   const params = await props.params;
-  const test = getHealthTestBySlug(params.slug);
+
+  let test: HealthTest | undefined;
+  try {
+    const form = await publicFormsService.getPublicHealthTestByCode(params.slug);
+    if (form) test = mapAssessmentFormToHealthTest(form);
+  } catch {
+    // fallback below
+  }
+  if (!test) {
+    test = getHealthTestBySlug(params.slug);
+  }
   if (!test) return {};
 
   const title =
@@ -84,10 +100,22 @@ export async function generateMetadata(
 
 export default async function HealthTestPage(props: { params: Params }) {
   const params = await props.params;
-  const test = getHealthTestBySlug(params.slug);
+
+  let test: HealthTest | undefined;
+  let fallbackUsed = false;
+  try {
+    const form = await publicFormsService.getPublicHealthTestByCode(params.slug);
+    if (form) test = mapAssessmentFormToHealthTest(form);
+  } catch {
+    fallbackUsed = true;
+  }
+  if (!test) {
+    test = getHealthTestBySlug(params.slug);
+    fallbackUsed = true;
+  }
   if (!test) notFound();
 
-  const related = HEALTH_TESTS.filter(t => t.slug !== test.slug).slice(0, 3);
+  const related = HEALTH_TESTS.filter(t => t.slug !== test!.slug).slice(0, 3);
   const faqItems: FAQItem[] = (test.faqs || []).length
     ? (test.faqs as unknown as FAQItem[])
     : DEFAULT_TEST_FAQS(test);
@@ -96,7 +124,7 @@ export default async function HealthTestPage(props: { params: Params }) {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <Navbar />
       <FAQSchema faqs={faqItems} pageUrl={`/health-tests/${test.slug}`} />
-      <HealthTestPageSchema testId={test.id} />
+      <HealthTestPageSchema test={test} />
 
       <main className="pt-28 pb-20">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -106,6 +134,14 @@ export default async function HealthTestPage(props: { params: Params }) {
               { name: test.title, href: `/health-tests/${test.slug}` },
             ]}
           />
+
+          {fallbackUsed && (
+            <div className="mb-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-[11px] font-bold text-amber-600">
+                نسخه آفلاین
+              </span>
+            </div>
+          )}
 
           {/* Back link + badges */}
           <section className="mb-8 flex flex-wrap items-center justify-between gap-4">
@@ -295,8 +331,7 @@ function DEFAULT_TEST_FAQS(test: ReturnType<typeof getHealthTestBySlug> & object
   ];
 }
 
-function HealthTestPageSchema({ testId }: { testId: string }) {
-  const test = getHealthTestBySlug(testId) || getHealthTestBySlug('elderly-health');
+function HealthTestPageSchema({ test }: { test: HealthTest }) {
   if (!test) return null;
 
   const data = {

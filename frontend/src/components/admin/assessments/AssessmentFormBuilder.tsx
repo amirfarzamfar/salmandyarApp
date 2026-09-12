@@ -36,6 +36,7 @@ const workflowLabels: Record<number, string> = {
   [AssessmentFormWorkflow.Checklist]: 'چک‌لیست',
   [AssessmentFormWorkflow.SatisfactionSurvey]: 'نظرسنجی رضایت',
   [AssessmentFormWorkflow.GuestServiceRequest]: 'درخواست بدون ثبت‌نام (لندینگ)',
+  [AssessmentFormWorkflow.HealthTestPublic]: 'تست سلامت سالمندان (عمومی)',
 };
 
 export default function AssessmentFormBuilder({ initialData, onSubmit, loading, title, allowedTypes }: AssessmentFormBuilderProps) {
@@ -98,6 +99,7 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
     [allowedTypes]
   );
   const isHomeCareWorkflow = Number(selectedWorkflow) === AssessmentFormWorkflow.HomeCareRequest;
+  const isHealthTestWorkflow = Number(selectedWorkflow) === AssessmentFormWorkflow.HealthTestPublic;
 
   useEffect(() => {
     if (!selectedTargetTypes.length) {
@@ -107,6 +109,14 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
       setValue('type', selectedTargetTypes[0]);
     }
   }, [availableRoleTypes, selectedTargetTypes, setValue]);
+
+  useEffect(() => {
+    if (isHealthTestWorkflow) {
+      const defaultTargets = [AssessmentType.Patient, AssessmentType.PatientFamily, AssessmentType.Elderly];
+      setValue('targetTypes', defaultTargets);
+      setValue('type', defaultTargets[0]);
+    }
+  }, [isHealthTestWorkflow, setValue]);
 
   useEffect(() => {
     if (!isHomeCareWorkflow) {
@@ -180,6 +190,11 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-teal-500 outline-none"
                 placeholder="مثال: home-care-icu-v1"
               />
+              {isHealthTestWorkflow && (
+                <div className="p-3 rounded-lg bg-gradient-to-r from-rose-500/15 to-orange-500/15 border border-rose-500/30 text-xs text-rose-200 leading-relaxed">
+                  <span className="font-semibold text-rose-300">نکته:</span> برای نمایش در صفحه تست‌های سلامت عمومی (/health-tests)، حتماً یک Code یکتا و مختصر (URL-friendly) مثل <span className="font-mono text-orange-300">'depression-check'</span> وارد کنید. Code در URL عمومی نمایش داده می‌شود.
+                </div>
+              )}
             </div>
             
             <div className="space-y-2">
@@ -244,6 +259,11 @@ export default function AssessmentFormBuilder({ initialData, onSubmit, loading, 
                   </option>
                 ))}
               </select>
+              {isHealthTestWorkflow && (
+                <div className="p-3 rounded-lg bg-gradient-to-r from-rose-500/15 to-orange-500/15 border border-rose-500/30 text-xs text-rose-200 leading-relaxed">
+                  <span className="font-semibold text-rose-300">نکته:</span> برای نمایش در صفحه تست‌های سلامت عمومی (/health-tests)، حتماً یک Code یکتا و مختصر (URL-friendly) مثل <span className="font-mono text-orange-300">'depression-check'</span> وارد کنید. Code در URL عمومی نمایش داده می‌شود.
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">

@@ -17,4 +17,6 @@ public interface IAssessmentService
     Task<UserProfileDto> SubmitAssessmentAsync(string userId, SubmitAssessmentDto dto);
     Task<UserProfileDto?> GetUserProfileAsync(string userId);
     Task<List<AssessmentFormDto>> GetAvailableAssessmentsForUserAsync(string userId, AssessmentType roleType);
+    Task<List<AssessmentFormDto>> GetPublicHealthTestsAsync(CancellationToken ct = default);
+    Task<AssessmentFormDto?> GetPublicHealthTestByCodeAsync(string code, CancellationToken ct = default);
 }

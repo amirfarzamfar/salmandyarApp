@@ -7,6 +7,7 @@ namespace Salmandyar.API.Controllers;
 
 [ApiController]
 [Route("api/public/forms")]
+[ResponseCache(NoStore = true, Location = ResponseCacheLocation.None, Duration = 0)]
 public class PublicFormsController : ControllerBase
 {
     private readonly IAssessmentService _assessmentService;
@@ -48,6 +49,28 @@ public class PublicFormsController : ControllerBase
         }
 
         return Ok(form);
+    }
+
+    [HttpGet("health-tests")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetHealthTests(CancellationToken ct)
+    {
+        var tests = await _assessmentService.GetPublicHealthTestsAsync(ct);
+        return Ok(tests);
+    }
+
+    [HttpGet("health-tests/{code}")]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetHealthTestByCode(string code, CancellationToken ct)
+    {
+        var test = await _assessmentService.GetPublicHealthTestByCodeAsync(code, ct);
+
+        if (test == null)
+        {
+            return NotFound("No active health test found for this code.");
+        }
+
+        return Ok(test);
     }
 }
 

@@ -7,7 +7,8 @@ public enum AssessmentFormWorkflow
     HomeCareRequest = 2,
     Checklist = 3,
     SatisfactionSurvey = 4,
-    GuestServiceRequest = 5
+    GuestServiceRequest = 5,
+    HealthTestPublic = 6
 }
 
 public enum AssessmentSubmissionStatus
