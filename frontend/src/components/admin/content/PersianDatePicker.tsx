@@ -95,14 +95,17 @@ function gregorianIsoToJalaliDateObject(isoOrDate: string): any | null {
     const trimmed = isoOrDate.trim(); if (!trimmed) return null;
     const gDate = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? parseISO(trimmed) : new Date(trimmed);
     if (isNaN(gDate.getTime())) return null;
-    const jDisplay = jalaliFormat(gDate, 'yyyy/MM/dd');
+    const jDisplay = jalaliFormat(gDate, 'yyyy/MM/dd HH:mm');
     if (!jDisplay) return null;
-    const [jyStr, jmStr, jdStr] = jDisplay.split('/');
+    const [datePart, timePart] = jDisplay.split(' ');
+    const [jyStr, jmStr, jdStr] = (datePart || '').split('/');
     const jy = parseInt(jyStr, 10); const jm = parseInt(jmStr, 10); const jd = parseInt(jdStr, 10);
     if (!jy || !jm || !jd) return null;
+    const hh = timePart ? (parseInt((timePart.split(':')[0] || '0'), 10) || 0) : 0;
+    const mm = timePart ? (parseInt((timePart.split(':')[1] || '0'), 10) || 0) : 0;
     return new DateObject({
       calendar: persianCalendar, locale: persianFaLocale,
-      year: jy, month: jm, day: jd,
+      year: jy, month: jm, day: jd, hour: hh, minute: mm, second: 0,
     });
   } catch {
     return null;
@@ -145,12 +148,15 @@ export default function PersianDatePicker({
     try {
       let year: number, month: number, day: number;
       const formatted =
-        typeof dateObj.format === 'function' ? dateObj.format('YYYY/MM/DD') : '';
-      const parts = formatted.split('/');
-      if (parts.length === 3) {
-        year = parseInt(parts[0], 10);
-        month = parseInt(parts[1], 10);
-        day = parseInt(parts[2], 10);
+        typeof dateObj.format === 'function' ? dateObj.format(includeTime ? 'YYYY/MM/DD HH:mm' : 'YYYY/MM/DD') : '';
+      const parts = formatted.split(' ');
+      const datePart = parts[0] || '';
+      const timePart = parts[1] || '';
+      const dateSegs = datePart.split('/');
+      if (dateSegs.length === 3) {
+        year = parseInt(dateSegs[0], 10);
+        month = parseInt(dateSegs[1], 10);
+        day = parseInt(dateSegs[2], 10);
       } else {
         year = dateObj.year;
         month = dateObj.month?.number || dateObj.month;
@@ -159,7 +165,23 @@ export default function PersianDatePicker({
       if (!year || !month || !day) return;
       const jmStr = String(month).padStart(2, '0');
       const jdStr = String(day).padStart(2, '0');
-      const displayDate = `${year}/${jmStr}/${jdStr}`;
+
+      let hh = 0, mm = 0;
+      if (includeTime) {
+        if (timePart && timePart.includes(':')) {
+          const [hStr, mStr] = timePart.split(':');
+          hh = parseInt(normalizeDigits(hStr || '0'), 10) || 0;
+          mm = parseInt(normalizeDigits(mStr || '0'), 10) || 0;
+        } else {
+          const hRaw = dateObj.hour ?? dateObj.hours ?? 0;
+          const mRaw = dateObj.minute ?? dateObj.minutes ?? 0;
+          hh = typeof hRaw === 'number' ? hRaw : parseInt(normalizeDigits(hRaw || '0'), 10) || 0;
+          mm = typeof mRaw === 'number' ? mRaw : parseInt(normalizeDigits(mRaw || '0'), 10) || 0;
+        }
+      }
+      const hhStr = String(hh).padStart(2, '0');
+      const mmStr = String(mm).padStart(2, '0');
+      const displayDate = includeTime ? `${year}/${jmStr}/${jdStr} ${hhStr}:${mmStr}` : `${year}/${jmStr}/${jdStr}`;
 
       const iso = jalaliDisplayToGregorianIsoUtc(displayDate, includeTime);
       if (iso) {
@@ -211,7 +233,7 @@ export default function PersianDatePicker({
         onChange={handlePickerChange}
         calendar={persianCalendar}
         locale={persianFaLocale}
-        format="YYYY/MM/DD"
+        format={includeTime ? 'YYYY/MM/DD HH:mm' : 'YYYY/MM/DD'}
         onOpen={() => setIsOpen(true)}
         onClose={() => setIsOpen(false)}
         portal

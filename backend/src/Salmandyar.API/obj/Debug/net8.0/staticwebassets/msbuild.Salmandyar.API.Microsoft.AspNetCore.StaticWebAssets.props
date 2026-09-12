@@ -720,6 +720,22 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\content\featured\1405\06\455127a375ea4c32834479b9410ec690_130148.webp))</OriginalItemSpec>
     </StaticWebAsset>
+    <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\content\featured\1405\06\4d0c571e9499409da1666ed96362b1e2_132236.webp))">
+      <SourceType>Package</SourceType>
+      <SourceId>Salmandyar.API</SourceId>
+      <ContentRoot>$(MSBuildThisFileDirectory)..\staticwebassets\</ContentRoot>
+      <BasePath>_content/Salmandyar.API</BasePath>
+      <RelativePath>uploads/content/featured/1405/06/4d0c571e9499409da1666ed96362b1e2_132236.webp</RelativePath>
+      <AssetKind>All</AssetKind>
+      <AssetMode>All</AssetMode>
+      <AssetRole>Primary</AssetRole>
+      <RelatedAsset></RelatedAsset>
+      <AssetTraitName></AssetTraitName>
+      <AssetTraitValue></AssetTraitValue>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <OriginalItemSpec>$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\content\featured\1405\06\4d0c571e9499409da1666ed96362b1e2_132236.webp))</OriginalItemSpec>
+    </StaticWebAsset>
     <StaticWebAsset Include="$([System.IO.Path]::GetFullPath($(MSBuildThisFileDirectory)..\staticwebassets\uploads\content\featured\1405\06\5e920452168647af81ba44ebdc81a83c_072023.webp))">
       <SourceType>Package</SourceType>
       <SourceId>Salmandyar.API</SourceId>

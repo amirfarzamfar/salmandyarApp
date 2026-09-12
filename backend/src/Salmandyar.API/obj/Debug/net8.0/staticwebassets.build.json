@@ -1,6 +1,6 @@
 {
   "Version": 1,
-  "Hash": "E91I/h32e4+FXiBDr9N9X1Wh+gpE5Z14yR6LhgIeVjk=",
+  "Hash": "uToy6fQtfJzVSgKYUia/68Q+8BBVOImz8yAGRNp5+bc=",
   "Source": "Salmandyar.API",
   "BasePath": "_content/Salmandyar.API",
   "Mode": "Default",
@@ -870,6 +870,25 @@
       "CopyToOutputDirectory": "Never",
       "CopyToPublishDirectory": "PreserveNewest",
       "OriginalItemSpec": "wwwroot\\uploads\\content\\featured\\1405\\06\\455127a375ea4c32834479b9410ec690_130148.webp"
+    },
+    {
+      "Identity": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\content\\featured\\1405\\06\\4d0c571e9499409da1666ed96362b1e2_132236.webp",
+      "SourceId": "Salmandyar.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\",
+      "BasePath": "_content/Salmandyar.API",
+      "RelativePath": "uploads/content/featured/1405/06/4d0c571e9499409da1666ed96362b1e2_132236.webp",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\uploads\\content\\featured\\1405\\06\\4d0c571e9499409da1666ed96362b1e2_132236.webp"
     },
     {
       "Identity": "C:\\Users\\amirFarzam\\Desktop\\salmandyar-main\\salmandyar-main\\backend\\src\\Salmandyar.API\\wwwroot\\uploads\\content\\featured\\1405\\06\\5e920452168647af81ba44ebdc81a83c_072023.webp",

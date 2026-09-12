@@ -1,17 +1,18 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Upload,
-  X,
   Image as ImageIcon,
   Loader2,
   RotateCcw,
   Trash2,
   CheckCircle2,
+  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import adminContentApi, { type UploadImageResult } from '@/lib/content-admin-api';
+import { getApiOrigin } from '@/lib/network';
 
 type Props = {
   imageUrl: string | null;
@@ -21,6 +22,20 @@ type Props = {
   title?: string;
 };
 
+function resolveImageSrc(url: string | null): string {
+  if (!url) return '';
+  if (/^https?:\/\//i.test(url) || url.startsWith('data:') || url.startsWith('blob:')) return url;
+  const trimmed = url.startsWith('/') ? url : `/${url}`;
+  const base = getApiOrigin() || '';
+  if (!base) return trimmed;
+  try {
+    const u = new URL(trimmed, base);
+    return u.toString();
+  } catch {
+    return trimmed;
+  }
+}
+
 export default function FeaturedImageUploader({
   imageUrl,
   imageAlt,
@@ -29,16 +44,38 @@ export default function FeaturedImageUploader({
   title = 'عکس شاخص مقاله',
 }: Props) {
   const [uploading, setUploading] = useState(false);
-  const [previewError, setPreviewError] = useState(false);
+  const [, forceTick] = useState(0);
   const [lastUploadInfo, setLastUploadInfo] = useState<{ sizeKB: number } | null>(null);
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);
+  const erroredUrlsRef = useRef<Set<string>>(new Set());
+  const toastShownRef = useRef(false);
+  const previewErrorRef = useRef(false);
 
-  const resolvedUrl = imageUrl || '';
-  const hasImage = !!resolvedUrl && !previewError;
+  useEffect(() => {
+    previewErrorRef.current = false;
+    forceTick((n) => n + 1);
+  }, [imageUrl]);
+
+  const resolvedUrl = resolveImageSrc(imageUrl);
+  const hasImage = !!resolvedUrl && !previewErrorRef.current;
 
   const triggerSelect = () => {
     if (uploading) return;
     hiddenInputRef.current?.click();
+  };
+
+  const markPreviewError = (flag: boolean) => {
+    previewErrorRef.current = flag;
+    forceTick((n) => n + 1);
+  };
+
+  const handleRetryPreview = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!resolvedUrl) return;
+    erroredUrlsRef.current.delete(resolvedUrl);
+    toastShownRef.current = false;
+    markPreviewError(false);
+    window.setTimeout(() => forceTick((n) => n + 1), 50);
   };
 
   const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +93,7 @@ export default function FeaturedImageUploader({
     }
 
     setUploading(true);
-    setPreviewError(false);
+    markPreviewError(false);
     const toastId = toast.loading('در حال آپلود تصویر شاخص...');
     try {
       const result = await adminContentApi.uploadImage(f, 'featured');
@@ -67,8 +104,9 @@ export default function FeaturedImageUploader({
       onImageChange(result.url, result);
       setLastUploadInfo({ sizeKB: result.sizeKB });
       toast.success('تصویر با موفقیت آپلود شد', { id: toastId });
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در آپلود تصویر';
+    } catch (err: unknown) {
+      const e2 = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = e2?.response?.data?.message ?? e2?.message ?? 'خطا در آپلود تصویر';
       toast.error(msg, { id: toastId });
     } finally {
       setUploading(false);
@@ -78,7 +116,7 @@ export default function FeaturedImageUploader({
   const handleRemove = () => {
     if (!confirm('تصویر شاخص حذف شود؟')) return;
     onImageChange(null);
-    setPreviewError(false);
+    markPreviewError(false);
     setLastUploadInfo(null);
     toast.success('تصویر شاخص حذف شد');
   };
@@ -112,11 +150,20 @@ export default function FeaturedImageUploader({
               </div>
             )}
             <img
+              key={resolvedUrl + (previewErrorRef.current ? ':err' : '')}
               src={resolvedUrl}
               alt={imageAlt || title}
               onError={() => {
-                setPreviewError(true);
-                toast.error('بارگذاری تصویر ناموفق بود');
+                if (erroredUrlsRef.current.has(resolvedUrl)) {
+                  markPreviewError(true);
+                  return;
+                }
+                erroredUrlsRef.current.add(resolvedUrl);
+                markPreviewError(true);
+                if (!toastShownRef.current) {
+                  toastShownRef.current = true;
+                  toast.error('بارگذاری تصویر ناموفق بود');
+                }
               }}
               className="w-full aspect-video object-cover"
             />
@@ -157,13 +204,31 @@ export default function FeaturedImageUploader({
                 <div className="text-sm font-black text-slate-700">در حال آپلود تصویر...</div>
                 <div className="text-xs text-slate-500">لطفاً منتظر بمانید</div>
               </div>
-            ) : previewError ? (
-              <div className="flex flex-col items-center gap-2 text-center px-4">
+            ) : previewErrorRef.current ? (
+              <div className="flex flex-col items-center gap-2 text-center px-4 z-10">
                 <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center mb-1">
                   <ImageIcon className="h-6 w-6 text-rose-500" />
                 </div>
                 <div className="text-sm font-black text-rose-700">مشکلی در نمایش تصویر قبلی پیش آمد</div>
                 <div className="text-xs text-rose-500">جهت مشاهده مجدد یا جایگزین کردن کلیک کنید</div>
+                <div className="flex gap-2 mt-2 flex-wrap justify-center">
+                  <button
+                    type="button"
+                    onClick={handleRetryPreview}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-white border border-rose-200 text-rose-700 px-3 py-1.5 text-xs font-black shadow-sm hover:bg-rose-50 transition-colors"
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    تلاش مجدد برای نمایش
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); triggerSelect(); }}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-teal-600 text-white px-3 py-1.5 text-xs font-black shadow-sm hover:bg-teal-700 transition-colors"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    جایگزین تصویر
+                  </button>
+                </div>
               </div>
             ) : (
               <>

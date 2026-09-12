@@ -177,6 +177,8 @@ export default function CreateArticlePage() {
   const loadArticleLockRef = useRef(false);
   const aliveRef = useRef(true);
   const didInitSnapshotRef = useRef(false);
+  const didFallbackLoadRef = useRef(false);
+  const currentFormRef = useRef({ title: '', slug: '', publishedAtIso: null as string | null, featuredImageUrl: '', imageAlt: '' });
 
   const [medicalReviewerId, setMedicalReviewerId] = useState<string>('');
   const [isMedicallyValidated, setIsMedicallyValidated] = useState(false);
@@ -195,6 +197,8 @@ export default function CreateArticlePage() {
     aliveRef.current = true;
     return () => { aliveRef.current = false; };
   }, []);
+
+  useEffect(() => { currentFormRef.current = { title, slug, publishedAtIso, featuredImageUrl, imageAlt }; }, [title, slug, publishedAtIso, featuredImageUrl, imageAlt]);
 
   useEffect(() => {
     let alive = true;
@@ -302,6 +306,7 @@ export default function CreateArticlePage() {
         });
         initialSnapshotRef.current = snap;
         setHasUnsavedChanges(false);
+        didFallbackLoadRef.current = true;
       }, 0);
     } catch (err: unknown) {
       if (!aliveRef.current) return;
@@ -312,18 +317,21 @@ export default function CreateArticlePage() {
     } finally {
       if (!silent) setLoadingArticle(false);
       loadArticleLockRef.current = false;
-      if (!success && aliveRef.current && id && title === '' && slug === '') {
+      if (!success && aliveRef.current && id && !didFallbackLoadRef.current && currentFormRef.current.title === '' && currentFormRef.current.slug === '') {
+        const rid = id;
         window.setTimeout(() => {
-          if (aliveRef.current && title === '' && slug === '' && !loadArticleLockRef.current) {
-            void loadArticleForEdit(id, true);
+          if (aliveRef.current && !didFallbackLoadRef.current && currentFormRef.current.title === '' && currentFormRef.current.slug === '' && !loadArticleLockRef.current) {
+            didFallbackLoadRef.current = true;
+            void loadArticleForEdit(rid, true);
           }
         }, 120);
       }
     }
-  }, [title, slug]);
+  }, []);
 
   useEffect(() => {
     if (!editId) return;
+    didFallbackLoadRef.current = false;
     const id = editId;
     const t = window.setTimeout(() => loadArticleForEdit(id, false), 0);
     return () => window.clearTimeout(t);
@@ -331,14 +339,17 @@ export default function CreateArticlePage() {
 
   useEffect(() => {
     if (!editId) return;
-    if (title !== '' || slug !== '' || content !== '') return;
+    if (didFallbackLoadRef.current) return;
+    if (title !== '' || slug !== '' || content !== '') { didFallbackLoadRef.current = true; return; }
     if (loadingArticle || loadArticleLockRef.current) return;
     const id = editId;
     const t = window.setTimeout(() => {
+      if (didFallbackLoadRef.current) return;
       if (title === '' && slug === '' && !loadArticleLockRef.current) {
+        didFallbackLoadRef.current = true;
         void loadArticleForEdit(id, true);
       }
-    }, 250);
+    }, 350);
     return () => window.clearTimeout(t);
   }, [editId, title, slug, content, loadingArticle, loadArticleForEdit]);
 
