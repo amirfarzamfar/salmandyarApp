@@ -177,7 +177,6 @@ export default function CreateArticlePage() {
   const loadArticleLockRef = useRef(false);
   const aliveRef = useRef(true);
   const didInitSnapshotRef = useRef(false);
-  const didTriggerLoadRef = useRef(false);
 
   const [medicalReviewerId, setMedicalReviewerId] = useState<string>('');
   const [isMedicallyValidated, setIsMedicallyValidated] = useState(false);
@@ -258,6 +257,7 @@ export default function CreateArticlePage() {
       setLoadingArticle(true);
       setLoadArticleError(null);
     }
+    let success = false;
     try {
       const data = (await adminContentApi.getArticle(id)) as RawApiArticle;
       if (!aliveRef.current || !data) {
@@ -287,6 +287,7 @@ export default function CreateArticlePage() {
       if (form.selectedServices.length > 0) setSelectedServices(form.selectedServices);
       setLastUpdatedAt(form.lastUpdatedAt);
       if (!silent) toast.success('اطلاعات مقاله برای ویرایش بارگذاری شد');
+      success = true;
       window.setTimeout(() => {
         if (!aliveRef.current) return;
         const snap = JSON.stringify({
@@ -309,21 +310,37 @@ export default function CreateArticlePage() {
       setLoadArticleError(msg);
       if (!silent) toast.error(msg);
     } finally {
-      if (aliveRef.current) {
-        if (!silent) setLoadingArticle(false);
-        loadArticleLockRef.current = false;
+      if (!silent) setLoadingArticle(false);
+      loadArticleLockRef.current = false;
+      if (!success && aliveRef.current && id && title === '' && slug === '') {
+        window.setTimeout(() => {
+          if (aliveRef.current && title === '' && slug === '' && !loadArticleLockRef.current) {
+            void loadArticleForEdit(id, true);
+          }
+        }, 120);
       }
     }
-  }, []);
+  }, [title, slug]);
 
   useEffect(() => {
     if (!editId) return;
-    if (didTriggerLoadRef.current) return;
-    didTriggerLoadRef.current = true;
     const id = editId;
     const t = window.setTimeout(() => loadArticleForEdit(id, false), 0);
     return () => window.clearTimeout(t);
   }, [editId, loadArticleForEdit]);
+
+  useEffect(() => {
+    if (!editId) return;
+    if (title !== '' || slug !== '' || content !== '') return;
+    if (loadingArticle || loadArticleLockRef.current) return;
+    const id = editId;
+    const t = window.setTimeout(() => {
+      if (title === '' && slug === '' && !loadArticleLockRef.current) {
+        void loadArticleForEdit(id, true);
+      }
+    }, 250);
+    return () => window.clearTimeout(t);
+  }, [editId, title, slug, content, loadingArticle, loadArticleForEdit]);
 
   const handleRetryLoadArticle = useCallback(() => {
     if (!editId) return;
