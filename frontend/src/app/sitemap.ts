@@ -14,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: baseUrl + '/diseases', lastModified, changeFrequency: 'weekly', priority: 0.9 },
     { url: baseUrl + '/guides', lastModified, changeFrequency: 'weekly', priority: 0.8 },
     { url: baseUrl + '/tools', lastModified, changeFrequency: 'weekly', priority: 0.8 },
+    { url: baseUrl + '/games/memory', lastModified, changeFrequency: 'weekly', priority: 0.9 },
     { url: baseUrl + '/cities', lastModified, changeFrequency: 'weekly', priority: 0.9 },
     { url: baseUrl + '/articles', lastModified, changeFrequency: 'daily', priority: 0.9 },
     { url: baseUrl + '/authors', lastModified, changeFrequency: 'monthly', priority: 0.6 },

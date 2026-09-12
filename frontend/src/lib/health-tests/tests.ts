@@ -289,7 +289,7 @@ export const HEALTH_TESTS: HealthTest[] = [
       {
         id: 'm-q4',
         categoryTag: 'memory',
-        text: 'چند بار اخیراً در آشپزی یا برق/گاز فراموشی کرده؟',
+        text: 'چند بار اخیراً در آشپزی ، برق یا گاز را فراموش کرده؟',
         options: [
           { id: 'a', label: 'اصلاً خیر', score: 4 },
           { id: 'b', label: 'خیلی کم', score: 3 },

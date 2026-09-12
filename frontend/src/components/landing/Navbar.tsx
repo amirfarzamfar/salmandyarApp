@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import {
   Menu, X, Phone, ChevronDown, ChevronLeft, Clock, Stethoscope, HeartPulse, BookOpen,
   Wrench, MapPin, Home, UserRound, Sparkles, Zap,
-  Calculator, CheckSquare, Brain, ShieldCheck, Activity, Pill, TrendingUp,
+  Calculator, CheckSquare, Brain, ShieldCheck, Activity, Pill, TrendingUp, Dices,
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -420,6 +420,105 @@ export default function Navbar() {
                   )}
                 </div>
 
+                {/* Games Mega Menu */}
+                <div className="relative" data-mega-wrapper>
+                  <button
+                    onMouseEnter={() => setActiveMega('games')}
+                    onClick={() => setActiveMega(activeMega === 'games' ? null : 'games')}
+                    className={`flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition ${activeMega === 'games' ? 'text-emerald-700 bg-emerald-50' : 'text-gray-700 hover:text-emerald-700 hover:bg-emerald-50/60'}`}
+                  >
+                    <Dices size={16} className="opacity-80" />
+                    بازی‌های سالمندیار
+                    <ChevronDown size={14} className={`transition ${activeMega === 'games' ? 'rotate-180' : ''}`} />
+                  </button>
+                  {activeMega === 'games' && (
+                    <div
+                      onMouseEnter={() => setActiveMega('games')}
+                      className="absolute top-full right-0 mt-2 w-[560px] max-w-[calc(100vw-2rem)] bg-white rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.15)] border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+                    >
+                      <div className="relative bg-gradient-to-l from-emerald-600 via-teal-500 to-amber-500 text-white px-6 py-4.5 overflow-hidden">
+                        <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+                        <div className="absolute -bottom-20 -left-10 w-56 h-56 rounded-full bg-yellow-200/20 blur-3xl" />
+                        <div className="relative flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur border border-white/20 flex items-center justify-center">
+                              <Brain size={22} strokeWidth={2.3} />
+                            </div>
+                            <div>
+                              <h3 className="font-black text-lg leading-tight flex items-center gap-2">
+                                بازی‌های تعاملی سالمندیار
+                                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-yellow-300/90 text-yellow-950">
+                                  <Sparkles size={10} fill="currentColor" /> رایگان و بدون ثبت نام
+                                </span>
+                              </h3>
+                              <p className="text-white/90 text-xs sm:text-sm font-medium mt-0.5">
+                                بازی‌های تصویری ساده برای تقویت حافظه، توجه و تمرکز سالمندان
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-5 sm:p-6 grid grid-cols-12 gap-5">
+                        <div className="col-span-12">
+                          <h4 className="text-[11px] font-black uppercase tracking-wider text-emerald-700 mb-3 flex items-center gap-1.5 px-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> بازی‌های فعال در دسترس
+                          </h4>
+                          <Link
+                            href="/games/memory"
+                            className="group block p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-white to-amber-50 border-2 border-emerald-200 hover:border-emerald-400 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 relative overflow-hidden"
+                          >
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-[0.07] transition bg-gradient-to-br from-emerald-500 via-teal-500 to-amber-500" />
+                            <div className="relative flex items-start gap-3.5">
+                              <div className="shrink-0 w-[52px] h-[52px] rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-amber-500 text-white flex items-center justify-center shadow-xl shadow-emerald-500/25 group-hover:scale-110 group-hover:rotate-[-2deg] transition-all duration-300 ring-8 ring-emerald-500/10">
+                                <Brain size={24} strokeWidth={2.3} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-1">
+                                  <h5 className="font-black text-base text-gray-900 leading-tight">
+                                    بازی تقویت حافظه سالمندان
+                                  </h5>
+                                  <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-lg bg-gradient-to-l from-emerald-500 to-teal-500 text-white shadow shadow-emerald-500/20">
+                                    <Zap size={9} fill="currentColor" /> مناسب
+                                  </span>
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed line-clamp-2 mb-2">
+                                  ۵ مرحله تصویری کوتاه و آرام برای تمرین حافظه دیداری، توجه و یادآوری سالمندان؛ با تصاویر بزرگ و بدون نیاز به تایپ.
+                                </p>
+                                <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-white/80 border border-gray-200 text-gray-600">
+                                    <ShieldCheck size={11} /> بدون ثبت نام
+                                  </span>
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-white/80 border border-gray-200 text-gray-600">
+                                    <Home size={11} /> اجرای آسان در خانه
+                                  </span>
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-white/80 border border-gray-200 text-gray-600">
+                                    <Clock size={11} /> هر جلسه ۵ تا ۱۰ دقیقه
+                                  </span>
+                                </div>
+                                <div className="inline-flex items-center gap-1 text-xs font-black text-emerald-700 group-hover:-translate-x-1 transition-transform">
+                                  شروع بازی رایگان
+                                  <ChevronLeft size={13} strokeWidth={2.5} />
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="px-5 sm:px-6 pb-5 sm:pb-6 border-t border-gray-100 pt-4 flex items-center justify-between gap-3 flex-wrap">
+                        <p className="text-xs text-gray-500 leading-relaxed max-w-md">
+                          این بازی‌ها ابزار تشخیص یا درمان نیستند و نتایج آن‌ها جایگزین مشورت با پزشک یا متخصص نمی‌شود.
+                        </p>
+                        <Link href="/games/memory" className="inline-flex items-center gap-1.5 h-9 px-4 rounded-xl bg-gradient-to-l from-emerald-500 to-teal-500 text-white text-xs font-black shadow-lg shadow-emerald-500/20 hover:shadow-xl hover:shadow-emerald-500/25 hover:-translate-y-0.5 transition">
+                          مشاهده صفحه بازی
+                          <ChevronLeft size={14} strokeWidth={2.4} />
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Cities Mega Menu */}
                 <div className="relative" data-mega-wrapper>
                   <button
@@ -543,6 +642,9 @@ export default function Navbar() {
             </Link>
 
             <MobileMenuSection title="خدمات پرستاری" icon={<Stethoscope size={16} />} items={servicesWithSeo.map(s => ({ label: s.serviceDefinition?.title || '', href: `/services/${s.slug}` }))} />
+            <MobileMenuSection title="بازی‌های سالمندیار" icon={<Dices size={16} />} items={[
+              { label: 'بازی تقویت حافظه سالمندان', href: '/games/memory' },
+            ]} />
             <MobileMenuSection title="دسته‌بندی مقالات" icon={<BookOpen size={16} />} items={menuCategories.map(c => ({ label: c.name, href: `/articles/category/${c.slug}` }))} />
             <MobileMenuSection title="بیماری‌ها" icon={<UserRound size={16} />} items={topDiseases.map(d => ({ label: d.name, href: `/diseases/${d.slug}` }))} />
             <MobileMenuSection title="ابزارهای سلامت" icon={<Wrench size={16} />} items={topTools.map(t => ({ label: t.name, href: `/tools/${t.slug}` }))} />
