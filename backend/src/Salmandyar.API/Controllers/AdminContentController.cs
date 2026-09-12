@@ -317,9 +317,10 @@ public class AdminContentController : ControllerBase
             .Include(a => a.Author).Include(a => a.Category)
             .Include(a => a.ArticleTags).ThenInclude(at => at.ContentTag)
             .FirstOrDefaultAsync(a => a.Id == id);
+
         if (a == null) return NotFound(new { message = "مقاله یافت نشد" });
 
-        return Ok(new
+        var response = new
         {
             a.Id, a.Title, a.Slug, a.Content, a.Excerpt, a.ShortAnswer,
             a.EstimatedReadingTimeMinutes, a.FeaturedImageUrl, a.FeaturedImageAlt,
@@ -329,9 +330,25 @@ public class AdminContentController : ControllerBase
             a.AuthorId, a.CategoryId, a.ServiceDefinitionId, a.DiseaseId,
             a.ViewCount, a.AllowComments, a.IsFeatured, a.IsMedicalContent, a.IsFactChecked,
             a.CreatedAt, a.UpdatedAt,
-            a.Author, a.Category,
+            Author = a.Author == null ? null : new
+            {
+                a.Author.Id, a.Author.FirstName, a.Author.LastName, a.Author.Title,
+                a.Author.Slug, a.Author.ProfileImageUrl, a.Author.Specialization,
+                a.Author.MedicalLicenseNumber, a.Author.IsMedicalReviewer,
+                a.Author.Email, a.Author.Biography, a.Author.ExperienceSummary,
+                a.Author.YearsOfExperience
+            },
+            Category = a.Category == null ? null : new
+            {
+                a.Category.Id, a.Category.Name, a.Category.Slug, a.Category.Description,
+                a.Category.ParentId, a.Category.DisplayOrder, a.Category.IsActive,
+                a.Category.ShowInMenu, a.Category.MetaTitle, a.Category.MetaDescription,
+                a.Category.CoverImageUrl
+            },
             Tags = a.ArticleTags.Select(at => at.ContentTag == null ? null : new { at.ContentTag.Id, at.ContentTag.Name, at.ContentTag.Slug }).ToList()
-        });
+        };
+
+        return Ok(response);
     }
 
     [HttpPost("articles")]

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
@@ -23,6 +23,10 @@ import {
   Search as SearchIcon,
   Loader2,
   Check,
+  RotateCcw,
+  SaveAll,
+  ExternalLink,
+  History,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Progress } from '@/components/ui/progress';
@@ -32,19 +36,120 @@ import {
   serviceSeoProfiles,
   diseases,
   cities,
-  healthTools,
   authors as mockAuthors,
 } from '@/lib/data/content-data';
-import adminContentApi, { type CategoryItem, type TagItem } from '@/lib/content-admin-api';
+import adminContentApi, {
+  type CategoryItem,
+  type TagItem,
+} from '@/lib/content-admin-api';
 import RichTextEditor from '@/components/admin/content/RichTextEditor';
 import PersianDatePicker from '@/components/admin/content/PersianDatePicker';
 import FeaturedImageUploader from '@/components/admin/content/FeaturedImageUploader';
+import { safeNumber, formatJalaliDateTime } from '@/lib/utils';
+import type { ArticleStatus } from '@/lib/types/content';
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+type NestedStub = { Id?: number; id?: number } & Record<string, unknown>;
+type RawApiArticle = Record<string, unknown>;
+type ApiErrorShape = { response?: { data?: { message?: string } }; message?: string };
+
+function mapApiArticleToFormState(a: RawApiArticle) {
+  const tagsRaw = (a.Tags ?? a.tags ?? a.TagIds ?? a.tagIds ?? []) as unknown[];
+  const tagIds: number[] = Array.isArray(tagsRaw)
+    ? tagsRaw
+        .map((t: unknown) =>
+          safeNumber(
+            typeof t === 'object' && t ? (t as NestedStub).Id ?? (t as NestedStub).id : t,
+            0
+          )
+        )
+        .filter(Boolean)
+    : [];
+
+  const resolveString = (...keys: (keyof RawApiArticle)[]): string => {
+    for (const k of keys) {
+      const v = a[k];
+      if (v !== null && v !== undefined) return String(v);
+    }
+    return '';
+  };
+
+  const resolveDateIso = (...keys: (keyof RawApiArticle)[]): string | null => {
+    for (const k of keys) {
+      const v = a[k];
+      if (typeof v === 'string' && v) {
+        try {
+          const d = new Date(v);
+          if (!isNaN(d.getTime())) return d.toISOString();
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+    return null;
+  };
+
+  const resolveKeywords = (): string[] => {
+    const rawSecondary = a.SecondaryKeywordsJson ?? a.secondaryKeywordsJson;
+    if (typeof rawSecondary === 'string') {
+      try {
+        const parsed = JSON.parse(rawSecondary);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean).map(String);
+      } catch {
+        /* ignore */
+      }
+    }
+    const kws = a.SecondaryKeywords ?? a.secondaryKeywords;
+    if (Array.isArray(kws)) return kws.filter(Boolean).map(String);
+    return [];
+  };
+
+  const resolveServices = (): number[] => {
+    const raw = (a.Services ?? a.services ?? a.ServiceIds ?? a.serviceIds ?? []) as unknown[];
+    return Array.isArray(raw)
+      ? raw
+          .map((s: unknown) =>
+            safeNumber(
+              typeof s === 'object' && s ? (s as NestedStub).Id ?? (s as NestedStub).id : s,
+              0
+            )
+          )
+          .filter(Boolean)
+      : [];
+  };
+
+  return {
+    title: resolveString('Title', 'title'),
+    slug: resolveString('Slug', 'slug'),
+    excerpt: resolveString('Excerpt', 'excerpt', 'MetaDescription', 'metaDescription'),
+    content: resolveString('Content', 'content'),
+    metaTitle: resolveString('MetaTitle', 'metaTitle'),
+    metaDescription: resolveString('MetaDescription', 'metaDescription', 'Excerpt', 'excerpt'),
+    focusKeyword: resolveString('PrimaryKeyword', 'primaryKeyword'),
+    keywords: resolveKeywords(),
+    status: ((a.Status ?? a.status ?? 'Draft') as ArticleStatus),
+    categoryId: String(safeNumber(a.CategoryId ?? a.categoryId ?? 0, 0) || ''),
+    authorId: String(safeNumber(a.AuthorId ?? a.authorId ?? 0, 0) || ''),
+    publishedAtIso: resolveDateIso('PublishedAt', 'publishedAt'),
+    featuredImageUrl: resolveString('FeaturedImageUrl', 'featuredImageUrl'),
+    imageAlt: resolveString('FeaturedImageAlt', 'featuredImageAlt'),
+    diseaseId: String(safeNumber(a.DiseaseId ?? a.diseaseId ?? 0, 0) || ''),
+    cityId: String(safeNumber(a.CityId ?? a.cityId ?? 0, 0) || ''),
+    isMedicallyValidated: Boolean(a.IsFactChecked ?? a.isFactChecked ?? false),
+    medicalReviewerId: String(safeNumber(a.MedicalReviewerId ?? a.medicalReviewerId ?? 0, 0) || ''),
+    serviceDefinitionId: safeNumber(a.ServiceDefinitionId ?? a.serviceDefinitionId ?? 0, 0),
+    selectedTags: tagIds,
+    selectedServices: resolveServices(),
+    lastUpdatedAt: (a.UpdatedAt ?? a.updatedAt ?? a.LastUpdatedAt ?? a.lastUpdatedAt ?? null) as string | null,
+  };
+}
 
 export default function CreateArticlePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const editIdRaw = searchParams.get('edit');
-  const editId = editIdRaw ? Number(editIdRaw) : null;
+  const editId = safeNumber(editIdRaw, 0) || null;
 
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
@@ -53,8 +158,8 @@ export default function CreateArticlePage() {
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [focusKeyword, setFocusKeyword] = useState('');
-  const [keywords, setKeywords] = useState<string[]>(['مراقبت در منزل', 'پرستاری', 'سلامت']);
-  const [status, setStatus] = useState<'Draft' | 'PendingReview' | 'Published' | 'Archived'>('Draft');
+  const [keywords, setKeywords] = useState<string[]>([]);
+  const [status, setStatus] = useState<ArticleStatus>('Draft');
   const [categoryId, setCategoryId] = useState<string>('');
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [publishedAtIso, setPublishedAtIso] = useState<string | null>(null);
@@ -66,81 +171,176 @@ export default function CreateArticlePage() {
   const [categories, setCategories] = useState<CategoryItem[]>([]);
   const [tags, setTags] = useState<TagItem[]>([]);
   const [lookupLoading, setLookupLoading] = useState({ cats: true, tags: true });
+
   const [loadingArticle, setLoadingArticle] = useState(false);
+  const [loadArticleError, setLoadArticleError] = useState<string | null>(null);
+  const loadArticleLockRef = useRef(false);
+  const aliveRef = useRef(true);
+  const didInitSnapshotRef = useRef(false);
+  const didTriggerLoadRef = useRef(false);
 
   const [medicalReviewerId, setMedicalReviewerId] = useState<string>('');
   const [isMedicallyValidated, setIsMedicallyValidated] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState<string>('');
-  const [imageAlt, setImageAlt] = useState('');
+  const [imageAlt, setImageAlt] = useState<string>('');
   const [diseaseId, setDiseaseId] = useState<string>('');
   const [selectedServices, setSelectedServices] = useState<number[]>([]);
   const [cityId, setCityId] = useState<string>('');
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<string | null>(null);
+
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const initialSnapshotRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => { aliveRef.current = false; };
+  }, []);
 
   useEffect(() => {
     let alive = true;
     adminContentApi.listCategories()
       .then(data => { if (alive) setCategories(data); })
-      .catch(() => { if (alive) setCategories((mockCategories as unknown) as CategoryItem[]); })
+      .catch(() => { if (alive) setCategories(mockCategories as unknown as CategoryItem[]); })
       .finally(() => { if (alive) setLookupLoading(p => ({ ...p, cats: false })); });
     adminContentApi.listTags()
       .then(data => { if (alive) setTags(data); })
-      .catch(() => { if (alive) setTags((mockTags as unknown) as TagItem[]); })
+      .catch(() => { if (alive) setTags(mockTags as unknown as TagItem[]); })
       .finally(() => { if (alive) setLookupLoading(p => ({ ...p, tags: false })); });
     return () => { alive = false; };
   }, []);
 
+  const captureSnapshot = useCallback(() => {
+    return JSON.stringify({
+      title, slug, excerpt, content, metaTitle, metaDescription,
+      focusKeyword, keywords, status, categoryId, selectedTags,
+      publishedAtIso, authorId, medicalReviewerId, isMedicallyValidated,
+      featuredImageUrl, imageAlt, diseaseId, selectedServices, cityId,
+    });
+  }, [title, slug, excerpt, content, metaTitle, metaDescription,
+      focusKeyword, keywords, status, categoryId, selectedTags,
+      publishedAtIso, authorId, medicalReviewerId, isMedicallyValidated,
+      featuredImageUrl, imageAlt, diseaseId, selectedServices, cityId]);
+
+  useEffect(() => {
+    if (editId) return;
+    if (didInitSnapshotRef.current) return;
+    didInitSnapshotRef.current = true;
+    const t = window.setTimeout(() => {
+      initialSnapshotRef.current = captureSnapshot();
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [editId, captureSnapshot]);
+
+  useEffect(() => {
+    const snap = captureSnapshot();
+    if (initialSnapshotRef.current && snap !== initialSnapshotRef.current) {
+      setHasUnsavedChanges(true);
+    }
+  }, [captureSnapshot]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges && saveStatus !== 'saving') {
+        e.preventDefault();
+        e.returnValue = 'تغییرات ذخیره نشده‌اند. آیا مطمئن هستید می‌خواهید از صفحه خارج شوید؟';
+        return e.returnValue;
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasUnsavedChanges, saveStatus]);
+
+  const loadArticleForEdit = useCallback(async (id: number, silent = false) => {
+    if (loadArticleLockRef.current) return;
+    loadArticleLockRef.current = true;
+    if (!silent) {
+      setLoadingArticle(true);
+      setLoadArticleError(null);
+    }
+    try {
+      const data = (await adminContentApi.getArticle(id)) as RawApiArticle;
+      if (!aliveRef.current || !data) {
+        if (aliveRef.current) setLoadArticleError('داده مقاله دریافت نشد');
+        return;
+      }
+      const form = mapApiArticleToFormState(data);
+      setTitle(form.title);
+      setSlug(form.slug);
+      setExcerpt(form.excerpt);
+      setContent(form.content);
+      setMetaTitle(form.metaTitle);
+      setMetaDescription(form.metaDescription);
+      setFocusKeyword(form.focusKeyword);
+      if (form.keywords.length > 0) setKeywords(form.keywords);
+      setStatus(form.status);
+      setCategoryId(form.categoryId);
+      setAuthorId(form.authorId);
+      setPublishedAtIso(form.publishedAtIso);
+      setFeaturedImageUrl(form.featuredImageUrl);
+      setImageAlt(form.imageAlt);
+      setDiseaseId(form.diseaseId);
+      setCityId(form.cityId);
+      setIsMedicallyValidated(form.isMedicallyValidated);
+      setMedicalReviewerId(form.medicalReviewerId);
+      if (form.selectedTags.length > 0) setSelectedTags(form.selectedTags);
+      if (form.selectedServices.length > 0) setSelectedServices(form.selectedServices);
+      setLastUpdatedAt(form.lastUpdatedAt);
+      if (!silent) toast.success('اطلاعات مقاله برای ویرایش بارگذاری شد');
+      window.setTimeout(() => {
+        if (!aliveRef.current) return;
+        const snap = JSON.stringify({
+          title: form.title, slug: form.slug, excerpt: form.excerpt, content: form.content,
+          metaTitle: form.metaTitle, metaDescription: form.metaDescription,
+          focusKeyword: form.focusKeyword, keywords: form.keywords, status: form.status,
+          categoryId: form.categoryId, selectedTags: form.selectedTags,
+          publishedAtIso: form.publishedAtIso, authorId: form.authorId,
+          medicalReviewerId: form.medicalReviewerId, isMedicallyValidated: form.isMedicallyValidated,
+          featuredImageUrl: form.featuredImageUrl, imageAlt: form.imageAlt,
+          diseaseId: form.diseaseId, selectedServices: form.selectedServices, cityId: form.cityId,
+        });
+        initialSnapshotRef.current = snap;
+        setHasUnsavedChanges(false);
+      }, 0);
+    } catch (err: unknown) {
+      if (!aliveRef.current) return;
+      const e = err as ApiErrorShape;
+      const msg = e?.response?.data?.message ?? e?.message ?? 'خطا در بارگذاری مقاله';
+      setLoadArticleError(msg);
+      if (!silent) toast.error(msg);
+    } finally {
+      if (aliveRef.current) {
+        if (!silent) setLoadingArticle(false);
+        loadArticleLockRef.current = false;
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (!editId) return;
-    let alive = true;
-    setLoadingArticle(true);
+    if (didTriggerLoadRef.current) return;
+    didTriggerLoadRef.current = true;
     const id = editId;
-    adminContentApi.getArticle(id)
-      .then((data: any) => {
-        if (!alive || !data) return;
-        setTitle(data.title ?? '');
-        setSlug(data.slug ?? '');
-        setExcerpt(data.excerpt ?? data.metaDescription ?? '');
-        setContent(data.content ?? '');
-        setMetaTitle(data.metaTitle ?? '');
-        setMetaDescription(data.metaDescription ?? data.excerpt ?? '');
-        setFocusKeyword(data.primaryKeyword ?? '');
-        try {
-          const kws = data.secondaryKeywordsJson
-            ? JSON.parse(data.secondaryKeywordsJson)
-            : [];
-          if (Array.isArray(kws) && kws.length) setKeywords(kws.filter(Boolean));
-        } catch { /* ignore */ }
-        setStatus((data.status as any) ?? 'Draft');
-        setCategoryId(String(data.categoryId ?? ''));
-        setAuthorId(String(data.authorId ?? ''));
-        if (data.publishedAt) {
-          setPublishedAtIso(new Date(data.publishedAt).toISOString());
-        }
-        setImageAlt(data.featuredImageAlt ?? '');
-        setFeaturedImageUrl(data.featuredImageUrl ?? '');
-        setDiseaseId(String(data.diseaseId ?? ''));
-        setIsMedicallyValidated(!!data.isFactChecked);
-        const tagIds = Array.isArray(data.Tags)
-          ? data.Tags.map((t: any) => Number(t.id)).filter(Boolean)
-          : [];
-        if (tagIds.length) setSelectedTags(tagIds);
-        toast.success('اطلاعات مقاله برای ویرایش بارگذاری شد');
-      })
-      .catch((err: any) => {
-        const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در بارگذاری مقاله';
-        toast.error(msg);
-      })
-      .finally(() => { if (alive) setLoadingArticle(false); });
-    return () => { alive = false; };
-  }, [editId]);
+    const t = window.setTimeout(() => loadArticleForEdit(id, false), 0);
+    return () => window.clearTimeout(t);
+  }, [editId, loadArticleForEdit]);
 
-  const contentCategories = categories.length > 0 ? (categories as unknown as any[]) : mockCategories;
-  const contentTags = tags.length > 0 ? (tags as unknown as any[]) : mockTags;
+  const handleRetryLoadArticle = useCallback(() => {
+    if (!editId) return;
+    loadArticleForEdit(editId, false);
+  }, [editId, loadArticleForEdit]);
+
+  const contentCategories: { id: number; name: string }[] =
+    categories.length > 0
+      ? (categories as unknown as { id: number; name: string }[])
+      : mockCategories;
+  const contentTags: { id: number; name: string }[] =
+    tags.length > 0 ? (tags as unknown as { id: number; name: string }[]) : mockTags;
   const authors = mockAuthors;
 
   const medicalReviewers = useMemo(
     () => authors.filter((a) => a.isMedicalReviewer),
-    []
+    [authors]
   );
 
   const wordCount = useMemo(
@@ -154,38 +354,85 @@ export default function CreateArticlePage() {
     const suggestions: { text: string; ok: boolean }[] = [];
 
     const titleOk = title.trim().length >= 20 && title.trim().length <= 70;
-    if (titleOk) { score += 12; suggestions.push({ text: 'طول عنوان در محدوده ایده‌آل (۲۰ تا ۷۰ کاراکتر)', ok: true }); }
-    else suggestions.push({ text: title.trim().length < 20 ? 'عنوان کوتاه‌تر از حد ایده‌آل است' : 'عنوان طولانی‌تر از حد ایده‌آل است', ok: false });
+    if (titleOk) {
+      score += 12;
+      suggestions.push({ text: 'طول عنوان در محدوده ایده‌آل (۲۰ تا ۷۰ کاراکتر)', ok: true });
+    } else {
+      suggestions.push({
+        text:
+        title.trim().length < 20 ? 'عنوان کوتاه‌تر از حد ایده‌آل است' : 'عنوان طولانی‌تر از حد ایده‌آل است',
+        ok: false,
+      });
+    }
 
     const slugOk = slug.trim().length >= 5 && slug.trim().length <= 80;
-    if (slugOk) { score += 8; suggestions.push({ text: 'Slug مناسب و خوانا تعریف شده است', ok: true }); }
-    else suggestions.push({ text: 'Slug کوتاه یا طولانی است و بهینه نیست', ok: false });
+    if (slugOk) {
+      score += 8;
+      suggestions.push({ text: 'Slug مناسب و خوانا تعریف شده است', ok: true });
+    } else {
+      suggestions.push({ text: 'Slug کوتاه یا طولانی است و بهینه نیست', ok: false });
+    }
 
     const excerptOk = excerpt.trim().length >= 80 && excerpt.trim().length <= 160;
-    if (excerptOk) { score += 12; suggestions.push({ text: 'خلاصه در محدوده ایده‌آل متای توصیف است', ok: true }); }
-    else suggestions.push({ text: 'خلاصه بین ۸۰ تا ۱۶۰ کاراکتر باشد', ok: false });
+    if (excerptOk) {
+      score += 12;
+      suggestions.push({ text: 'خلاصه در محدوده ایده‌آل متای توصیف است', ok: true });
+    } else {
+      suggestions.push({ text: 'خلاصه بین ۸۰ تا ۱۶۰ کاراکتر باشد', ok: false });
+    }
 
     const contentOk = wordCount >= 500;
-    if (contentOk) { score += wordCount >= 1500 ? 20 : 14; suggestions.push({ text: wordCount >= 1500 ? 'محتوا طولانی و جامع (مناسب سئو عمیق)' : 'طول محتوا قابل قبول است', ok: true }); }
-    else suggestions.push({ text: 'محتوا باید حداقل ۵۰۰ کلمه باشد', ok: false });
+    if (contentOk) {
+      score += wordCount >= 1500 ? 20 : 14;
+      suggestions.push({
+        text: wordCount >= 1500 ? 'محتوا طولانی و جامع (مناسب سئو عمیق)' : 'طول محتوا قابل قبول است',
+        ok: true,
+      });
+    } else {
+      suggestions.push({ text: 'محتوا باید حداقل ۵۰۰ کلمه باشد', ok: false });
+    }
 
-    if (/<h2[^>]*>[\s\S]*?<\/h2>/i.test(content)) { score += 6; suggestions.push({ text: 'ساختار H2 در محتوا استفاده شده است', ok: true }); }
-    else suggestions.push({ text: 'حداقل یک عنوان H2 در محتوا قرار دهید', ok: false });
+    if (/<h2[^>]*>[\s\S]*?<\/h2>/i.test(content)) {
+      score += 6;
+      suggestions.push({ text: 'ساختار H2 در محتوا استفاده شده است', ok: true });
+    } else {
+      suggestions.push({ text: 'حداقل یک عنوان H2 در محتوا قرار دهید', ok: false });
+    }
 
-    if (featuredImageUrl && imageAlt.trim().length >= 3) { score += 8; suggestions.push({ text: 'عکس شاخص با Alt مناسب تعریف شده', ok: true }); }
-    else suggestions.push({ text: 'عکس شاخص با Alt Text مناسب انتخاب کنید', ok: false });
+    if (featuredImageUrl && imageAlt.trim().length >= 3) {
+      score += 8;
+      suggestions.push({ text: 'عکس شاخص با Alt مناسب تعریف شده', ok: true });
+    } else {
+      suggestions.push({ text: 'عکس شاخص با Alt Text مناسب انتخاب کنید', ok: false });
+    }
 
-    if (focusKeyword.trim().length >= 3) { score += 6; suggestions.push({ text: 'کلمه کلیدی اصلی تعریف شده است', ok: true }); }
-    else suggestions.push({ text: 'کلمه کلیدی اصلی را مشخص کنید', ok: false });
+    if (focusKeyword.trim().length >= 3) {
+      score += 6;
+      suggestions.push({ text: 'کلمه کلیدی اصلی تعریف شده است', ok: true });
+    } else {
+      suggestions.push({ text: 'کلمه کلیدی اصلی را مشخص کنید', ok: false });
+    }
 
-    if (keywords.length >= 3) { score += 4; suggestions.push({ text: 'کلمات کلیدی فرعی کافی تعریف شده‌اند', ok: true }); }
-    else suggestions.push({ text: 'حداقل ۳ کلمه کلیدی فرعی اضافه کنید', ok: false });
+    if (keywords.length >= 3) {
+      score += 4;
+      suggestions.push({ text: 'کلمات کلیدی فرعی کافی تعریف شده‌اند', ok: true });
+    } else {
+      suggestions.push({ text: 'حداقل ۳ کلمه کلیدی فرعی اضافه کنید', ok: false });
+    }
 
-    if (categoryId) { score += 4; suggestions.push({ text: 'دسته‌بندی مقاله مشخص است', ok: true }); }
-    else suggestions.push({ text: 'دسته‌بندی مقاله را انتخاب کنید', ok: false });
+    if (categoryId) {
+      score += 4;
+      suggestions.push({ text: 'دسته‌بندی مقاله مشخص است', ok: true });
+    } else {
+      suggestions.push({ text: 'دسته‌بندی مقاله را انتخاب کنید', ok: false });
+    }
 
-    if (selectedTags.length >= 2) { score += 2; suggestions.push({ text: 'تگ‌های مرتبط تعریف شده‌اند', ok: true }); }
-    else suggestions.push({ text: 'حداقل ۲ تگ مرتبط اضافه کنید', ok: false });
+    if (selectedTags.length >= 2) {
+      score += 2;
+      suggestions.push({ text: 'تگ‌های مرتبط تعریف شده‌اند', ok: true });
+    } else {
+      suggestions.push({ text: 'حداقل ۲ تگ مرتبط اضافه کنید', ok: false });
+    }
 
     score = Math.min(100, score);
     return [score, suggestions] as const;
@@ -220,28 +467,27 @@ export default function CreateArticlePage() {
 
   const toggleTag = (tagId: number) => {
     setSelectedTags((prev) =>
-      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]
-    );
+      prev.includes(tagId) ? prev.filter((t) => t !== tagId) : [...prev, tagId]);
   };
 
   const toggleService = (serviceId: number) => {
     setSelectedServices((prev) =>
       prev.includes(serviceId)
         ? prev.filter((s) => s !== serviceId)
-        : [...prev, serviceId]
-    );
+        : [...prev, serviceId]);
   };
 
   const resolvePayload = (articleStatus: 'Draft' | 'Published') => {
-    const effectiveAuthorId = Number(authorId) || Number(mockAuthors[0]?.id) || 1;
-    const effectiveCategoryId = Number(categoryId) || Number(contentCategories[0]?.id) || 1;
-    const effectiveSlug = (slug.trim() || title.trim())
+    const effectiveAuthorId = safeNumber(authorId, 0) || safeNumber(mockAuthors[0]?.id, 0) || 1;
+    const effectiveCategoryId = safeNumber(categoryId, 0) || safeNumber(contentCategories[0]?.id, 0) || 1;
+    const effectiveSlug = ((slug.trim() || title.trim())
       .trim()
       .toLowerCase()
       .replace(/[\s\u200c]+/g, '-')
       .replace(/[^a-z0-9\-آ-ی]/g, '')
       .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '') || `article-${Date.now()}`;
+      .replace(/^-|-$/g, '')
+    ) || `article-${Date.now()}`;
     const finalStatus = articleStatus;
     return {
       title: title.trim(),
@@ -260,12 +506,15 @@ export default function CreateArticlePage() {
       secondaryKeywordsJson: keywords?.length ? JSON.stringify(keywords) : null,
       status: finalStatus,
       publishedAt: publishedAtIso,
-      diseaseId: Number(diseaseId) || 0,
+      diseaseId: safeNumber(diseaseId, 0),
+      cityId: safeNumber(cityId, 0),
       isFeatured: false,
       isMedicalContent: true,
       isFactChecked: isMedicallyValidated,
       allowComments: true,
       tagIds: selectedTags,
+      serviceDefinitionId: safeNumber(selectedServices[0] ?? 0, 0),
+      medicalReviewerId: safeNumber(medicalReviewerId, 0),
     };
   };
 
@@ -273,12 +522,23 @@ export default function CreateArticlePage() {
     if (saveLock || submitting) return false;
     setSaveLock(true);
     setSubmitting(true);
+    setSaveStatus('saving');
     return true;
   };
 
-  const releaseSaveLock = () => {
+  const releaseSaveLock = (success: boolean) => {
     setSaveLock(false);
     setSubmitting(false);
+    setSaveStatus(success ? 'saved' : 'error');
+    if (success) {
+      window.setTimeout(() => {
+        if (aliveRef.current) {
+          setSaveStatus('idle');
+          initialSnapshotRef.current = captureSnapshot();
+          setHasUnsavedChanges(false);
+        }
+      }, 2200);
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -286,22 +546,48 @@ export default function CreateArticlePage() {
     try {
       if (!title.trim()) {
         toast.error('عنوان مقاله الزامی است');
+        releaseSaveLock(false);
         return;
       }
       const payload = resolvePayload('Draft');
-      const res: any = editId
+      const res = (editId
         ? await adminContentApi.updateArticle(editId, payload)
-        : await adminContentApi.createArticle(payload);
+        : await adminContentApi.createArticle(payload)) as { message?: string } | undefined;
       toast.success(res?.message || 'پیش‌نویس مقاله ذخیره شد');
-      setTimeout(() => router.push('/dashboard/admin/content/articles'), 800);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در ذخیره پیش‌نویس';
+      releaseSaveLock(true);
+      window.setTimeout(() => router.push('/dashboard/admin/content/articles'), 800);
+    } catch (err: unknown) {
+      const e = err as ApiErrorShape;
+      const msg = e?.response?.data?.message ?? e?.message ?? 'خطا در ذخیره پیش‌نویس';
       toast.error(msg);
-    } finally { releaseSaveLock(); }
+      releaseSaveLock(false);
+    }
   };
 
   const handlePreview = () => {
-    toast.success('صفحه پیش‌نمایش باز شد');
+    if (editId) {
+      const win = window.open(`/articles/${slug || '#'}`, '_blank', 'noopener,noreferrer');
+      if (!win) toast.success('صفحه پیش‌نمایش باز شد');
+    } else {
+      toast('ذخیره مقاله برای مشاهده پیش‌نمایش', { icon: '📝' });
+    }
+  };
+
+  const handleDiscardChanges = () => {
+    if (!editId) {
+      if (!confirm('تمامی تغییرات پاک شوند؟')) return;
+      setTitle(''); setSlug(''); setExcerpt(''); setContent(''); setMetaTitle('');
+      setMetaDescription(''); setFocusKeyword(''); setKeywords([]); setStatus('Draft');
+      setCategoryId(''); setSelectedTags([]); setPublishedAtIso(null); setAuthorId('');
+      setMedicalReviewerId(''); setIsMedicallyValidated(false);
+      setFeaturedImageUrl(''); setImageAlt(''); setDiseaseId(''); setSelectedServices([]); setCityId('');
+      initialSnapshotRef.current = captureSnapshot();
+      setHasUnsavedChanges(false);
+      toast.success('فرم بازنشانی شد');
+      return;
+    }
+    if (!confirm('آیا می‌خواهید تغییرات ذخیره نشده را کنار بگذارید و مجدد مقاله را بارگذاری کنید؟')) return;
+    loadArticleForEdit(editId, false);
   };
 
   const handlePublish = async () => {
@@ -309,22 +595,55 @@ export default function CreateArticlePage() {
     try {
       if (!title.trim()) {
         toast.error('عنوان مقاله الزامی است');
+        releaseSaveLock(false);
         return;
       }
       if (!categoryId && !contentCategories[0]) {
         toast.error('انتخاب دسته‌بندی الزامی است');
+        releaseSaveLock(false);
         return;
       }
       const payload = resolvePayload('Published');
-      const res: any = editId
+      const res = (editId
         ? await adminContentApi.updateArticle(editId, payload)
-        : await adminContentApi.createArticle(payload);
+        : await adminContentApi.createArticle(payload)) as { message?: string } | undefined;
       toast.success(res?.message || 'مقاله با موفقیت منتشر شد');
-      setTimeout(() => router.push('/dashboard/admin/content/articles'), 800);
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در انتشار مقاله';
+      releaseSaveLock(true);
+      window.setTimeout(() => router.push('/dashboard/admin/content/articles'), 800);
+    } catch (err: unknown) {
+      const e = err as ApiErrorShape;
+      const msg = e?.response?.data?.message ?? e?.message ?? 'خطا در انتشار مقاله';
       toast.error(msg);
-    } finally { releaseSaveLock(); }
+      releaseSaveLock(false);
+    }
+  };
+
+  const renderSaveStatusBadge = () => {
+    if (saveStatus === 'saving' || submitting) {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-2.5 py-1 text-[11px] font-black text-blue-700">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          در حال ذخیره...
+        </span>
+      );
+    }
+    if (saveStatus === 'saved') {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-black text-emerald-700">
+          <Check className="h-3 w-3" />
+          ذخیره شد
+        </span>
+      );
+    }
+    if (hasUnsavedChanges) {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1 text-[11px] font-black text-amber-700">
+          <SaveAll className="h-3 w-3" />
+          تغییرات ذخیره نشده
+        </span>
+      );
+    }
+    return null;
   };
 
   return (
@@ -339,9 +658,21 @@ export default function CreateArticlePage() {
             بازگشت به لیست مقالات
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-gray-900">
-              {editId ? 'ویرایش مقاله' : 'نوشتن مقاله جدید'}
-            </h1>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-2xl font-black text-gray-900">
+                {editId ? 'ویرایش مقاله' : 'نوشتن مقاله جدید'}
+              </h1>
+              {renderSaveStatusBadge()}
+              {editId && lastUpdatedAt && (
+                <span
+                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 border border-slate-200 px-2.5 py-1 text-[11px] font-black text-slate-600"
+                  title={String(lastUpdatedAt)}
+                >
+                  <History className="h-3 w-3" />
+                  آخرین ویرایش: {formatJalaliDateTime(String(lastUpdatedAt))}
+                </span>
+              )}
+            </div>
             <p className="mt-2 text-sm text-gray-500">
               اطلاعات اصلی مقاله را وارد کنید، سپس محتوا را با ویرایشگر حرفه‌ای بنویسید و تنظیمات انتشار را تکمیل نمایید.
             </p>
@@ -349,12 +680,21 @@ export default function CreateArticlePage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDiscardChanges}
+            disabled={submitting || loadingArticle}
+          >
+            <RotateCcw className="ml-2 h-4 w-4" />
+            بازنشانی تغییرات
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             onClick={handleSaveDraft}
             disabled={submitting || loadingArticle}
           >
-            {submitting && !submitting ? null : submitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
+            {submitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
             ذخیره پیش‌نویس
           </Button>
           <Button
@@ -365,6 +705,7 @@ export default function CreateArticlePage() {
           >
             <Eye className="ml-2 h-4 w-4" />
             پیش‌نمایش
+            {editId && <ExternalLink className="mr-1 h-3 w-3" />}
           </Button>
           <Button
             size="sm"
@@ -379,9 +720,34 @@ export default function CreateArticlePage() {
       </div>
 
       {loadingArticle && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 flex flex-col items-center justify-center gap-2 shadow-sm">
-          <Loader2 className="h-8 w-8 text-teal-600 animate-spin" />
-          <div className="text-sm font-bold text-slate-600">در حال بارگذاری اطلاعات مقاله برای ویرایش...</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-8 flex flex-col items-center justify-center gap-3 shadow-sm">
+          <Loader2 className="h-10 w-10 text-teal-600 animate-spin" />
+          <div className="text-sm font-bold text-slate-700">در حال بارگذاری اطلاعات مقاله برای ویرایش...</div>
+          <div className="text-xs text-slate-500">لطفاً چند لحظه منتظر بمانید</div>
+        </div>
+      )}
+
+      {!loadingArticle && loadArticleError && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-5 shadow-sm space-y-3">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-rose-100 flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="h-5 w-5 text-rose-600" />
+            </div>
+            <div className="flex-1">
+              <div className="text-base font-black text-rose-800">خطا در بارگذاری اطلاعات مقاله</div>
+              <div className="mt-1 text-sm font-bold text-rose-600/80">{loadArticleError}</div>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Button size="sm" variant="outline" onClick={() => router.push('/dashboard/admin/content/articles')}>
+                <ArrowLeft className="ml-2 h-4 w-4" />
+                بازگشت به لیست
+              </Button>
+              <Button size="sm" onClick={handleRetryLoadArticle}>
+                <RotateCcw className="ml-2 h-4 w-4" />
+                تلاش مجدد
+              </Button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -548,7 +914,7 @@ export default function CreateArticlePage() {
                       excerptCount > 160 ? 'text-rose-600' : 'text-slate-400'
                     }`}
                   >
-                    {excerptCount}/۱۶۰
+                    {metaDescription.length}/۱۶۰
                   </span>
                 </div>
                 <textarea
@@ -614,7 +980,7 @@ export default function CreateArticlePage() {
                 <label className="text-xs font-bold text-slate-600 block">وضعیت</label>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as any)}
+                  onChange={(e) => setStatus(e.target.value as ArticleStatus)}
                   className="w-full rounded-2xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all font-bold"
                 >
                   <option value="Draft">پیش‌نویس</option>
@@ -684,6 +1050,9 @@ export default function CreateArticlePage() {
                     })
                   )}
                 </div>
+                <p className="text-[11px] font-bold text-slate-400 leading-relaxed">
+                  {selectedTags.length} تگ انتخاب شده است
+                </p>
               </div>
             </div>
           </Card>
@@ -798,6 +1167,9 @@ export default function CreateArticlePage() {
                     })
                   )}
                 </div>
+                <p className="text-[11px] font-bold text-slate-400 leading-relaxed">
+                  {selectedServices.length} سرویس مرتبط انتخاب شده
+                </p>
               </div>
 
               <div className="space-y-2">

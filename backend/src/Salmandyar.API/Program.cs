@@ -48,7 +48,15 @@ builder.Services.AddControllers(options =>
     provider.SetNonPropertyUnknownValueIsInvalidAccessor(() => "مقدار نامعتبر است");
     provider.SetNonPropertyValueMustBeANumberAccessor(() => "مقدار وارد شده باید عدد باشد");
     provider.SetNonPropertyAttemptedValueIsInvalidAccessor(value => $"مقدار '{value}' نامعتبر است");
-}).AddDataAnnotationsLocalization();
+})
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowReadingFromString;
+    options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    options.JsonSerializerOptions.MaxDepth = 64;
+})
+.AddDataAnnotationsLocalization();
 
 builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
