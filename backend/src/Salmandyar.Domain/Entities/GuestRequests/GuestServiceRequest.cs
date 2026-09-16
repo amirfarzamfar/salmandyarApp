@@ -39,6 +39,9 @@ public class GuestServiceRequest
     public DateTime? NextFollowUpAt { get; set; }
     public DateTime? ConvertedAt { get; set; }
 
+    public string? LandingPage { get; set; }
+    public string? SourceMetadataJson { get; set; }
+
     public string? RejectionReason { get; set; }
 
     public virtual ICollection<GuestServiceRequestTimelineEvent> TimelineEvents { get; set; } = new List<GuestServiceRequestTimelineEvent>();

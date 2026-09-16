@@ -11,6 +11,7 @@ import {
   Bell,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
@@ -53,6 +54,7 @@ import {
   GuestServiceRequestSource,
   GuestServiceRequestStatus,
   GuestRequestPriorityLabels,
+  GuestRequestSourceLabels,
   GuestRequestStatusLabels,
   PagedResponse,
   SmsTemplate,
@@ -103,6 +105,23 @@ function statusBadge(s: GuestServiceRequestStatus) {
   return `inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-bold ${cls}`;
 }
 
+function sourceBadge(s: GuestServiceRequestSource) {
+  const organic = [GuestServiceRequestSource.OrganicSearch];
+  const paid = [GuestServiceRequestSource.PaidSearch];
+  const social = [GuestServiceRequestSource.SocialMedia];
+  const direct = [GuestServiceRequestSource.Direct, GuestServiceRequestSource.LandingForm];
+  const referral = [GuestServiceRequestSource.Referral, GuestServiceRequestSource.ReferralTraffic];
+
+  let cls = 'bg-slate-100 text-slate-700 border-slate-200';
+  if (organic.includes(s)) cls = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  else if (paid.includes(s)) cls = 'bg-blue-50 text-blue-700 border-blue-200';
+  else if (social.includes(s)) cls = 'bg-pink-50 text-pink-700 border-pink-200';
+  else if (direct.includes(s)) cls = 'bg-slate-50 text-slate-700 border-slate-200';
+  else if (referral.includes(s)) cls = 'bg-violet-50 text-violet-700 border-violet-200';
+
+  return `inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold ${cls}`;
+}
+
 function normalizeDigits(value: unknown): string {
   if (value === null || value === undefined) return '';
   return String(value).replace(/[۰-۹]/g, (digit) =>
@@ -123,6 +142,9 @@ export default function GuestRequestsAdminPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | GuestServiceRequestStatus>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | GuestServiceRequestPriority>('all');
+  const [sourceFilter, setSourceFilter] = useState<'all' | GuestServiceRequestSource>('all');
+  const [landingPageFilter, setLandingPageFilter] = useState('');
+  const [debouncedLandingPage, setDebouncedLandingPage] = useState('');
 
   // ---------- details state ----------
   const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
@@ -261,6 +283,11 @@ export default function GuestRequestsAdminPage() {
     return () => clearTimeout(h);
   }, [search]);
 
+  useEffect(() => {
+    const h = setTimeout(() => setDebouncedLandingPage(landingPageFilter.trim()), 350);
+    return () => clearTimeout(h);
+  }, [landingPageFilter]);
+
   // ---------- load stats ----------
   useEffect(() => {
     const load = async () => {
@@ -288,6 +315,8 @@ export default function GuestRequestsAdminPage() {
           searchQuery: debouncedSearch || undefined,
           status: statusFilter === 'all' ? undefined : statusFilter,
           priority: priorityFilter === 'all' ? undefined : priorityFilter,
+          source: sourceFilter === 'all' ? undefined : sourceFilter,
+          landingPageContains: debouncedLandingPage || undefined,
           sortBy: 'createdAt',
           sortDescending: true,
         };
@@ -302,7 +331,7 @@ export default function GuestRequestsAdminPage() {
       }
     };
     void load();
-  }, [pageNumber, pageSize, debouncedSearch, statusFilter, priorityFilter]);
+  }, [pageNumber, pageSize, debouncedSearch, statusFilter, priorityFilter, sourceFilter, debouncedLandingPage]);
 
   // ---------- helpers list update ----------
   const refreshAfterAction = async (fresh: GuestServiceRequestDetails) => {
@@ -322,6 +351,9 @@ export default function GuestRequestsAdminPage() {
                 assignedSupervisorName: fresh.assignedSupervisorName,
                 assignedCaregiverName: fresh.assignedCaregiverName,
                 convertedCareRecipientId: fresh.convertedCareRecipientId,
+                serviceDefinitionTitle: (fresh as GuestServiceRequestDetails & { serviceDefinitionTitle?: string }).serviceDefinitionTitle,
+                landingPage: fresh.landingPage,
+                source: fresh.source,
               }
             : i,
         ),
@@ -841,7 +873,7 @@ export default function GuestRequestsAdminPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-lg font-black text-gray-900">لیست درخواست‌ها</h2>
           </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-[1fr,auto,auto] sm:items-center">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 sm:items-center">
             <div className="relative">
               <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -854,7 +886,19 @@ export default function GuestRequestsAdminPage() {
                 className="w-full rounded-2xl border border-gray-200 bg-white py-2 pr-9 pl-3 text-sm outline-none focus:border-teal-500"
               />
             </div>
-            <div className="relative inline-flex items-center">
+            <div className="relative">
+              <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                value={landingPageFilter}
+                onChange={(e) => {
+                  setLandingPageFilter(e.target.value);
+                  setPageNumber(1);
+                }}
+                placeholder="جستجو در صفحه فرود (Landing)"
+                className="w-full rounded-2xl border border-gray-200 bg-white py-2 pr-9 pl-3 text-sm outline-none focus:border-teal-500"
+              />
+            </div>
+            <div className="relative inline-flex items-center w-full">
               <Filter className="pointer-events-none absolute left-3 h-4 w-4 text-gray-500" />
               <select
                 value={statusFilter}
@@ -862,7 +906,7 @@ export default function GuestRequestsAdminPage() {
                   setStatusFilter(e.target.value === 'all' ? 'all' : (Number(e.target.value) as GuestServiceRequestStatus));
                   setPageNumber(1);
                 }}
-                className="inline-flex items-center gap-1 rounded-2xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-500"
+                className="inline-flex items-center gap-1 w-full rounded-2xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-500"
               >
                 <option value="all">همه وضعیت‌ها</option>
                 {Object.entries(GuestRequestStatusLabels).map(([k, v]) => (
@@ -872,7 +916,7 @@ export default function GuestRequestsAdminPage() {
                 ))}
               </select>
             </div>
-            <div className="relative inline-flex items-center">
+            <div className="relative inline-flex items-center w-full">
               <Flag className="pointer-events-none absolute left-3 h-4 w-4 text-gray-500" />
               <select
                 value={priorityFilter}
@@ -880,10 +924,28 @@ export default function GuestRequestsAdminPage() {
                   setPriorityFilter(e.target.value === 'all' ? 'all' : (Number(e.target.value) as GuestServiceRequestPriority));
                   setPageNumber(1);
                 }}
-                className="inline-flex items-center gap-1 rounded-2xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-500"
+                className="inline-flex items-center gap-1 w-full rounded-2xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-500"
               >
                 <option value="all">همه اولویت‌ها</option>
                 {Object.entries(GuestRequestPriorityLabels).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="relative inline-flex items-center w-full">
+              <Radio className="pointer-events-none absolute left-3 h-4 w-4 text-gray-500" />
+              <select
+                value={sourceFilter}
+                onChange={(e) => {
+                  setSourceFilter(e.target.value === 'all' ? 'all' : (Number(e.target.value) as GuestServiceRequestSource));
+                  setPageNumber(1);
+                }}
+                className="inline-flex items-center gap-1 w-full rounded-2xl border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:border-teal-500"
+              >
+                <option value="all">همه منابع</option>
+                {Object.entries(GuestRequestSourceLabels).map(([k, v]) => (
                   <option key={k} value={k}>
                     {v}
                   </option>
@@ -924,6 +986,7 @@ export default function GuestRequestsAdminPage() {
                           {GuestRequestPriorityLabels[r.priority]}
                         </span>
                         <span className={statusBadge(r.status)}>{GuestRequestStatusLabels[r.status]}</span>
+                        <span className={sourceBadge(r.source)}>{GuestRequestSourceLabels[r.source]}</span>
                       </div>
                       <div className="mt-2 line-clamp-1 text-sm font-black text-gray-900">{r.contactName}</div>
                       <div className="mt-0.5 line-clamp-1 text-xs text-gray-500">
@@ -931,6 +994,20 @@ export default function GuestRequestsAdminPage() {
                         {r.city ? ` • ${r.city}` : ''}
                         {r.serviceType ? ` • ${r.serviceType}` : ''}
                       </div>
+                      {((r as GuestServiceRequestListItem & { serviceDefinitionTitle?: string }).serviceDefinitionTitle || r.landingPage) && (
+                        <div className="mt-1.5 space-y-1">
+                          {(r as GuestServiceRequestListItem & { serviceDefinitionTitle?: string }).serviceDefinitionTitle && (
+                            <div className="line-clamp-1 text-[11px] font-bold text-teal-700 flex items-center gap-1">
+                              📌 {(r as GuestServiceRequestListItem & { serviceDefinitionTitle?: string }).serviceDefinitionTitle}
+                            </div>
+                          )}
+                          {r.landingPage && (
+                            <div className="line-clamp-1 text-[10px] text-slate-500 font-mono flex items-center gap-1">
+                              🔗 {r.landingPage}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       <div className="mt-2 grid grid-cols-2 gap-2 text-[11px] text-gray-500 md:grid-cols-3">
                         <div>
                           ثبت: <span className="font-bold text-gray-700">{fmtDate(r.createdAt)}</span>
@@ -1042,6 +1119,60 @@ export default function GuestRequestsAdminPage() {
                       <span>پیگیری بعدی: <b className="text-gray-800">{fmtDate(selectedRequest.nextFollowUpAt)}</b></span>
                       <span>تبدیل شده: <b className="text-gray-800">{selectedRequest.convertedAt ? fmtDate(selectedRequest.convertedAt) : '—'}</b></span>
                     </div>
+
+                    {/* Attribution / Source Info Card */}
+                    {(selectedRequest.serviceDefinitionTitle || selectedRequest.landingPage || selectedRequest.sourceMetadataJson) && (
+                      <div className="mt-4 rounded-2xl border border-slate-200/70 bg-gradient-to-br from-slate-50 to-white p-3.5 sm:p-4">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                          <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-700">
+                            <Radio className="h-3 w-3 text-slate-500" />
+                            منبع:
+                            <span className={sourceBadge(selectedRequest.source)}>
+                              <span className="font-black">{GuestRequestSourceLabels[selectedRequest.source]}</span>
+                            </span>
+                          </div>
+                          {selectedRequest.serviceDefinitionTitle && (
+                            <div className="inline-flex items-center gap-1.5 text-xs text-slate-600">
+                              📌 <span className="font-black text-slate-800">خدمت:</span> {selectedRequest.serviceDefinitionTitle}
+                            </div>
+                          )}
+                          {selectedRequest.landingPage && (
+                            <a
+                              href={selectedRequest.landingPage}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-teal-700 font-mono break-all line-clamp-1"
+                            >
+                              🔗 <span className="font-black text-slate-800">صفحه فرود:</span> {selectedRequest.landingPage}
+                            </a>
+                          )}
+                        </div>
+                        {selectedRequest.sourceMetadataJson && (() => {
+                          try {
+                            const meta = JSON.parse(selectedRequest.sourceMetadataJson);
+                            if (meta && typeof meta === 'object' && Object.keys(meta).length > 0) {
+                              return (
+                                <details className="mt-3 group rounded-xl border border-slate-200 bg-white/70">
+                                  <summary className="cursor-pointer p-2.5 pr-3 flex items-center justify-between gap-4 text-[11px] font-bold text-slate-600 hover:bg-slate-50 transition marker:content-['']">
+                                    <span className="inline-flex items-center gap-1.5">
+                                      <Sparkles className="h-3 w-3 text-violet-500" />
+                                      جزئیات ردیابی (Source Metadata)
+                                    </span>
+                                    <ChevronDown size={14} className="flex-shrink-0 text-slate-400 group-open:rotate-180 group-open:text-violet-500 transition" />
+                                  </summary>
+                                  <div className="px-3 pb-3 pt-1">
+                                    <pre className="text-[10.5px] leading-relaxed text-slate-700 font-mono whitespace-pre-wrap break-words max-h-48 overflow-auto rounded-lg bg-slate-50 p-2.5 border border-slate-200">
+{JSON.stringify(meta, null, 2)}
+                                    </pre>
+                                  </div>
+                                </details>
+                              );
+                            }
+                          } catch { /* ignore */ }
+                          return null;
+                        })()}
+                      </div>
+                    )}
                   </div>
 
                   {/* Quick actions */}

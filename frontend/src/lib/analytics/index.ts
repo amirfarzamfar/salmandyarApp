@@ -50,9 +50,66 @@ export interface MemoryGameEventPayloadMap {
   memory_game_signup_completed: MemoryGameSignupCompletedPayload;
 }
 
-export type AnalyticsEvent<E extends MemoryGameEventName = MemoryGameEventName> = {
+export type ServiceFunnelEventName =
+  | 'service_page_view'
+  | 'request_form_open'
+  | 'request_form_step_completed'
+  | 'request_submitted'
+  | 'request_failed';
+
+export interface ServicePageViewPayload {
+  serviceSlug: string;
+  serviceDefinitionId?: number;
+  source?: string;
+}
+
+export interface RequestFormOpenPayload {
+  serviceSlug?: string;
+  formId: number;
+}
+
+export interface RequestFormStepCompletedPayload {
+  formId: number;
+  step: number;
+  totalSteps: number;
+  questionKey?: string;
+  serviceSlug?: string;
+  landingPage?: string;
+  answersCount?: number;
+}
+
+export interface RequestSubmittedPayload {
+  formId: number;
+  trackingCode: string;
+  landingPage?: string;
+  serviceDefinitionId?: number;
+  source?: string;
+}
+
+export interface RequestFailedPayload {
+  formId: number;
+  errorMessage: string;
+  landingPage?: string;
+  statusCode?: number;
+  serviceDefinitionId?: number;
+}
+
+export interface ServiceFunnelEventPayloadMap {
+  service_page_view: ServicePageViewPayload;
+  request_form_open: RequestFormOpenPayload;
+  request_form_step_completed: RequestFormStepCompletedPayload;
+  request_submitted: RequestSubmittedPayload;
+  request_failed: RequestFailedPayload;
+}
+
+export type SalmandyarAnalyticsEventName = MemoryGameEventName | ServiceFunnelEventName;
+
+export type SalmandyarEventPayloadMap = MemoryGameEventPayloadMap &
+  ServiceFunnelEventPayloadMap;
+
+export type AnalyticsEvent<E extends SalmandyarAnalyticsEventName = SalmandyarAnalyticsEventName> = {
   name: E;
-  payload: MemoryGameEventPayloadMap[E];
+  payload: SalmandyarEventPayloadMap[E];
   timestamp?: number;
   url?: string;
   userAgent?: string;
@@ -78,9 +135,9 @@ export function registerAnalyticsProvider(provider: AnalyticsProvider): () => vo
   };
 }
 
-export function track<E extends MemoryGameEventName>(
+export function track<E extends SalmandyarAnalyticsEventName>(
   name: E,
-  payload: MemoryGameEventPayloadMap[E],
+  payload: SalmandyarEventPayloadMap[E],
 ): void {
   try {
     const event: AnalyticsEvent<E> = {

@@ -46,9 +46,10 @@ function createFallbackMegamenu(): MegamenuResponse {
       .filter((s: any) => s.serviceDefinition)
       .slice(0, 8)
       .map((s: any) => ({
-        id: s.serviceDefinition?.id,
+        id: s.id,
+        serviceDefinitionId: s.serviceDefinition?.id,
         code: s.serviceDefinition?.code,
-        title: s.serviceDefinition?.title,
+        title: s.title || s.serviceDefinition?.title,
         slug: s.slug,
       })),
     diseases: mock.diseases.slice(0, 8).map((d: any) => ({ id: d.id, name: d.name, slug: d.slug })),

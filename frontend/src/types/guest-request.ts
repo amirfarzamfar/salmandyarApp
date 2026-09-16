@@ -55,6 +55,11 @@ export enum GuestServiceRequestSource {
   PhoneCall = 2,
   Referral = 3,
   Other = 4,
+  OrganicSearch = 5,
+  PaidSearch = 6,
+  SocialMedia = 7,
+  ReferralTraffic = 8,
+  Direct = 9,
 }
 
 export enum GuestServiceRequestTimelineEventType {
@@ -95,6 +100,19 @@ export const GuestRequestPriorityLabels: Record<GuestServiceRequestPriority, str
   [GuestServiceRequestPriority.Normal]: 'عادی',
   [GuestServiceRequestPriority.High]: 'بالا',
   [GuestServiceRequestPriority.Urgent]: 'فوری',
+};
+
+export const GuestRequestSourceLabels: Record<GuestServiceRequestSource, string> = {
+  [GuestServiceRequestSource.LandingForm]: 'فرم عمومی',
+  [GuestServiceRequestSource.DirectAdminEntry]: 'ثبت دستی ادمین',
+  [GuestServiceRequestSource.PhoneCall]: 'تماس تلفنی',
+  [GuestServiceRequestSource.Referral]: 'معرفی',
+  [GuestServiceRequestSource.Other]: 'سایر',
+  [GuestServiceRequestSource.OrganicSearch]: 'جستجوی ارگانیک',
+  [GuestServiceRequestSource.PaidSearch]: 'تبلیغات کلیکی',
+  [GuestServiceRequestSource.SocialMedia]: 'شبکه‌های اجتماعی',
+  [GuestServiceRequestSource.ReferralTraffic]: 'ترافیک ارجاعی',
+  [GuestServiceRequestSource.Direct]: 'مستقیم',
 };
 
 export const GuestContactChannelLabels: Record<GuestContactChannel, string> = {
@@ -138,6 +156,9 @@ export interface CreateGuestServiceRequestDto {
   serviceDefinitionId?: number;
   summaryJson?: string;
   answers: AssessmentAnswerDto[];
+  sourceOverride?: GuestServiceRequestSource | number;
+  landingPage?: string;
+  sourceMetadataJson?: string;
 }
 
 export interface GuestRequestQueryParams {
@@ -150,6 +171,8 @@ export interface GuestRequestQueryParams {
   assignedCaregiverId?: string;
   formId?: number;
   source?: GuestServiceRequestSource;
+  serviceDefinitionId?: number;
+  landingPageContains?: string;
   createdFrom?: string;
   createdTo?: string;
   nextFollowUpFrom?: string;
@@ -198,6 +221,9 @@ export interface GuestServiceRequestListItem {
   formId: number;
   formTitle?: string;
   source: GuestServiceRequestSource;
+  landingPage?: string;
+  serviceDefinitionId?: number;
+  serviceDefinitionTitle?: string;
 }
 
 export interface GuestServiceRequestTimelineEvent {
@@ -272,6 +298,7 @@ export interface GuestServiceRequestDetails {
   formVersion: number;
   submissionId: number;
   serviceDefinitionId?: number;
+  serviceDefinitionTitle?: string;
   assignedSupervisorId?: string;
   assignedSupervisorName?: string;
   assignedCaregiverId?: string;
@@ -280,6 +307,8 @@ export interface GuestServiceRequestDetails {
   status: GuestServiceRequestStatus;
   priority: GuestServiceRequestPriority;
   source: GuestServiceRequestSource;
+  landingPage?: string;
+  sourceMetadataJson?: string;
   serviceType?: string;
   urgency?: string;
   city?: string;

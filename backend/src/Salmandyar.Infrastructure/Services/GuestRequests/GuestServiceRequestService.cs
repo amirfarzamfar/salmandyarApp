@@ -87,22 +87,29 @@ public class GuestServiceRequestService : IGuestServiceRequestService
             ServiceDefinitionId = service?.Id,
             Status = GuestServiceRequestStatus.New,
             Priority = ResolvePriorityFromUrgency(urgency),
-            Source = GuestServiceRequestSource.LandingForm,
+            Source = dto.SourceOverride ?? GuestServiceRequestSource.LandingForm,
             ServiceType = serviceType,
             Urgency = urgency,
             City = city,
             ContactName = contactName,
             ContactMobile = normalizedMobile,
+            LandingPage = dto.LandingPage,
+            SourceMetadataJson = dto.SourceMetadataJson,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
+        var attrParts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(dto.LandingPage))
+            attrParts.Add($"صفحه فرود: {dto.LandingPage}");
+        attrParts.Add($"منبع: {request.Source}");
 
         _context.GuestServiceRequestTimelineEvents.Add(new GuestServiceRequestTimelineEvent
         {
             RequestId = request.Id,
             EventType = GuestServiceRequestTimelineEventType.RequestCreated,
             Title = "درخواست ثبت شد",
-            Description = "درخواست بدون ثبت‌نام با موفقیت ثبت شد.",
+            Description = "درخواست بدون ثبت‌نام با موفقیت ثبت شد. " + string.Join(" | ", attrParts),
             ActorUserId = null,
             OccurredAt = DateTime.UtcNow
         });
@@ -182,6 +189,12 @@ public class GuestServiceRequestService : IGuestServiceRequestService
         if (!string.IsNullOrWhiteSpace(query.AssignedCaregiverId)) q = q.Where(r => r.AssignedCaregiverId == query.AssignedCaregiverId);
         if (query.FormId.HasValue) q = q.Where(r => r.FormId == query.FormId.Value);
         if (query.Source.HasValue) q = q.Where(r => r.Source == query.Source.Value);
+        if (query.ServiceDefinitionId.HasValue) q = q.Where(r => r.ServiceDefinitionId == query.ServiceDefinitionId.Value);
+        if (!string.IsNullOrWhiteSpace(query.LandingPageContains))
+        {
+            var lc = query.LandingPageContains.Trim();
+            q = q.Where(r => r.LandingPage != null && r.LandingPage.Contains(lc));
+        }
         if (query.CreatedFrom.HasValue) q = q.Where(r => r.CreatedAt >= query.CreatedFrom.Value);
         if (query.CreatedTo.HasValue) q = q.Where(r => r.CreatedAt <= query.CreatedTo.Value);
         if (query.NextFollowUpFrom.HasValue) q = q.Where(r => r.NextFollowUpAt >= query.NextFollowUpFrom.Value);
@@ -233,7 +246,10 @@ public class GuestServiceRequestService : IGuestServiceRequestService
                 NextFollowUpAt = r.NextFollowUpAt,
                 FormId = r.FormId,
                 FormTitle = r.Form != null ? r.Form.Title : null,
-                Source = r.Source
+                Source = r.Source,
+                LandingPage = r.LandingPage,
+                ServiceDefinitionId = r.ServiceDefinitionId,
+                ServiceDefinitionTitle = r.ServiceDefinition != null ? r.ServiceDefinition.Title : null
             })
             .ToListAsync();
 
@@ -271,7 +287,10 @@ public class GuestServiceRequestService : IGuestServiceRequestService
                 NextFollowUpAt = r.NextFollowUpAt,
                 FormId = r.FormId,
                 FormTitle = r.Form != null ? r.Form.Title : null,
-                Source = r.Source
+                Source = r.Source,
+                LandingPage = r.LandingPage,
+                ServiceDefinitionId = r.ServiceDefinitionId,
+                ServiceDefinitionTitle = r.ServiceDefinition != null ? r.ServiceDefinition.Title : null
             })
             .ToListAsync();
     }
@@ -334,6 +353,8 @@ public class GuestServiceRequestService : IGuestServiceRequestService
             ConvertedAt = request.ConvertedAt,
             RejectionReason = request.RejectionReason,
             SummaryJson = request.Submission.SummaryJson,
+            LandingPage = request.LandingPage,
+            SourceMetadataJson = request.SourceMetadataJson,
             Form = MapForm(request.Form),
             Answers = request.Submission.Answers.Select(a => new SubmitAnswerDto
             {

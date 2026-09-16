@@ -10,6 +10,9 @@ public class CreateGuestServiceRequestDto
     public int? ServiceDefinitionId { get; set; }
     public string? SummaryJson { get; set; }
     public List<SubmitAnswerDto> Answers { get; set; } = new();
+    public GuestServiceRequestSource? SourceOverride { get; set; }
+    public string? LandingPage { get; set; }
+    public string? SourceMetadataJson { get; set; }
 }
 
 public class GuestRequestQueryDto
@@ -23,6 +26,8 @@ public class GuestRequestQueryDto
     public string? AssignedCaregiverId { get; set; }
     public int? FormId { get; set; }
     public GuestServiceRequestSource? Source { get; set; }
+    public int? ServiceDefinitionId { get; set; }
+    public string? LandingPageContains { get; set; }
     public DateTime? CreatedFrom { get; set; }
     public DateTime? CreatedTo { get; set; }
     public DateTime? NextFollowUpFrom { get; set; }
@@ -73,6 +78,9 @@ public class GuestServiceRequestListItemDto
     public int FormId { get; set; }
     public string? FormTitle { get; set; }
     public GuestServiceRequestSource Source { get; set; }
+    public string? LandingPage { get; set; }
+    public int? ServiceDefinitionId { get; set; }
+    public string? ServiceDefinitionTitle { get; set; }
 }
 
 public class GuestServiceRequestTimelineEventDto
@@ -174,6 +182,8 @@ public class GuestServiceRequestDetailsDto
     public DateTime? ConvertedAt { get; set; }
     public string? RejectionReason { get; set; }
     public string? SummaryJson { get; set; }
+    public string? LandingPage { get; set; }
+    public string? SourceMetadataJson { get; set; }
 
     public AssessmentFormDto? Form { get; set; }
     public List<SubmitAnswerDto> Answers { get; set; } = new();

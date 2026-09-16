@@ -134,7 +134,12 @@ public enum GuestServiceRequestSource
     DirectAdminEntry = 1,
     PhoneCall = 2,
     Referral = 3,
-    Other = 4
+    Other = 4,
+    OrganicSearch = 5,
+    PaidSearch = 6,
+    SocialMedia = 7,
+    ReferralTraffic = 8,
+    Direct = 9
 }
 
 public enum GuestServiceRequestTimelineEventType

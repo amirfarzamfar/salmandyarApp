@@ -7,6 +7,7 @@ import Footer from '@/components/landing/Footer';
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import { ServiceSchema } from '@/lib/seo/structured-data';
 import { listServicesWithSeo, getServiceLandingBySlug, listArticles, listCities, getFaqs } from '@/lib/content-api';
+import ServiceLandingInteractiveShell from '@/components/services/ServiceLandingInteractiveShell';
 
 export async function generateStaticParams() {
   const services = await listServicesWithSeo();
@@ -42,13 +43,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ServiceLandingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [serviceResult, articlesResult, citiesResult] = await Promise.all([
+  const [serviceResult, articlesResult, citiesResult, allServicesResult] = await Promise.all([
     getServiceLandingBySlug(slug),
     listArticles({ pageSize: 20 }),
     listCities(),
+    listServicesWithSeo(),
   ]);
   const service = serviceResult;
   if (!service) notFound();
+
+  const allServices = allServicesResult && allServicesResult.length > 0 ? allServicesResult : [];
 
   const faqsFromService = service.faqs && service.faqs.length > 0 ? service.faqs : [];
   const faqsFromApi = service?.id ? await getFaqs('Service', service.id) : [];
@@ -302,6 +306,9 @@ export default async function ServiceLandingPage({ params }: { params: Promise<{
               </div>
             </section>
           )}
+
+          {/* Interactive Shell: SEO Sections + Process + Inline Wizard + Related Services */}
+          <ServiceLandingInteractiveShell service={service} allServices={allServices} />
 
           {/* FAQs */}
           {faqs.length > 0 && (

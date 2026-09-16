@@ -117,6 +117,15 @@ export interface Article {
   faqs?: FAQItem[];
 }
 
+export interface ServiceSeoSection {
+  id: number;
+  heading: string;
+  headingLevel?: 2 | 3;
+  content: string;
+  subsections?: { heading: string; content: string }[];
+  displayOrder: number;
+}
+
 export interface ServiceSeoProfile {
   id: number;
   serviceDefinitionId: number;
@@ -151,6 +160,8 @@ export interface ServiceSeoProfile {
   coverageAreas?: ServiceCoverageArea[];
   testimonials?: ServiceTestimonial[];
   faqs?: FAQItem[];
+  seoSections?: ServiceSeoSection[];
+  relatedServicesSlugs?: string[];
 }
 
 export interface ServiceBenefit {
