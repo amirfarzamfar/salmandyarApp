@@ -367,19 +367,32 @@ public class AdminContentController : ControllerBase
             return BadRequest(new { message = "دسته‌بندی یافت نشد" });
 
         var status = ArticleStatus.Draft;
-        if (dto.Status.ToLower() == "published") status = ArticleStatus.Published;
-        else if (dto.Status.ToLower() == "pending") status = ArticleStatus.PendingReview;
-        else if (dto.Status.ToLower() == "archived") status = ArticleStatus.Archived;
+        if (!string.IsNullOrWhiteSpace(dto.Status))
+        {
+            if (Enum.TryParse<ArticleStatus>(dto.Status, ignoreCase: true, out var parsedStatus))
+            {
+                status = parsedStatus;
+            }
+            else
+            {
+                var sLower = dto.Status.ToLowerInvariant();
+                if (sLower == "published") status = ArticleStatus.Published;
+                else if (sLower == "pending" || sLower == "pendingreview" || sLower == "pending_review") status = ArticleStatus.PendingReview;
+                else if (sLower == "archived" || sLower == "archive") status = ArticleStatus.Archived;
+                else if (sLower == "draft") status = ArticleStatus.Draft;
+            }
+        }
 
         DateTime? publishedAt = null;
-        if (status == ArticleStatus.Published)
+        if (dto.PublishedAt.HasValue)
         {
-            if (dto.PublishedAt.HasValue)
-                publishedAt = dto.PublishedAt.Value.Kind == DateTimeKind.Unspecified
-                    ? DateTime.SpecifyKind(dto.PublishedAt.Value, DateTimeKind.Utc)
-                    : dto.PublishedAt.Value.ToUniversalTime();
-            else
-                publishedAt = DateTime.UtcNow;
+            publishedAt = dto.PublishedAt.Value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(dto.PublishedAt.Value, DateTimeKind.Utc)
+                : dto.PublishedAt.Value.ToUniversalTime();
+        }
+        else if (status == ArticleStatus.Published)
+        {
+            publishedAt = DateTime.UtcNow;
         }
 
         var article = new Article
@@ -463,10 +476,18 @@ public class AdminContentController : ControllerBase
         if (!string.IsNullOrWhiteSpace(dto.Status))
         {
             var st = article.Status;
-            if (dto.Status.ToLower() == "published") st = ArticleStatus.Published;
-            else if (dto.Status.ToLower() == "pending") st = ArticleStatus.PendingReview;
-            else if (dto.Status.ToLower() == "archived") st = ArticleStatus.Archived;
-            else if (dto.Status.ToLower() == "draft") st = ArticleStatus.Draft;
+            if (Enum.TryParse<ArticleStatus>(dto.Status, ignoreCase: true, out var parsedStatus))
+            {
+                st = parsedStatus;
+            }
+            else
+            {
+                var sLower = dto.Status.ToLowerInvariant();
+                if (sLower == "published") st = ArticleStatus.Published;
+                else if (sLower == "pending" || sLower == "pendingreview" || sLower == "pending_review") st = ArticleStatus.PendingReview;
+                else if (sLower == "archived" || sLower == "archive") st = ArticleStatus.Archived;
+                else if (sLower == "draft") st = ArticleStatus.Draft;
+            }
             if (st != article.Status)
             {
                 article.Status = st;

@@ -42,7 +42,7 @@ export default async function ArticlesListPage() {
   ]);
 
   const published: Article[] = (articlesResult?.items || []).filter(
-    (a: any) => !a.status || a.status === 'Published'
+    (a: any) => a.status === 'Published'
   );
 
   const allCategories: ContentCategory[] = categoriesResult || [];

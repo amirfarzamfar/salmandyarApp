@@ -97,6 +97,7 @@ export default function ArticlesAdminPage() {
   const pageSize = 10;
 
   const loadArticles = async (silent = false) => {
+    console.log('[DEBUG-ARTICLES] loadArticles called with params:', { currentPage, search, categoryFilter, statusFilter });
     if (!silent) setLoading(true);
     try {
       const params: {
@@ -110,14 +111,17 @@ export default function ArticlesAdminPage() {
       if (statusFilter !== 'all') params.status = statusFilter;
       const res = await adminContentApi.listArticles(params);
       const items = res?.items ?? [];
+      console.log('[DEBUG-ARTICLES] loadArticles response received. items.length=', items.length, 'serverTotal=', res?.total);
       if (items.length > 0) {
         setArticles(items.map(mapApiArticleToUiArticle));
         setServerTotal(res.total ?? items.length);
       } else {
+        console.log('[DEBUG-ARTICLES] loadArticles: no API items, falling back to mockArticles');
         setArticles(mockArticles);
         setServerTotal(mockArticles.length);
       }
     } catch (err: any) {
+      console.error('[DEBUG-ARTICLES] loadArticles ERROR:', err?.message, err?.response?.data);
       setArticles(mockArticles);
       setServerTotal(mockArticles.length);
     } finally {
@@ -226,25 +230,31 @@ export default function ArticlesAdminPage() {
     );
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: number | string) => {
+    const numId = typeof id === 'string' ? Number(id) : id;
+    console.log('[DEBUG-ARTICLES] handleDelete called. articleId=', id, 'numId=', numId);
     if (!confirm('آیا از حذف این مقاله اطمینان دارید؟')) return;
     try {
-      await adminContentApi.deleteArticle(id);
+      await adminContentApi.deleteArticle(numId);
       setArticles((prev) => prev.filter((a) => a.id !== id));
       toast.success('مقاله با موفقیت حذف شد');
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در حذف مقاله';
+      console.error('[DEBUG-ARTICLES] handleDelete ERROR:', err?.message, 'responseData=', err?.response?.data);
       toast.error(msg);
     }
   };
 
   const handleTogglePublish = async (article: Article) => {
     const shouldPublish = article.status !== 'Published';
+    console.log('[DEBUG-ARTICLES] handleTogglePublish called. articleId=', article.id, 'currentStatus=', article.status, 'shouldPublish=', shouldPublish);
     try {
       if (shouldPublish) {
         await adminContentApi.publishArticle(article.id);
+        console.log('[DEBUG-ARTICLES] handleTogglePublish: publishArticle API call SUCCESS');
       } else {
         await adminContentApi.unpublishArticle(article.id);
+        console.log('[DEBUG-ARTICLES] handleTogglePublish: unpublishArticle API call SUCCESS');
       }
       const newStatus: ArticleStatus = shouldPublish ? 'Published' : 'Draft';
       setArticles((prev) =>
@@ -253,6 +263,7 @@ export default function ArticlesAdminPage() {
       toast.success(shouldPublish ? 'مقاله منتشر شد' : 'مقاله از حالت انتشار خارج شد');
     } catch (err: any) {
       const msg = err?.response?.data?.message ?? err?.message ?? 'خطا در تغییر وضعیت انتشار';
+      console.error('[DEBUG-ARTICLES] handleTogglePublish ERROR:', err?.message, 'responseData=', err?.response?.data);
       toast.error(msg);
     }
   };

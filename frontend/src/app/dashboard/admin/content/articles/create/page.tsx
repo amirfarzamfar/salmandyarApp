@@ -505,7 +505,8 @@ export default function CreateArticlePage() {
         : [...prev, serviceId]);
   };
 
-  const resolvePayload = (articleStatus: 'Draft' | 'Published') => {
+  const resolvePayload = (overrideStatus?: ArticleStatus) => {
+    console.log('[DEBUG-ARTICLES] resolvePayload called. overrideStatus=', overrideStatus, 'current status state=', status);
     const effectiveAuthorId = safeNumber(authorId, 0) || safeNumber(mockAuthors[0]?.id, 0) || 1;
     const effectiveCategoryId = safeNumber(categoryId, 0) || safeNumber(contentCategories[0]?.id, 0) || 1;
     const effectiveSlug = ((slug.trim() || title.trim())
@@ -516,7 +517,8 @@ export default function CreateArticlePage() {
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '')
     ) || `article-${Date.now()}`;
-    const finalStatus = articleStatus;
+    const finalStatus = overrideStatus ?? status;
+    console.log('[DEBUG-ARTICLES] final status to send=', finalStatus, 'publishedAtIso=', publishedAtIso);
     return {
       title: title.trim(),
       slug: effectiveSlug,
@@ -577,16 +579,20 @@ export default function CreateArticlePage() {
         releaseSaveLock(false);
         return;
       }
-      const payload = resolvePayload('Draft');
+      console.log('[DEBUG-ARTICLES] handleSaveDraft: saving with status from dropdown =', status);
+      const payload = resolvePayload();
+      console.log('[DEBUG-ARTICLES] handleSaveDraft payload:', JSON.stringify({ status: payload.status, publishedAt: payload.publishedAt }));
       const res = (editId
         ? await adminContentApi.updateArticle(editId, payload)
         : await adminContentApi.createArticle(payload)) as { message?: string } | undefined;
-      toast.success(res?.message || 'پیش‌نویس مقاله ذخیره شد');
+      console.log('[DEBUG-ARTICLES] handleSaveDraft response:', res);
+      toast.success(res?.message || 'تغییرات مقاله با موفقیت ذخیره شد');
       releaseSaveLock(true);
       window.setTimeout(() => router.push('/dashboard/admin/content/articles'), 800);
     } catch (err: unknown) {
       const e = err as ApiErrorShape;
-      const msg = e?.response?.data?.message ?? e?.message ?? 'خطا در ذخیره پیش‌نویس';
+      const msg = e?.response?.data?.message ?? e?.message ?? 'خطا در ذخیره تغییرات';
+      console.error('[DEBUG-ARTICLES] handleSaveDraft error:', err);
       toast.error(msg);
       releaseSaveLock(false);
     }
@@ -631,16 +637,21 @@ export default function CreateArticlePage() {
         releaseSaveLock(false);
         return;
       }
+      console.log('[DEBUG-ARTICLES] handlePublish: forcing status=Published, current status state=', status);
+      setStatus('Published');
       const payload = resolvePayload('Published');
+      console.log('[DEBUG-ARTICLES] handlePublish payload:', JSON.stringify({ status: payload.status, publishedAt: payload.publishedAt }));
       const res = (editId
         ? await adminContentApi.updateArticle(editId, payload)
         : await adminContentApi.createArticle(payload)) as { message?: string } | undefined;
+      console.log('[DEBUG-ARTICLES] handlePublish response:', res);
       toast.success(res?.message || 'مقاله با موفقیت منتشر شد');
       releaseSaveLock(true);
       window.setTimeout(() => router.push('/dashboard/admin/content/articles'), 800);
     } catch (err: unknown) {
       const e = err as ApiErrorShape;
       const msg = e?.response?.data?.message ?? e?.message ?? 'خطا در انتشار مقاله';
+      console.error('[DEBUG-ARTICLES] handlePublish error:', err);
       toast.error(msg);
       releaseSaveLock(false);
     }
@@ -723,7 +734,7 @@ export default function CreateArticlePage() {
             disabled={submitting || loadingArticle}
           >
             {submitting ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : <Save className="ml-2 h-4 w-4" />}
-            ذخیره پیش‌نویس
+            ذخیره تغییرات
           </Button>
           <Button
             variant="ghost"

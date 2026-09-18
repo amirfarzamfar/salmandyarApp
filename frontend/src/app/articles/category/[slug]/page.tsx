@@ -126,7 +126,7 @@ export default async function CategoryPage({
   ]);
 
   const publishedArticles: Article[] = (articlesResult?.items || []).filter(
-    (a: any) => !a.status || a.status === 'Published'
+    (a: any) => a.status === 'Published'
   ) as Article[];
 
   const sortedArticles: Article[] = [...publishedArticles].sort((a: any, b: any) => {

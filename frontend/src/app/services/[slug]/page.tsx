@@ -60,7 +60,7 @@ export default async function ServiceLandingPage({ params }: { params: Promise<{
 
   const articles = articlesResult?.items || [];
   const coverageCities = citiesResult || [];
-  const relatedArticles = articles.filter(a => a.serviceDefinitionId === service.serviceDefinitionId || a.status === 'Published').slice(0, 3);
+  const relatedArticles = articles.filter(a => a.status === 'Published' && a.serviceDefinitionId === service.serviceDefinitionId).slice(0, 3);
   const has24Hour = (service.coverageAreas || []).some(c => c.has24HourService);
   const citiesList = coverageCities.filter(c => (service.coverageAreas || []).some(cc => cc.cityId === c.id || cc.areaName?.includes(c.name))).slice(0, 6);
 
