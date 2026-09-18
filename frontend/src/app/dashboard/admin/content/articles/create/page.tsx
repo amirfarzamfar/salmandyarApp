@@ -54,6 +54,31 @@ type NestedStub = { Id?: number; id?: number } & Record<string, unknown>;
 type RawApiArticle = Record<string, unknown>;
 type ApiErrorShape = { response?: { data?: { message?: string } }; message?: string };
 
+const VALID_STATUSES: ArticleStatus[] = ['Draft', 'PendingReview', 'Published', 'Archived'];
+const STATUS_NUM_TO_STR: Record<number, ArticleStatus> = {
+  0: 'Draft',
+  1: 'PendingReview',
+  2: 'Published',
+  3: 'Archived',
+};
+function normalizeArticleStatus(v: unknown): ArticleStatus {
+  if (typeof v === 'number') {
+    return STATUS_NUM_TO_STR[v] ?? 'Draft';
+  }
+  if (typeof v === 'string') {
+    if ((VALID_STATUSES as string[]).includes(v)) return v as ArticleStatus;
+    const low = v.toLowerCase();
+    if (low === 'draft') return 'Draft';
+    if (low === 'pendingreview' || low === 'pending' || low === 'pending_review') return 'PendingReview';
+    if (low === 'published' || low === 'publish') return 'Published';
+    if (low === 'archived' || low === 'archive') return 'Archived';
+    if (/^\d+$/.test(v)) {
+      return STATUS_NUM_TO_STR[parseInt(v, 10)] ?? 'Draft';
+    }
+  }
+  return 'Draft';
+}
+
 function mapApiArticleToFormState(a: RawApiArticle) {
   const tagsRaw = (a.Tags ?? a.tags ?? a.TagIds ?? a.tagIds ?? []) as unknown[];
   const tagIds: number[] = Array.isArray(tagsRaw)
@@ -128,7 +153,7 @@ function mapApiArticleToFormState(a: RawApiArticle) {
     metaDescription: resolveString('MetaDescription', 'metaDescription', 'Excerpt', 'excerpt'),
     focusKeyword: resolveString('PrimaryKeyword', 'primaryKeyword'),
     keywords: resolveKeywords(),
-    status: ((a.Status ?? a.status ?? 'Draft') as ArticleStatus),
+    status: normalizeArticleStatus(a.Status ?? a.status ?? 0),
     categoryId: String(safeNumber(a.CategoryId ?? a.categoryId ?? 0, 0) || ''),
     authorId: String(safeNumber(a.AuthorId ?? a.authorId ?? 0, 0) || ''),
     publishedAtIso: resolveDateIso('PublishedAt', 'publishedAt'),

@@ -27,11 +27,36 @@ import {
 import adminContentApi, { type ArticleItem } from '@/lib/content-admin-api';
 import type { Article, ArticleStatus } from '@/lib/types/content';
 
+const VALID_STATUSES: ArticleStatus[] = ['Draft', 'PendingReview', 'Published', 'Archived'];
+const STATUS_NUM_TO_STR: Record<number, ArticleStatus> = {
+  0: 'Draft',
+  1: 'PendingReview',
+  2: 'Published',
+  3: 'Archived',
+};
+function normalizeArticleStatus(v: unknown): ArticleStatus {
+  if (typeof v === 'number') {
+    return STATUS_NUM_TO_STR[v] ?? 'Draft';
+  }
+  if (typeof v === 'string') {
+    if ((VALID_STATUSES as string[]).includes(v)) return v as ArticleStatus;
+    const low = v.toLowerCase();
+    if (low === 'draft') return 'Draft';
+    if (low === 'pendingreview' || low === 'pending' || low === 'pending_review') return 'PendingReview';
+    if (low === 'published' || low === 'publish') return 'Published';
+    if (low === 'archived' || low === 'archive') return 'Archived';
+    if (/^\d+$/.test(v)) {
+      return STATUS_NUM_TO_STR[parseInt(v, 10)] ?? 'Draft';
+    }
+  }
+  return 'Draft';
+}
+
 const mapApiArticleToUiArticle = (a: ArticleItem): Article => ({
   id: a.id,
   title: a.title,
   slug: a.slug,
-  status: (a.status as ArticleStatus) || 'Draft',
+  status: normalizeArticleStatus((a as unknown as Record<string, unknown>).status ?? a.status ?? 0),
   excerpt: a.excerpt ?? undefined,
   content: '',
   shortAnswer: undefined,
