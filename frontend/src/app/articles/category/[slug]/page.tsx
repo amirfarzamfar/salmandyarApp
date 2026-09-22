@@ -14,6 +14,21 @@ import { getCategoryContent } from '@/lib/data/category-content';
 
 export const revalidate = 3600;
 
+const VALID_CAT_STATUSES: string[] = ['Draft', 'PendingReview', 'Published', 'Archived'];
+const CAT_STATUS_NUM_TO_STR: Record<number, string> = {
+  0: 'Draft', 1: 'PendingReview', 2: 'Published', 3: 'Archived',
+};
+function normalizeCatStatus(v: unknown): string {
+  if (typeof v === 'number') return CAT_STATUS_NUM_TO_STR[v] ?? 'Draft';
+  if (typeof v === 'string') {
+    if (VALID_CAT_STATUSES.includes(v)) return v;
+    const low = v.toLowerCase();
+    if (low === 'published' || low === 'publish') return 'Published';
+    if (/^\d+$/.test(v)) return CAT_STATUS_NUM_TO_STR[parseInt(v, 10)] ?? 'Draft';
+  }
+  return 'Draft';
+}
+
 const PAGE_PATH_BASE = '/articles/category';
 
 export async function generateStaticParams() {
@@ -126,7 +141,7 @@ export default async function CategoryPage({
   ]);
 
   const publishedArticles: Article[] = (articlesResult?.items || []).filter(
-    (a: any) => a.status === 'Published'
+    (a: any) => normalizeCatStatus((a as any).status) === 'Published'
   ) as Article[];
 
   const sortedArticles: Article[] = [...publishedArticles].sort((a: any, b: any) => {

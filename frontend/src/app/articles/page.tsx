@@ -34,6 +34,22 @@ function formatDate(dateStr?: string | Date) {
   } catch { return ''; }
 }
 
+const VALID_PUB_STATUSES: string[] = ['Draft', 'PendingReview', 'Published', 'Archived'];
+const PUB_STATUS_NUM_TO_STR: Record<number, string> = {
+  0: 'Draft', 1: 'PendingReview', 2: 'Published', 3: 'Archived',
+};
+function normalizePublicStatus(v: unknown): string {
+  if (typeof v === 'number') return PUB_STATUS_NUM_TO_STR[v] ?? 'Draft';
+  if (typeof v === 'string') {
+    if (VALID_PUB_STATUSES.includes(v)) return v;
+    const low = v.toLowerCase();
+    if (low === 'published' || low === 'publish' || low === '2') return 'Published';
+    if (low === 'draft' || low === '0') return 'Draft';
+    if (/^\d+$/.test(v)) return PUB_STATUS_NUM_TO_STR[parseInt(v, 10)] ?? 'Draft';
+  }
+  return 'Draft';
+}
+
 export default async function ArticlesListPage() {
   const [articlesResult, categoriesResult, tagsResult] = await Promise.all([
     listArticles({ pageSize: 9 }),
@@ -42,7 +58,7 @@ export default async function ArticlesListPage() {
   ]);
 
   const published: Article[] = (articlesResult?.items || []).filter(
-    (a: any) => a.status === 'Published'
+    (a: any) => normalizePublicStatus((a as any).status) === 'Published'
   );
 
   const allCategories: ContentCategory[] = categoriesResult || [];

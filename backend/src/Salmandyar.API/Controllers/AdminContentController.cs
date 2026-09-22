@@ -351,6 +351,79 @@ public class AdminContentController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("articles/preview/{slug}")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetArticlePreviewBySlug(string slug)
+    {
+        var article = await _db.Articles
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Where(a => a.Slug == slug)
+            .Include(a => a.Author)
+            .Include(a => a.Category)
+            .Include(a => a.RelatedDisease)
+            .Include(a => a.RelatedService)
+            .Include(a => a.ArticleTags).ThenInclude(t => t.ContentTag)
+            .Include(a => a.MedicalReviews).ThenInclude(m => m.MedicalReviewer)
+            .Include(a => a.Sources)
+            .FirstOrDefaultAsync();
+
+        if (article == null) return NotFound($"Article with slug '{slug}' not found.");
+
+        var faqs = await _db.FAQs
+            .AsNoTracking()
+            .Where(f => f.EntityType == FAQEntityType.Article && f.EntityId == article.Id && f.IsActive)
+            .OrderBy(f => f.DisplayOrder)
+            .Select(f => new { f.Id, f.Question, f.Answer, f.DisplayOrder })
+            .ToListAsync();
+
+        var internalLinks = await _db.InternalLinks
+            .AsNoTracking()
+            .Where(l => l.SourceArticleId == article.Id && l.IsActive)
+            .OrderBy(l => l.DisplayOrder)
+            .Select(l => new
+            {
+                l.Id, l.AnchorText, l.Title, l.Description, l.TargetType,
+                l.TargetServiceId, l.TargetDiseaseId, l.TargetGuideId, l.TargetToolId, l.TargetCityId, l.TargetArticleId, l.TargetCustomUrl
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            article.Id, article.Title, article.Slug, article.Content, Excerpt = article.Excerpt,
+            article.ShortAnswer, article.FeaturedImageUrl, GalleryImages = article.ImageGalleryJson,
+            ReadingTime = article.EstimatedReadingTimeMinutes, article.PublishedAt, article.LastUpdatedAt,
+            Version = article.Version, article.ViewCount, article.IsMedicalContent, article.IsFactChecked,
+            article.MetaTitle, article.MetaDescription, article.CanonicalUrl, article.PrimaryKeyword, article.SecondaryKeywordsJson,
+            OgImage = article.OgImageUrl, TwitterImage = article.TwitterImageUrl, article.Status,
+            Category = article.Category == null ? null : new { article.Category.Id, article.Category.Name, article.Category.Slug },
+            Author = new
+            {
+                article.Author.Id, article.Author.FirstName, article.Author.LastName, article.Author.Title,
+                article.Author.Specialization, article.Author.ExperienceSummary, article.Author.YearsOfExperience,
+                article.Author.ProfileImageUrl, article.Author.Slug, article.Author.MedicalLicenseNumber,
+                article.Author.IsMedicalReviewer, article.Author.Email
+            },
+            RelatedDisease = article.RelatedDisease == null ? null : new { article.RelatedDisease.Id, article.RelatedDisease.Name, article.RelatedDisease.Slug },
+            RelatedService = article.RelatedService == null ? null : new { article.RelatedService.Id, article.RelatedService.Code, article.RelatedService.Title },
+            Tags = article.ArticleTags.Select(t => new { t.ContentTag.Id, t.ContentTag.Name, t.ContentTag.Slug }).ToList(),
+            MedicalReviews = article.MedicalReviews.Select(r => new
+            {
+                r.Id, r.IsApproved, r.ReviewNotes, r.ReviewedAt, r.ExpiresAt,
+                Reviewer = new
+                {
+                    r.MedicalReviewer.FirstName, r.MedicalReviewer.LastName, r.MedicalReviewer.Title,
+                    r.MedicalReviewer.Slug, r.MedicalReviewer.MedicalLicenseNumber, r.MedicalReviewer.YearsOfExperience
+                }
+            }).ToList(),
+            Sources = article.Sources.Select(s => new { s.Id, s.Title, s.Url, s.Publisher, s.PublicationYear, s.DisplayOrder }).ToList(),
+            FAQs = faqs,
+            InternalLinks = internalLinks
+        });
+    }
+
     [HttpPost("articles")]
     public async Task<IActionResult> CreateArticle([FromBody] CreateArticleDto dto)
     {

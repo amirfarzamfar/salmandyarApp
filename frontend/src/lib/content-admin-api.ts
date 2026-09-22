@@ -170,6 +170,9 @@ export const adminContentApi = {
   unpublishArticle: (id: number) =>
     api.post(`/admin/content/articles/${id}/unpublish`).then(r => r.data),
 
+  previewArticleBySlug: (slug: string) =>
+    api.get(`/admin/content/articles/preview/${slug}`).then(r => r.data),
+
   uploadImage: (file: File, use: 'featured' | 'inline' = 'featured'): Promise<UploadImageResult> => {
     const fd = new FormData();
     fd.append('file', file);

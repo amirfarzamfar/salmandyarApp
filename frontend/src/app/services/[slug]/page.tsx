@@ -1,13 +1,24 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { Phone, Star, MapPin, CheckCircle2, ShieldCheck, MessageSquare, Clock, ArrowLeft, Award, HandHeart, UserCheck, Building, ChevronDown } from 'lucide-react';
+import {
+  Phone, Star, MapPin, CheckCircle2, ShieldCheck, MessageSquare, Clock, ArrowLeft, Award, HandHeart, UserCheck, Building, ChevronDown,
+  Droplets, Camera, GraduationCap, Activity, Syringe, UserPlus, CalendarClock, BriefcaseMedical, FileText, RefreshCw, ClipboardCheck, Users, PhoneCall, HeartPulse, Droplet, Sparkles, Zap, Home, Stethoscope, Baby, Pill, Thermometer, Scale, Microscope, FlaskConical, AlertTriangle, Info, CircleHelp, Eye, IdCard, BadgeCheck, BadgePercent, Wrench, Settings2, LineChart, HeartHandshake, Smile,
+} from 'lucide-react';
 import Navbar from '@/components/landing/Navbar';
 import Footer from '@/components/landing/Footer';
 import Breadcrumb from '@/components/seo/Breadcrumb';
 import { ServiceSchema } from '@/lib/seo/structured-data';
 import { listServicesWithSeo, getServiceLandingBySlug, listArticles, listCities, getFaqs } from '@/lib/content-api';
 import ServiceLandingInteractiveShell from '@/components/services/ServiceLandingInteractiveShell';
+import type { LucideIcon } from 'lucide-react';
+
+const ICON_NAME_MAP: Record<string, LucideIcon> = {
+  // Icons used inside benefits.iconName in content-data.ts
+  ShieldCheck, FileText, Pill, Clock, HeartPulse, GraduationCap, Activity, PhoneCall, Syringe, MessageSquare, CalendarClock, Camera, BriefcaseMedical, Droplets, UserPlus, UserCheck, RefreshCw, ClipboardCheck, Users, LineChart, HeartHandshake, Smile, AlertTriangle,
+  // Extra icons used manually in the page components
+  Sparkles, Zap, BadgePercent, Phone, Star, MapPin, Award, HandHeart, Building, ChevronDown, Settings2, Wrench, Home, Stethoscope,
+};
 
 export async function generateStaticParams() {
   const services = await listServicesWithSeo();
@@ -191,8 +202,11 @@ export default async function ServiceLandingPage({ params }: { params: Promise<{
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {service.benefits.map(b => (
                   <div key={b.id} className="p-6 rounded-3xl bg-gradient-to-br from-white to-gray-50/50 border border-gray-100 hover:shadow-xl hover:border-teal-100 transition-all group">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg text-2xl ${b.colorClass || 'bg-gradient-to-br from-teal-100 to-teal-50 text-teal-600'}`}>
-                      {b.iconName || '✨'}
+                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg ${b.colorClass || 'bg-gradient-to-br from-teal-100 to-teal-50 text-teal-600'}`}>
+                      {(() => {
+                        const IconComp = b.iconName ? ICON_NAME_MAP[b.iconName] : undefined;
+                        return IconComp ? <IconComp size={26} /> : <Sparkles size={26} className="text-teal-500" />;
+                      })()}
                     </div>
                     <h3 className="font-black text-lg text-gray-900 mb-2 group-hover:text-teal-700 transition">{b.title}</h3>
                     {b.description && <p className="text-sm text-gray-600 leading-relaxed">{b.description}</p>}
@@ -201,6 +215,63 @@ export default async function ServiceLandingPage({ params }: { params: Promise<{
               </div>
             </section>
           )}
+
+          {/* Why Choose Salmandyar */}
+          <section className="py-16 border-t border-gray-100 bg-gradient-to-b from-white via-slate-50/40 to-white relative overflow-hidden">
+            <div className="pointer-events-none absolute inset-0">
+              <div className="absolute -top-10 right-10 w-64 h-64 rounded-full bg-teal-100/50 blur-3xl" />
+              <div className="absolute bottom-10 -left-10 w-72 h-72 rounded-full bg-emerald-100/50 blur-3xl" />
+            </div>
+            <div className="container relative mx-auto px-4 sm:px-6 lg:px-8">
+              <SectionHeader eyebrow="چرا سالمندیار؟" title="۶ دلیل محکم که شما را از انتخاب سالمندیار مطمئن می‌کند" />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 max-w-6xl mx-auto">
+                {[
+                  { n: '۰۱', t: 'سوابق معتبر و مدارک رسمی', d: 'تمامی پرستاران و کادر درمانی دارای پروانه اشتغال رسمی از وزارت بهداشت، درمان و آموزش پزشکی هستند و سوابق کاری آن‌ها به صورت حضوری و تلفنی تأیید شده است.', i: ShieldCheck, c: 'from-teal-500 to-emerald-500' },
+                  { n: '۰۲', t: 'پشتیبانی ۲۴ ساعته', d: 'تیم پشتیبانی و پزشکی سالمندیار در تمام روزهای هفته، حتی در تعطیلات رسمی و شب، برای پاسخگویی به سوالات و اضطراری شما حاضر و آماده اقدام هستند.', i: PhoneCall, c: 'from-sky-500 to-blue-500' },
+                  { n: '۰۳', t: 'تضمین کیفیت و امکان تعویض پرستار', d: 'اگر از پرستار اختصاصی راضی نباشید، تا ۴۸ ساعت اول و همچنین در طول قرارداد، امکان تعویض رایگان پرستار با مشخصات هم‌ارز برای شما فراهم شده است.', i: RefreshCw, c: 'from-indigo-500 to-purple-500' },
+                  { n: '۰۴', t: 'ارسال سریع در کمتر از ۲ ساعت', d: 'برای خدمات فوری (تزریق، پانسمان، کاتتر، کانولا) پرستار متخصص در نقاط مرکزی تهران و کرج، کمتر از دو ساعت پس از ثبت درخواست، در منزل شما حاضر می‌شود.', i: Zap, c: 'from-amber-500 to-orange-500' },
+                  { n: '۰۵', t: 'گزارش‌دهی شفاف و منظم', d: 'پس از هر مراجعه پرستار، گزارش تصویری و کتبی شامل وضعیت بیمار، اقدامات انجام‌شده و پیشنهادات بعدی از طریق سامانه یا پیامک برای شما ارسال می‌شود.', i: ClipboardCheck, c: 'from-rose-500 to-pink-500' },
+                  { n: '۰۶', t: 'قیمت‌گذاری شفاف و بدون هزینه پنهان', d: 'هزینه‌ها قبل از شروع خدمت به صورت شفاف و با احتساب تمام لوازم مصرفی اعلام می‌شود و هزینه اضافی به صورت ناگهانی از شما دریافت نخواهد شد.', i: BadgePercent, c: 'from-fuchsia-500 to-violet-500' },
+                ].map(item => (
+                  <div key={item.n} className="group p-6 sm:p-7 rounded-3xl bg-white/80 backdrop-blur border border-gray-100 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-500">
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg bg-gradient-to-br ${item.c} flex-shrink-0 group-hover:scale-110 transition`}>
+                        <item.i size={22} />
+                      </div>
+                      <div className="text-sm font-black text-slate-400 group-hover:text-teal-600 transition leading-none mt-3">{item.n}</div>
+                    </div>
+                    <h3 className="font-black text-xl text-gray-900 mb-2 leading-tight group-hover:text-teal-700 transition">{item.t}</h3>
+                    <p className="text-sm text-gray-600 leading-[2]">{item.d}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA Banner */}
+              <div className="mt-12 max-w-4xl mx-auto p-6 sm:p-8 rounded-[2rem] bg-gradient-to-r from-teal-600 via-teal-700 to-emerald-700 text-white shadow-2xl shadow-teal-700/20 overflow-hidden relative">
+                <div className="absolute inset-0 opacity-20" style={{backgroundImage: 'radial-gradient(circle at 0% 50%, white 0%, transparent 50%), radial-gradient(circle at 100% 50%, white 0%, transparent 50%)'}} />
+                <div className="relative flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="flex-1">
+                    <h3 className="text-2xl sm:text-3xl font-black mb-2 leading-tight">
+                      همین حالا درخواست پرستار متخصص را ثبت کنید
+                    </h3>
+                    <p className="text-teal-100 text-base sm:text-lg leading-relaxed">
+                      مشاوره اولیه کاملاً رایگان است و تا قبل از شروع خدمت هیچ گونه وجهی از شما دریافت نمی‌شود.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <Link href="#guest-request-form" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-white text-teal-700 font-black shadow-xl hover:scale-[1.03] hover:shadow-2xl transition text-base whitespace-nowrap">
+                      <HandHeart size={20} />
+                      درخواست فوری خدمات
+                    </Link>
+                    <a href="tel:09128718237" className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl bg-white/15 backdrop-blur border border-white/25 text-white font-black hover:bg-white/25 transition text-base whitespace-nowrap">
+                      <Phone size={20} />
+                      تماس تلفنی
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* Target Patients + Coverage */}
           <section className="py-16 border-t border-gray-100 grid grid-cols-1 lg:grid-cols-2 gap-8">

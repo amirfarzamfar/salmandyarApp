@@ -23,6 +23,23 @@ function apiUrl(path: string) {
   return `${origin}${API_PREFIX}${normalized}`;
 }
 
+function toCamelCaseKey(k: string): string {
+  if (!k) return k;
+  if (k.length <= 1) return k.toLowerCase();
+  return k.charAt(0).toLowerCase() + k.slice(1);
+}
+
+function deepCamelize(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(deepCamelize);
+  if (typeof obj !== 'object') return obj;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+    out[toCamelCaseKey(k)] = deepCamelize(v);
+  }
+  return out;
+}
+
 async function safeFetch<T>(
   path: string,
   fallback: T,
@@ -46,7 +63,8 @@ async function safeFetch<T>(
       return fallback;
     }
     const json = await res.json();
-    return (json ?? fallback) as T;
+    const normalized = deepCamelize(json ?? fallback) as T;
+    return normalized;
   } catch {
     return fallback;
   }

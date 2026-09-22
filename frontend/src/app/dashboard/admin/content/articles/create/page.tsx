@@ -624,8 +624,9 @@ export default function CreateArticlePage() {
   };
 
   const handlePreview = () => {
-    if (editId) {
-      const win = window.open(`/articles/${slug || '#'}`, '_blank', 'noopener,noreferrer');
+    if (editId || slug.trim()) {
+      const targetSlug = (slug || '').trim() || '#';
+      const win = window.open(`/articles/preview/${targetSlug}`, '_blank', 'noopener,noreferrer');
       if (!win) toast.success('صفحه پیش‌نمایش باز شد');
     } else {
       toast('ذخیره مقاله برای مشاهده پیش‌نمایش', { icon: '📝' });

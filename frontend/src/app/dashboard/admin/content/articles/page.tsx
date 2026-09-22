@@ -507,7 +507,7 @@ export default function ArticlesAdminPage() {
                         <td className="px-4 py-3.5 whitespace-nowrap">
                           <div className="flex items-center gap-1">
                             <Link
-                              href={`/articles/${article.slug}`}
+                              href={`/articles/preview/${article.slug}`}
                               target="_blank"
                               title="پیش‌نمایش"
                               className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-teal-600 transition-colors"
