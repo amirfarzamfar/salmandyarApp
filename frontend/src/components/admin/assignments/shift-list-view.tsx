@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { assignmentService } from "@/services/assignment.service";
 import { AssignmentDto, AssignmentStatus, ShiftSlot } from "@/types/assignment";
-import { format } from "date-fns-jalali";
 import { Stethoscope, User, Clock, CalendarDays, History, Edit, ChevronLeft, ChevronRight, Timer, LogOut, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import {
@@ -12,6 +11,8 @@ import {
   getAssignmentRemainingText,
   getAssignmentStatusPresentation,
   getAssignmentTimings,
+  safeFormatJalali,
+  isValidDate,
 } from "@/lib/assignment-status";
 
 interface ShiftListViewProps {
@@ -111,13 +112,13 @@ export function ShiftListView({ search, patientId, caregiverId, status, start, e
                   }`}
                 >
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900 dark:text-white leading-tight">
-                      {format(timings.start, 'yyyy/MM/dd HH:mm')}
+                    <div className={`font-medium leading-tight ${isValidDate(timings.start) ? 'text-gray-900 dark:text-white' : 'text-amber-600'}`}>
+                      {safeFormatJalali(timings.start, 'yyyy/MM/dd HH:mm', 'تاریخ شروع نامعتبر')}
                     </div>
                     <div className="mt-1 text-[11px] text-gray-500 flex items-center gap-1">
                       <Clock size={11} />
-                      پایان: {format(timings.effectiveEnd, 'yyyy/MM/dd HH:mm')}
-                      {timings.source !== 'explicit-end-date' && (
+                      پایان: {safeFormatJalali(timings.effectiveEnd, 'yyyy/MM/dd HH:mm', 'تاریخ پایان نامعتبر')}
+                      {timings.source !== 'explicit-end-date' && isValidDate(timings.effectiveEnd) && (
                         <span className="text-gray-400 mr-1">(پیش‌فرض)</span>
                       )}
                     </div>

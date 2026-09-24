@@ -1,4 +1,43 @@
 import { AssignmentDto, AssignmentStatus, AssignmentType, ShiftSlot } from '@/types/assignment';
+import { format as formatJalali } from 'date-fns-jalali';
+import { format as formatGregorian, Locale } from 'date-fns';
+
+export function isValidDate(d: unknown): d is Date {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+
+export function safeParseDate(value: string | undefined | null): Date | null {
+  if (value === undefined || value === null || value === '') return null;
+  try {
+    const d = new Date(value);
+    return isValidDate(d) ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+export function safeFormatJalali(date: Date | null | undefined, pattern: string, fallback: string = '—'): string {
+  if (!isValidDate(date)) return fallback;
+  try {
+    return formatJalali(date!, pattern);
+  } catch {
+    return fallback;
+  }
+}
+
+export function safeFormatGregorian(
+  date: Date | null | undefined,
+  pattern: string,
+  opts?: { locale?: Locale },
+  fallback: string = '—',
+): string {
+  if (!isValidDate(date)) return fallback;
+  try {
+    return formatGregorian(date!, pattern, opts);
+  } catch {
+    return fallback;
+  }
+}
 
 export function getShiftSlotLabelFromSlot(slot?: ShiftSlot): string {
   if (slot === undefined || slot === null) return 'نامشخص';
@@ -49,13 +88,15 @@ export const ASSIGNMENT_TYPE_DEFAULT_HOURS: Record<AssignmentType, number> = {
 };
 
 export function getAssignmentTimings(a: Pick<AssignmentDto, 'startDate' | 'endDate' | 'shiftSlot' | 'assignmentType'>): AssignmentTimings {
-  const start = new Date(a.startDate);
-  if (a.endDate) {
-    const end = new Date(a.endDate);
+  const fallbackNow = new Date();
+  const start = safeParseDate(a.startDate) ?? fallbackNow;
+
+  const explicitEnd = safeParseDate(a.endDate);
+  if (explicitEnd) {
     return {
       start,
-      end,
-      effectiveEnd: end,
+      end: explicitEnd,
+      effectiveEnd: explicitEnd,
       source: 'explicit-end-date',
     };
   }
@@ -64,10 +105,10 @@ export function getAssignmentTimings(a: Pick<AssignmentDto, 'startDate' | 'endDa
   let source: AssignmentTimings['source'] = 'fallback-24h';
 
   if (a.shiftSlot !== undefined && a.shiftSlot !== null && a.shiftSlot !== ShiftSlot.None) {
-    hours = SHIFT_SLOT_DEFAULT_HOURS[a.shiftSlot];
+    hours = SHIFT_SLOT_DEFAULT_HOURS[a.shiftSlot] ?? 24;
     source = 'shift-slot-default';
   } else if (a.assignmentType !== undefined && a.assignmentType !== null) {
-    hours = ASSIGNMENT_TYPE_DEFAULT_HOURS[a.assignmentType];
+    hours = ASSIGNMENT_TYPE_DEFAULT_HOURS[a.assignmentType] ?? 24;
     source = 'assignment-type-default';
   } else {
     hours = 24;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AssignmentDto, AssignmentStatus, ShiftSlot } from "@/types/assignment";
-import { format, startOfWeek, addDays, isSameDay } from "date-fns";
+import { startOfWeek, addDays, isSameDay } from "date-fns";
 import { faIR } from "date-fns/locale";
 import { User, Stethoscope, Clock, CalendarDays, Timer, LogOut, Undo2, Loader2 } from "lucide-react";
 import {
@@ -10,6 +10,9 @@ import {
   getAssignmentStatusPresentation,
   getAssignmentTimings,
   getAssignmentRemainingText,
+  safeParseDate,
+  safeFormatGregorian,
+  isValidDate,
 } from "@/lib/assignment-status";
 
 interface CaregiverScheduleProps {
@@ -33,8 +36,8 @@ export function CaregiverSchedule({ assignments, onEdit, currentDate = new Date(
 
   const getAssignmentsForDay = (date: Date) => {
     return assignments.filter(a => {
-      const start = new Date(a.startDate);
-      return isSameDay(date, start); 
+      const start = safeParseDate(a.startDate);
+      return start ? isSameDay(date, start) : false;
     });
   };
 
@@ -75,7 +78,7 @@ export function CaregiverSchedule({ assignments, onEdit, currentDate = new Date(
             <div key={day.toString()} className="rounded-xl border border-gray-100 bg-gray-50/80 p-4 dark:border-gray-700 dark:bg-gray-900/40">
               <div className="mb-3 flex items-start justify-between gap-3 border-b border-gray-200 pb-3 dark:border-gray-700">
                 <div>
-                  <div className="font-bold text-gray-700 dark:text-gray-200">{format(day, 'EEEE', { locale: faIR })}</div>
+                  <div className="font-bold text-gray-700 dark:text-gray-200">{safeFormatGregorian(day, 'EEEE', { locale: faIR }, '')}</div>
                   <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">{formatPersianDate(day)}</div>
                 </div>
                 <div className="rounded-full bg-white px-2.5 py-1 text-xs text-gray-500 shadow-sm dark:bg-gray-800 dark:text-gray-300">
@@ -117,9 +120,9 @@ export function CaregiverSchedule({ assignments, onEdit, currentDate = new Date(
                         </div>
                         <div className="mt-2 space-y-2 border-t border-black/5 pt-2 dark:border-white/10">
                           <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex w-fit items-center gap-1.5 rounded bg-black/5 px-1.5 py-0.5 text-[10px] opacity-90 dark:bg-white/5">
+                            <div className={`flex w-fit items-center gap-1.5 rounded px-1.5 py-0.5 text-[10px] opacity-90 dark:bg-white/5 ${isValidDate(timings.start) && isValidDate(timings.effectiveEnd) ? 'bg-black/5' : 'bg-amber-100 text-amber-700'}`}>
                               <Clock size={10} />
-                              <span>{format(timings.start, 'HH:mm')} — {format(timings.effectiveEnd, 'HH:mm')}</span>
+                              <span>{safeFormatGregorian(timings.start, 'HH:mm', undefined, '--:--')} — {safeFormatGregorian(timings.effectiveEnd, 'HH:mm', undefined, '--:--')}</span>
                             </div>
                             {assignment.shiftSlot !== undefined && assignment.shiftSlot !== ShiftSlot.None && (
                               <div className="flex w-fit items-center gap-1.5 rounded bg-teal-100 px-1.5 py-0.5 text-[10px] font-bold text-teal-700 dark:bg-teal-900/50 dark:text-teal-300">
@@ -177,7 +180,7 @@ export function CaregiverSchedule({ assignments, onEdit, currentDate = new Date(
       <div className="hidden md:grid md:grid-cols-7 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
         {days.map(day => (
           <div key={day.toString()} className="p-4 text-center border-l dark:border-gray-700 last:border-l-0">
-            <div className="font-bold text-gray-700 dark:text-gray-200">{format(day, 'EEEE', { locale: faIR })}</div>
+            <div className="font-bold text-gray-700 dark:text-gray-200">{safeFormatGregorian(day, 'EEEE', { locale: faIR }, '')}</div>
             <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">{formatPersianDate(day)}</div>
           </div>
         ))}
@@ -221,9 +224,9 @@ export function CaregiverSchedule({ assignments, onEdit, currentDate = new Date(
                     {/* Shift/Time Row */}
                     <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-black/5 dark:border-white/10">
                       <div className="flex items-center justify-between gap-1">
-                        <div className="flex items-center gap-1.5 text-[10px] opacity-90 bg-black/5 dark:bg-white/5 rounded px-1.5 py-0.5 w-fit">
+                        <div className={`flex items-center gap-1.5 text-[10px] opacity-90 rounded px-1.5 py-0.5 w-fit ${isValidDate(timings.start) && isValidDate(timings.effectiveEnd) ? 'bg-black/5 dark:bg-white/5' : 'bg-amber-100 text-amber-700'}`}>
                           <Clock size={10} />
-                          <span>{format(timings.start, 'HH:mm')}–{format(timings.effectiveEnd, 'HH:mm')}</span>
+                          <span>{safeFormatGregorian(timings.start, 'HH:mm', undefined, '--:--')}–{safeFormatGregorian(timings.effectiveEnd, 'HH:mm', undefined, '--:--')}</span>
                         </div>
                         {assignment.shiftSlot !== undefined && assignment.shiftSlot !== ShiftSlot.None && (
                           <div className="flex items-center gap-1.5 text-[10px] font-bold text-teal-700 dark:text-teal-300 bg-teal-100 dark:bg-teal-900/50 rounded px-1.5 py-0.5 w-fit">

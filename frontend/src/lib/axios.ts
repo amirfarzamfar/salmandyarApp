@@ -6,6 +6,7 @@ const protectedPrefixes = ['/dashboard', '/nurse-portal', '/portal'];
 
 const api = axios.create({
   baseURL: getApiBaseUrl(),
+  timeout: 12000,
   headers: {
     'Content-Type': 'application/json',
   },

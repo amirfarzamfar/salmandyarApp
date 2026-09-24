@@ -21,13 +21,15 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { format } from "date-fns-jalali";
+import { format as formatJalali } from "date-fns-jalali";
 import {
   computeAssignmentStatus,
   getAssignmentTimings,
   getAssignmentRemainingText,
   getAssignmentStatusPresentation,
   getShiftSlotLabelFromSlot,
+  safeFormatJalali,
+  safeFormatGregorian,
 } from "@/lib/assignment-status";
 
 export type ShiftCloseType =
@@ -273,7 +275,7 @@ export function AssignmentCloseDialog({ isOpen, onClose, assignment, onSuccess }
 
       const closeAuditLines: string[] = [];
       const when = now.toISOString();
-      const whenFa = format(now, "yyyy/MM/dd HH:mm");
+      const whenFa = formatJalali(now, "yyyy/MM/dd HH:mm");
       closeAuditLines.push("=== بسته شدن شیفت توسط ادمین ===");
       closeAuditLines.push(`زمان بستن: ${whenFa}`);
       closeAuditLines.push(`نوع بستن: ${opt.label}`);
@@ -420,9 +422,9 @@ export function AssignmentCloseDialog({ isOpen, onClose, assignment, onSuccess }
                 <div className="min-w-0">
                   <div className="text-[11px] font-medium text-gray-500 dark:text-gray-400">شیفت {getShiftSlotLabel(assignment.shiftSlot)} — بازه زمانی</div>
                   <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-                    {timings && format(timings.start, "yyyy/MM/dd HH:mm")} تا {timings && format(timings.effectiveEnd, "yyyy/MM/dd HH:mm")}
+                    {safeFormatJalali(timings?.start, "yyyy/MM/dd HH:mm", "نامشخص")} تا {safeFormatJalali(timings?.effectiveEnd, "yyyy/MM/dd HH:mm", "نامشخص")}
                   </div>
-                  {timings?.source !== 'explicit-end-date' && (
+                  {timings?.source !== 'explicit-end-date' && timings?.effectiveEnd && (
                     <div className="text-[10px] text-gray-400 mt-0.5">مدت پیش‌فرض بر اساس نوع شیفت</div>
                   )}
                 </div>
