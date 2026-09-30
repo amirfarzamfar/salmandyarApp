@@ -7,7 +7,6 @@ import DateObjectImport from 'react-date-object';
 import persianCalendar from 'react-date-object/calendars/persian';
 import persianFaLocale from 'react-date-object/locales/persian_fa';
 import { parse as jalaliParse, isValid as jalaliIsValid, format as jalaliFormat } from 'date-fns-jalali';
-import { parseISO } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const DateObject = ((DateObjectImport as any)?.default ?? DateObjectImport) as any;
@@ -45,12 +44,29 @@ function gregorianIsoToJalaliDisplay(isoOrDate: string, includeTimePart = false)
     if (!trimmed) return '';
 
     let gDate: Date;
+
     if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      gDate = parseISO(trimmed);
+      const [yStr, mStr, dStr] = trimmed.split('-');
+      gDate = new Date(
+        parseInt(yStr, 10),
+        parseInt(mStr, 10) - 1,
+        parseInt(dStr, 10),
+        0, 0, 0, 0
+      );
     } else {
-      gDate = new Date(trimmed);
-      if (isNaN(gDate.getTime())) return '';
+      const parsed = new Date(trimmed);
+      if (isNaN(parsed.getTime())) return '';
+      gDate = new Date(
+        parsed.getUTCFullYear(),
+        parsed.getUTCMonth(),
+        parsed.getUTCDate(),
+        parsed.getUTCHours(),
+        parsed.getUTCMinutes(),
+        0, 0
+      );
     }
+
+    if (isNaN(gDate.getTime())) return '';
 
     const jDisplay = jalaliFormat(gDate, includeTimePart ? 'yyyy/MM/dd HH:mm' : 'yyyy/MM/dd');
     return jDisplay || '';
@@ -93,8 +109,30 @@ function gregorianIsoToJalaliDateObject(isoOrDate: string): any | null {
   try {
     if (!isoOrDate) return null;
     const trimmed = isoOrDate.trim(); if (!trimmed) return null;
-    const gDate = /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? parseISO(trimmed) : new Date(trimmed);
+
+    let gDate: Date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+      const [yStr, mStr, dStr] = trimmed.split('-');
+      gDate = new Date(
+        parseInt(yStr, 10),
+        parseInt(mStr, 10) - 1,
+        parseInt(dStr, 10),
+        0, 0, 0, 0
+      );
+    } else {
+      const parsed = new Date(trimmed);
+      if (isNaN(parsed.getTime())) return null;
+      gDate = new Date(
+        parsed.getUTCFullYear(),
+        parsed.getUTCMonth(),
+        parsed.getUTCDate(),
+        parsed.getUTCHours(),
+        parsed.getUTCMinutes(),
+        0, 0
+      );
+    }
     if (isNaN(gDate.getTime())) return null;
+
     const jDisplay = jalaliFormat(gDate, 'yyyy/MM/dd HH:mm');
     if (!jDisplay) return null;
     const [datePart, timePart] = jDisplay.split(' ');

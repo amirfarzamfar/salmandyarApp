@@ -6,7 +6,7 @@ import { ReportWriter } from "@/components/nurse-portal/report-writer";
 import { ServiceTracker } from "@/components/nurse-portal/service-tracker";
 import { MedicationTracker } from "@/components/nurse-portal/medication-tracker";
 import { PortalButton } from "@/components/portal/ui/portal-button";
-import { User, Phone, Activity, FileText, Calendar, AlertCircle, Loader2, Pill } from "lucide-react";
+import { User, Phone, Activity, FileText, Calendar, AlertCircle, Loader2, Pill, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { patientService } from "@/services/patient.service";
@@ -16,12 +16,13 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { PageHeader } from "@/components/navigation/PageHeader";
 import { getPanelNavigation } from "@/components/navigation/panel-navigation";
 import { usePathname } from "next/navigation";
+import { PatientLabsTab } from "@/features/labs/PatientLabsTab";
 
 export default function PatientDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const pathname = usePathname();
   const nav = getPanelNavigation("nurse", pathname);
-  const [activeTab, setActiveTab] = useState<'vitals' | 'reports' | 'services' | 'meds'>('vitals');
+  const [activeTab, setActiveTab] = useState<'vitals' | 'reports' | 'services' | 'meds' | 'labs'>('vitals');
   const [patient, setPatient] = useState<Patient | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -166,6 +167,13 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           active={activeTab === 'services'} 
           onClick={() => setActiveTab('services')} 
         />
+        <TabButton 
+          id="labs" 
+          label="آزمایش‌ها" 
+          icon={FlaskConical} 
+          active={activeTab === 'labs'} 
+          onClick={() => setActiveTab('labs')} 
+        />
       </div>
 
       {/* Tab Content with Animation */}
@@ -181,6 +189,7 @@ export default function PatientDetailPage({ params }: { params: Promise<{ id: st
           {activeTab === 'meds' && <MedicationTracker patientId={patient.id} />}
           {activeTab === 'reports' && <ReportWriter patientId={patient.id} />}
           {activeTab === 'services' && <ServiceTracker patientId={patient.id} />}
+          {activeTab === 'labs' && <PatientLabsTab patientId={patient.id} canManage={true} />}
         </motion.div>
       </AnimatePresence>
     </div>

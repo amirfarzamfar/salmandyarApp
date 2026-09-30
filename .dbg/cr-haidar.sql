@@ -1,0 +1,1 @@
+SELECT "Id", "FirstName", "LastName", "UserId", "PrimaryDiagnosis", "CurrentStatus" FROM "CareRecipients" WHERE "UserId" = '14140e4d-3af8-4ec0-b09c-ece9ce2c27e3' OR "FirstName" ILIKE '%حیدر%' OR "LastName" ILIKE '%حیدر%' ORDER BY "Id";

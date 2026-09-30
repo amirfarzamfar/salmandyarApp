@@ -2968,6 +2968,596 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("HomeCareRequestTimelineEvents", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.LabTestCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.ToTable("LabTestCategories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "CBC و هماتولوژی",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "قند خون",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "عملکرد کلیه",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "عملکرد کبد",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "چربی خون",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "تیروئید و هورمون‌ها",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "انعقادی",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "ادرار",
+                            SortOrder = 7
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "کشت‌ها",
+                            SortOrder = 8
+                        });
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.LabTestDefinition", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("CriticalMax")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("CriticalMin")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("DataType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("EnglishName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<decimal?>("ReferenceMax")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("ReferenceMin")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.HasIndex("CategoryId", "IsActive", "SortOrder");
+
+                    b.ToTable("LabTestDefinitions");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CategoryId = 1,
+                            Code = "WBC",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "WBC",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "WBC",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CategoryId = 1,
+                            Code = "RBC",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "RBC",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "RBC",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CategoryId = 1,
+                            Code = "HB",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Hb",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Hb",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 4,
+                            CategoryId = 1,
+                            Code = "HCT",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Hct",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Hct",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = 5,
+                            CategoryId = 1,
+                            Code = "MCV",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "MCV",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "MCV",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = 6,
+                            CategoryId = 1,
+                            Code = "MCH",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "MCH",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "MCH",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Id = 7,
+                            CategoryId = 1,
+                            Code = "MCHC",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "MCHC",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "MCHC",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Id = 8,
+                            CategoryId = 1,
+                            Code = "PLT",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "PLT",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "PLT",
+                            SortOrder = 7
+                        },
+                        new
+                        {
+                            Id = 9,
+                            CategoryId = 1,
+                            Code = "NEUTROPHIL",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Neutrophil",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Neutrophil",
+                            SortOrder = 8
+                        },
+                        new
+                        {
+                            Id = 10,
+                            CategoryId = 1,
+                            Code = "LYMPHOCYTE",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Lymphocyte",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Lymphocyte",
+                            SortOrder = 9
+                        },
+                        new
+                        {
+                            Id = 11,
+                            CategoryId = 2,
+                            Code = "FBS",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "FBS",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "FBS",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = 12,
+                            CategoryId = 2,
+                            Code = "BS",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "BS",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "BS",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 13,
+                            CategoryId = 2,
+                            Code = "HBA1C",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "HbA1c",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "HbA1c",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 14,
+                            CategoryId = 3,
+                            Code = "BUN",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "BUN",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "BUN",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = 15,
+                            CategoryId = 3,
+                            Code = "CREATININE",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Creatinine",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Creatinine",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 16,
+                            CategoryId = 3,
+                            Code = "URIC-ACID",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Uric Acid",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Uric Acid",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 17,
+                            CategoryId = 4,
+                            Code = "AST",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "AST",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "AST",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = 18,
+                            CategoryId = 4,
+                            Code = "ALT",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "ALT",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "ALT",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 19,
+                            CategoryId = 4,
+                            Code = "ALP",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "ALP",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "ALP",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 20,
+                            CategoryId = 4,
+                            Code = "BILIRUBIN-TOTAL",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Bilirubin Total",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Bilirubin Total",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = 21,
+                            CategoryId = 4,
+                            Code = "BILIRUBIN-DIRECT",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Bilirubin Direct",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Bilirubin Direct",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = 22,
+                            CategoryId = 5,
+                            Code = "CHOLESTEROL",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Cholesterol",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Cholesterol",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = 23,
+                            CategoryId = 5,
+                            Code = "TRIGLYCERIDE",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Triglyceride",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Triglyceride",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 24,
+                            CategoryId = 5,
+                            Code = "HDL",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "HDL",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "HDL",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = 25,
+                            CategoryId = 5,
+                            Code = "LDL",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "LDL",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "LDL",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = 26,
+                            CategoryId = 6,
+                            Code = "TSH",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "TSH",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "TSH",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = 27,
+                            CategoryId = 6,
+                            Code = "FREE-T4",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "Free T4",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "Free T4",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 28,
+                            CategoryId = 7,
+                            Code = "PT",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "PT",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "PT",
+                            SortOrder = 0
+                        },
+                        new
+                        {
+                            Id = 29,
+                            CategoryId = 7,
+                            Code = "INR",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "INR",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "INR",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = 30,
+                            CategoryId = 7,
+                            Code = "PTT",
+                            CreatedAt = new DateTime(2026, 9, 26, 0, 0, 0, 0, DateTimeKind.Utc),
+                            DataType = 0,
+                            EnglishName = "PTT",
+                            IsActive = true,
+                            IsDeleted = false,
+                            Name = "PTT",
+                            SortOrder = 2
+                        });
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.MedicationAlertSettings", b =>
                 {
                     b.Property<int>("Id")
@@ -3722,6 +4312,135 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("OtpLoginSettings", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientLabReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("character varying(450)");
+
+                    b.Property<string>("FileType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FileUrl")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LaboratoryName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int>("PatientId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("PerformedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ReportTitle")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("PatientId", "IsDeleted", "PerformedAt");
+
+                    b.ToTable("PatientLabReports");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientLabResult", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool?>("BooleanValue")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal?>("CriticalMax")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("CriticalMin")
+                        .HasColumnType("numeric");
+
+                    b.Property<int>("DataType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsAbnormal")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LabTestDefinitionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<decimal?>("NumericValue")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid>("PatientLabReportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ReferenceMax")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("ReferenceMin")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("TextValue")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LabTestDefinitionId");
+
+                    b.HasIndex("PatientLabReportId", "LabTestDefinitionId")
+                        .IsUnique();
+
+                    b.ToTable("PatientLabResults");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.Address", b =>
@@ -5799,6 +6518,17 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("Request");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.LabTestDefinition", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.LabTestCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.Medications.MedicationAlertHistory", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "CareRecipient")
@@ -5944,6 +6674,50 @@ namespace Salmandyar.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Item");
+
+                    b.Navigation("Report");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientLabReport", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.LabTestCategory", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.CareRecipient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientLabResult", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.LabTestDefinition", "Definition")
+                        .WithMany()
+                        .HasForeignKey("LabTestDefinitionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.PatientLabReport", "Report")
+                        .WithMany("Results")
+                        .HasForeignKey("PatientLabReportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Definition");
 
                     b.Navigation("Report");
                 });
@@ -6521,6 +7295,11 @@ namespace Salmandyar.Infrastructure.Migrations
             modelBuilder.Entity("Salmandyar.Domain.Entities.NursingReport", b =>
                 {
                     b.Navigation("Details");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.PatientLabReport", b =>
+                {
+                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.PatientProfile.PatientProfile", b =>

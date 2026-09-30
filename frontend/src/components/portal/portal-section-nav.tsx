@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const items = [
   { label: "خانه", href: "/portal" },
   { label: "پروفایل", href: "/portal/profile" },
+  { label: "آزمایش‌ها", href: "/portal/labs" },
   { label: "آزمون‌ها", href: "/portal/assessments" },
   { label: "خدمات منزل", href: "/portal/home-care" },
 ];

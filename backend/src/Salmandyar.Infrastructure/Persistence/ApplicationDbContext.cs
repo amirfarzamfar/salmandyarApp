@@ -18,6 +18,10 @@ public class ApplicationDbContext : IdentityDbContext<User>
     }
 
     public DbSet<CareRecipient> CareRecipients { get; set; }
+    public DbSet<LabTestCategory> LabTestCategories { get; set; }
+    public DbSet<LabTestDefinition> LabTestDefinitions { get; set; }
+    public DbSet<PatientLabReport> PatientLabReports { get; set; }
+    public DbSet<PatientLabResult> PatientLabResults { get; set; }
     public DbSet<CaregiverProfile> CaregiverProfiles { get; set; }
     public DbSet<CaregiverProfileDocument> CaregiverProfileDocuments { get; set; }
     public DbSet<VitalSign> VitalSigns { get; set; }
@@ -114,6 +118,7 @@ public class ApplicationDbContext : IdentityDbContext<User>
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        LabModelConfiguration.Configure(builder);
         
         // Explicit table names to avoid naming mismatches
         builder.Entity<CareAssignment>().ToTable("CareAssignments");

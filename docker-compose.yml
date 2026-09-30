@@ -67,6 +67,7 @@ services:
       Networking__EnableHttpsRedirection: "false"
     volumes:
       - backend_uploads:/app/wwwroot/uploads
+      - backend_private_documents:/app/App_Data/patient-documents
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
       interval: 30s
@@ -120,3 +121,4 @@ services:
 volumes:
   postgres_data:
   backend_uploads:
+  backend_private_documents:

@@ -12,7 +12,7 @@ import { DocumentCards } from "@/components/portal/document-cards";
 import { QuickConnect } from "@/components/portal/quick-connect";
 import { PrivacyBadge } from "@/components/portal/ui/privacy-badge";
 import { cn } from "@/lib/utils";
-import { Eye, Smartphone, ShieldCheck, ClipboardCheck, ArrowLeft, User } from "lucide-react";
+import { Eye, Smartphone, ShieldCheck, ClipboardCheck, ArrowLeft, User, FlaskConical } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -326,6 +326,23 @@ export default function PortalPageClient() {
                     </div>
                     <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center group-hover:bg-teal-50 group-hover:border-teal-100 transition-colors">
                         <ArrowLeft size={20} className="text-gray-400 group-hover:text-teal-600" />
+                    </div>
+                </div>
+             </Link>
+
+             <Link href="/portal/labs">
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-md transition-all group cursor-pointer">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-medical-50 rounded-2xl flex items-center justify-center text-medical-600 group-hover:scale-110 transition-transform">
+                            <FlaskConical size={24} />
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-gray-800 text-lg group-hover:text-medical-700 transition-colors">آزمایش‌های من</h3>
+                            <p className="text-gray-500 text-sm">گزارش‌های آزمایشگاهی، روند نتایج و فایل‌ها</p>
+                        </div>
+                    </div>
+                    <div className="w-10 h-10 rounded-full border border-gray-100 flex items-center justify-center group-hover:bg-medical-50 group-hover:border-medical-100 transition-colors">
+                        <ArrowLeft size={20} className="text-gray-400 group-hover:text-medical-600" />
                     </div>
                 </div>
              </Link>

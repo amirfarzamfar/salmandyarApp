@@ -389,6 +389,443 @@ export const articles: Article[] = [
     isMedicalContent: false,
     isFactChecked: true,
   },
+  {
+    id: 7,
+    title: 'راهنمای کامل مراقبت از سالمند در منزل؛ از انتخاب مراقب تا پیگیری وضعیت سالمند',
+    slug: 'complete-guide-elderly-home-care',
+    content: `<h2>۱. مراقبت از سالمند در منزل چیست و چه زمانی ضروری می‌شود؟</h2>
+<p><span class="text-teal-700 font-bold">مراقبت از سالمند در منزل</span> مجموعه‌ای از خدمات پزشکی، پرستاری و حمایتی است که در محیط امن و آشفته خانه سالمند ارائه می‌شود. برخلاف مراکز پرستاری و آسایشگاه‌ها، مراقبت در منزل باعث حفظ استقلال، آرامش روانی و کیفیت زندگی بهتر برای سالمند می‌شود. این خدمات از کمک‌های روزانه ساده مثل کمک به غذا خوردن و حمام کردن گرفته تا <span class="text-emerald-700 font-bold">خدمات پرستاری تخصصی</span> مثل تزریق دارو، پانسمان زخم و کنترل علائم حیاتی را شامل می‌شود.</p>
+<p>مراقبت در منزل زمانی ضروری می‌شود که سالمند به دلیل افزایش سن، بیماری‌های مزمن، زوال عقل یا نقاهت پس از عمل جراحی، توانایی انجام کارهای روزمره خود را نداشته باشد. تحقیقات نشان می‌دهد بیش از ۷۵ درصد سالمندان ایرانی ترجیح می‌دهند آخرین سال‌های عمر را در خانه خود و نزد خانواده سپری کنند.</p>
+
+<div class="rounded-3xl bg-gradient-to-l from-teal-50 via-emerald-50 to-teal-50 border border-teal-200 p-6 my-8 shadow-md">
+  <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="flex-1">
+      <h3 class="text-lg font-black text-teal-800 mb-2">🩺 برای مراقبت فوری سالمندتان کافیست تماس بگیرید</h3>
+      <p class="text-sm text-teal-700 font-bold leading-relaxed">پرستاران و مراقبان حرفه‌ای سالمندیار در کمتر از ۲ ساعت آماده ارائه خدمات در منزل شما هستند - بدون نیاز به ثبت‌نام اولیه</p>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3">
+      <a href="/portal/home-care/request" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-teal-600 hover:bg-teal-700 text-white font-black px-6 py-3 shadow-lg shadow-teal-600/20 transition-all whitespace-nowrap">
+        درخواست سریع پرستار
+      </a>
+      <a href="#guest-request-form" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white hover:bg-teal-50 text-emerald-700 font-black px-6 py-3 border-2 border-emerald-300 transition-all whitespace-nowrap">
+        تماس فوری با ما
+      </a>
+    </div>
+  </div>
+</div>
+
+<h2>۲. چه زمانی سالمند به پرستار یا مراقب نیاز دارد؟</h2>
+<p>شناسایی زمان دقیق نیاز به کمک حرفه‌ای می‌تواند از بروز بسیاری از مشکلات جسمی و روانی جلوگیری کند. به سیگنال‌های زیر توجه کنید:</p>
+<ul class="space-y-2.5 my-4">
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span><strong class="text-slate-800">کاهش توانایی حرکتی:</strong> مشکل در پیاده‌روی، بالا رفتن از پله‌ها یا حتی بیدار شدن از تخت بدون کمک</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span><strong class="text-slate-800">فراموشی مکرر:</strong> فراموش کردن خاموش کردن اجاق، مصرف نکردن داروها یا گم کردن مسیر خانه</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span><strong class="text-slate-800">کاهش وزن ناگهانی:</strong> کمبود اشتها یا مشکل در آماده کردن غذا برای خودش</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span><strong class="text-slate-800">بهداشت شخصی نامناسب:</strong> عدم رعایت بهداشت روزانه، پوشیدن لباس‌های کثیف یا بوی نامطبوع بدن</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span><strong class="text-slate-800">چندین بار سقوط در سال گذشته:</strong> حتی سقوط‌های جزئی می‌توانند زنگ خطری برای مشکلات جدی‌تر باشند</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span><strong class="text-slate-800">افزایش اضطراب یا کناره‌گیری از اجتماع:</strong> تمایل به تنهایی و عدم شرکت در مهمانی‌های خانوادگی که قبلاً علاقه‌مند بود</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span><strong class="text-slate-800">کنترل نامناسب بیماری‌های مزمن:</strong> نوسانات مکرر قند خون یا فشار خون بالا علی‌رغم مصرف دارو</span></li>
+</ul>
+
+<h2>۳. تفاوت پرستار سالمند و مراقب سالمند چیست؟</h2>
+<p>یکی از رایج‌ترین سوالات خانواده‌ها تفاوت بین پرستار و مراقب است. این دو نقش تفاوت‌های اساسی در مسئولیت‌ها، تحصیلات و تعرفه دارند:</p>
+<table class="w-full my-6 border-collapse rounded-2xl overflow-hidden shadow-sm">
+  <thead>
+    <tr class="bg-gradient-to-l from-teal-600 to-emerald-500 text-white">
+      <th class="px-4 py-3.5 text-right text-sm font-black">معیار</th>
+      <th class="px-4 py-3.5 text-right text-sm font-black">پرستار سالمند</th>
+      <th class="px-4 py-3.5 text-right text-sm font-black">مراقب سالمند</th>
+    </tr>
+  </thead>
+  <tbody class="divide-y divide-slate-200 bg-white">
+    <tr class="hover:bg-slate-50">
+      <td class="px-4 py-3 font-bold text-slate-700">تحصیلات</td>
+      <td class="px-4 py-3 text-slate-600">دارای مدرک کاردانی یا کارشناسی پرستاری و دارای پروانه اشتغال به کار وزارت بهداشت</td>
+      <td class="px-4 py-3 text-slate-600">دیپلم به بالا با گذراندن دوره‌های آموزشی مراقبت از سالمند</td>
+    </tr>
+    <tr class="hover:bg-slate-50 bg-slate-50/40">
+      <td class="px-4 py-3 font-bold text-slate-700">وظایف پزشکی</td>
+      <td class="px-4 py-3 text-slate-600">تزریق دارو، پانسمان، اندازه‌گیری علائم حیاتی، ساکشن، تغذیه از طریق PEG و تراکئوستومی</td>
+      <td class="px-4 py-3 text-slate-600">کمک به امور روزانه؛ وظایف تخصصی پزشکی بر عهده پرستار است</td>
+    </tr>
+    <tr class="hover:bg-slate-50">
+      <td class="px-4 py-3 font-bold text-slate-700">وظایف حمایتی</td>
+      <td class="px-4 py-3 text-slate-600">همراهی پزشکی و آموزشی به خانواده</td>
+      <td class="px-4 py-3 text-slate-600">حمام کردن، پوشاندن، کمک به غذا خوردن، تمیز کردن منزل و همراهی بیرون از منزل</td>
+    </tr>
+    <tr class="hover:bg-slate-50 bg-slate-50/40">
+      <td class="px-4 py-3 font-bold text-slate-700">مناسب برای</td>
+      <td class="px-4 py-3 text-slate-600">سالمندان بیمار، تخت‌بخواب، زخم بستر، بعد از عمل و نیازمند مراقبت‌های تخصصی</td>
+      <td class="px-4 py-3 text-slate-600">سالمندان نسبتاً سالم که فقط در کارهای روزانه به کمک نیاز دارند</td>
+    </tr>
+    <tr class="hover:bg-slate-50">
+      <td class="px-4 py-3 font-bold text-slate-700">هزینه</td>
+      <td class="px-4 py-3 text-slate-600">بالا‌تر (به دلیل تخصص و مدارک پزشکی)</td>
+      <td class="px-4 py-3 text-slate-600">پایین‌تر و مناسب‌تر برای حمایت طولانی‌مدت</td>
+    </tr>
+  </tbody>
+</table>
+<p>در سالمندیار، شما می‌توانید هر دو نوع کادر درمانی را بر اساس نیاز واقعی سالمندتان درخواست کنید. کارشناسان ما پس از <a href="/portal/home-care/request" class="text-teal-700 font-bold underline decoration-2 hover:text-emerald-700">ارزیابی رایگان از وضعیت سالمند</a>، بهترین ترکیب پرستار و مراقب را به شما پیشنهاد می‌دهند.</p>
+
+<h2>۴. هنگام انتخاب مراقب سالمند به چه نکاتی توجه کنیم؟</h2>
+<p>انتخاب مراقب مناسب یکی از مهم‌ترین تصمیمات خانواده است. این فرد ساعت‌ها نزد سالمند شما حضور خواهد داشت؛ پس انتخاب دقیق می‌تواند تفاوت بین یک تجربه مثبت و یک کابوس را ایجاد کند.</p>
+<h3 class="text-amber-700 font-black text-lg mt-5 mb-3">۴-۱. ویژگی‌های شخصیتی ایده‌آل مراقب</h3>
+<ul class="space-y-2.5 my-4">
+  <li class="flex items-start gap-2"><span class="text-amber-500 font-black mt-0.5">★</span><span><strong class="text-slate-800">فضیلت و صداقت:</strong> مراقب باید قابل اعتماد باشد زیرا در غیاب شما در خانه حضور پیدا می‌کند</span></li>
+  <li class="flex items-start gap-2"><span class="text-amber-500 font-black mt-0.5">★</span><span><strong class="text-slate-800">صبر و آرامش:</strong> برخورد با سالمندان به خصوص مبتلایان به آلزایمر نیازمند صبروتحمل بسیار است</span></li>
+  <li class="flex items-start gap-2"><span class="text-amber-500 font-black mt-0.5">★</span><span><strong class="text-slate-800">دلسوزی و همدلی:</strong> علاقه واقعی به کار با سالمندان و درک نیازهای عاطفی آن‌ها</span></li>
+  <li class="flex items-start gap-2"><span class="text-amber-500 font-black mt-0.5">★</span><span><strong class="text-slate-800">انضباط و وقت‌شناسی:</strong> رعایت دقیق زمان داروها و وعده‌های غذایی</span></li>
+  <li class="flex items-start gap-2"><span class="text-amber-500 font-black mt-0.5">★</span><span><strong class="text-slate-800">ارتباطات مؤثر:</strong> توانایی صحبت آرام و شفاف با سالمند و گزارش‌دهی منظم به خانواده</span></li>
+</ul>
+<h3 class="text-amber-700 font-black text-lg mt-5 mb-3">۴-۲. بررسی سوابق و مدارک</h3>
+<ul class="space-y-2.5 my-4">
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>درخواست کارت ملی و گواهی عدم سوء پیشینه کیفری</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>تماس با دو کارفرمای قبلی و گرفتن توصیف کتبی</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>بررسی گواهینامه‌های آموزشی معتبر در زمینه مراقبت از سالمند</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>انجام مصاحبه حضوری در خانه و حضور سالمند در این مصاحبه</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>قرارداد رسمی با تعیین دقیق مسئولیت‌ها، ساعت کاری و حقوق</span></li>
+</ul>
+<p>💡 <strong class="text-teal-700">نکته طلایی:</strong> اگر زمان یا تجربه لازم برای این فرآیند را ندارید، می‌توانید این کار را به تیم تخصصی استخدام سالمندیار بسپارید. ما <a href="/services/home-nursing-elderly-care" class="text-teal-700 font-bold underline hover:text-emerald-700">پرستاران و مراقبان سالمند</a> را پس از ۱۰ مرحله بررسی و امتحان عملی به شما معرفی می‌کنیم.</p>
+
+<h2>۵. چک‌لیست مراقبت روزانه از سالمند</h2>
+<p>داشتن یک برنامه روزانه منظم نه تنها از بروز مشکلات پیشگیری می‌کند بلکه به سالمند نیز حس امنیت و پیش‌بینی‌پذیری می‌دهد. چک‌لیست زیر را به صورت روزانه پیگیری کنید:</p>
+<table class="w-full my-6 border-collapse rounded-2xl overflow-hidden shadow-sm">
+  <thead>
+    <tr class="bg-gradient-to-l from-blue-600 to-sky-500 text-white">
+      <th class="px-4 py-3.5 text-right text-sm font-black w-48">گروه</th>
+      <th class="px-4 py-3.5 text-right text-sm font-black">کارهای روزانه</th>
+      <th class="px-4 py-3.5 text-right text-sm font-black w-32">زمان پیشنهادی</th>
+    </tr>
+  </thead>
+  <tbody class="divide-y divide-slate-200 bg-white">
+    <tr class="hover:bg-slate-50">
+      <td class="px-4 py-3 font-bold text-rose-700 bg-rose-50/50">💊 داروها</td>
+      <td class="px-4 py-3 text-slate-600">مصرف دقیق داروها طبق نسخه، ثبت مصرف هر دارو در کاردکس، بررسی باقی‌مانده داروها</td>
+      <td class="px-4 py-3 text-slate-700 font-bold">هر وعده غذایی + قبل از خواب</td>
+    </tr>
+    <tr class="hover:bg-slate-50 bg-slate-50/40">
+      <td class="px-4 py-3 font-bold text-orange-700 bg-orange-50/50">🍎 تغذیه</td>
+      <td class="px-4 py-3 text-slate-600">۳ وعده اصلی متعادل، ۲ میان‌وعده، ۵ واحد میوه و سبزی، محدود کردن شکر و نمک</td>
+      <td class="px-4 py-3 text-slate-700 font-bold">۸ صبح - ۱۲ ظهر - ۷ شب</td>
+    </tr>
+    <tr class="hover:bg-slate-50">
+      <td class="px-4 py-3 font-bold text-sky-700 bg-sky-50/50">💧 مصرف مایعات</td>
+      <td class="px-4 py-3 text-slate-600">حداقل ۶ تا ۸ لیوان مایعات در روز؛ آب، دمنوش، کمپوت رقیق؛ محدود کردن کافئین بعد از ظهر</td>
+      <td class="px-4 py-3 text-slate-700 font-bold">در طول روز (هر ۲ ساعت یک لیوان)</td>
+    </tr>
+    <tr class="hover:bg-slate-50 bg-slate-50/40">
+      <td class="px-4 py-3 font-bold text-emerald-700 bg-emerald-50/50">❤️ علائم حیاتی</td>
+      <td class="px-4 py-3 text-slate-600">فشار خون، نبض، دمای بدن، قند خون (اگر دیابتی باشد)، اشباع اکسیژن</td>
+      <td class="px-4 py-3 text-slate-700 font-bold">صبح پس از بیدار شدن + شب قبل از خواب</td>
+    </tr>
+    <tr class="hover:bg-slate-50">
+      <td class="px-4 py-3 font-bold text-purple-700 bg-purple-50/50">🧼 بهداشت</td>
+      <td class="px-4 py-3 text-slate-600">مسواک زدن دو بار در روز، حمام روزانه یا یک روز در میان، بررسی پوست برای زخم بستر، مراقبت از دهان و دندان مصنوعی</td>
+      <td class="px-4 py-3 text-slate-700 font-bold">صبح و شب</td>
+    </tr>
+    <tr class="hover:bg-slate-50 bg-slate-50/40">
+      <td class="px-4 py-3 font-bold text-pink-700 bg-pink-50/50">🚶 تحرک</td>
+      <td class="px-4 py-3 text-slate-600">حرکت در اطراف منزل، پیاده‌روی کوتاه در حیاط، تمرینات خفیف کششی، تغییر وضعیت هر ۲ ساعت برای بیماران تخت‌بخواب</td>
+      <td class="px-4 py-3 text-slate-700 font-bold">۱۵ تا ۳۰ دقیقه بعد از ناهار</td>
+    </tr>
+    <tr class="hover:bg-slate-50">
+      <td class="px-4 py-3 font-bold text-indigo-700 bg-indigo-50/50">😴 خواب</td>
+      <td class="px-4 py-3 text-slate-600">ایجاد روال ثابت قبل از خواب، تاریک و ساکت کردن اتاق، اجتناب از چرت طولانی بعد از ظهر، دمنوش آرام‌بخش</td>
+      <td class="px-4 py-3 text-slate-700 font-bold">۹ شب تا ۶ صبح (۷ تا ۹ ساعت)</td>
+    </tr>
+    <tr class="hover:bg-slate-50 bg-slate-50/40">
+      <td class="px-4 py-3 font-bold text-teal-700 bg-teal-50/50">💬 وضعیت روحی</td>
+      <td class="px-4 py-3 text-slate-600">گفتگوهای روزانه، تماس تلفنی با فرزندان و نوه‌ها، تماشای برنامه‌های مورد علاقه، بازی‌های فکری و بازی‌های حافظه</td>
+      <td class="px-4 py-3 text-slate-700 font-bold">حداقل ۳۰ دقیقه در طول روز</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="rounded-3xl bg-gradient-to-l from-amber-50 via-orange-50 to-amber-50 border border-amber-200 p-6 my-8 shadow-md">
+  <div class="flex flex-col md:flex-row items-start gap-4">
+    <div class="flex-1">
+      <h3 class="text-lg font-black text-amber-800 mb-2">⚡ درخواست فوری پرستار برای مراقبت موقت</h3>
+      <p class="text-sm text-amber-700 font-bold leading-relaxed">
+        اگر برای سفر کوتاه، مرخصی یا ضرورت کوتاه‌مدت به پرستار یا مراقب نیاز دارید، سرویس فوری سالمندیار آماده ارسال در کمتر از ۲ ساعت است. نیازی به ثبت‌نام یا قرارداد بلندمدت نیست.
+      </p>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3 shrink-0">
+      <a href="/portal/home-care/request" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-black px-6 py-3 shadow-lg shadow-amber-500/20 transition-all whitespace-nowrap">
+        ثبت درخواست فوری
+      </a>
+    </div>
+  </div>
+</div>
+
+<h2>۶. مراقبت از سالمندان مبتلا به بیماری‌های مزمن</h2>
+<p>بیش از ۸۰ درصد سالمندان ۶۵ سال به بالا حداقل یک بیماری مزمن و بیش از ۵۰ درصد دو یا چند بیماری همزمان دارند. مدیریت این بیماری‌ها در منزل نیازمند دانش و برنامه‌ریزی دقیق است.</p>
+<h3 class="text-rose-700 font-black text-lg mt-5 mb-3">دیابت در سالمندان</h3>
+<p>کنترل <span class="text-rose-600 font-bold">دیابت در سالمندان</span> با توجه به تغییر متابولیسم و احتمال عوارض قلبی-عروقی، متفاوت از جوانان است. اندازه‌گیری قند خون ناشتا و بعد از غذا، رعایت رژیم کم‌کربوهیدرات، معاینات منظم پا و چشم از ضروریات است. در صورت زخم پای دیابتی، حتماً از خدمات <a href="/services/wound-care-dressing-at-home" class="text-rose-600 font-bold underline hover:text-rose-700">پانسمان تخصصی زخم در منزل</a> استفاده کنید تا عفونت و پیشرفت زخم جلوگیری شود.</p>
+<h3 class="text-blue-700 font-black text-lg mt-5 mb-3">فشار خون بالا</h3>
+<p>فشار خون کنترل نشده مهم‌ترین عامل سکته مغزی و نارسایی قلبی در سالمندان است. اندازه‌گیری روزانه فشار خون در یک زمان ثابت، مصرف دقیق داروها، کاهش نمک در رژیم غذایی و پیاده‌روی منظم روزانه نقش تعیین‌کننده‌ای دارد.</p>
+<h3 class="text-purple-700 font-black text-lg mt-5 mb-3">آرتروز و دردهای اسکلتی-عضلانی</h3>
+<p>دردهای زانو، کمر و شانه شایع‌ترین دلیل کاهش تحرک در سالمندان است. گرم کردن مفاصل قبل از حرکت، تمرینات تقویتی منظم، کنترل وزن و استفاده از کمربندها و بندهای حمایتی می‌تواند کیفیت زندگی را بهبود بخشد. در صورت نیاز، فیزیوتراپی در منزل توسط متخصصین سالمندیار قابل ارائه است.</p>
+
+<h2>۷. مراقبت از سالمند مبتلا به اختلال حافظه و آلزایمر</h2>
+<p><span class="text-purple-700 font-bold">بیماری آلزایمر</span> بیشترین دلیل زوال عقل در سالمندان جهان و ایران است. مراقبت از این بیماران به صبر، دانش و برنامه‌ریزی ویژه‌ای نیاز دارد و می‌تواند برای خانواده‌هایی که تجربه قبلی ندارند بسیار چالش‌برانگیز باشد.</p>
+<h3 class="text-purple-700 font-black text-lg mt-5 mb-3">اصلاحات امنیتی در خانه</h3>
+<ul class="space-y-2.5 my-4">
+  <li class="flex items-start gap-2"><span class="text-purple-600 font-black mt-0.5">🔒</span><span>قفل کردن یخچال و مایع‌پز برای جلوگیری از مصرف مواد خطرناک</span></li>
+  <li class="flex items-start gap-2"><span class="text-purple-600 font-black mt-0.5">🔒</span><span>حذف مبلمان تیز و گوشه‌دار که در هنگام افتادن آسیب‌زا هستند</span></li>
+  <li class="flex items-start gap-2"><span class="text-purple-600 font-black mt-0.5">🔒</span><span>نصب نرده‌های محافظ در امتداد راهروها و کنار تخت و توالت</span></li>
+  <li class="flex items-start gap-2"><span class="text-purple-600 font-black mt-0.5">🔒</span><span>ماسک کردن دکمه‌های اجاق گاز و لباسشویی با نوار ایمنی کودک</span></li>
+  <li class="flex items-start gap-2"><span class="text-purple-600 font-black mt-0.5">🔒</span><span>نصب دستگیره مخصوص در ورودی برای جلوگیری از گم شدن سالمند</span></li>
+  <li class="flex items-start gap-2"><span class="text-purple-600 font-black mt-0.5">🔒</span><span>گذاشتن برچسب نام و شماره تماس روی جلیقه یا ساعتی سالمند</span></li>
+</ul>
+<h3 class="text-purple-700 font-black text-lg mt-5 mb-3">مدیریت رفتارهای چالش‌برانگیز</h3>
+<p>سالمندان مبتلا به آلزایمر ممکن است پرخاشگری، اضطراب شدید، بی‌خوابی شبانه و پرسه‌زدن در منزل را تجربه کنند. در این موارد:</p>
+<ul class="space-y-2.5 my-4">
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>هرگز با آن‌ها بحث و مجادله نکنید؛ روی احساسات آن‌ها تمرکز کنید نه منطق</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>یک روال روزانه ثابت و قابل پیش‌بینی ایجاد کنید؛ تغییرات ناگهانی اضطراب را افزایش می‌دهد</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>در زمان‌های پرخاشگری، محیط را آرام و از محرک‌های بصری و شنیداری پاک کنید</span></li>
+  <li class="flex items-start gap-2"><span class="text-emerald-600 font-black mt-0.5">✓</span><span>فعالیت‌های ساده و لذت‌بخش مثل گل‌کاری، آوردن چای و نشستن در حیاط را در برنامه قرار دهید</span></li>
+</ul>
+<p>اگر مراقبت از سالمند آلزایمر برای شما طاقت‌فرسا شده است، به یاد داشته باشید که درخواست کمک حرفه‌ای نشانه‌ای از محبت است، نه ضعف. تیم سالمندیار متشکل از متخصصان زوال عقل آماده ارائه حمایت ۲۴ ساعته و شیفت‌های ۱۲ ساعته است. می‌توانید در <a href="/articles/category/elderly-care" class="text-purple-700 font-bold underline hover:text-purple-800">بخش مقالات مراقبت از سالمند</a> مقالات بیشتری در این زمینه بخوانید.</p>
+
+<h2>۸. مراقبت بعد از ترخیص از بیمارستان</h2>
+<p>ماهی اول پس از ترخیص از بیمارستان، حساس‌ترین دوره برای سالمندان است. آمار نشان می‌دهد حدود ۲۰ درصد سالمندان طی این ماه دوباره به بیمارستان مراجعه می‌کنند؛ دلیل اصلی آن مراقبت‌های نامناسب پس از ترخیص در خانه است.</p>
+<ul class="space-y-2.5 my-4">
+  <li class="flex items-start gap-2"><span class="text-teal-600 font-black mt-0.5">🏥</span><span><strong class="text-slate-800">پیگیری دقیق نسخه پزشک:</strong> مصرف تمامی داروها حتی اگر بیمار حالش خوب باشد؛ به خصوص داروهای ضد انعقاد خون و آنتی‌بیوتیک‌ها</span></li>
+  <li class="flex items-start gap-2"><span class="text-teal-600 font-black mt-0.5">🏥</span><span><strong class="text-slate-800">رعایت محدودیت‌های حرکتی:</strong> بالابردن از جسم سنگین، خم شدن بیش از حد و یا نشستن روی نشیمن‌های کم ارتفاع</span></li>
+  <li class="flex items-start gap-2"><span class="text-teal-600 font-black mt-0.5">🏥</span><span><strong class="text-slate-800">مراقبت از محل جراحی:</strong> تعویض <a href="/services/wound-care-dressing-at-home" class="text-teal-700 font-bold underline hover:text-emerald-700">پانسمان استریل</a> طبق دستور پزشک و مشاهده نشانه‌های عفونت (قرمزی، ترشح، تب)</span></li>
+  <li class="flex items-start gap-2"><span class="text-teal-600 font-black mt-0.5">🏥</span><span><strong class="text-slate-800">فیزیوتراپی منظم:</strong> شروع حرکات درمانی به موقع برای جلوگیری از سفتی مفاصل و افت قدرت عضلانی</span></li>
+  <li class="flex items-start gap-2"><span class="text-teal-600 font-black mt-0.5">🏥</span><span><strong class="text-slate-800">تغذیه پروتئین‌بالا:</strong> مصرف کافی پروتئین (تخم‌مرغ، مرغ، ماهی، حبوبات) برای ترمیم بافت‌ها و زخم‌ها</span></li>
+  <li class="flex items-start gap-2"><span class="text-teal-600 font-black mt-0.5">🏥</span><span><strong class="text-slate-800">مراجعه به پزشک در زمان مقرر:</strong> حتی اگر علائم خوبی دارید، بررسی‌های دوره‌ای را فراموش نکنید</span></li>
+</ul>
+<p>در صورت نیاز به مراقبت تخصصی پس از جراحی قلب، عروق، مغز و اعصاب یا ارتوپدی، خدمات <a href="/services/icu-home-care-nursing" class="text-teal-700 font-bold underline hover:text-emerald-700">ICU در منزل</a> سالمندیار شامل مانیتورینگ ۲۴ ساعته، پرستار متخصص و تجهیزات ICU کامل قابل ارائه است.</p>
+
+<h2>۹. چه زمانی به پرستار فوری در منزل نیاز داریم؟</h2>
+<p>گاهی اوقات شرایط اضطراری پیش می‌آید که نیاز به کمک فوری پزشکی در خانه است، بدون اینکه لزوماً نیاز به انتقال به اورژانس باشد. در شرایط زیر درخواست پرستار فوری کنید:</p>
+<ul class="space-y-2.5 my-4">
+  <li class="flex items-start gap-2"><span class="text-rose-600 font-black mt-0.5">🚨</span><span><strong class="text-rose-700">افزایش ناگهانی فشار خون</strong> بالاتر از ۱۸۰/۱۱۰ همراه با سردرد شدید یا تاری دید</span></li>
+  <li class="flex items-start gap-2"><span class="text-rose-600 font-black mt-0.5">🚨</span><span><strong class="text-rose-700">افزایش قند خون</strong> بالاتر از ۳۰۰ میلی‌گرم/دسی‌لیتر یا پایین‌تر از ۷۰ همراه با عرق سرد</span></li>
+  <li class="flex items-start gap-2"><span class="text-rose-600 font-black mt-0.5">🚨</span><span><strong class="text-rose-700">تب بالای ۳۸.۵</strong> در سالمند که به بیماری زمینه‌ای مبتلاست</span></li>
+  <li class="flex items-start gap-2"><span class="text-rose-600 font-black mt-0.5">🚨</span><span><strong class="text-rose-700">سقوط و ضربه به سر</strong> حتی اگر علائم ظاهری نداشته باشد</span></li>
+  <li class="flex items-start gap-2"><span class="text-rose-600 font-black mt-0.5">🚨</span><span><strong class="text-rose-700">ترشح خون یا صفرا از محل زخم</strong> یا باز شدن بخیه‌ها بعد از عمل</span></li>
+  <li class="flex items-start gap-2"><span class="text-rose-600 font-black mt-0.5">🚨</span><span><strong class="text-rose-700">دشواری در تنفس</strong> یا سرفه‌های مداوم همراه با خلط خونی</span></li>
+  <li class="flex items-start gap-2"><span class="text-rose-600 font-black mt-0.5">🚨</span><span><strong class="text-rose-700">سکته احتمالی</strong>؛ حالت کج صورت، ضعف یک طرف بدن، مشکل در صحبت کردن</span></li>
+</ul>
+<div class="rounded-3xl bg-gradient-to-l from-rose-50 via-pink-50 to-rose-50 border border-rose-200 p-6 my-8 shadow-md">
+  <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+    <div>
+      <h3 class="text-lg font-black text-rose-800 mb-2">🆘 پرستار فوری سالمندیار؛ کمک در کمتر از ۲ ساعت</h3>
+      <p class="text-sm text-rose-700 font-bold leading-relaxed">
+        تیم آماده‌بهره سالمندیار ۲۴ ساعته و ۷ روز هفته پاسخگوی درخواست‌های فوری شماست - بدون نیاز به ثبت‌نام یا پیش‌پرداخت
+      </p>
+    </div>
+    <div class="flex flex-col sm:flex-row gap-3 shrink-0">
+      <a href="/portal/home-care/request" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-black px-7 py-3.5 shadow-lg shadow-rose-600/20 transition-all whitespace-nowrap">
+        درخواست فوری پرستار
+      </a>
+    </div>
+  </div>
+</div>
+
+<h2>۱۰. چگونه وضعیت سالمند را در طول زمان پیگیری کنیم؟</h2>
+<p>پاسخ این سوال می‌تواند تفاوت میان کشف زودهنگام مشکلات و مواجهه با بحران‌های جبران‌ناپذیر را تعیین کند. پلتفرم هوشمند سالمندیار با ارائه ابزارهای جامع مدیریت سلامت، این فرآیند را برای خانواده‌ها بسیار ساده کرده است. قابلیت‌های زیر را به صورت رایگان در اختیار شما قرار می‌دهیم:</p>
+<h3 class="text-teal-700 font-black text-lg mt-5 mb-3">۱۰-۱. ثبت منظم علائم حیاتی</h3>
+<p>در پنل کاربری سالمندیار، می‌توانید فشار خون، نبض، دما، قند خون، وزن و اشباع اکسیژن را روزانه ثبت کنید. سیستم به صورت هوشمند نوسانات غیرعادی را تشخیص می‌دهد و در صورت نیاز هشدار برای شما و پزشک معالج ارسال می‌کند.</p>
+<h3 class="text-teal-700 font-black text-lg mt-5 mb-3">۱۰-۲. ثبت نتایج آزمایش‌های دوره‌ای</h3>
+<p>تمام نتایج آزمایش خون، ادرار، رادیولوژی و نوار قلب را به صورت دیجیتال در پرونده سلامت سالمند ذخیره کنید. سالمندیار روند تغییرات شاخص‌های کلیدی را نمودار می‌سازد و به پزشک معالج کمک می‌کند تشخیص دقیق‌تری داشته باشد.</p>
+<h3 class="text-teal-700 font-black text-lg mt-5 mb-3">۱۰-۳. مدیریت دارو و کاردکس هوشمند</h3>
+<p>یکی از شایع‌ترین دلایل بستری مجدد سالمندان، اشتباه در مصرف داروهاست. سیستم مدیریت داروی سالمندیار با تنظیم آلارم‌های دقیق به صورت پیامک و اعلان موبایل، خود سالمند و مراقب را به موقع مصرف دارو یادآوری می‌کند. هر بار مصرف دارو در کاردکس ثبت شده و برای خانواده قابل مشاهده است.</p>
+<h3 class="text-teal-700 font-black text-lg mt-5 mb-3">۱۰-۴. مشاهده سوابق مراقبتی در هر زمان و هر مکان</h3>
+<p>فرزندان ساکن در شهرهای دیگر یا حتی خارج از کشور می‌توانند به صورت زنده از وضعیت سلامت والدین خود مطلع شوند. گزارش‌های روزانه پرستار، نتایج معاینات و تصاویر پیشرفت روند درمان همگی در پنل یکپارچه در دسترس است.</p>
+<h3 class="text-teal-700 font-black text-lg mt-5 mb-3">۱۰-۵. درخواست پرستار یا مراقب بدون ثبت‌نام اولیه</h3>
+<p>در صورت نیاز فوری یا حتی آشنایی با سیستم، می‌توانید بدون ایجاد حساب کاربری و تکمیل فرم‌های طولانی، مستقیماً از طریق فرم درخواست سریع، پرستار یا مراقب مورد نظر خود را درخواست کنید. کارشناسان ما بلافاصله با شما تماس می‌گیرند.</p>
+
+<h2>۱۱. خدمات سالمندیار برای مراقبت در منزل</h2>
+<p>سالمندیار به عنوان جامع‌ترین پلتفرم خدمات سلامت و مراقبت در منزل ایران، مجموعه‌ای یکپارچه از خدمات تخصصی را در اختیار خانواده‌های سالمندان قرار می‌دهد. مهم‌ترین خدمات ما عبارتند از:</p>
+<ul class="space-y-3.5 my-5">
+  <li class="flex items-start gap-3 p-4 rounded-2xl bg-gradient-to-r from-teal-50 to-white border border-teal-100">
+    <span class="text-2xl shrink-0">👩‍⚕️</span>
+    <div>
+      <a href="/services/home-nursing-elderly-care" class="font-black text-teal-800 text-base hover:text-emerald-700 transition-colors">خدمات سالمند پرستاری حرفه‌ای در منزل</a>
+      <p class="text-sm text-slate-600 mt-1">شیفت‌های صبح، شب و ۲۴ ساعته با پرستاران دارای پروانه معتبر وزارت بهداشت، گزارش‌دهی روزانه به خانواده و نظارت دائمی کارشناس ارشد.</p>
+    </div>
+  </li>
+  <li class="flex items-start gap-3 p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-white border border-blue-100">
+    <span class="text-2xl shrink-0">🩺</span>
+    <div>
+      <a href="/services/icu-home-care-nursing" class="font-black text-blue-800 text-base hover:text-sky-700 transition-colors">مراقبت‌های ویژه ICU در منزل</a>
+      <p class="text-sm text-slate-600 mt-1">مانیتورینگ ۵ پارامتر، پرستاران متخصص ICU با سابقه بیمارستانی، نگهداری ونتیلاتور، تراکئوستومی، PEG و ساکشن ترشحات.</p>
+    </div>
+  </li>
+  <li class="flex items-start gap-3 p-4 rounded-2xl bg-gradient-to-r from-emerald-50 to-white border border-emerald-100">
+    <span class="text-2xl shrink-0">🩹</span>
+    <div>
+      <a href="/services/wound-care-dressing-at-home" class="font-black text-emerald-800 text-base hover:text-teal-700 transition-colors">پانسمان انواع زخم در منزل</a>
+      <p class="text-sm text-slate-600 mt-1">پانسمان تخصصی زخم بستر درجات ۲ تا ۴، زخم پای دیابتی، سوختگی، زخم بعد از عمل و تراکئوستومی با لوازم کاملاً استریل یکبار مصرف.</p>
+    </div>
+  </li>
+  <li class="flex items-start gap-3 p-4 rounded-2xl bg-gradient-to-r from-amber-50 to-white border border-amber-100">
+    <span class="text-2xl shrink-0">💉</span>
+    <div>
+      <a href="/portal/home-care/request" class="font-black text-amber-800 text-base hover:text-orange-700 transition-colors">تزریقات و سرخرگ‌گیری در منزل</a>
+      <p class="text-sm text-slate-600 mt-1">تزریق عضلانی، وریدی، زیرجلدی، سرخرگ‌گیری برای آزمایش خون و واکسن‌سازی کاملاً استریل و بدون درد توسط پرستار متخصص.</p>
+    </div>
+  </li>
+  <li class="flex items-start gap-3 p-4 rounded-2xl bg-gradient-to-r from-purple-50 to-white border border-purple-100">
+    <span class="text-2xl shrink-0">🧠</span>
+    <div>
+      <a href="/articles/category/elderly-care" class="font-black text-purple-800 text-base hover:text-violet-700 transition-colors">مراقبت اختصاصی از بیماران آلزایمر</a>
+      <p class="text-sm text-slate-600 mt-1">تیم دلسوز و آموزش‌دیده در زمینه زوال عقل، مدیریت رفتارهای چالش‌برانگیز، برنامه تحریکی ذهنی و همراهی برای فعالیت‌های روزمره.</p>
+    </div>
+  </li>
+</ul>
+
+<h2>۱۲. سوالات متداول (FAQ)</h2>
+<div class="space-y-4 my-5">
+  <details class="group rounded-2xl border border-slate-200 bg-white p-5 open:bg-gradient-to-l open:from-teal-50/40 open:to-white open:border-teal-200 shadow-sm transition-all">
+    <summary class="cursor-pointer list-none flex items-center justify-between font-black text-slate-800 group-open:text-teal-800 transition-colors">
+      <span>میزان هزینه پرستار سالمند در منزل چقدر است و بر چه اساسی محاسبه می‌شود؟</span>
+      <span class="text-teal-600 transition-transform group-open:rotate-45">+</span>
+    </summary>
+    <p class="mt-4 text-slate-700 leading-relaxed text-sm">
+    هزینه پرستار سالمند بسته به نوع شیفت کاری (صبح، شب یا ۲۴ ساعته)، سطح تخصص مورد نیاز (پرستار عمومی یا ICU)، تعداد روزهای درخواستی و محل سکونت شما متفاوت است. به طور میانگین، شیفت روزانه از ۱.۲ میلیون تومان شروع می‌شود و شیفت ۲۴ ساعته با دو پرستار ۱۲ ساعته از ۳ میلیون تومان. در سالمندیار تعرفه‌ها شفاف، بدون هزینه پنهان و قبل از شروع کار به صورت کتبی به شما اعلام می‌شود. برای دریافت پیشنهاد دقیق می‌توانید <a href="/portal/home-care/request" class="text-teal-700 font-bold underline">فرم درخواست رایگان</a> را تکمیل نمایید.
+    </p>
+  </details>
+  <details class="group rounded-2xl border border-slate-200 bg-white p-5 open:bg-gradient-to-l open:from-teal-50/40 open:to-white open:border-teal-200 shadow-sm transition-all">
+    <summary class="cursor-pointer list-none flex items-center justify-between font-black text-slate-800 group-open:text-teal-800 transition-colors">
+      <span>اگر از عملکرد پرستار یا مراقب معرفی شده راضی نباشیم چه امکاناتی داریم؟</span>
+      <span class="text-teal-600 transition-transform group-open:rotate-45">+</span>
+    </summary>
+    <p class="mt-4 text-slate-700 leading-relaxed text-sm">
+    در سالمندیار رضایت شما اولویت اول ماست. به همین دلیل ۴۸ ساعت اول خدمات به صورت <strong class="font-bold text-emerald-700">آزمایشی و بدون تعهد</strong> ارائه می‌شود. در صورت نارضایتی هر دلیلی، بدون هیچ هزینه‌ای پرستار جایگزین برای شما معرفی می‌گردد. همچنین در طول مدت قرارداد نیز در صورت وجود هرگونه مشکل، تیم پشتیبانی ما ۲۴ ساعته آماده رسیدگی و تعویض کادر درمانی است.
+    </p>
+  </details>
+  <details class="group rounded-2xl border border-slate-200 bg-white p-5 open:bg-gradient-to-l open:from-teal-50/40 open:to-white open:border-teal-200 shadow-sm transition-all">
+    <summary class="cursor-pointer list-none flex items-center justify-between font-black text-slate-800 group-open:text-teal-800 transition-colors">
+      <span>آیا برای درخواست خدمات نیاز به ثبت‌نام و تکمیل مدارک زیاد داریم؟</span>
+      <span class="text-teal-600 transition-transform group-open:rotate-45">+</span>
+    </summary>
+    <p class="mt-4 text-slate-700 leading-relaxed text-sm">
+    خیر؛ یکی از مهم‌ترین تفاوت‌های سالمندیار با سایر ارائه‌دهندگان خدمات، <strong class="font-bold text-amber-700">عدم نیاز به ثبت‌نام اولیه</strong> است. شما می‌توانید تنها با وارد کردن شماره تماس و آدرس خود، درخواست خدمات را ثبت کنید و کارشناسان ما در اولین فرصت با شما تماس می‌گیرند. البته برای استفاده از ابزارهای پایش سلامت و مدیریت دارو در بلندمدت، ایجاد پرونده اختصاصی پیشنهاد می‌شود که کاملاً رایگان است.
+    </p>
+  </details>
+  <details class="group rounded-2xl border border-slate-200 bg-white p-5 open:bg-gradient-to-l open:from-teal-50/40 open:to-white open:border-teal-200 shadow-sm transition-all">
+    <summary class="cursor-pointer list-none flex items-center justify-between font-black text-slate-800 group-open:text-teal-800 transition-colors">
+      <span>حداقل مدت زمان قرارداد برای استخدام پرستار سالمند در منزل چقدر است؟</span>
+      <span class="text-teal-600 transition-transform group-open:rotate-45">+</span>
+    </summary>
+    <p class="mt-4 text-slate-700 leading-relaxed text-sm">
+    برای خدمات روزانه حداقل ۵ روز پیوسته و برای خدمات ۲۴ ساعته حداقل ۳ روز درخواست پذیرفته می‌شود. البته در موارد فوری و اضطراری حتی برای یک روز نیز خدمات ارائه می‌شود. برای سفرهای کوتاه، تعطیلات رسمی یا حضور نکردن موقت اعضای خانواده، می‌توانید خدمات موقت را بدون هیچ محدودیتی درخواست کنید.
+    </p>
+  </details>
+  <details class="group rounded-2xl border border-slate-200 bg-white p-5 open:bg-gradient-to-l open:from-teal-50/40 open:to-white open:border-teal-200 shadow-sm transition-all">
+    <summary class="cursor-pointer list-none flex items-center justify-between font-black text-slate-800 group-open:text-teal-800 transition-colors">
+      <span>آیا پرستاران و مراقبان دارای بیمه تخصصی و ضمانت‌نامه عمل هستند؟</span>
+      <span class="text-teal-600 transition-transform group-open:rotate-45">+</span>
+    </summary>
+    <p class="mt-4 text-slate-700 leading-relaxed text-sm">
+    بله؛ تمام پرستاران و مراقبان شاغل در سالمندیار دارای <strong class="font-bold text-blue-700">بیمه مسئولیت حرفه‌ای</strong> در قبال خسارات احتمالی هستند و با شما قرارداد رسمی منعقد می‌کنند. علاوه بر این، تمامی اعضای تیم ما پیش از استخدام، مراحل گواهی عدم سوء پیشینه و مصاحبه چندمرحله‌ای را طی می‌نمایند. خانواده‌ها کاملاً از هرگونه مسئولیت حقوقی و مالی در قبال حوادث احتمالی مبرا هستند.
+    </p>
+  </details>
+  <details class="group rounded-2xl border border-slate-200 bg-white p-5 open:bg-gradient-to-l open:from-teal-50/40 open:to-white open:border-teal-200 shadow-sm transition-all">
+    <summary class="cursor-pointer list-none flex items-center justify-between font-black text-slate-800 group-open:text-teal-800 transition-colors">
+      <span>چگونه می‌توانیم از کیفیت خدمات ارائه‌شده مطمئن شویم؟</span>
+      <span class="text-teal-600 transition-transform group-open:rotate-45">+</span>
+    </summary>
+    <p class="mt-4 text-slate-700 leading-relaxed text-sm">
+    در سالمندیار، کیفیت کنترل با ۳ لایه تضمین می‌شود: اول) گزارش‌دهی روزانه از پرستار به خانواده از طریق پنل و پیامک؛ دوم) بازدید تصادفی و پایش کیفیت توسط کارشناسان ارشد تیم؛ سوم) سیستم نظرسنجی پس از اتمام خدمت و رتبه‌بندی پرستاران بر اساس امتیازات واقعی کاربران. همچنین در صورت هرگونه شکایت، تیم رسیدگی به شکایات حداکثر ظرف ۲ ساعت پاسخگویی و رسیدگی می‌نماید.
+    </p>
+  </details>
+</div>
+
+<h2>جمع‌بندی و درخواست کمک</h2>
+<p>مراقبت از سالمند در منزل یکی از باارزش‌ترین اقدامات خانواده‌ها در قبال والدین و عزیزانشان است، اما نباید فراموش کنیم که این مسئله تنها با عشق و محبت قابل انجام نیست؛ نیاز به دانش، تخصص، زمان و انرژی زیادی دارد. تلاش برای انجام همه چیز به تنهایی می‌تواند منجر به خستگی مزمن caregivers، کاهش کیفیت مراقبت و در نهایت آسیب به سالمند و خانواده شود.</p>
+<p>در این مسیر، سالمندیار کنار شماست. چه به دنبال کمک برای چند ساعات در هفته باشید و چه به پرستار ۲۴ ساعته تخصصی؛ تیم ما آماده ارائه مشاوره رایگان و پیشنهاد بهترین راهکار متناسب با نیاز شما و بودجه‌تان است.</p>
+
+<div class="rounded-3xl bg-gradient-to-l from-slate-50 via-teal-50/50 to-slate-50 border-2 border-teal-300 p-8 my-6 shadow-xl">
+  <p class="text-lg md:text-xl font-black text-slate-800 text-center leading-relaxed">
+    اگر برای مراقبت از سالمندتان در منزل به <span class="text-teal-700">پرستار</span> یا <span class="text-emerald-700">مراقب</span> نیاز دارید، می‌توانید درخواست خود را در سالمندیار ثبت کنید.
+  </p>
+  <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+    <a href="/portal/home-care/request" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-l from-teal-600 to-emerald-500 hover:from-teal-700 hover:to-emerald-600 text-white font-black px-8 py-4 shadow-lg shadow-teal-600/30 transition-all text-base whitespace-nowrap">
+      درخواست پرستار و مراقب سالمند در منزل
+    </a>
+  </div>
+  <p class="mt-4 text-center text-xs font-bold text-slate-500">
+    🔒 مشاوره رایگان • ۲۴ ساعته پاسخگو • بدون نیاز به پیش‌پرداخت
+  </p>
+</div>`,
+    shortAnswer:
+      'مراقبت از سالمند در منزل شامل انتخاب پرستار یا مراقب مناسب، چک‌لیست مراقبت روزانه، مدیریت بیماری‌های مزمن و آلزایمر، و پیگیری منظم وضعیت سلامت است. سالمندیار با ارائه پرستار تخصصی، پنل هوشمند مدیریت سلامت و خدمات فوری ۲۴ ساعته، همراه خانواده‌هاست.',
+    excerpt:
+      'راهنمای جامع و کاربردی مراقبت از سالمند در منزل برای خانواده‌ها. از تشخیص نیاز به پرستار سالمند، تفاوت پرستار و مراقب، چک‌لیست کامل مراقبت روزانه، مدیریت بیماری‌های مزمن و آلزایمر، تا نحوه پیگیری وضعیت سلامت و درخواست کمک حرفه‌ای از سالمندیار.',
+    estimatedReadingTimeMinutes: 20,
+    featuredImageUrl:
+      'https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=warm%20professional%20elderly%20home%20care%20nurse%20helping%20happy%20senior%20woman%20indoor%20sunny%20cozy%20living%20room%20healthcare%20persian%20family&image_size=landscape_16_9',
+    featuredImageAlt: 'پرستار سالمند کمک به سالمند در خانه',
+    metaTitle: 'راهنمای کامل مراقبت از سالمند در منزل ۱۴۰۵ | از انتخاب پرستار تا پیگیری | سالمندیار',
+    metaDescription:
+      'راهنمای تخصصی مراقبت از سالمند در منزل: انتخاب پرستار و مراقب سالمند، چک‌لیست روزانه، مدیریت دیابت فشار خون و آلزایمر، خدمات پرستار فوری ۲۴ ساعته و پیگیری وضعیت سلامت.',
+    primaryKeyword: 'مراقبت از سالمند در منزل',
+    secondaryKeywords: [
+      'پرستار سالمند',
+      'مراقب سالمند',
+      'پرستار سالمند در منزل',
+      'خدمات سالمندی در منزل',
+      'مراقبت از سالمند بیمار',
+      'سالمندیار در منزل',
+    ],
+    status: 'Published',
+    publishedAt: now,
+    lastUpdatedAt: now,
+    authorId: 1,
+    author: authors[0],
+    categoryId: 1,
+    category: contentCategories[0],
+    viewCount: 0,
+    isFeatured: false,
+    isMedicalContent: true,
+    isFactChecked: false,
+    tags: [contentTags[1], contentTags[2], contentTags[4], contentTags[0]],
+    medicalReviews: [],
+    sources: [],
+    faqs: [
+      {
+        id: 100,
+        question: 'میزان هزینه پرستار سالمند در منزل چقدر است و بر چه اساسی محاسبه می‌شود؟',
+        answer: 'هزینه پرستار سالمند بسته به نوع شیفت کاری (صبح، شب یا ۲۴ ساعته)، سطح تخصص مورد نیاز، تعداد روزهای درخواستی و محل سکونت متفاوت است. شیفت روزانه از ۱.۲ میلیون و شیفت ۲۴ ساعته از ۳ میلیون تومان شروع می‌شود.',
+        displayOrder: 1,
+      },
+      {
+        id: 101,
+        question: 'اگر از عملکرد پرستار یا مراقب معرفی شده راضی نباشیم چه امکاناتی داریم؟',
+        answer: '۴۸ ساعت اول خدمات به صورت آزمایشی و بدون تعهد ارائه می‌شود. در صورت نارضایتی هر دلیلی، بدون هیچ هزینه‌ای پرستار جایگزین معرفی می‌گردد.',
+        displayOrder: 2,
+      },
+      {
+        id: 102,
+        question: 'آیا برای درخواست خدمات نیاز به ثبت‌نام و تکمیل مدارک زیاد داریم؟',
+        answer: 'خیر؛ در سالمندیار حتی بدون ثبت‌نام و تنها با شماره تماس می‌توانید درخواست خدمات ثبت کنید و کارشناسان در اولین فرصت با شما تماس می‌گیرند.',
+        displayOrder: 3,
+      },
+      {
+        id: 103,
+        question: 'حداقل مدت زمان قرارداد برای استخدام پرستار سالمند در منزل چقدر است؟',
+        answer: 'برای خدمات روزانه حداقل ۵ روز و برای خدمات ۲۴ ساعته حداقل ۳ روز درخواست پذیرفته می‌شود. موارد فوری حتی برای یک روز نیز قابل ارائه است.',
+        displayOrder: 4,
+      },
+      {
+        id: 104,
+        question: 'آیا پرستاران و مراقبان دارای بیمه تخصصی و ضمانت‌نامه عمل هستند؟',
+        answer: 'بله؛ تمام پرستاران دارای بیمه مسئولیت حرفه‌ای هستند و قرارداد رسمی با شما منعقد می‌کنند. همچنین گواهی عدم سوء پیشینه برای همه اعضای تیم تهیه شده است.',
+        displayOrder: 5,
+      },
+      {
+        id: 105,
+        question: 'چگونه می‌توانیم از کیفیت خدمات ارائه‌شده مطمئن شویم؟',
+        answer: 'گزارش‌دهی روزانه از طریق پنل، بازدید تصادفی کارشناسان ارشد و سیستم نظرسنجی بعد از اتمام خدمت، سه لایه تضمین کیفیت در سالمندیار است.',
+        displayOrder: 6,
+      },
+    ],
+  },
 ];
 
 export const serviceSeoProfiles: ServiceSeoProfile[] = [

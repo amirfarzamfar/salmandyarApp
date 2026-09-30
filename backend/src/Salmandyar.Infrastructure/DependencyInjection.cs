@@ -98,6 +98,7 @@ public static class DependencyInjection
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IOtpLoginChallengeStore, OtpLoginChallengeStore>();
         services.AddScoped<IPatientService, PatientService>();
+        services.AddScoped<Salmandyar.Application.Services.ILabService, LabService>();
         services.AddScoped<Salmandyar.Application.Services.PatientSelfServiceAccess.IPatientSelfServiceAccessService, PatientSelfServiceAccessService>();
         services.AddScoped<IServiceCatalogService, ServiceCatalogService>();
         services.AddScoped<Salmandyar.Application.Services.ReportConfig.IReportConfigurationService, Salmandyar.Infrastructure.Services.ReportConfigurationService>();

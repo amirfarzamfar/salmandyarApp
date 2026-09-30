@@ -159,7 +159,26 @@ export async function listArticles(params?: {
     pageSize,
     items: filtered.slice(start, start + pageSize) as Article[],
   };
-  return safeFetch<PagedResponse<Article>>(`/articles?${qs.toString()}`, fallback);
+  const apiResult = await safeFetch<PagedResponse<Article>>(`/articles?${qs.toString()}`, fallback);
+  if (!apiResult || !Array.isArray(apiResult.items) || apiResult.items.length === 0) {
+    return fallback;
+  }
+  const seen = new Set<number>((apiResult.items as any[]).map((a: any) => a.id));
+  const missingFromApi = fallback.items.filter((a: any) => !seen.has(a.id));
+  const mergedItems = [...apiResult.items, ...missingFromApi] as Article[];
+  const mergedFiltered = mergedItems.filter((a: any) => {
+    if (categoryId != null && a.categoryId !== categoryId) return false;
+    if (diseaseId != null && a.diseaseId !== diseaseId) return false;
+    if (search && !a.title.includes(search) && !(a.excerpt || '').includes(search)) return false;
+    return true;
+  });
+  const mergedStart = (page - 1) * pageSize;
+  return {
+    total: Math.max(apiResult.total ?? 0, mergedFiltered.length, fallback.total),
+    page,
+    pageSize,
+    items: mergedFiltered.slice(mergedStart, mergedStart + pageSize),
+  };
 }
 
 export async function getRecentArticles(count = 5, excludeId?: number): Promise<Article[]> {

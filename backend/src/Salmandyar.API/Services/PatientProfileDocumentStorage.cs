@@ -9,6 +9,59 @@ namespace Salmandyar.API.Services;
 public static class PatientProfileDocumentStorage
 {
     public const long MaxUploadBytes = 50L * 1024 * 1024;
+    public const long MaxLabUploadBytes = 10L * 1024 * 1024;
+
+    public static async Task<StoredPatientDocument> SaveLabOriginalAsync(
+        IFormFile file, string uploadsFolder, CancellationToken cancellationToken)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        var allowed = new Dictionary<string, string>
+        {
+            [".jpg"] = "image/jpeg", [".jpeg"] = "image/jpeg", [".png"] = "image/png",
+            [".webp"] = "image/webp", [".pdf"] = "application/pdf"
+        };
+        if (file.Length <= 0 || file.Length > MaxLabUploadBytes ||
+            !allowed.TryGetValue(extension, out var mime) || file.ContentType != mime)
+            throw new ArgumentException("فایل باید تصویر JPG، PNG، WEBP یا PDF و حداکثر ۱۰ مگابایت باشد.");
+
+        await using var input = file.OpenReadStream();
+        var header = new byte[12];
+        var read = await input.ReadAsync(header, cancellationToken);
+        var valid = extension switch
+        {
+            ".pdf" => read >= 5 && System.Text.Encoding.ASCII.GetString(header, 0, 5) == "%PDF-",
+            ".jpg" or ".jpeg" => read >= 3 && header[0] == 0xff && header[1] == 0xd8 && header[2] == 0xff,
+            ".png" => read >= 8 && header.AsSpan(0, 8).SequenceEqual(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }),
+            ".webp" => read >= 12 && System.Text.Encoding.ASCII.GetString(header, 0, 4) == "RIFF" &&
+                System.Text.Encoding.ASCII.GetString(header, 8, 4) == "WEBP",
+            _ => false
+        };
+        if (!valid) throw new ArgumentException("محتوای فایل با نوع انتخاب‌شده مطابقت ندارد.");
+        if (extension != ".pdf")
+        {
+            await using var imageStream = file.OpenReadStream();
+            var info = await Image.IdentifyAsync(imageStream, cancellationToken);
+            if ((long)info.Width * info.Height > 40_000_000)
+                throw new ArgumentException("ابعاد تصویر بیش از حد مجاز است.");
+        }
+
+        // Preserve the original medical document; do not recompress or publish under wwwroot.
+        Directory.CreateDirectory(uploadsFolder);
+        var name = $"{Guid.NewGuid():N}{extension}";
+        var path = Path.Combine(uploadsFolder, name);
+        try
+        {
+            await using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+            await using var original = file.OpenReadStream();
+            await original.CopyToAsync(output, cancellationToken);
+        }
+        catch
+        {
+            if (File.Exists(path)) File.Delete(path);
+            throw;
+        }
+        return new StoredPatientDocument(name, path, extension);
+    }
 
     private const int MaxImageWidth = 2200;
     private const int MaxImageHeight = 2200;
