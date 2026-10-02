@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Calendar, UserCircle, ClipboardCheck, LogOut, LayoutDashboard, Activity, GraduationCap, BriefcaseBusiness, FlaskConical } from "lucide-react";
+import { FileText, Calendar, UserCircle, ClipboardCheck, LogOut, LayoutDashboard, Activity, GraduationCap, BriefcaseBusiness, FlaskConical, HandCoins } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/components/auth/UserContext";
@@ -19,6 +19,7 @@ export function NurseSidebar() {
     { icon: FileText, label: "گزارش‌ها", href: "/nurse-portal/reports" },
     { icon: Calendar, label: "خدمات", href: "/nurse-portal/services" },
     { icon: BriefcaseBusiness, label: "پروفایل استخدامی", href: "/nurse-portal/employment-profile" },
+    { icon: HandCoins, label: "قرارداد همکاری", href: "/nurse-portal/contract" },
     { icon: UserCircle, label: "پروفایل", href: "/nurse-portal/profile" },
   ];
 

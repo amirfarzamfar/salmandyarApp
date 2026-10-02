@@ -7,7 +7,8 @@ import {
   LayoutDashboard, Users, UserCog, FileText, Settings, LogOut, ClipboardList,
   ChevronDown, ChevronLeft, Bell, Clock, List, Brain, UserCheck, BarChart2, X,
   ShieldCheck, MessageSquareMore, Sparkles, BookOpen, Stethoscope, MapPin,
-  GraduationCap, Calculator, UserPen, Tag, Layers, Plus, HandHeart, FlaskConical
+  GraduationCap, Calculator, UserPen, Tag, Layers, Plus, HandHeart, FlaskConical,
+  HandCoins
 } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 
@@ -44,6 +45,16 @@ const navigation = [
       { name: 'لیست فرم‌های ارزیابی', href: '/dashboard/admin/user-evaluations', icon: List },
       { name: 'مدیریت ارزیابی کاربران', href: '/dashboard/admin/user-evaluations/user-assignments', icon: UserCheck },
       { name: 'ایجاد فرم ارزیابی', href: '/dashboard/admin/user-evaluations/create', icon: FileText }
+    ]
+  },
+  {
+    name: 'مدیریت قراردادها',
+    href: '/dashboard/admin/contracts',
+    icon: HandCoins,
+    subItems: [
+      { name: 'لیست شابلون‌ها', href: '/dashboard/admin/contracts', icon: List },
+      { name: 'تخصیص‌های قرارداد', href: '/dashboard/admin/contracts/assignments', icon: UserCheck },
+      { name: 'ایجاد شابلون قرارداد', href: '/dashboard/admin/contracts/templates/create', icon: FileText }
     ]
   },
   { name: 'مدیریت پرسنل', href: '/dashboard/personnel', icon: UserCog },

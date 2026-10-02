@@ -12,6 +12,7 @@ import {
   CheckCircle,
   Clock3,
   Eye,
+  HandCoins,
   KeyRound,
   Lock,
   Pencil,
@@ -45,6 +46,7 @@ import type { PatientList } from '@/types/patient';
 import { translateRole } from '@/utils/role-translation';
 import { PatientSelfServiceAccessModal } from '@/components/admin/users/PatientSelfServiceAccessModal';
 import CaregiverProfileWizard from '@/components/caregiver-profile/CaregiverProfileWizard';
+import PersonnelContractsTab from '@/components/admin/contracts/PersonnelContractsTab';
 import {
   Dialog,
   DialogContent,
@@ -59,7 +61,7 @@ const caregiverRoles = ['Nurse', 'AssistantNurse', 'Physiotherapist', 'ElderlyCa
 type UserFormState = CreateAdminUserDto;
 type RoleFormState = { name: string; permissions: string[] };
 type PermissionGroup = { key: string; title: string; permissions: PermissionDefinitionDto[] };
-type DetailSection = 'overview' | 'employment-profile';
+type DetailSection = 'overview' | 'employment-profile' | 'contracts';
 type AssignmentFormState = {
   patientId: string;
   assignmentType: AssignmentType;
@@ -279,7 +281,12 @@ export default function UsersPageClient({ mode = 'users' }: { mode?: 'users' | '
     try {
       const detail = await userService.getUserById(userId);
       setSelectedUser(detail);
-      setDetailSection('overview');
+      const tabFromQuery = searchParams.get('tab');
+      if (tabFromQuery === 'contracts' || tabFromQuery === 'employment-profile' || tabFromQuery === 'overview') {
+        setDetailSection(tabFromQuery as DetailSection);
+      } else {
+        setDetailSection('overview');
+      }
       setUserPermissionDraft(detail.directPermissions);
       setUserPermissionSearch('');
       if (openDialog) {
@@ -1438,6 +1445,12 @@ export default function UsersPageClient({ mode = 'users' }: { mode?: 'users' | '
                       label="مدیریت پروفایل استخدامی"
                       className={detailSection === 'employment-profile' ? 'border-teal-200 bg-teal-50 text-teal-700' : ''}
                     />
+                    <ActionButton
+                      onClick={() => setDetailSection('contracts')}
+                      icon={<HandCoins className="h-4 w-4" />}
+                      label="قرارداد همکاری"
+                      className={detailSection === 'contracts' ? 'border-medical-200 bg-medical-50 text-medical-700' : ''}
+                    />
                     <Link
                       href={`/dashboard/personnel/employment-profile?userId=${selectedUser.id}`}
                       className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
@@ -1488,6 +1501,17 @@ export default function UsersPageClient({ mode = 'users' }: { mode?: 'users' | '
                   >
                     پروفایل استخدامی
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setDetailSection('contracts')}
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                      detailSection === 'contracts'
+                        ? 'bg-medical-500 text-white shadow-glow-medical'
+                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    قرارداد همکاری
+                  </button>
                 </div>
               )}
 
@@ -1498,6 +1522,8 @@ export default function UsersPageClient({ mode = 'users' }: { mode?: 'users' | '
                   </div>
                   <CaregiverProfileWizard adminUserId={selectedUser.id} />
                 </InfoCard>
+              ) : isPersonnelMode && detailSection === 'contracts' && canReceiveAssignments(selectedUser) ? (
+                <PersonnelContractsTab userId={selectedUser.id} fullName={`${selectedUser.firstName} ${selectedUser.lastName}`.trim()} />
               ) : (
                 <>
               <InfoCard title="سطوح دسترسی موثر">

@@ -2374,6 +2374,457 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.ToTable("ServiceTestimonials", (string)null);
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CancellationRequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ContentHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContractNumber")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("ContractTemplateId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("EmployerSignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmployerUserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("SignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SignedSnapshotContractText")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractNumber")
+                        .IsUnique()
+                        .HasFilter("\"ContractNumber\" IS NOT NULL");
+
+                    b.HasIndex("EmployerUserId");
+
+                    b.HasIndex("ContractTemplateId", "Status");
+
+                    b.HasIndex("UserId", "Status");
+
+                    b.ToTable("ContractAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractField", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ContractTemplateId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DefaultValueFromProfile")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("FieldKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<int>("FieldType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("OptionsJson")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Placeholder")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ValidationJson")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractTemplateId", "FieldKey")
+                        .IsUnique();
+
+                    b.ToTable("ContractFields", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "User.FirstName+LastName",
+                            FieldKey = "fullName",
+                            FieldType = 0,
+                            IsRequired = true,
+                            Label = "نام و نام خانوادگی",
+                            Order = 1
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "CaregiverProfile.NationalCode",
+                            FieldKey = "nationalCode",
+                            FieldType = 0,
+                            IsRequired = true,
+                            Label = "کد ملی",
+                            Order = 2
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "User.PhoneNumber",
+                            FieldKey = "phoneNumber",
+                            FieldType = 0,
+                            IsRequired = true,
+                            Label = "شماره تماس",
+                            Order = 3
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "CaregiverProfile.Address",
+                            FieldKey = "address",
+                            FieldType = 4,
+                            IsRequired = false,
+                            Label = "آدرس سکونت",
+                            Order = 4
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "CaregiverProfile.Iban",
+                            FieldKey = "iban",
+                            FieldType = 0,
+                            IsRequired = false,
+                            Label = "شماره شبا (IR)",
+                            Order = 5
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "CaregiverProfile.CooperationType",
+                            FieldKey = "cooperationType",
+                            FieldType = 3,
+                            IsRequired = true,
+                            Label = "نوع همکاری",
+                            OptionsJson = "[\"تمام‌وقت\",\"نیمه‌وقت\",\"شیفتی\",\"فوق‌العاده\",\"حضوری ماهانه\"]",
+                            Order = 6
+                        },
+                        new
+                        {
+                            Id = 7,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "CaregiverProfile.EmploymentStartDate",
+                            FieldKey = "startDate",
+                            FieldType = 2,
+                            IsRequired = true,
+                            Label = "تاریخ شروع همکاری",
+                            Order = 7
+                        },
+                        new
+                        {
+                            Id = 8,
+                            ContractTemplateId = 1,
+                            FieldKey = "endDate",
+                            FieldType = 2,
+                            IsRequired = false,
+                            Label = "تاریخ پایان همکاری (اختیاری)",
+                            Order = 8
+                        },
+                        new
+                        {
+                            Id = 9,
+                            ContractTemplateId = 1,
+                            FieldKey = "monthlySalary",
+                            FieldType = 1,
+                            IsRequired = false,
+                            Label = "حقوق ماهانه (تومان)",
+                            Order = 9
+                        },
+                        new
+                        {
+                            Id = 10,
+                            ContractTemplateId = 1,
+                            FieldKey = "workShift",
+                            FieldType = 3,
+                            IsRequired = false,
+                            Label = "شیفت کاری",
+                            OptionsJson = "[\"صبح\",\"عصر\",\"شب\",\"24 ساعته\",\"طبق برنامه هفتگی\"]",
+                            Order = 10
+                        },
+                        new
+                        {
+                            Id = 11,
+                            ContractTemplateId = 1,
+                            FieldKey = "elderlyFullName",
+                            FieldType = 0,
+                            IsRequired = false,
+                            Label = "نام و نام خانوادگی سالمند تحت پوشش",
+                            Order = 11
+                        },
+                        new
+                        {
+                            Id = 12,
+                            ContractTemplateId = 1,
+                            FieldKey = "serviceCity",
+                            FieldType = 0,
+                            IsRequired = false,
+                            Label = "شهر محل خدمت",
+                            Order = 12
+                        },
+                        new
+                        {
+                            Id = 13,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "CaregiverProfile.EmergencyPhone",
+                            FieldKey = "emergencyContact",
+                            FieldType = 0,
+                            IsRequired = false,
+                            Label = "شماره تماس اضطراری",
+                            Order = 13
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ContractTemplateId = 1,
+                            DefaultValueFromProfile = "User.FirstName+LastName",
+                            FieldKey = "bankAccountOwner",
+                            FieldType = 0,
+                            IsRequired = false,
+                            Label = "نام صاحب حساب",
+                            Order = 14
+                        });
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractFieldValue", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ContractFieldId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DateValue")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FieldKey")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<decimal?>("NumberValue")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("numeric(18,4)");
+
+                    b.Property<string>("StringValue")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractFieldId");
+
+                    b.HasIndex("AssignmentId", "FieldKey")
+                        .IsUnique();
+
+                    b.ToTable("ContractFieldValues", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractSigningAuditLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActionType")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("AuthMethod")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ClientIp")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ContentHash")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DetailsJson")
+                        .HasColumnType("text");
+
+                    b.Property<string>("DeviceInfoJson")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("PerformedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TransactionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("UserAgent")
+                        .HasColumnType("text");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TransactionId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("AssignmentId", "PerformedAt");
+
+                    b.ToTable("ContractSigningAuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("ContractText")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CooperationType")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EffectiveEndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("EffectiveStartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedByUserId")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("UpdatedByUserId");
+
+                    b.HasIndex("Code", "Version")
+                        .IsUnique();
+
+                    b.HasIndex("IsActive", "EffectiveStartDate");
+
+                    b.ToTable("ContractTemplates", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Code = "ELDERLY_CARE_CONTRACT",
+                            ContractText = "\r\n<h2 class=\"contract-title\">قرارداد الکترونیکی ارائه خدمات مراقبت از سالمند</h2>\r\n<p class=\"contract-meta\"><strong>شماره قرارداد:</strong> {{contractNumber}} &nbsp;|&nbsp; <strong>نسخه قرارداد:</strong> {{templateVersion}} &nbsp;|&nbsp; <strong>تاریخ انعقاد:</strong> {{signDate}}</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۱ – طرفین قرارداد</h3>\r\n<p>این قرارداد در تاریخ {{startDate}} بین دو طرف زیر منعقد گردیده است:</p>\r\n<p><strong>۱-۱ کارفرما (طرف اول):</strong> سازمان یا مجموعه ارائه‌دهنده خدمات در منزل سالمندیار، که در ادامه با عنوان «کارفرما» نامیده خواهد شد.</p>\r\n<p><strong>۱-۲ پرستار / مراقب سالمند (طرف دوم):</strong> آقای/خانم <strong>{{fullName}}</strong> دارای کد ملی <strong>{{nationalCode}}</strong> و شماره تماس <strong>{{phoneNumber}}</strong> که در ادامه با عنوان «مراقب» نامیده خواهد شد و ساکن {{address}} می‌باشد.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۲ – موضوع قرارداد</h3>\r\n<p>طرف اول به موجب این قرارداد، انجام خدمات مراقبت و نگهداری از سالمند «{{elderlyFullName}}» در شهر «{{serviceCity}}» را به طرف دوم محول می‌نماید و طرف دوم نیز تعهد می‌نماید مطابق با مهارت‌ها و مدارک ارائه شده از سوی خود، به نحو احسن خدمات مقرر در این قرارداد را از تاریخ {{startDate}} ارائه نماید. نوع همکاری طرفین به شکل <strong>{{cooperationType}}</strong> و در شیفت کاری «{{workShift}}» می‌باشد.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۳ – مدت قرارداد</h3>\r\n<p>۳-۱ مدت این قرارداد از تاریخ {{startDate}} شروع شده و در تاریخ {{endDate}} به پایان می‌رسد؛ در صورتی که تاریخ پایان قرارداد ذکر نشده باشد، مدت قرارداد نامحدود در نظر گرفته شده و هر یک از طرفین می‌توانند با رعایت ماده ۱۳ قرارداد، آن را فسخ نمایند.</p>\r\n<p>۳-۲ تمدید قرارداد به صورت ضمنی در صورتی که هیچ‌یک از طرفین تا ۱۵ روز قبل از تاریخ پایان، إلغای قرارداد را کتباً به طرف دیگر اعلام ننماید، به مدت مشابه تمدید خواهد شد.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۴ – ساعات کاری و تعطیلات</h3>\r\n<p>۴-۱ ساعت کاری روزانه مراقب طبق شیفت «{{workShift}}» و بر اساس برنامه ارائه شده از سوی کارفرما به طول انجامید خواهد شد.</p>\r\n<p>۴-۲ مراقب دارای یک روز مرخصی هفتگی در طول هفته خواهد بود و تعیین روز مرخصی با تنبیع به نیاز سالمند و هماهنگی با کارفرما انجام خواهد شد.</p>\r\n<p>۴-۳ ساعات اضافه و کار در روزهای تعطیل رسمی طبق قانون کار مصوب جمهوری اسلامی ایران محاسبه و تسویه خواهد شد.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۵ – مبلغ و نحوه پرداخت حق‌الزحمه</h3>\r\n<p>۵-۱ حق‌الزحمه ماهانه طرف دوم به مبلغ <strong>{{monthlySalary}}</strong> تومان به توافق طرفین می‌رسد و کارفرما متعهد می‌گردد مبلغ مقرر را حداکثر تا پایان روز پنجم هر ماه شمسی به شماره شبا «{{iban}}» به نام «{{bankAccountOwner}}» واریز نماید.</p>\r\n<p>۵-۲ در صورت همکاری شیفتی یا ساعت‌ای، مبلغ مورد توافق طبق شیفت‌ها و در پایان هر هفته با طرف دوم تسویه خواهد شد.</p>\r\n<p>۵-۳ حق مسکن، حق خواروبار، سهم بیمه، و مزایای جانبی طبق ضمائم قرارداد و قوانین کشور الزامی خواهد بود.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۶ – وظایف و تعهدات مراقب سالمند</h3>\r\n<p>مراقب متعهد است طی مدت اعتبار قرارداد:</p>\r\n<p>۶-۱ به نحوه‌ای صادقانه و مطابق با قوانین اخلاقی حرفه‌ای و استانداردهای روز جهانی مراقبت از سالمند، کلیه امور مراقبتی سالمند را از خوراک، دارو، بهداشت شخصی، پیاده‌روی، پزشکی و تماس‌های پزشکی، همراهی در مراجعه و… به نحو احسن انجام دهد.</p>\r\n<p>۶-۲ ساعات حضور خود را مطابق برنامه‌ریزی اعلامی رعایت کرده و در موارد غیبت یا تأخیر، حداقل ۲۴ ساعت زودتر آن را به کارفرما و جانشین تعیین‌شده اطلاع دهد.</p>\r\n<p>۶-۳ در تمامی ساعات کاری از وسایل ارتباطی (تلفن همراه) فقط برای موارد ضروری مرتبط با وظیفه استفاده نموده و موبایل را در زمان‌های استراحت استفاده کند.</p>\r\n<p>۶-۴ هرگونه مشکل جسمی، روانی یا رفتاری سالمند را بلافاصله به خانواده و در موارد حاد به مرکز درمانی و اورژانس اطلاع دهد.</p>\r\n<p>۶-۵ هیچگونه مواد مخدر، نوشیدنی الکلی، دخانیات را در محوطه خانه مصرف ننماید و از افرادی که تأییدیه کارفرما را ندارند در محیط حضور ندهد.</p>\r\n<p>۶-۶ اموال سالمند و خانواده را به دقت حفظ نماید و از ورود به قسمت‌های خصوصی خانه که مرتبط با وظیفه خود نمی‌باشد، خودداری نماید.</p>\r\n<p>۶-۷ از ارائه هرگونه توصیه دارویی، تشخیص پزشکی و یا اقدام درمانی فراتر از توان و مدرک رسمی خود، خودداری نماید.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۷ – وظایف و تعهدات کارفرما</h3>\r\n<p>کارفرما متعهد است:</p>\r\n<p>۷-۱ مبلغ قراردادی را در زمان مقرر و به‌موقع به حساب مراقب واریز نماید.</p>\r\n<p>۷-۲ محیط کار سالم، امن و بهداشتی را برای مراقب فراهم نماید و در صورت اقامت در محل، تسهیلات مورد نیاز شامل اتاق مناسب و غذا را تأمین کند.</p>\r\n<p>۷-۳ وسایل و ملزومات مراقبت شامل پوشاک یکبارمصرف، دستکش، ماسک، ملزومات بهداشت فردی سالمند و داروهای روزانه را به‌موقع تأمین نماید.</p>\r\n<p>۷-۴ در مواقع اضطراری و بحرانی شامل تشدید بیماری، تصادف و… همکاری لازم با مراقب را نموده و شماره تماس‌های اضطراری و نزدیکان سالمند را در دسترس همیشه قرار دهد.</p>\r\n<p>۷-۵ حقوق کارگری، بیمه خدمات درمانی، بیمه اجتماعی و سایر مزایای قانونی طبق قوانین مصوب کشور برای مراقب را رعایت نماید.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۸ – تعهد محرمانگی اطلاعات</h3>\r\n<p>مراقب با قبول این قرارداد متعهد می‌گردد کلیه اطلاعات فردی، پزشکی، مالی و خانوادگی سالمند و خانواده که در حین انجام وظیفه به دست می‌آورد را کاملاً محرمانه تلقی کند و بدون تأیید کتبی کارفرما در اختیار هیچ شخص ثالثی قرار ندهد. این تعهد پس از پایان قرارداد نیز دارای اعتبار کامل خواهد بود.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۹ – بیمه و مسئولیت‌ها</h3>\r\n<p>۹-۱ در صورت بروز هرگونه حادثه یا آسیب جسمی یا مالی برای سالمند ناشی از قصور و غفلت اثبات‌شده مراقب، مراقب مسئول جبران خسارت می‌باشد.</p>\r\n<p>۹-۲ کارفرما می‌تواند به اختیار خود بیمه مسئولیت مدنی حرفه‌ای برای مراقب تهیه نماید و در صورت بروز هرگونه خسارت، شرکت بیمه واسطه خواهد بود.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۱۰ – شرایط اضطراری و تماس‌های فوری</h3>\r\n<p>۱۰-۱ شماره تماس اضطراری مراقب: «{{emergencyContact}}» و سایر شماره‌های نزدیکان در پرونده سالمند ثبت خواهد شد.</p>\r\n<p>۱۰-۲ در موارد سکته، ایست قلبی، سقوط از پله، خونریزی شدید و… مراقب موظف است بلافاصله با شماره ۱۱۵ تماس گرفته و در همان زمان خانواده سالمند را در جریان قرار دهد و اقدامات احیای اولیه را طبق استاندارد انجام دهد.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۱۱ – عدم واگذاری خدمات</h3>\r\n<p>مراقب متعهد است که خدمات موضوع این قرارداد را به شخص ثالثی واگذار نکند و در موارد غیبت یا بیماری فرد جانشین تأییدشده از سوی کارفرما را معرفی نماید. واگذاری غیرمجاز خدمات موجب فسخ فوری قرارداد از سوی کارفرما خواهد بود.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۱۲ – حل اختلاف‌ها</h3>\r\n<p>۱۲-۱ هرگونه اختلاف و یا مغایرت در مورد تفسیر مواد قرارداد، در مرحله اول با توافق و مذاکره دو طرف حل خواهد شد.</p>\r\n<p>۱۲-۲ در صورت عدم توافق، موضوع به داور دبیرخانه داوران صلح قضائیه شهرستان ارجاع داده خواهد شد و در صورت ناموفق بودن، مراجع قضایی صلاحیت‌دار صالح رسیدگی خواهند بود.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۱۳ – شرایط فسخ قرارداد</h3>\r\n<p>۱۳-۱ هر یک از طرفین می‌توانند با ارسال پیامک رسمی یا ایمیل تاییدشده، حداقل ۱۵ روز قبل از تاریخ مطلوب، فسخ قرارداد را اعلام نمایند.</p>\r\n<p>۱۳-۲ در موارد نقض فاحش تعهدات شامل نقض مواد ۶، ۸، ۱۱ قرارداد، کارفرما حق فسخ فوری قرارداد را بدون پرداخت خسارت خواهد داشت.</p>\r\n<p>۱۳-۳ در صورت فسخ قرارداد از سوی کارفرما بدون دلیل مشروع، حقوق یک ماه کامل به عنوان خسارت تاخیر به مراقب پرداخت می‌شود.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۱۴ – توافق و ضمائم</h3>\r\n<p>۱۴-۱ کلیه ضمائم قرارداد اعم از برنامه‌ریزی روزانه، فهرست داروها، مشخصات کامل سالمند، لیست تماس‌ها و … جزء لاینفک این قرارداد محسوب می‌گردند.</p>\r\n<p>۱۴-۲ هرگونه تغییر و اصلاح در مواد قرارداد تنها به صورت کتبی و با امضای الکترونیکی یا کتبی طرفین معتبر خواهد بود.</p>\r\n<p>۱۴-۳ طرفین اعلام می‌دارند که صلاحیت کامل جهت انعقاد این قرارداد را دارند و کلیه موارد فوق را مطالعه نموده و مورد تأیید قرار داده‌اند.</p>\r\n\r\n<h3 class=\"contract-clause-title\">ماده ۱۵ – امضا</h3>\r\n<p>با توجه به اینکه طرفین کلیه مواد ۱ تا ۱۴ را مطالعه و تأیید نموده‌اند، لذا این قرارداد با حفظ تمام مصادیق در نسخه الکترونیکی در پرونده طرفین و سامانه سالمندیار ذخیره شده و دارای اعتبار قانونی برابر با نسخه کتبی می‌باشد.</p>\r\n<div class=\"contract-signatures\">\r\n    <div class=\"sig-block\">\r\n        <p><strong>امضای الکترونیکی کارفرما:</strong></p>\r\n        <p>در صورت امضای الکترونیکی در آینده در این قسمت ثبت خواهد شد.</p>\r\n        <p>تاریخ: {{employerSignDate}}</p>\r\n    </div>\r\n    <div class=\"sig-block\">\r\n        <p><strong>امضای الکترونیکی مراقب:</strong> {{fullName}}</p>\r\n        <p>کد ملی: {{nationalCode}}</p>\r\n        <p>شماره تماس: {{phoneNumber}}</p>\r\n        <p>تاریخ امضا: {{signDate}}</p>\r\n        <p>شناسه تراکنش: {{transactionId}}</p>\r\n        <p>امضای دیجیتال (هش): {{contentHash}}</p>\r\n    </div>\r\n</div>\r\n",
+                            CooperationType = "مراقبت از سالمند",
+                            CreatedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            EffectiveStartDate = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            PublishedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Title = "قرارداد الکترونیکی ارائه خدمات مراقبت از سالمند",
+                            Version = 1
+                        });
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestContactLog", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6256,6 +6707,97 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("ServiceSeoProfile");
                 });
 
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractAssignment", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Contracts.ContractTemplate", "ContractTemplate")
+                        .WithMany("Assignments")
+                        .HasForeignKey("ContractTemplateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "EmployerUser")
+                        .WithMany()
+                        .HasForeignKey("EmployerUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ContractTemplate");
+
+                    b.Navigation("EmployerUser");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractField", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Contracts.ContractTemplate", "ContractTemplate")
+                        .WithMany("Fields")
+                        .HasForeignKey("ContractTemplateId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ContractTemplate");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractFieldValue", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Contracts.ContractAssignment", "Assignment")
+                        .WithMany("FieldValues")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.Contracts.ContractField", "ContractField")
+                        .WithMany()
+                        .HasForeignKey("ContractFieldId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("ContractField");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractSigningAuditLog", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.Contracts.ContractAssignment", "Assignment")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractTemplate", b =>
+                {
+                    b.HasOne("Salmandyar.Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Salmandyar.Domain.Entities.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestContactLog", b =>
                 {
                     b.HasOne("Salmandyar.Domain.Entities.User", "ActorUser")
@@ -7246,6 +7788,20 @@ namespace Salmandyar.Infrastructure.Migrations
                     b.Navigation("TargetPatients");
 
                     b.Navigation("Testimonials");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractAssignment", b =>
+                {
+                    b.Navigation("AuditLogs");
+
+                    b.Navigation("FieldValues");
+                });
+
+            modelBuilder.Entity("Salmandyar.Domain.Entities.Contracts.ContractTemplate", b =>
+                {
+                    b.Navigation("Assignments");
+
+                    b.Navigation("Fields");
                 });
 
             modelBuilder.Entity("Salmandyar.Domain.Entities.GuestRequests.GuestServiceRequest", b =>

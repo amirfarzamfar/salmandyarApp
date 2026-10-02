@@ -190,6 +190,23 @@ function getDashboardNav(pathname: string): PanelNav {
       return { title: "مدیریت ارزیابی کاربران", breadcrumbs: evalBase, backHref: "/dashboard", show: true };
     }
 
+    if (pathname.startsWith("/dashboard/admin/contracts")) {
+      const contractsBase = [...base, { label: "مدیریت قراردادها", href: "/dashboard/admin/contracts" }];
+      if (pathname === "/dashboard/admin/contracts") {
+        return { title: "لیست شابلون‌های قرارداد", breadcrumbs: [...contractsBase, { label: "لیست شابلون‌ها" }], backHref: "/dashboard", show: true };
+      }
+      if (pathname.startsWith("/dashboard/admin/contracts/templates/create")) {
+        return { title: "ایجاد شابلون قرارداد", breadcrumbs: [...contractsBase, { label: "ایجاد شابلون" }], backHref: "/dashboard/admin/contracts", show: true };
+      }
+      if (pathname.startsWith("/dashboard/admin/contracts/templates/") && pathname.includes("/edit")) {
+        return { title: "ویرایش شابلون قرارداد", breadcrumbs: [...contractsBase, { label: "ویرایش شابلون" }], backHref: "/dashboard/admin/contracts", show: true };
+      }
+      if (pathname.startsWith("/dashboard/admin/contracts/assignments")) {
+        return { title: "تخصیص‌های قرارداد", breadcrumbs: [...contractsBase, { label: "تخصیص‌ها" }], backHref: "/dashboard/admin/contracts", show: true };
+      }
+      return { title: "مدیریت قراردادها", breadcrumbs: contractsBase, backHref: "/dashboard", show: true };
+    }
+
     return { title: "مدیریت", breadcrumbs: base, backHref: "/dashboard", show: true };
   }
 
@@ -255,6 +272,16 @@ function getNurseNav(pathname: string): PanelNav {
 
   if (pathname.startsWith("/nurse-portal/employment-profile")) {
     return { title: "پروفایل استخدامی", breadcrumbs: [...breadcrumbs, { label: "پروفایل استخدامی" }], backHref: "/nurse-portal", show: true };
+  }
+
+  if (pathname.startsWith("/nurse-portal/contract")) {
+    return {
+      title: "قرارداد همکاری",
+      description: "قرارداد فعال خود را بررسی، تکمیل و در صورت تأیید، امضای الکترونیکی کنید.",
+      breadcrumbs: [...breadcrumbs, { label: "قرارداد همکاری" }],
+      backHref: "/nurse-portal",
+      show: true,
+    };
   }
 
   return { title: "پنل پرستار", breadcrumbs, backHref: "/nurse-portal", show: true };

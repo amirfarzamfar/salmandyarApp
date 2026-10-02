@@ -8,6 +8,8 @@ using Salmandyar.Domain.Entities.UserEvaluations;
 using Salmandyar.Domain.Entities.Medications;
 using Salmandyar.Domain.Entities.PatientProfile;
 using Salmandyar.Domain.Entities.Content;
+using Salmandyar.Domain.Entities.Contracts;
+using Salmandyar.Domain.Enums;
 
 namespace Salmandyar.Infrastructure.Persistence;
 
@@ -62,6 +64,13 @@ public class ApplicationDbContext : IdentityDbContext<User>
     public DbSet<UserEvaluationSubmission> UserEvaluationSubmissions { get; set; }
     public DbSet<UserEvaluationAnswer> UserEvaluationAnswers { get; set; }
     public DbSet<UserEvaluationAssignment> UserEvaluationAssignments { get; set; }
+
+    // Collaboration Contracts Module
+    public DbSet<ContractTemplate> ContractTemplates { get; set; }
+    public DbSet<ContractField> ContractFields { get; set; }
+    public DbSet<ContractAssignment> ContractAssignments { get; set; }
+    public DbSet<ContractFieldValue> ContractFieldValues { get; set; }
+    public DbSet<ContractSigningAuditLog> ContractSigningAuditLogs { get; set; }
 
     // Medication Module
     public DbSet<PatientMedication> PatientMedications { get; set; }
@@ -1664,5 +1673,411 @@ public class ApplicationDbContext : IdentityDbContext<User>
             .WithMany(s => s.Testimonials)
             .HasForeignKey(t => t.ServiceSeoProfileId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // ============================================================
+        // Collaboration Contracts Module Configurations
+        // ============================================================
+
+        builder.Entity<ContractTemplate>().ToTable("ContractTemplates");
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.Title)
+            .IsRequired()
+            .HasMaxLength(400);
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.Code)
+            .IsRequired()
+            .HasMaxLength(128);
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.CooperationType)
+            .HasMaxLength(128);
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.ContractText)
+            .IsRequired();
+
+        builder.Entity<ContractTemplate>()
+            .HasIndex(t => new { t.Code, t.Version })
+            .IsUnique();
+
+        builder.Entity<ContractTemplate>()
+            .HasIndex(t => new { t.IsActive, t.EffectiveStartDate });
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.EffectiveStartDate)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.EffectiveEndDate)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.CreatedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.UpdatedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractTemplate>()
+            .Property(t => t.PublishedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractTemplate>()
+            .HasOne(t => t.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(t => t.CreatedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ContractTemplate>()
+            .HasOne(t => t.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(t => t.UpdatedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ContractTemplate>()
+            .Navigation(t => t.Fields)
+            .UsePropertyAccessMode(PropertyAccessMode.PreferFieldDuringConstruction);
+
+        builder.Entity<ContractTemplate>()
+            .Navigation(t => t.Assignments)
+            .UsePropertyAccessMode(PropertyAccessMode.PreferFieldDuringConstruction);
+
+        // ContractField
+        builder.Entity<ContractField>().ToTable("ContractFields");
+
+        builder.Entity<ContractField>()
+            .Property(f => f.FieldKey)
+            .IsRequired()
+            .HasMaxLength(128);
+
+        builder.Entity<ContractField>()
+            .Property(f => f.Label)
+            .IsRequired()
+            .HasMaxLength(256);
+
+        builder.Entity<ContractField>()
+            .Property(f => f.Placeholder)
+            .HasMaxLength(256);
+
+        builder.Entity<ContractField>()
+            .Property(f => f.DefaultValueFromProfile)
+            .HasMaxLength(256);
+
+        builder.Entity<ContractField>()
+            .Property(f => f.FieldType)
+            .HasConversion<int>();
+
+        builder.Entity<ContractField>()
+            .HasIndex(f => new { f.ContractTemplateId, f.FieldKey })
+            .IsUnique();
+
+        builder.Entity<ContractField>()
+            .HasOne(f => f.ContractTemplate)
+            .WithMany(t => t.Fields)
+            .HasForeignKey(f => f.ContractTemplateId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // ContractAssignment
+        builder.Entity<ContractAssignment>().ToTable("ContractAssignments");
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.UserId)
+            .IsRequired();
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.ContractNumber)
+            .HasMaxLength(64);
+
+        builder.Entity<ContractAssignment>()
+            .HasIndex(a => a.ContractNumber)
+            .IsUnique()
+            .HasFilter("\"ContractNumber\" IS NOT NULL");
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.Status)
+            .HasConversion<int>();
+
+        builder.Entity<ContractAssignment>()
+            .HasIndex(a => new { a.UserId, a.Status });
+
+        builder.Entity<ContractAssignment>()
+            .HasIndex(a => new { a.ContractTemplateId, a.Status });
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.AssignedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.SubmittedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.SignedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.EmployerSignedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.StartDate)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.EndDate)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractAssignment>()
+            .Property(a => a.CancellationRequestedAt)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractAssignment>()
+            .HasOne(a => a.ContractTemplate)
+            .WithMany(t => t.Assignments)
+            .HasForeignKey(a => a.ContractTemplateId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ContractAssignment>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<ContractAssignment>()
+            .HasOne(a => a.EmployerUser)
+            .WithMany()
+            .HasForeignKey(a => a.EmployerUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // ContractFieldValue
+        builder.Entity<ContractFieldValue>().ToTable("ContractFieldValues");
+
+        builder.Entity<ContractFieldValue>()
+            .Property(v => v.FieldKey)
+            .IsRequired()
+            .HasMaxLength(128);
+
+        builder.Entity<ContractFieldValue>()
+            .HasIndex(v => new { v.AssignmentId, v.FieldKey })
+            .IsUnique();
+
+        builder.Entity<ContractFieldValue>()
+            .Property(v => v.DateValue)
+            .HasConversion(
+                v => v.HasValue ? v.Value.ToUniversalTime() : (DateTime?)null,
+                v => v.HasValue ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) : (DateTime?)null);
+
+        builder.Entity<ContractFieldValue>()
+            .Property(v => v.NumberValue)
+            .HasPrecision(18, 4);
+
+        builder.Entity<ContractFieldValue>()
+            .HasOne(v => v.Assignment)
+            .WithMany(a => a.FieldValues)
+            .HasForeignKey(v => v.AssignmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ContractFieldValue>()
+            .HasOne(v => v.ContractField)
+            .WithMany()
+            .HasForeignKey(v => v.ContractFieldId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // ContractSigningAuditLog
+        builder.Entity<ContractSigningAuditLog>().ToTable("ContractSigningAuditLogs");
+
+        builder.Entity<ContractSigningAuditLog>()
+            .Property(l => l.UserId)
+            .IsRequired();
+
+        builder.Entity<ContractSigningAuditLog>()
+            .Property(l => l.ActionType)
+            .HasConversion<int>();
+
+        builder.Entity<ContractSigningAuditLog>()
+            .Property(l => l.PerformedAt)
+            .HasConversion(v => v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        builder.Entity<ContractSigningAuditLog>()
+            .Property(l => l.TransactionId)
+            .IsRequired();
+
+        builder.Entity<ContractSigningAuditLog>()
+            .HasIndex(l => l.TransactionId)
+            .IsUnique();
+
+        builder.Entity<ContractSigningAuditLog>()
+            .HasIndex(l => new { l.AssignmentId, l.PerformedAt });
+
+        builder.Entity<ContractSigningAuditLog>()
+            .HasOne(l => l.Assignment)
+            .WithMany(a => a.AuditLogs)
+            .HasForeignKey(l => l.AssignmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<ContractSigningAuditLog>()
+            .HasOne(l => l.User)
+            .WithMany()
+            .HasForeignKey(l => l.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Seed default contract template (elderly care cooperation contract)
+        SeedDefaultContract(builder);
     }
+
+    private static void SeedDefaultContract(ModelBuilder builder)
+    {
+        var now = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var templateId = 1;
+
+        builder.Entity<ContractTemplate>().HasData(new ContractTemplate
+        {
+            Id = templateId,
+            Title = "قرارداد الکترونیکی ارائه خدمات مراقبت از سالمند",
+            Code = "ELDERLY_CARE_CONTRACT",
+            CooperationType = "مراقبت از سالمند",
+            Version = 1,
+            IsActive = true,
+            EffectiveStartDate = now,
+            CreatedAt = now,
+            PublishedAt = now,
+            ContractText = DefaultContractText
+        });
+
+        var fields = new List<ContractField>
+        {
+            new() { Id = 1, ContractTemplateId = templateId, Order = 1, FieldKey = "fullName", Label = "نام و نام خانوادگی", FieldType = ContractFieldType.Text, IsRequired = true, DefaultValueFromProfile = "User.FirstName+LastName" },
+            new() { Id = 2, ContractTemplateId = templateId, Order = 2, FieldKey = "nationalCode", Label = "کد ملی", FieldType = ContractFieldType.Text, IsRequired = true, DefaultValueFromProfile = "CaregiverProfile.NationalCode" },
+            new() { Id = 3, ContractTemplateId = templateId, Order = 3, FieldKey = "phoneNumber", Label = "شماره تماس", FieldType = ContractFieldType.Text, IsRequired = true, DefaultValueFromProfile = "User.PhoneNumber" },
+            new() { Id = 4, ContractTemplateId = templateId, Order = 4, FieldKey = "address", Label = "آدرس سکونت", FieldType = ContractFieldType.TextArea, IsRequired = false, DefaultValueFromProfile = "CaregiverProfile.Address" },
+            new() { Id = 5, ContractTemplateId = templateId, Order = 5, FieldKey = "iban", Label = "شماره شبا (IR)", FieldType = ContractFieldType.Text, IsRequired = false, DefaultValueFromProfile = "CaregiverProfile.Iban" },
+            new() { Id = 6, ContractTemplateId = templateId, Order = 6, FieldKey = "cooperationType", Label = "نوع همکاری", FieldType = ContractFieldType.Select, IsRequired = true, DefaultValueFromProfile = "CaregiverProfile.CooperationType",
+                OptionsJson = "[\"تمام‌وقت\",\"نیمه‌وقت\",\"شیفتی\",\"فوق‌العاده\",\"حضوری ماهانه\"]" },
+            new() { Id = 7, ContractTemplateId = templateId, Order = 7, FieldKey = "startDate", Label = "تاریخ شروع همکاری", FieldType = ContractFieldType.Date, IsRequired = true, DefaultValueFromProfile = "CaregiverProfile.EmploymentStartDate" },
+            new() { Id = 8, ContractTemplateId = templateId, Order = 8, FieldKey = "endDate", Label = "تاریخ پایان همکاری (اختیاری)", FieldType = ContractFieldType.Date, IsRequired = false },
+            new() { Id = 9, ContractTemplateId = templateId, Order = 9, FieldKey = "monthlySalary", Label = "حقوق ماهانه (تومان)", FieldType = ContractFieldType.Number, IsRequired = false },
+            new() { Id = 10, ContractTemplateId = templateId, Order = 10, FieldKey = "workShift", Label = "شیفت کاری", FieldType = ContractFieldType.Select, IsRequired = false,
+                OptionsJson = "[\"صبح\",\"عصر\",\"شب\",\"24 ساعته\",\"طبق برنامه هفتگی\"]" },
+            new() { Id = 11, ContractTemplateId = templateId, Order = 11, FieldKey = "elderlyFullName", Label = "نام و نام خانوادگی سالمند تحت پوشش", FieldType = ContractFieldType.Text, IsRequired = false },
+            new() { Id = 12, ContractTemplateId = templateId, Order = 12, FieldKey = "serviceCity", Label = "شهر محل خدمت", FieldType = ContractFieldType.Text, IsRequired = false },
+            new() { Id = 13, ContractTemplateId = templateId, Order = 13, FieldKey = "emergencyContact", Label = "شماره تماس اضطراری", FieldType = ContractFieldType.Text, IsRequired = false, DefaultValueFromProfile = "CaregiverProfile.EmergencyPhone" },
+            new() { Id = 14, ContractTemplateId = templateId, Order = 14, FieldKey = "bankAccountOwner", Label = "نام صاحب حساب", FieldType = ContractFieldType.Text, IsRequired = false, DefaultValueFromProfile = "User.FirstName+LastName" },
+        };
+
+        builder.Entity<ContractField>().HasData(fields);
+    }
+
+    private const string DefaultContractText = @"
+<h2 class=""contract-title"">قرارداد الکترونیکی ارائه خدمات مراقبت از سالمند</h2>
+<p class=""contract-meta""><strong>شماره قرارداد:</strong> {{contractNumber}} &nbsp;|&nbsp; <strong>نسخه قرارداد:</strong> {{templateVersion}} &nbsp;|&nbsp; <strong>تاریخ انعقاد:</strong> {{signDate}}</p>
+
+<h3 class=""contract-clause-title"">ماده ۱ – طرفین قرارداد</h3>
+<p>این قرارداد در تاریخ {{startDate}} بین دو طرف زیر منعقد گردیده است:</p>
+<p><strong>۱-۱ کارفرما (طرف اول):</strong> سازمان یا مجموعه ارائه‌دهنده خدمات در منزل سالمندیار، که در ادامه با عنوان «کارفرما» نامیده خواهد شد.</p>
+<p><strong>۱-۲ پرستار / مراقب سالمند (طرف دوم):</strong> آقای/خانم <strong>{{fullName}}</strong> دارای کد ملی <strong>{{nationalCode}}</strong> و شماره تماس <strong>{{phoneNumber}}</strong> که در ادامه با عنوان «مراقب» نامیده خواهد شد و ساکن {{address}} می‌باشد.</p>
+
+<h3 class=""contract-clause-title"">ماده ۲ – موضوع قرارداد</h3>
+<p>طرف اول به موجب این قرارداد، انجام خدمات مراقبت و نگهداری از سالمند «{{elderlyFullName}}» در شهر «{{serviceCity}}» را به طرف دوم محول می‌نماید و طرف دوم نیز تعهد می‌نماید مطابق با مهارت‌ها و مدارک ارائه شده از سوی خود، به نحو احسن خدمات مقرر در این قرارداد را از تاریخ {{startDate}} ارائه نماید. نوع همکاری طرفین به شکل <strong>{{cooperationType}}</strong> و در شیفت کاری «{{workShift}}» می‌باشد.</p>
+
+<h3 class=""contract-clause-title"">ماده ۳ – مدت قرارداد</h3>
+<p>۳-۱ مدت این قرارداد از تاریخ {{startDate}} شروع شده و در تاریخ {{endDate}} به پایان می‌رسد؛ در صورتی که تاریخ پایان قرارداد ذکر نشده باشد، مدت قرارداد نامحدود در نظر گرفته شده و هر یک از طرفین می‌توانند با رعایت ماده ۱۳ قرارداد، آن را فسخ نمایند.</p>
+<p>۳-۲ تمدید قرارداد به صورت ضمنی در صورتی که هیچ‌یک از طرفین تا ۱۵ روز قبل از تاریخ پایان، إلغای قرارداد را کتباً به طرف دیگر اعلام ننماید، به مدت مشابه تمدید خواهد شد.</p>
+
+<h3 class=""contract-clause-title"">ماده ۴ – ساعات کاری و تعطیلات</h3>
+<p>۴-۱ ساعت کاری روزانه مراقب طبق شیفت «{{workShift}}» و بر اساس برنامه ارائه شده از سوی کارفرما به طول انجامید خواهد شد.</p>
+<p>۴-۲ مراقب دارای یک روز مرخصی هفتگی در طول هفته خواهد بود و تعیین روز مرخصی با تنبیع به نیاز سالمند و هماهنگی با کارفرما انجام خواهد شد.</p>
+<p>۴-۳ ساعات اضافه و کار در روزهای تعطیل رسمی طبق قانون کار مصوب جمهوری اسلامی ایران محاسبه و تسویه خواهد شد.</p>
+
+<h3 class=""contract-clause-title"">ماده ۵ – مبلغ و نحوه پرداخت حق‌الزحمه</h3>
+<p>۵-۱ حق‌الزحمه ماهانه طرف دوم به مبلغ <strong>{{monthlySalary}}</strong> تومان به توافق طرفین می‌رسد و کارفرما متعهد می‌گردد مبلغ مقرر را حداکثر تا پایان روز پنجم هر ماه شمسی به شماره شبا «{{iban}}» به نام «{{bankAccountOwner}}» واریز نماید.</p>
+<p>۵-۲ در صورت همکاری شیفتی یا ساعت‌ای، مبلغ مورد توافق طبق شیفت‌ها و در پایان هر هفته با طرف دوم تسویه خواهد شد.</p>
+<p>۵-۳ حق مسکن، حق خواروبار، سهم بیمه، و مزایای جانبی طبق ضمائم قرارداد و قوانین کشور الزامی خواهد بود.</p>
+
+<h3 class=""contract-clause-title"">ماده ۶ – وظایف و تعهدات مراقب سالمند</h3>
+<p>مراقب متعهد است طی مدت اعتبار قرارداد:</p>
+<p>۶-۱ به نحوه‌ای صادقانه و مطابق با قوانین اخلاقی حرفه‌ای و استانداردهای روز جهانی مراقبت از سالمند، کلیه امور مراقبتی سالمند را از خوراک، دارو، بهداشت شخصی، پیاده‌روی، پزشکی و تماس‌های پزشکی، همراهی در مراجعه و… به نحو احسن انجام دهد.</p>
+<p>۶-۲ ساعات حضور خود را مطابق برنامه‌ریزی اعلامی رعایت کرده و در موارد غیبت یا تأخیر، حداقل ۲۴ ساعت زودتر آن را به کارفرما و جانشین تعیین‌شده اطلاع دهد.</p>
+<p>۶-۳ در تمامی ساعات کاری از وسایل ارتباطی (تلفن همراه) فقط برای موارد ضروری مرتبط با وظیفه استفاده نموده و موبایل را در زمان‌های استراحت استفاده کند.</p>
+<p>۶-۴ هرگونه مشکل جسمی، روانی یا رفتاری سالمند را بلافاصله به خانواده و در موارد حاد به مرکز درمانی و اورژانس اطلاع دهد.</p>
+<p>۶-۵ هیچگونه مواد مخدر، نوشیدنی الکلی، دخانیات را در محوطه خانه مصرف ننماید و از افرادی که تأییدیه کارفرما را ندارند در محیط حضور ندهد.</p>
+<p>۶-۶ اموال سالمند و خانواده را به دقت حفظ نماید و از ورود به قسمت‌های خصوصی خانه که مرتبط با وظیفه خود نمی‌باشد، خودداری نماید.</p>
+<p>۶-۷ از ارائه هرگونه توصیه دارویی، تشخیص پزشکی و یا اقدام درمانی فراتر از توان و مدرک رسمی خود، خودداری نماید.</p>
+
+<h3 class=""contract-clause-title"">ماده ۷ – وظایف و تعهدات کارفرما</h3>
+<p>کارفرما متعهد است:</p>
+<p>۷-۱ مبلغ قراردادی را در زمان مقرر و به‌موقع به حساب مراقب واریز نماید.</p>
+<p>۷-۲ محیط کار سالم، امن و بهداشتی را برای مراقب فراهم نماید و در صورت اقامت در محل، تسهیلات مورد نیاز شامل اتاق مناسب و غذا را تأمین کند.</p>
+<p>۷-۳ وسایل و ملزومات مراقبت شامل پوشاک یکبارمصرف، دستکش، ماسک، ملزومات بهداشت فردی سالمند و داروهای روزانه را به‌موقع تأمین نماید.</p>
+<p>۷-۴ در مواقع اضطراری و بحرانی شامل تشدید بیماری، تصادف و… همکاری لازم با مراقب را نموده و شماره تماس‌های اضطراری و نزدیکان سالمند را در دسترس همیشه قرار دهد.</p>
+<p>۷-۵ حقوق کارگری، بیمه خدمات درمانی، بیمه اجتماعی و سایر مزایای قانونی طبق قوانین مصوب کشور برای مراقب را رعایت نماید.</p>
+
+<h3 class=""contract-clause-title"">ماده ۸ – تعهد محرمانگی اطلاعات</h3>
+<p>مراقب با قبول این قرارداد متعهد می‌گردد کلیه اطلاعات فردی، پزشکی، مالی و خانوادگی سالمند و خانواده که در حین انجام وظیفه به دست می‌آورد را کاملاً محرمانه تلقی کند و بدون تأیید کتبی کارفرما در اختیار هیچ شخص ثالثی قرار ندهد. این تعهد پس از پایان قرارداد نیز دارای اعتبار کامل خواهد بود.</p>
+
+<h3 class=""contract-clause-title"">ماده ۹ – بیمه و مسئولیت‌ها</h3>
+<p>۹-۱ در صورت بروز هرگونه حادثه یا آسیب جسمی یا مالی برای سالمند ناشی از قصور و غفلت اثبات‌شده مراقب، مراقب مسئول جبران خسارت می‌باشد.</p>
+<p>۹-۲ کارفرما می‌تواند به اختیار خود بیمه مسئولیت مدنی حرفه‌ای برای مراقب تهیه نماید و در صورت بروز هرگونه خسارت، شرکت بیمه واسطه خواهد بود.</p>
+
+<h3 class=""contract-clause-title"">ماده ۱۰ – شرایط اضطراری و تماس‌های فوری</h3>
+<p>۱۰-۱ شماره تماس اضطراری مراقب: «{{emergencyContact}}» و سایر شماره‌های نزدیکان در پرونده سالمند ثبت خواهد شد.</p>
+<p>۱۰-۲ در موارد سکته، ایست قلبی، سقوط از پله، خونریزی شدید و… مراقب موظف است بلافاصله با شماره ۱۱۵ تماس گرفته و در همان زمان خانواده سالمند را در جریان قرار دهد و اقدامات احیای اولیه را طبق استاندارد انجام دهد.</p>
+
+<h3 class=""contract-clause-title"">ماده ۱۱ – عدم واگذاری خدمات</h3>
+<p>مراقب متعهد است که خدمات موضوع این قرارداد را به شخص ثالثی واگذار نکند و در موارد غیبت یا بیماری فرد جانشین تأییدشده از سوی کارفرما را معرفی نماید. واگذاری غیرمجاز خدمات موجب فسخ فوری قرارداد از سوی کارفرما خواهد بود.</p>
+
+<h3 class=""contract-clause-title"">ماده ۱۲ – حل اختلاف‌ها</h3>
+<p>۱۲-۱ هرگونه اختلاف و یا مغایرت در مورد تفسیر مواد قرارداد، در مرحله اول با توافق و مذاکره دو طرف حل خواهد شد.</p>
+<p>۱۲-۲ در صورت عدم توافق، موضوع به داور دبیرخانه داوران صلح قضائیه شهرستان ارجاع داده خواهد شد و در صورت ناموفق بودن، مراجع قضایی صلاحیت‌دار صالح رسیدگی خواهند بود.</p>
+
+<h3 class=""contract-clause-title"">ماده ۱۳ – شرایط فسخ قرارداد</h3>
+<p>۱۳-۱ هر یک از طرفین می‌توانند با ارسال پیامک رسمی یا ایمیل تاییدشده، حداقل ۱۵ روز قبل از تاریخ مطلوب، فسخ قرارداد را اعلام نمایند.</p>
+<p>۱۳-۲ در موارد نقض فاحش تعهدات شامل نقض مواد ۶، ۸، ۱۱ قرارداد، کارفرما حق فسخ فوری قرارداد را بدون پرداخت خسارت خواهد داشت.</p>
+<p>۱۳-۳ در صورت فسخ قرارداد از سوی کارفرما بدون دلیل مشروع، حقوق یک ماه کامل به عنوان خسارت تاخیر به مراقب پرداخت می‌شود.</p>
+
+<h3 class=""contract-clause-title"">ماده ۱۴ – توافق و ضمائم</h3>
+<p>۱۴-۱ کلیه ضمائم قرارداد اعم از برنامه‌ریزی روزانه، فهرست داروها، مشخصات کامل سالمند، لیست تماس‌ها و … جزء لاینفک این قرارداد محسوب می‌گردند.</p>
+<p>۱۴-۲ هرگونه تغییر و اصلاح در مواد قرارداد تنها به صورت کتبی و با امضای الکترونیکی یا کتبی طرفین معتبر خواهد بود.</p>
+<p>۱۴-۳ طرفین اعلام می‌دارند که صلاحیت کامل جهت انعقاد این قرارداد را دارند و کلیه موارد فوق را مطالعه نموده و مورد تأیید قرار داده‌اند.</p>
+
+<h3 class=""contract-clause-title"">ماده ۱۵ – امضا</h3>
+<p>با توجه به اینکه طرفین کلیه مواد ۱ تا ۱۴ را مطالعه و تأیید نموده‌اند، لذا این قرارداد با حفظ تمام مصادیق در نسخه الکترونیکی در پرونده طرفین و سامانه سالمندیار ذخیره شده و دارای اعتبار قانونی برابر با نسخه کتبی می‌باشد.</p>
+<div class=""contract-signatures"">
+    <div class=""sig-block"">
+        <p><strong>امضای الکترونیکی کارفرما:</strong></p>
+        <p>در صورت امضای الکترونیکی در آینده در این قسمت ثبت خواهد شد.</p>
+        <p>تاریخ: {{employerSignDate}}</p>
+    </div>
+    <div class=""sig-block"">
+        <p><strong>امضای الکترونیکی مراقب:</strong> {{fullName}}</p>
+        <p>کد ملی: {{nationalCode}}</p>
+        <p>شماره تماس: {{phoneNumber}}</p>
+        <p>تاریخ امضا: {{signDate}}</p>
+        <p>شناسه تراکنش: {{transactionId}}</p>
+        <p>امضای دیجیتال (هش): {{contentHash}}</p>
+    </div>
+</div>
+";
 }

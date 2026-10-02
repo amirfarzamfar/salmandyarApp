@@ -40,6 +40,8 @@ using Salmandyar.Application.Services.GuestRequests;
 using Salmandyar.Infrastructure.Services.GuestRequests;
 using Salmandyar.Application.Services.PatientServices;
 using Salmandyar.Infrastructure.Services.PatientServices;
+using Salmandyar.Application.Services.Contracts;
+using Salmandyar.Infrastructure.Services.Contracts;
 
 namespace Salmandyar.Infrastructure;
 
@@ -140,6 +142,11 @@ public static class DependencyInjection
 
         // Patient Service Management
         services.AddScoped<IPatientServiceManagementService, PatientServiceManagementService>();
+
+        // Collaboration Contracts Module
+        services.AddScoped<IContractService, ContractService>();
+        services.AddSingleton<IContractContentHasher, ContractContentHasher>();
+        services.AddSingleton<IContractPlaceholderRenderer, ContractPlaceholderRenderer>();
 
         // Background Services
         services.AddHostedService<Salmandyar.Infrastructure.BackgroundServices.ReminderBackgroundService>();
